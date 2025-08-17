@@ -2,73 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Logistics Platform Design System - Professional & Modern */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* LogiTrack - Enhanced Visibility Design System */
 
 @layer base {
   :root {
-    /* Core Backgrounds */
-    --background: 248 250 252;
-    --foreground: 224 230 239;
+    /* Enhanced Backgrounds with Better Contrast */
+    --background: 249 250 251;
+    --foreground: 15 23 42;
     
-    /* Card System */
+    /* Card System - Higher Contrast */
     --card: 255 255 255;
-    --card-foreground: 51 65 85;
+    --card-foreground: 15 23 42;
     
     /* Popovers */
     --popover: 255 255 255;
-    --popover-foreground: 51 65 85;
+    --popover-foreground: 15 23 42;
     
-    /* Primary - Professional Deep Blue */
-    --primary: 219 88% 26%;
-    --primary-foreground: 248 250 252;
-    --primary-hover: 219 88% 31%;
+    /* Primary - Vibrant Blue for Better Visibility */
+    --primary: 219 78% 45%;
+    --primary-foreground: 255 255 255;
+    --primary-hover: 219 78% 40%;
     
-    /* Secondary - Clean Gray */
-    --secondary: 215 25% 97%;
-    --secondary-foreground: 100 116 139;
+    /* Secondary - Better Contrast Gray */
+    --secondary: 226 71% 96%;
+    --secondary-foreground: 30 41 59;
     
-    /* Muted Elements */
-    --muted: 215 25% 97%;
-    --muted-foreground: 100 116 139;
+    /* Muted Elements - More Visible */
+    --muted: 226 71% 96%;
+    --muted-foreground: 71 85 105;
     
-    /* Accent - Logistics Teal */
-    --accent: 178 78% 35%;
-    --accent-foreground: 248 250 252;
-    --accent-hover: 178 78% 40%;
+    /* Accent - Enhanced Teal */
+    --accent: 175 70% 45%;
+    --accent-foreground: 255 255 255;
+    --accent-hover: 175 70% 40%;
     
-    /* Status Colors */
-    --success: 142 76% 36%;
-    --success-foreground: 248 250 252;
-    --warning: 45 93% 47%;
-    --warning-foreground: 51 65 85;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 248 250 252;
+    /* Status Colors - High Visibility */
+    --success: 142 76% 42%;
+    --success-foreground: 255 255 255;
+    --warning: 38 92% 50%;
+    --warning-foreground: 255 255 255;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 255 255 255;
     
-    /* Borders & Inputs */
-    --border: 220 14% 89%;
-    --input: 220 14% 89%;
-    --ring: 219 88% 26%;
+    /* Borders & Inputs - More Defined */
+    --border: 214 32% 86%;
+    --input: 214 32% 86%;
+    --ring: 219 78% 45%;
     
-    /* Logistics Specific */
-    --logistics-orange: 25 95% 53%;
-    --logistics-orange-foreground: 248 250 252;
-    --logistics-green: 142 69% 58%;
-    --logistics-blue: 210 100% 56%;
+    /* Logistics Specific - Enhanced Visibility */
+    --logistics-orange: 24 95% 53%;
+    --logistics-orange-foreground: 255 255 255;
+    --logistics-green: 142 69% 45%;
+    --logistics-green-foreground: 255 255 255;
+    --logistics-blue: 210 89% 52%;
+    --logistics-blue-foreground: 255 255 255;
+    --logistics-purple: 262 83% 58%;
+    --logistics-purple-foreground: 255 255 255;
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(219 88% 26%), hsl(219 88% 31%));
-    --gradient-accent: linear-gradient(135deg, hsl(178 78% 35%), hsl(178 78% 40%));
-    --gradient-status: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 69% 58%));
+    /* Enhanced Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(219 78% 45%), hsl(219 78% 55%));
+    --gradient-accent: linear-gradient(135deg, hsl(175 70% 45%), hsl(175 70% 55%));
+    --gradient-success: linear-gradient(135deg, hsl(142 69% 45%), hsl(142 69% 55%));
+    --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 60%));
     
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(219 88% 26% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(219 88% 26% / 0.1), 0 2px 4px -1px hsl(219 88% 26% / 0.06);
-    --shadow-lg: 0 10px 15px -3px hsl(219 88% 26% / 0.1), 0 4px 6px -2px hsl(219 88% 26% / 0.05);
+    /* Enhanced Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(219 78% 45% / 0.08);
+    --shadow-md: 0 4px 6px -1px hsl(219 78% 45% / 0.12), 0 2px 4px -1px hsl(219 78% 45% / 0.08);
+    --shadow-lg: 0 10px 15px -3px hsl(219 78% 45% / 0.12), 0 4px 6px -2px hsl(219 78% 45% / 0.06);
+    --shadow-xl: 0 20px 25px -5px hsl(219 78% 45% / 0.12), 0 10px 10px -5px hsl(219 78% 45% / 0.06);
     
     /* Animation */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
@@ -137,6 +142,13 @@
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 600;
   }
 }
 
