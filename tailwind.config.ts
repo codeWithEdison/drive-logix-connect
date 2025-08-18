@@ -67,6 +67,10 @@ export default {
 					DEFAULT: 'hsl(var(--warning))',
 					foreground: 'hsl(var(--warning-foreground))'
 				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))'
+				},
 				logistics: {
 					orange: 'hsl(var(--logistics-orange))',
 					'orange-foreground': 'hsl(var(--logistics-orange-foreground))',
