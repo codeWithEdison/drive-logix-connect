@@ -18,21 +18,21 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
         <DynamicSidebar />
-        
+
         <div className="flex-1 flex flex-col">
           {/* Top Header */}
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="flex h-14 items-center gap-4 px-4">
               <SidebarTrigger className="h-8 w-8" />
-              
+
               <div className="flex-1 flex items-center gap-4">
                 <div className="relative max-w-sm">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search..." 
+                  <Input
+                    placeholder="Search..."
                     className="pl-8 h-9"
                   />
                 </div>

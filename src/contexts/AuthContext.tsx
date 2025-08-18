@@ -18,6 +18,7 @@ interface AuthContextType {
   loginWithDemo: (role: UserRole) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  getDefaultRoute: (role: UserRole) => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -93,13 +94,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('logistics_user');
   };
 
+  const getDefaultRoute = (role: UserRole): string => {
+    switch (role) {
+      case 'client':
+        return '/';
+      case 'driver':
+        return '/driver';
+      case 'admin':
+        return '/admin';
+      case 'super_admin':
+        return '/super-admin';
+      default:
+        return '/';
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
       login,
       loginWithDemo,
       logout,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      getDefaultRoute
     }}>
       {children}
     </AuthContext.Provider>

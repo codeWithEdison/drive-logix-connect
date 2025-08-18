@@ -25,7 +25,7 @@ import NotFound from '@/pages/NotFound';
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, getDefaultRoute } = useAuth();
 
   if (!isAuthenticated) {
     return (
@@ -34,6 +34,12 @@ function AppContent() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
+  }
+
+  // If user is authenticated but on login page, redirect to their default route
+  if (user && window.location.pathname === '/login') {
+    const defaultRoute = getDefaultRoute(user.role);
+    return <Navigate to={defaultRoute} replace />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +10,8 @@ import { Truck, User, Shield, Crown, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Login() {
-  const { login, loginWithDemo } = useAuth();
+  const { login, loginWithDemo, getDefaultRoute } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,10 +20,22 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const success = await login(email, password);
     if (success) {
       toast.success('Login successful!');
+      // Get the user role and navigate to the appropriate portal
+      const mockUsers = [
+        { email: 'client@demo.com', role: 'client' as UserRole },
+        { email: 'driver@demo.com', role: 'driver' as UserRole },
+        { email: 'admin@demo.com', role: 'admin' as UserRole },
+        { email: 'superadmin@demo.com', role: 'super_admin' as UserRole }
+      ];
+      const user = mockUsers.find(u => u.email === email);
+      if (user) {
+        const defaultRoute = getDefaultRoute(user.role);
+        navigate(defaultRoute);
+      }
     } else {
       toast.error('Invalid credentials. Use demo123 as password.');
     }
@@ -31,6 +45,8 @@ export default function Login() {
   const handleDemoLogin = (role: UserRole) => {
     loginWithDemo(role);
     toast.success(`Logged in as ${role.replace('_', ' ')} demo account`);
+    const defaultRoute = getDefaultRoute(role);
+    navigate(defaultRoute);
   };
 
   const demoAccounts = [
@@ -72,9 +88,18 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-foreground">LogiTrack</h1>
-          <p className="text-lg text-muted-foreground">Professional Logistics Management Platform</p>
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <img
+              src="/lovewaylogistic.png"
+              alt="Loveway Logistics"
+              className="w-16 h-16 object-contain"
+            />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-foreground">Loveway Logistics</h1>
+            <p className="text-lg text-muted-foreground">Professional Logistics Management Platform</p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -127,7 +152,7 @@ export default function Login() {
                   {isLoading ? 'Signing in...' : 'Sign In'}
                 </Button>
               </form>
-              
+
               <div className="mt-4 text-center text-sm text-muted-foreground">
                 <p>Demo credentials: any email with password "demo123"</p>
               </div>
@@ -168,7 +193,7 @@ export default function Login() {
 
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground">
-          <p>© 2024 LogiTrack. Professional logistics management made simple.</p>
+          <p>© 2024 Loveway Logistics. Professional logistics management made simple.</p>
         </div>
       </div>
     </div>

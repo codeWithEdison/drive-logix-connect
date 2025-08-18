@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Truck, 
-  Package, 
-  MapPin, 
-  Users, 
-  Settings, 
-  BarChart3, 
+import {
+  Truck,
+  Package,
+  MapPin,
+  Users,
+  Settings,
+  BarChart3,
   Menu,
   Bell,
   User,
@@ -55,7 +55,7 @@ export function LogisticsLayout({
 }: LogisticsLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeItem, setActiveItem] = useState(0);
-  
+
   const currentMenuItems = menuItems[userRole];
 
   return (
@@ -72,13 +72,17 @@ export function LogisticsLayout({
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Truck className="h-4 w-4 text-primary-foreground" />
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img
+                src="/lovewaylogistic.png"
+                alt="Loveway Logistics"
+                className="w-8 h-8 object-contain"
+              />
             </div>
-            <h1 className="text-xl font-semibold text-foreground">LogiTrack</h1>
+            <h1 className="text-xl font-semibold text-foreground">Loveway Logistics</h1>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm">
             <Bell className="h-5 w-5" />
@@ -116,7 +120,7 @@ export function LogisticsLayout({
               </button>
             ))}
           </nav>
-          
+
           <div className="absolute bottom-4 left-4 right-4">
             <Button variant="ghost" size="sm" className="w-full justify-start gap-3">
               <LogOut className="h-5 w-5" />

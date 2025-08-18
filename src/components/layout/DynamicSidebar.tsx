@@ -16,13 +16,13 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { 
-  Package, 
-  MapPin, 
-  Plus, 
-  History, 
-  Truck, 
-  Clock, 
+import {
+  Package,
+  MapPin,
+  Plus,
+  History,
+  Truck,
+  Clock,
   Route,
   Users,
   Settings,
@@ -73,7 +73,7 @@ export function DynamicSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const collapsed = state === 'collapsed';
-  
+
   if (!user) return null;
 
   const navigation = navigationConfig[user.role] || [];
@@ -90,49 +90,49 @@ export function DynamicSidebar() {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
+    <Sidebar className={`${collapsed ? "w-14" : "w-64"} collapsible="icon bg-background border-r border-border`}>
       <SidebarHeader className="border-b border-border/40 p-4">
-        {!collapsed && (
-          <div className="flex items-center gap-3">
-            <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-              style={{ backgroundColor: getRoleColor(user.role) }}
-            >
-              LT
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 flex items-center justify-center">
+            <img
+              src="/lovewaylogistic.png"
+              alt="Loveway Logistics"
+              className="w-8 h-8 object-contain"
+            />
+          </div>
+          {!collapsed && (
             <div>
-              <h2 className="font-semibold text-foreground">LogiTrack</h2>
+              <h2 className="font-semibold text-foreground">Loveway Logistics</h2>
               <p className="text-xs text-muted-foreground capitalize">
                 {user.role.replace('_', ' ')} Portal
               </p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="p-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupLabel className="px-2 text-xs font-semibold text-gray-700 uppercase tracking-wide">Navigation</SidebarGroupLabel>
+          <SidebarGroupContent className="space-y-1">
             <SidebarMenu>
               {navigation.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.url);
-                
+
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <NavLink 
-                        to={item.url} 
-                        className={({ isActive }) => 
-                          `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-                            isActive 
-                              ? 'bg-primary text-primary-foreground font-medium' 
-                              : 'hover:bg-accent hover:text-accent-foreground'
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3 py-2 rounded-md transition-colors font-medium ${isActive
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-gray-50 text-gray-800 hover:bg-gray-100 border border-gray-200 shadow-sm'
                           }`
                         }
                       >
-                        <Icon className="h-4 w-4 flex-shrink-0" />
+                        <Icon className="h-4 w-4 flex-shrink-0 text-current" />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -162,10 +162,10 @@ export function DynamicSidebar() {
                 </p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={logout}
-              variant="ghost" 
-              size="sm" 
+              variant="ghost"
+              size="sm"
               className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />
@@ -173,10 +173,10 @@ export function DynamicSidebar() {
             </Button>
           </div>
         ) : (
-          <Button 
+          <Button
             onClick={logout}
-            variant="ghost" 
-            size="sm" 
+            variant="ghost"
+            size="sm"
             className="w-full p-2"
           >
             <LogOut className="h-4 w-4" />
