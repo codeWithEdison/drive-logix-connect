@@ -1,39 +1,123 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import CreateCargo from "./pages/CreateCargo";
-import MyCargos from "./pages/MyCargos";
-import TrackingPage from "./pages/TrackingPage";
-import DriverDashboardPage from "./pages/DriverDashboard";
-import AdminDashboardPage from "./pages/AdminDashboard";
-import SuperAdminDashboardPage from "./pages/SuperAdminDashboard";
-import NotFound from "./pages/NotFound";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Pages
+import Login from '@/pages/Login';
+import Index from '@/pages/Index';
+import CreateCargo from '@/pages/CreateCargo';
+import MyCargos from '@/pages/MyCargos';
+import TrackingPage from '@/pages/TrackingPage';
+import History from '@/pages/History';
+import DriverDashboard from '@/pages/DriverDashboard';
+import AdminDashboard from '@/pages/AdminDashboard';
+import SuperAdminDashboard from '@/pages/SuperAdminDashboard';
+import DriverDeliveries from '@/pages/driver/DriverDeliveries';
+import AdminCargos from '@/pages/admin/AdminCargos';
+import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/create-cargo" element={<CreateCargo />} />
-          <Route path="/cargos" element={<MyCargos />} />
-          <Route path="/tracking" element={<TrackingPage />} />
-          <Route path="/driver" element={<DriverDashboardPage />} />
-          <Route path="/admin" element={<AdminDashboardPage />} />
-          <Route path="/super-admin" element={<SuperAdminDashboardPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <AppLayout>
+      <Routes>
+        {/* Client Routes */}
+        <Route path="/" element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <Index />
+          </ProtectedRoute>
+        } />
+        <Route path="/create-cargo" element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <CreateCargo />
+          </ProtectedRoute>
+        } />
+        <Route path="/my-cargos" element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <MyCargos />
+          </ProtectedRoute>
+        } />
+        <Route path="/tracking" element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <TrackingPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/history" element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <History />
+          </ProtectedRoute>
+        } />
+
+        {/* Driver Routes */}
+        <Route path="/driver" element={
+          <ProtectedRoute allowedRoles={['driver']}>
+            <DriverDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/driver/deliveries" element={
+          <ProtectedRoute allowedRoles={['driver']}>
+            <DriverDeliveries />
+          </ProtectedRoute>
+        } />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/cargos" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminCargos />
+          </ProtectedRoute>
+        } />
+
+        {/* Super Admin Routes */}
+        <Route path="/super-admin" element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <SuperAdminDashboard />
+          </ProtectedRoute>
+        } />
+
+        {/* Fallback */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AppLayout>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <Router>
+            <AppContent />
+            <Toaster />
+            <Sonner />
+          </Router>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
