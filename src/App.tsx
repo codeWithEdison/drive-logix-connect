@@ -19,7 +19,10 @@ import DriverDashboard from '@/pages/DriverDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
 import SuperAdminDashboard from '@/pages/SuperAdminDashboard';
 import DriverDeliveries from '@/pages/driver/DriverDeliveries';
+import DriverHistory from '@/pages/driver/DriverHistory';
 import AdminCargos from '@/pages/admin/AdminCargos';
+import AdminUsers from '@/pages/admin/AdminUsers';
+import AdminTrucks from '@/pages/admin/AdminTrucks';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -83,6 +86,11 @@ function AppContent() {
             <DriverDeliveries />
           </ProtectedRoute>
         } />
+        <Route path="/driver/history" element={
+          <ProtectedRoute allowedRoles={['driver']}>
+            <DriverHistory />
+          </ProtectedRoute>
+        } />
 
         {/* Admin Routes */}
         <Route path="/admin" element={
@@ -93,6 +101,16 @@ function AppContent() {
         <Route path="/admin/cargos" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <AdminCargos />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/users" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminUsers />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/trucks" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminTrucks />
           </ProtectedRoute>
         } />
 

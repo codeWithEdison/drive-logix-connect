@@ -31,7 +31,20 @@ import {
   Database,
   Activity,
   LogOut,
-  Home
+  Home,
+  DollarSign,
+  FileText,
+  Star,
+  Bell,
+  CreditCard,
+  CheckCircle,
+  AlertTriangle,
+  UserCheck,
+  Wrench,
+  TrendingUp,
+  ShieldCheck,
+  Archive,
+  Globe
 } from 'lucide-react';
 
 const navigationConfig = {
@@ -45,8 +58,6 @@ const navigationConfig = {
   driver: [
     { title: 'Dashboard', url: '/driver', icon: Home },
     { title: 'Active Deliveries', url: '/driver/deliveries', icon: Truck },
-    { title: 'Schedule', url: '/driver/schedule', icon: Clock },
-    { title: 'Route Planning', url: '/driver/routes', icon: Route },
     { title: 'Delivery History', url: '/driver/history', icon: History },
   ],
   admin: [
@@ -59,11 +70,9 @@ const navigationConfig = {
   ],
   super_admin: [
     { title: 'Dashboard', url: '/super-admin', icon: Home },
-    { title: 'System Overview', url: '/super-admin/system', icon: Activity },
     { title: 'User Management', url: '/super-admin/users', icon: Users },
     { title: 'Admin Management', url: '/super-admin/admins', icon: Shield },
     { title: 'Analytics', url: '/super-admin/analytics', icon: BarChart3 },
-    { title: 'Database', url: '/super-admin/database', icon: Database },
     { title: 'System Settings', url: '/super-admin/settings', icon: Settings },
   ]
 };
