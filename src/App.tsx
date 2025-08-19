@@ -30,6 +30,18 @@ const queryClient = new QueryClient();
 function AppContent() {
   const { isAuthenticated, user, getDefaultRoute } = useAuth();
 
+  // Show loading state while auth is being determined
+  if (user === null && localStorage.getItem('logistics_user')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <Routes>

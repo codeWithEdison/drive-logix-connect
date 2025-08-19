@@ -99,20 +99,20 @@ export function DynamicSidebar() {
   };
 
   return (
-    <Sidebar className={`${collapsed ? "w-14" : "w-64"} collapsible="icon bg-background border-r border-border`}>
-      <SidebarHeader className="border-b border-border/40 p-4">
+    <Sidebar className={`${collapsed ? "w-16" : "w-64"} transition-all duration-300 bg-card border-r border-border shadow-lg`}>
+      <SidebarHeader className="border-b border-border/50 p-4 bg-primary/5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center">
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
             <img
               src="/lovewaylogistic.png"
               alt="Loveway Logistics"
-              className="w-8 h-8 object-contain"
+              className="w-6 h-6 object-contain"
             />
           </div>
           {!collapsed && (
             <div>
-              <h2 className="font-semibold text-foreground">Loveway Logistics</h2>
-              <p className="text-xs text-muted-foreground capitalize">
+              <h2 className="font-bold text-lg text-foreground">Loveway Logistics</h2>
+              <p className="text-sm text-primary font-medium capitalize">
                 {user.role.replace('_', ' ')} Portal
               </p>
             </div>
@@ -120,10 +120,12 @@ export function DynamicSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-3">
         <SidebarGroup>
-          <SidebarGroupLabel className="px-2 text-xs font-semibold text-gray-700 uppercase tracking-wide">Navigation</SidebarGroupLabel>
-          <SidebarGroupContent className="space-y-1">
+          <SidebarGroupLabel className="px-3 text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+            Navigation
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="space-y-2">
             <SidebarMenu>
               {navigation.map((item) => {
                 const Icon = item.icon;
@@ -135,14 +137,19 @@ export function DynamicSidebar() {
                       <NavLink
                         to={item.url}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 px-3 py-2 rounded-md transition-colors font-medium ${isActive
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'bg-gray-50 text-gray-800 hover:bg-gray-100 border border-gray-200 shadow-sm'
-                          }`
+                          `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium group relative ${isActive
+                            ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                          } ${collapsed ? 'justify-center' : ''}`
                         }
                       >
-                        <Icon className="h-4 w-4 flex-shrink-0 text-current" />
-                        {!collapsed && <span>{item.title}</span>}
+                        <Icon className={`h-5 w-5 flex-shrink-0 ${active ? 'text-primary-foreground' : 'text-current'}`} />
+                        {!collapsed && <span className="text-sm">{item.title}</span>}
+                        {collapsed && (
+                          <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                            {item.title}
+                          </div>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -153,17 +160,20 @@ export function DynamicSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/40 p-4">
+      <SidebarFooter className="border-t border-border/50 p-4 bg-muted/30">
         {!collapsed ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback style={{ backgroundColor: getRoleColor(user.role) }}>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border">
+              <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                <AvatarFallback 
+                  style={{ backgroundColor: getRoleColor(user.role) }}
+                  className="text-white font-bold"
+                >
                   {user.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
+                <p className="text-sm font-semibold text-foreground truncate">
                   {user.name}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
@@ -173,23 +183,38 @@ export function DynamicSidebar() {
             </div>
             <Button
               onClick={logout}
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+              className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:border-destructive"
             >
               <LogOut className="h-4 w-4" />
               Sign Out
             </Button>
           </div>
         ) : (
-          <Button
-            onClick={logout}
-            variant="ghost"
-            size="sm"
-            className="w-full p-2"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="space-y-2">
+            <div className="flex justify-center">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                <AvatarFallback 
+                  style={{ backgroundColor: getRoleColor(user.role) }}
+                  className="text-white font-bold text-xs"
+                >
+                  {user.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <Button
+              onClick={logout}
+              variant="ghost"
+              size="sm"
+              className="w-full p-2 hover:text-destructive group"
+            >
+              <LogOut className="h-4 w-4" />
+              <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                Sign Out
+              </div>
+            </Button>
+          </div>
         )}
       </SidebarFooter>
     </Sidebar>
