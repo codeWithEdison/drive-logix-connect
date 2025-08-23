@@ -4,10 +4,17 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { DynamicSidebar } from './DynamicSidebar';
 import { MobileBottomNav } from './MobileBottomNav';
 import { Button } from '@/components/ui/button';
-import { Bell, Search, Menu } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Bell, Menu } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { FaLanguage } from "react-icons/fa6";
+import { useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -16,6 +23,13 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const isMobile = useIsMobile();
+  const [currentLanguage, setCurrentLanguage] = useState('English');
+
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'rw', name: 'Kinyarwanda', flag: '🇷🇼' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' }
+  ];
 
   if (!user) {
     return <>{children}</>;
@@ -35,36 +49,55 @@ export function AppLayout({ children }: AppLayoutProps) {
     return (
       <div className="flex flex-col min-h-screen w-full bg-background">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-40 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
+        <header className="sticky top-0 z-40 w-full border-b bg-white border-gray-200">
           <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <img
-                  src="/lovewaylogistic.png"
-                  alt="Loveway Logistics"
-                  className="w-5 h-5 object-contain"
-                />
-              </div>
+              <img
+                src="/lovewaylogistic.png"
+                alt="Loveway Logistics"
+                className="w-8 h-8 object-contain"
+              />
               <div>
-                <h1 className="font-bold text-base text-foreground">Loveway</h1>
-                <p className="text-xs text-primary capitalize">
-                  {user.role.replace('_', ' ')}
-                </p>
+                <h1 className="font-bold text-base text-gray-900">Loveway Logistic</h1>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+              {/* Mobile Language Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-600 hover:text-gray-900">
+                    <FaLanguage className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {languages.map((language) => (
+                    <DropdownMenuItem
+                      key={language.code}
+                      onClick={() => setCurrentLanguage(language.name)}
+                      className="flex items-center gap-3 cursor-pointer"
+                    >
+                      <span className="text-lg">{language.flag}</span>
+                      <span className="font-medium">{language.name}</span>
+                      {currentLanguage === language.name && (
+                        <span className="ml-auto text-blue-600">✓</span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-600 hover:text-gray-900">
                 <Bell className="h-4 w-4" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-9 w-9 p-0"
                 onClick={logout}
               >
                 <Avatar className="h-7 w-7">
-                  <AvatarFallback 
+                  <AvatarFallback
                     style={{ backgroundColor: getRoleColor(user.role) }}
                     className="text-white font-bold text-xs"
                   >
@@ -77,7 +110,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </header>
 
         {/* Mobile Content */}
-        <main className="flex-1 overflow-auto pb-20">
+        <main className="flex-1 overflow-auto pb-20 bg-gray-50 min-h-screen">
           <div className="p-4">
             {children}
           </div>
@@ -96,29 +129,47 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         <div className="flex-1 flex flex-col">
           {/* Desktop Header */}
-          <header className="sticky top-0 z-40 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-sm">
+          <header className="sticky top-0 z-40 w-full border-b bg-white border-gray-200">
             <div className="flex h-16 items-center gap-4 px-6">
-              <SidebarTrigger className="h-9 w-9" />
+              <SidebarTrigger className="h-9 w-9 text-gray-600 hover:text-blue-600" />
 
               <div className="flex-1 flex items-center gap-4">
-                <div className="relative max-w-sm">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search anything..."
-                    className="pl-9 h-10 bg-background"
-                  />
-                </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 relative">
+                {/* Language Selector */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-9 px-3 text-gray-600 hover:text-gray-900 flex items-center gap-2">
+                      <FaLanguage className="h-4 w-4" />
+                      <span className="hidden sm:block text-sm font-medium">{currentLanguage}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {languages.map((language) => (
+                      <DropdownMenuItem
+                        key={language.code}
+                        onClick={() => setCurrentLanguage(language.name)}
+                        className="flex items-center gap-3 cursor-pointer"
+                      >
+                        <span className="text-lg">{language.flag}</span>
+                        <span className="font-medium">{language.name}</span>
+                        {currentLanguage === language.name && (
+                          <span className="ml-auto text-blue-600">✓</span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 relative text-gray-600 hover:text-gray-900">
                   <Bell className="h-4 w-4" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full text-xs"></span>
+                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full text-xs"></span>
                 </Button>
-                
-                <div className="flex items-center gap-3 pl-3 border-l border-border">
+
+                <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback 
+                    <AvatarFallback
                       style={{ backgroundColor: getRoleColor(user.role) }}
                       className="text-white font-bold"
                     >
@@ -126,8 +177,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden xl:block">
-                    <p className="text-sm font-medium text-foreground">{user.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">
+                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                    <p className="text-xs text-gray-500 capitalize">
                       {user.role.replace('_', ' ')}
                     </p>
                   </div>
@@ -137,7 +188,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </header>
 
           {/* Desktop Content */}
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto bg-gray-50 min-h-screen">
             <div className="container mx-auto p-6">
               {children}
             </div>

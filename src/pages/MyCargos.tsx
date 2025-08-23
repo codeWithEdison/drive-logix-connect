@@ -4,15 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CargoCard } from "@/components/dashboard/CargoCard";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Package,
   Search,
   Filter,
   Plus,
   Eye,
-  MoreVertical
+  MoreVertical,
+  MapPin,
+  User,
+  Clock
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
 
 // Extended mock data for client cargos
 const mockClientCargos = [
@@ -78,7 +88,53 @@ const mockClientCargos = [
   }
 ];
 
+const statusConfig = {
+  pending: {
+    label: "Pending",
+    className: "bg-orange-100 text-orange-800 border-orange-200",
+  },
+  transit: {
+    label: "In Transit",
+    className: "bg-blue-100 text-blue-800 border-blue-200",
+  },
+  delivered: {
+    label: "Delivered",
+    className: "bg-green-100 text-green-800 border-green-200",
+  },
+  cancelled: {
+    label: "Cancelled",
+    className: "bg-red-100 text-red-800 border-red-200",
+  }
+};
+
 const MyCargos = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+
+  const filteredCargos = mockClientCargos.filter(cargo => {
+    const matchesSearch = cargo.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cargo.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cargo.type.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || cargo.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const sortedCargos = [...filteredCargos].sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+      case 'oldest':
+        return new Date(a.createdDate).getTime() - new Date(b.createdDate).getTime();
+      case 'cost-high':
+        return parseInt(b.cost.replace('$', '')) - parseInt(a.cost.replace('$', ''));
+      case 'cost-low':
+        return parseInt(a.cost.replace('$', '')) - parseInt(b.cost.replace('$', ''));
+      default:
+        return 0;
+    }
+  });
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -167,10 +223,12 @@ const MyCargos = () => {
                 <Input
                   placeholder="Search by cargo ID, destination, or type..."
                   className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
-            <Select defaultValue="all">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -182,7 +240,7 @@ const MyCargos = () => {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            <Select defaultValue="newest">
+            <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -197,22 +255,117 @@ const MyCargos = () => {
         </CardContent>
       </Card>
 
-      {/* Cargo List */}
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-foreground font-heading">All Cargos</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {mockClientCargos.map((cargo) => (
-            <div key={cargo.id} className="relative">
-              <CargoCard cargo={cargo} />
-              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </div>
+      {/* Cargo Table */}
+      <Card className="card-elevated">
+        <CardHeader>
+          <CardTitle>All Cargos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cargo ID</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Route</TableHead>
+                  <TableHead>Driver</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Cost</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedCargos.map((cargo) => {
+                  const status = statusConfig[cargo.status];
+                  return (
+                    <TableRow key={cargo.id}>
+                      <TableCell className="font-medium">
+                        {cargo.id}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{cargo.type}</div>
+                          <div className="text-xs text-muted-foreground">{cargo.weight}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-xs">
+                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            <span className="truncate max-w-32">{cargo.from}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs">
+                            <div className="w-2 h-2 bg-accent rounded-full"></div>
+                            <span className="truncate max-w-32">{cargo.to}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                            <User className="h-3 w-3" />
+                          </div>
+                          <span className="text-sm">{cargo.driver}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className={status.className}>
+                          {status.label}
+                        </Badge>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {cargo.estimatedTime}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-semibold">{cargo.cost}</div>
+                      </TableCell>
+                      <TableCell>{cargo.createdDate}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <MapPin className="h-4 w-4 mr-2" />
+                              Track Cargo
+                            </DropdownMenuItem>
+                            {cargo.status === 'pending' && (
+                              <DropdownMenuItem className="text-destructive">
+                                Cancel Cargo
+                              </DropdownMenuItem>
+                            )}
+                            {cargo.status === 'delivered' && (
+                              <DropdownMenuItem>
+                                Download Receipt
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {sortedCargos.length === 0 && (
+            <div className="text-center py-12">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold text-muted-foreground">No cargos found</h3>
+              <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
             </div>
-          ))}
-        </div>
-      </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Pagination */}
       <div className="flex items-center justify-center space-x-2 pt-4">

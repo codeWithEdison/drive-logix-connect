@@ -3,22 +3,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Package, 
-  Truck, 
-  Users, 
-  DollarSign,
-  TrendingUp,
-  AlertCircle,
-  Clock,
-  CheckCircle,
-  BarChart3,
-  MapPin,
-  Settings,
-  UserCheck,
-  Filter,
-  Plus
-} from "lucide-react";
+import {
+  AiOutlineInbox,
+  AiOutlineCar,
+  AiOutlineTeam,
+  AiOutlineDollar,
+  AiOutlineRise,
+  AiOutlineExclamationCircle,
+  AiOutlineClockCircle,
+  AiOutlineCheckCircle,
+  AiOutlineBarChart,
+  AiOutlineEnvironment,
+  AiOutlineSetting,
+  AiOutlineCheck,
+  AiOutlineFilter,
+  AiOutlinePlus
+} from "react-icons/ai";
 
 // Mock data for admin
 const mockAdminData = {
@@ -94,9 +94,9 @@ export function AdminDashboard() {
   };
 
   const alertConfig = {
-    warning: { icon: AlertCircle, color: "text-logistics-orange" },
-    info: { icon: Clock, color: "text-logistics-blue" },
-    urgent: { icon: AlertCircle, color: "text-destructive" }
+    warning: { icon: AiOutlineExclamationCircle, color: "text-logistics-orange" },
+    info: { icon: AiOutlineClockCircle, color: "text-logistics-blue" },
+    urgent: { icon: AiOutlineExclamationCircle, color: "text-destructive" }
   };
 
   return (
@@ -109,11 +109,11 @@ export function AdminDashboard() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
+            <AiOutlineFilter className="h-4 w-4 mr-2" />
             Filter
           </Button>
           <Button className="bg-gradient-primary hover:bg-primary-hover">
-            <Plus className="h-4 w-4 mr-2" />
+            <AiOutlinePlus className="h-4 w-4 mr-2" />
             Quick Actions
           </Button>
         </div>
@@ -121,58 +121,67 @@ export function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="card-elevated">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="bg-white/80 backdrop-blur-sm border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
+            <CardTitle className="text-sm font-medium text-gray-600">
               Total Cargos
             </CardTitle>
-            <Package className="h-4 w-4 text-primary" />
+            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{mockAdminData.stats.totalCargos.toLocaleString()}</div>
-            <p className="text-xs text-logistics-blue">{mockAdminData.stats.activeCargos} active</p>
+          <CardContent className="px-6 pb-6">
+            <div className="text-3xl font-bold text-gray-900 mb-1">{mockAdminData.stats.totalCargos.toLocaleString()}</div>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-blue-600 font-medium">{mockAdminData.stats.activeCargos}</span>
+              <span className="text-xs text-gray-500">active</span>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="bg-white/80 backdrop-blur-sm border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
+            <CardTitle className="text-sm font-medium text-gray-600">
               Drivers
             </CardTitle>
-            <Users className="h-4 w-4 text-accent" />
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{mockAdminData.stats.totalDrivers}</div>
-            <p className="text-xs text-success">{mockAdminData.stats.availableDrivers} available</p>
+          <CardContent className="px-6 pb-6">
+            <div className="text-3xl font-bold text-gray-900 mb-1">{mockAdminData.stats.totalDrivers}</div>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-green-600 font-medium">{mockAdminData.stats.availableDrivers}</span>
+              <span className="text-xs text-gray-500">available</span>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
+            <CardTitle className="text-sm font-medium text-gray-600">
               Fleet Status
             </CardTitle>
-            <Truck className="h-4 w-4 text-logistics-purple" />
+            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{mockAdminData.stats.totalTrucks}</div>
-            <p className="text-xs text-logistics-purple">{mockAdminData.stats.activeTrucks} on road</p>
+          <CardContent className="px-6 pb-6">
+            <div className="text-3xl font-bold text-gray-900 mb-1">{mockAdminData.stats.totalTrucks}</div>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-purple-600 font-medium">{mockAdminData.stats.activeTrucks}</span>
+              <span className="text-xs text-gray-500">on road</span>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
+            <CardTitle className="text-sm font-medium text-gray-600">
               Monthly Revenue
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-logistics-green" />
+            <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{mockAdminData.stats.monthlyRevenue}</div>
-            <p className="text-xs text-success flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              {mockAdminData.stats.revenueGrowth}
-            </p>
+          <CardContent className="px-6 pb-6">
+            <div className="text-3xl font-bold text-gray-900 mb-1">{mockAdminData.stats.monthlyRevenue}</div>
+            <div className="flex items-center gap-1">
+              <AiOutlineRise className="h-3 w-3 text-green-600" />
+              <span className="text-sm text-green-600 font-medium">{mockAdminData.stats.revenueGrowth}</span>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -193,7 +202,7 @@ export function AdminDashboard() {
               <Card className="card-elevated">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-primary" />
+                    <AiOutlineInbox className="h-5 w-5 text-primary" />
                     Recent Cargo Requests
                   </CardTitle>
                 </CardHeader>
@@ -242,7 +251,7 @@ export function AdminDashboard() {
               <Card className="card-elevated">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-logistics-orange" />
+                    <AiOutlineExclamationCircle className="h-5 w-5 text-logistics-orange" />
                     System Alerts
                   </CardTitle>
                 </CardHeader>
@@ -250,7 +259,7 @@ export function AdminDashboard() {
                   {mockAdminData.alerts.map((alert, index) => {
                     const AlertIcon = alertConfig[alert.type as keyof typeof alertConfig].icon;
                     const iconColor = alertConfig[alert.type as keyof typeof alertConfig].color;
-                    
+
                     return (
                       <div key={index} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                         <AlertIcon className={`h-4 w-4 mt-0.5 ${iconColor}`} />
@@ -271,25 +280,25 @@ export function AdminDashboard() {
               <Card className="card-elevated mt-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5 text-accent" />
+                    <AiOutlineSetting className="h-5 w-5 text-accent" />
                     Quick Actions
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Button variant="outline" className="w-full justify-start">
-                    <UserCheck className="h-4 w-4 mr-2" />
+                    <AiOutlineCheck className="h-4 w-4 mr-2" />
                     Approve Drivers
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
-                    <Truck className="h-4 w-4 mr-2" />
+                    <AiOutlineCar className="h-4 w-4 mr-2" />
                     Add New Truck
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
-                    <BarChart3 className="h-4 w-4 mr-2" />
+                    <AiOutlineBarChart className="h-4 w-4 mr-2" />
                     Generate Report
                   </Button>
                   <Button variant="outline" className="w-full justify-start">
-                    <Settings className="h-4 w-4 mr-2" />
+                    <AiOutlineSetting className="h-4 w-4 mr-2" />
                     System Settings
                   </Button>
                 </CardContent>
@@ -305,7 +314,7 @@ export function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
-                <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <AiOutlineInbox className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg font-semibold text-muted-foreground">Cargo Management Interface</p>
                 <p className="text-sm text-muted-foreground">Detailed cargo list and management tools will be here</p>
               </div>
@@ -320,7 +329,7 @@ export function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
-                <Truck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <AiOutlineCar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg font-semibold text-muted-foreground">Fleet Management Interface</p>
                 <p className="text-sm text-muted-foreground">Truck and driver management tools will be here</p>
               </div>
@@ -335,7 +344,7 @@ export function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
-                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <AiOutlineBarChart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg font-semibold text-muted-foreground">Analytics Dashboard</p>
                 <p className="text-sm text-muted-foreground">Charts and detailed analytics will be displayed here</p>
               </div>

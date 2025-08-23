@@ -112,7 +112,7 @@ export function LogisticsLayout({
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                   activeItem === index
                     ? "bg-primary text-primary-foreground shadow-custom-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
                 )}
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -145,7 +145,7 @@ export function LogisticsLayout({
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                       activeItem === index
                         ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        : "text-foreground/70 hover:bg-muted hover:text-foreground"
                     )}
                   >
                     <item.icon className="h-5 w-5" />

@@ -10,11 +10,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Pages
 import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
 import Index from '@/pages/Index';
 import CreateCargo from '@/pages/CreateCargo';
 import MyCargos from '@/pages/MyCargos';
 import TrackingPage from '@/pages/TrackingPage';
 import History from '@/pages/History';
+import PaymentPage from '@/pages/PaymentPage';
+import PaymentSuccess from '@/pages/PaymentSuccess';
+import Invoices from '@/pages/Invoices';
 import DriverDashboard from '@/pages/DriverDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
 import SuperAdminDashboard from '@/pages/SuperAdminDashboard';
@@ -46,6 +51,8 @@ function AppContent() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
@@ -84,6 +91,21 @@ function AppContent() {
         <Route path="/history" element={
           <ProtectedRoute allowedRoles={['client']}>
             <History />
+          </ProtectedRoute>
+        } />
+        <Route path="/payment/:invoiceId?" element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <PaymentPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/invoices" element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <Invoices />
+          </ProtectedRoute>
+        } />
+        <Route path="/payment-success" element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <PaymentSuccess />
           </ProtectedRoute>
         } />
 

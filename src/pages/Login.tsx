@@ -155,6 +155,11 @@ export default function Login() {
 
               <div className="mt-4 text-center text-sm text-muted-foreground">
                 <p>Demo credentials: any email with password "demo123"</p>
+                <div className="mt-2">
+                  <Link to="/forgot-password" className="text-primary hover:underline">
+                    Forgot your password?
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -194,6 +199,11 @@ export default function Login() {
         {/* Footer */}
         <div className="text-center text-sm text-muted-foreground">
           <p>© 2024 Loveway Logistics. Professional logistics management made simple.</p>
+          <div className="mt-2">
+            <Link to="/register" className="text-primary hover:underline">
+              Don't have an account? Register here
+            </Link>
+          </div>
         </div>
       </div>
     </div>
