@@ -47,9 +47,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col min-h-screen w-full bg-background">
+      <div className="flex flex-col min-h-screen w-full bg-[#F9FAFE]">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-40 w-full border-b bg-white border-gray-200">
+        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20">
           <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <img
@@ -110,7 +110,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </header>
 
         {/* Mobile Content */}
-        <main className="flex-1 overflow-auto pb-20 bg-gray-50 min-h-screen">
+        <main className="flex-1 overflow-auto pb-20 bg-[#F9FAFE] min-h-screen">
           <div className="p-4">
             {children}
           </div>
@@ -124,12 +124,12 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-[#F9FAFE] ">
         <DynamicSidebar />
 
         <div className="flex-1 flex flex-col">
           {/* Desktop Header */}
-          <header className="sticky top-0 z-40 w-full border-b bg-white border-gray-200">
+          <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20">
             <div className="flex h-16 items-center gap-4 px-6">
               <SidebarTrigger className="h-9 w-9 text-gray-600 hover:text-blue-600" />
 
@@ -188,7 +188,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           </header>
 
           {/* Desktop Content */}
-          <main className="flex-1 overflow-auto bg-gray-50 min-h-screen">
+          <main className="flex-1 overflow-auto bg-[#F9FAFE] min-h-screen">
             <div className="container mx-auto p-6">
               {children}
             </div>

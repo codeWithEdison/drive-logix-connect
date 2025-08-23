@@ -74,13 +74,13 @@ export function DynamicSidebar() {
 
 
   return (
-    <Sidebar className={`${collapsed ? "w-16" : "w-64"} transition-all duration-300 bg-white border-r border-gray-100`}>
+    <Sidebar className={`${collapsed ? "w-16" : "w-64"} transition-all duration-300 bg-[#EBF3FD]`}>
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
           <img
             src="/logo-text.png"
             alt="Loveway Logistics"
-            className={`${collapsed ? 'w-8' : 'w-32'} h-auto object-contain`}
+            className={`${collapsed ? 'w-8' : 'w-36'} h-auto object-contain`}
           />
         </div>
       </SidebarHeader>
@@ -99,14 +99,14 @@ export function DynamicSidebar() {
                       <NavLink
                         to={item.url}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-200 font-medium ${isActive
+                          `flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-200 font-medium    ${isActive
                             ? 'bg-blue-500 text-white'
                             : 'text-gray-600 hover:text-gray-900'
-                          } ${collapsed ? 'justify-center' : ''}`
+                          } ${collapsed ? 'justify-center' : ''} `
                         }
                       >
-                        <Icon className={`h-5 w-5 flex-shrink-0 ${active ? 'text-white' : 'text-gray-600'}`} />
-                        {!collapsed && <span className="text-sm">{item.title}</span>}
+                        <Icon className={`flex-shrink-0 ${active ? 'text-primary h-8 w-8' : 'text-gray-600 h-5 w-5'}`} />
+                        {!collapsed && <span className={`text-sm ${active ? 'font-bold text-primary' : 'text-gray-600'}`}>{item.title}</span>}
                         {collapsed && (
                           <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                             {item.title}

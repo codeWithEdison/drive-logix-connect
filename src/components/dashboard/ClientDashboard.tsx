@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useNavigate } from "react-router-dom";
 import {
   AiOutlineInbox,
   AiOutlineCar,
@@ -9,18 +11,88 @@ import {
   AiOutlinePlus,
   AiOutlineEnvironment,
   AiOutlineDollar,
-  AiOutlineNotification
+  AiOutlineNotification,
+  AiOutlineUser,
+  AiOutlineHeart,
+  AiOutlineArrowUp,
+  AiOutlineArrowDown
 } from "react-icons/ai";
-import { CargoCard } from "./CargoCard";
-import { TrackingMap } from "./TrackingMap";
+import { TrackingComponent } from "./TrackingComponent";
 
-// Mock data - in real app this would come from API
-const mockCargos = [
+// Mock data for cargo stats
+const cargoStatsData = [
+  {
+    title: "Total Cargos",
+    value: "12",
+    change: "+2",
+    changeType: "increase",
+    icon: AiOutlineCar,
+    color: "orange"
+  },
+  {
+    title: "In Transit",
+    value: "3",
+    change: "Active",
+    changeType: "active",
+    icon: AiOutlineClockCircle,
+    color: "green"
+  },
+  {
+    title: "Pending",
+    value: "2",
+    change: "Waiting",
+    changeType: "waiting",
+    icon: AiOutlineInbox,
+    color: "blue"
+  },
+  {
+    title: "Delivered",
+    value: "7",
+    change: "Success",
+    changeType: "success",
+    icon: AiOutlineCheckCircle,
+    color: "pink"
+  }
+];
+
+// Mock data for recent activities
+const recentActivities = [
+  {
+    id: 1,
+    type: "delivery",
+    icon: "check",
+    title: "Cargo Delivered",
+    description: "Cargo #4832920 delivered successfully",
+    time: "2 hours ago",
+    avatar: null
+  },
+  {
+    id: 2,
+    type: "transit",
+    icon: "truck",
+    title: "Cargo In Transit",
+    description: "Cargo #3565432 is now in transit",
+    time: "4 hours ago",
+    avatar: null
+  },
+  {
+    id: 3,
+    type: "created",
+    icon: "plus",
+    title: "New Cargo Created",
+    description: "New cargo request #1442654 created",
+    time: "1 day ago",
+    avatar: null
+  }
+];
+
+// Mock data for recent cargos
+const recentCargos = [
   {
     id: "#3565432",
-    status: "transit" as const,
-    from: "4140 Parker Rd, Allentown, New Mexico 31134",
-    to: "3517 W. Gray St. Utica, Pennsylvania 57867",
+    status: "In Transit",
+    from: "4140 Parker Rd, Allentown, NM",
+    to: "3517 W. Gray St. Utica, PA",
     driver: "Albert Flores",
     estimatedTime: "2.5 hours",
     weight: "25 kg",
@@ -28,9 +100,9 @@ const mockCargos = [
   },
   {
     id: "#4832920",
-    status: "delivered" as const,
-    from: "1050 Elden St. Colma, Delaware 10299",
-    to: "6502 Preston Rd. Inglewood, Maine 98380",
+    status: "Delivered",
+    from: "1050 Elden St. Colma, DE",
+    to: "6502 Preston Rd. Inglewood, ME",
     driver: "Guy Hawkins",
     estimatedTime: "Delivered",
     weight: "15 kg",
@@ -38,9 +110,9 @@ const mockCargos = [
   },
   {
     id: "#1442654",
-    status: "pending" as const,
-    from: "2972 Westheimer Rd. Santa Ana, Illinois 85486",
-    to: "6391 Elgin St. Celina, Delaware 10299",
+    status: "Pending",
+    from: "2972 Westheimer Rd. Santa Ana, IL",
+    to: "6391 Elgin St. Celina, DE",
     driver: "Kathryn Murphy",
     estimatedTime: "Pending pickup",
     weight: "40 kg",
@@ -49,6 +121,24 @@ const mockCargos = [
 ];
 
 export function ClientDashboard() {
+  const navigate = useNavigate();
+
+  const handleCreateCargo = () => {
+    navigate('/create-cargo');
+  };
+
+  const handleViewAllActivities = () => {
+    navigate('/history');
+  };
+
+  const handleViewAllInvoices = () => {
+    navigate('/invoices');
+  };
+
+  const handleViewAllCargos = () => {
+    navigate('/my-cargos');
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -57,173 +147,164 @@ export function ClientDashboard() {
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">Track and manage your cargo shipments</p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary-hover">
+        <Button className="bg-gradient-primary hover:bg-primary-hover" onClick={handleCreateCargo}>
           <AiOutlinePlus className="w-4 h-4 mr-2" />
           Create New Cargo
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-white/80 backdrop-blur-sm border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Cargos
-            </CardTitle>
-            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900 mb-1">12</div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-green-600 font-medium">+2</span>
-              <span className="text-xs text-gray-500">from last month</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/80 backdrop-blur-sm border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              In Transit
-            </CardTitle>
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900 mb-1">3</div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-blue-600 font-medium">Active</span>
-              <span className="text-xs text-gray-500">Currently shipping</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Pending
-            </CardTitle>
-            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900 mb-1">2</div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-amber-600 font-medium">Waiting</span>
-              <span className="text-xs text-gray-500">Awaiting pickup</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Delivered
-            </CardTitle>
-            <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900 mb-1">7</div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-green-600 font-medium">Success</span>
-              <span className="text-xs text-gray-500">This month</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Live Tracking */}
-        <div className="lg:col-span-2">
-          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-gray-900">
-                <AiOutlineEnvironment className="h-5 w-5 text-blue-600" />
-                Live Tracking
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TrackingMap />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity & Notifications */}
-        <div className="space-y-6">
-          {/* Featured Notification Card - Similar to the blue card in the image */}
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden border-0">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <Badge className="bg-white/20 text-white border-white/30 text-xs font-medium px-2 py-1 rounded-full">
-                  NEW
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-bold leading-tight">
-                    We have added new tracking features!
-                  </h3>
-                  <p className="text-blue-100 text-sm mt-2 leading-relaxed">
-                    New features focused on helping you monitor your cargo in real-time
-                  </p>
+      {/* Stats Card - Single card with dividers */}
+      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+        <CardContent className="p-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+            {cargoStatsData.map((stat, index) => (
+              <div key={stat.title} className="relative">
+                <div className="p-4 md:p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 bg-${stat.color}-500 rounded-full`}></div>
+                      <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                    </div>
+                    <stat.icon className={`w-5 h-5 text-${stat.color}-500`} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl md:text-3xl font-bold text-gray-900">{stat.value}</span>
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${stat.changeType === 'increase'
+                      ? 'bg-green-100 text-green-600'
+                      : stat.changeType === 'active'
+                        ? 'bg-blue-100 text-blue-600'
+                        : stat.changeType === 'waiting'
+                          ? 'bg-yellow-100 text-yellow-600'
+                          : 'bg-green-100 text-green-600'
+                      }`}>
+                      {stat.changeType === 'increase' && <AiOutlineArrowUp className="w-3 h-3" />}
+                      {stat.change}
+                    </div>
+                  </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="bg-white text-blue-600 hover:bg-blue-50 rounded-xl font-medium shadow-none border-0"
-                >
-                  Explore Now
-                </Button>
+                {/* Vertical divider */}
+                {index < cargoStatsData.length - 1 && (
+                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-px h-12 md:h-16 bg-gray-200"></div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* Recent Activity */}
-          <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-gray-900">
-                <AiOutlineNotification className="h-5 w-5 text-blue-600" />
-                Recent Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Cargo #4832920 delivered</p>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Cargo #3565432 in transit</p>
-                  <p className="text-xs text-gray-500">4 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">New cargo request created</p>
-                  <p className="text-xs text-gray-500">1 day ago</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Recent Cargos */}
+      {/* Live Tracking - Full Width */}
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-foreground">Recent Cargos</h2>
-          <Button variant="outline">View All</Button>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {mockCargos.map((cargo) => (
-            <CargoCard key={cargo.id} cargo={cargo} />
-          ))}
-        </div>
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-900">
+              <AiOutlineEnvironment className="h-5 w-5 text-blue-600" />
+              Live Tracking
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TrackingComponent />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity and Invoices Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        {/* Recent Activity */}
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-gray-900">Recent Activity</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleViewAllActivities}>View All</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivities.map((activity, index) => (
+                <div key={activity.id} className="relative">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                      {activity.type === 'delivery' && (
+                        <AiOutlineCheckCircle className="w-4 h-4 text-green-600" />
+                      )}
+                      {activity.type === 'transit' && (
+                        <AiOutlineCar className="w-4 h-4 text-blue-600" />
+                      )}
+                      {activity.type === 'created' && (
+                        <AiOutlinePlus className="w-4 h-4 text-orange-600" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        {activity.type === 'delivery' && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        )}
+                        {activity.type === 'transit' && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
+                        {activity.type === 'created' && (
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        )}
+                        <span className="text-sm font-medium text-gray-900">{activity.title}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                    </div>
+                  </div>
+                  {index < recentActivities.length - 1 && (
+                    <div className="absolute left-4 top-8 w-px h-8 bg-gray-200"></div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Cargo Invoices */}
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden lg:col-span-3">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-gray-900">Recent Cargo Invoices</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleViewAllInvoices}>View All</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs font-medium text-gray-600">Invoice No</TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">Cargo ID</TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">Client</TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">Amount</TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentCargos.map((cargo) => (
+                  <TableRow key={cargo.id}>
+                    <TableCell className="text-sm font-medium text-gray-900">INV-{cargo.id.slice(1)}</TableCell>
+                    <TableCell className="text-sm text-gray-600">{cargo.id}</TableCell>
+                    <TableCell className="text-sm font-medium text-gray-900">{cargo.driver}</TableCell>
+                    <TableCell className="text-sm font-medium text-gray-900">
+                      ${Math.floor(Math.random() * 2000) + 500}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={`text-xs font-medium ${cargo.status === 'Delivered'
+                          ? 'bg-green-100 text-green-600'
+                          : cargo.status === 'In Transit'
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'bg-yellow-100 text-yellow-600'
+                          }`}
+                      >
+                        {cargo.status === 'Delivered' ? 'PAID' : cargo.status === 'In Transit' ? 'PENDING' : 'DRAFT'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
