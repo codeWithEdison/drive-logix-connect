@@ -244,9 +244,9 @@ export function CreateCargoForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Enhanced Progress Bar - Mobile Responsive */}
-      <div className="flex items-center justify-between mb-8 overflow-x-auto">
+      <div className="flex items-center justify-between mb-8 overflow-x-auto  p-2">
         {[1, 2, 3, 4, 5, 6].map((number) => (
           <div key={number} className="flex items-center flex-shrink-0">
             <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs md:text-sm font-medium transition-all duration-300 shadow-sm ${step === number
