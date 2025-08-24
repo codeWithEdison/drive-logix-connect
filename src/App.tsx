@@ -22,7 +22,6 @@ import PaymentSuccess from '@/pages/PaymentSuccess';
 import Invoices from '@/pages/Invoices';
 import DriverDashboard from '@/pages/DriverDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
-import SuperAdminDashboard from '@/pages/SuperAdminDashboard';
 import DriverDeliveries from '@/pages/driver/DriverDeliveries';
 import DriverHistory from '@/pages/driver/DriverHistory';
 import { AssignedCargosPage } from '@/pages/AssignedCargosPage';
@@ -31,7 +30,11 @@ import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminTrucks from '@/pages/admin/AdminTrucks';
 import AdminSettings from '@/pages/admin/AdminSettings';
 import AdminReports from '@/pages/admin/AdminReports';
+import SuperAdminUsers from '@/pages/superadmin/SuperAdminUsers';
+import SuperAdminSettings from '@/pages/superadmin/SuperAdminSettings';
+import SuperAdminLogs from '@/pages/superadmin/SuperAdminLogs';
 import NotFound from '@/pages/NotFound';
+import SuperAdminDashboard from '@/pages/superadmin/SuperAdminDashboard';
 
 const queryClient = new QueryClient();
 
@@ -170,6 +173,21 @@ function AppContent() {
         <Route path="/super-admin" element={
           <ProtectedRoute allowedRoles={['super_admin']}>
             <SuperAdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/super-admin/users" element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <SuperAdminUsers />
+          </ProtectedRoute>
+        } />
+        <Route path="/super-admin/settings" element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <SuperAdminSettings />
+          </ProtectedRoute>
+        } />
+        <Route path="/super-admin/logs" element={
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <SuperAdminLogs />
           </ProtectedRoute>
         } />
 

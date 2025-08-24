@@ -27,6 +27,8 @@ import {
   LogOut,
   Home,
   Receipt,
+  Activity,
+  Database,
 } from 'lucide-react';
 
 const navigationConfig = {
@@ -55,9 +57,8 @@ const navigationConfig = {
   super_admin: [
     { title: 'Dashboard', url: '/super-admin', icon: Home },
     { title: 'User Management', url: '/super-admin/users', icon: Users },
-    { title: 'Admin Management', url: '/super-admin/admins', icon: Shield },
-    { title: 'Analytics', url: '/super-admin/analytics', icon: BarChart3 },
     { title: 'System Settings', url: '/super-admin/settings', icon: Settings },
+    { title: 'System Logs', url: '/super-admin/logs', icon: Activity },
   ]
 };
 

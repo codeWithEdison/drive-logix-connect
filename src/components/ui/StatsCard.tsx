@@ -16,6 +16,17 @@ interface StatsCardProps {
 }
 
 export function StatsCard({ stats, className = "" }: StatsCardProps) {
+    // Safety check for undefined or null stats
+    if (!stats || !Array.isArray(stats) || stats.length === 0) {
+        return (
+            <Card className={`bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}>
+                <CardContent className="p-6">
+                    <p className="text-muted-foreground text-center">No statistics available</p>
+                </CardContent>
+            </Card>
+        );
+    }
+
     const getChangeTypeStyles = (changeType: StatItem['changeType']) => {
         switch (changeType) {
             case 'increase':
