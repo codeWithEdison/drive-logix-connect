@@ -1,296 +1,596 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
+import { CustomTabs } from '@/components/ui/CustomTabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Plus } from 'lucide-react';
+import { TruckTable, Truck } from '@/components/ui/TruckTable';
+import { TruckDetailModal } from '@/components/ui/TruckDetailModal';
+import ModernModel from '@/components/modal/ModernModel';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-    Truck,
-    Search,
-    Plus,
-    Eye,
-    Edit,
-    Trash2,
-    MapPin,
-    Gauge,
-    Package,
-    User
-} from 'lucide-react';
 
-// Mock data for trucks
-const mockTrucks = [
+// Mock data for trucks - Rwanda-based
+const mockTrucks: Truck[] = [
     {
         id: "TRK-001",
-        model: "Ford F-650",
-        licensePlate: "ABC-123",
-        capacity: "5 tons",
-        status: "available" as const,
+        model: "Toyota Dyna",
+        licensePlate: "RAB-123-A",
+        capacity: "3 tons",
+        status: "available",
         driver: "Albert Flores",
-        location: "Los Angeles, CA",
+        location: "Kigali",
         lastMaintenance: "2024-01-10",
         totalDeliveries: 156,
-        fuelLevel: 85
+        fuelLevel: 85,
+        year: "2020",
+        manufacturer: "Toyota",
+        engineType: "Diesel",
+        mileage: 45000,
+        insuranceExpiry: "2024-12-31",
+        registrationExpiry: "2024-12-31",
+        is_active: true
     },
     {
         id: "TRK-002",
-        model: "Chevrolet Silverado 3500",
-        licensePlate: "XYZ-789",
-        capacity: "3 tons",
-        status: "in_use" as const,
+        model: "Isuzu NPR",
+        licensePlate: "RAB-456-B",
+        capacity: "5 tons",
+        status: "in_use",
         driver: "Mike Johnson",
-        location: "Houston, TX",
+        location: "Butare",
         lastMaintenance: "2024-01-08",
         totalDeliveries: 89,
-        fuelLevel: 45
+        fuelLevel: 45,
+        year: "2019",
+        manufacturer: "Isuzu",
+        engineType: "Diesel",
+        mileage: 67000,
+        insuranceExpiry: "2024-11-30",
+        registrationExpiry: "2024-11-30",
+        is_active: true
     },
     {
         id: "TRK-003",
-        model: "Dodge Ram 3500",
-        licensePlate: "DEF-456",
+        model: "Mitsubishi Fuso",
+        licensePlate: "RAB-789-C",
         capacity: "4 tons",
-        status: "maintenance" as const,
+        status: "maintenance",
         driver: "Unassigned",
-        location: "Chicago, IL",
+        location: "Musanze",
         lastMaintenance: "2024-01-15",
         totalDeliveries: 234,
-        fuelLevel: 20
+        fuelLevel: 20,
+        year: "2021",
+        manufacturer: "Mitsubishi",
+        engineType: "Diesel",
+        mileage: 32000,
+        insuranceExpiry: "2025-01-31",
+        registrationExpiry: "2025-01-31",
+        is_active: true
     },
     {
         id: "TRK-004",
-        model: "GMC Sierra 3500",
-        licensePlate: "GHI-789",
+        model: "Hino 300",
+        licensePlate: "RAB-012-D",
         capacity: "6 tons",
-        status: "available" as const,
+        status: "available",
         driver: "Unassigned",
-        location: "Phoenix, AZ",
+        location: "Kigali",
         lastMaintenance: "2024-01-12",
         totalDeliveries: 67,
-        fuelLevel: 90
+        fuelLevel: 90,
+        year: "2022",
+        manufacturer: "Hino",
+        engineType: "Diesel",
+        mileage: 18000,
+        insuranceExpiry: "2025-03-31",
+        registrationExpiry: "2025-03-31",
+        is_active: true
     }
 ];
 
 const AdminTrucks = () => {
+    const [activeTab, setActiveTab] = useState('all');
+    const [trucks, setTrucks] = useState<Truck[]>(mockTrucks);
+    const [selectedTruck, setSelectedTruck] = useState<Truck | null>(null);
+    const [isTruckDetailModalOpen, setIsTruckDetailModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingTruck, setEditingTruck] = useState<Truck | null>(null);
+
+    // Filter trucks based on active tab
+    const getFilteredTrucks = () => {
+        if (activeTab === 'all') return trucks;
+        return trucks.filter(truck => truck.status === activeTab);
+    };
+
+    // Truck handlers
+    const handleViewTruckDetails = (truck: Truck) => {
+        setSelectedTruck(truck);
+        setIsTruckDetailModalOpen(true);
+    };
+
+    const handleEditTruck = (truck: Truck) => {
+        setEditingTruck(truck);
+        setIsEditModalOpen(true);
+    };
+
+    const handleDeleteTruck = (truckId: string) => {
+        console.log(`Deleting truck: ${truckId}`);
+        setTrucks(prev => prev.filter(truck => truck.id !== truckId));
+    };
+
+    const handleTrackTruck = (truckId: string) => {
+        console.log(`Tracking truck: ${truckId}`);
+        window.location.href = `/admin/tracking/truck/${truckId}`;
+    };
+
+    const handleAssignDriver = (truckId: string) => {
+        console.log(`Assigning driver to truck: ${truckId}`);
+    };
+
+    const handleScheduleMaintenance = (truckId: string) => {
+        console.log(`Scheduling maintenance for truck: ${truckId}`);
+    };
+
+    const handleDownloadTruckDocuments = (truckId: string) => {
+        console.log(`Downloading documents for truck: ${truckId}`);
+        const truck = trucks.find(t => t.id === truckId);
+        if (truck) {
+            const documents = {
+                truck_id: truck.id,
+                model: truck.model,
+                license_plate: truck.licensePlate,
+                insurance_expiry: truck.insuranceExpiry,
+                registration_expiry: truck.registrationExpiry
+            };
+
+            const blob = new Blob([JSON.stringify(documents, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `truck-documents-${truckId}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    };
+
+    // Create/Edit handlers
+    const handleCreateNew = () => {
+        setIsCreateModalOpen(true);
+    };
+
+    const handleSaveCreate = (formData: any) => {
+        console.log('Creating new truck:', formData);
+        setIsCreateModalOpen(false);
+    };
+
+    const handleSaveEdit = (formData: any) => {
+        console.log('Saving edited truck:', formData);
+        setIsEditModalOpen(false);
+        setEditingTruck(null);
+    };
+
+    // Custom actions for table
+    const truckCustomActions = (
+        <Button onClick={handleCreateNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Truck
+        </Button>
+    );
+
+    const tabs = [
+        {
+            value: 'all',
+            label: 'All Trucks',
+            count: trucks.length
+        },
+        {
+            value: 'available',
+            label: 'Available',
+            count: trucks.filter(t => t.status === 'available').length
+        },
+        {
+            value: 'in_use',
+            label: 'In Use',
+            count: trucks.filter(t => t.status === 'in_use').length
+        },
+        {
+            value: 'maintenance',
+            label: 'Maintenance',
+            count: trucks.filter(t => t.status === 'maintenance').length
+        }
+    ];
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-foreground font-heading">Truck Management</h1>
                     <p className="text-muted-foreground">Manage your fleet of delivery trucks</p>
                 </div>
-                <Button className="bg-gradient-primary hover:bg-primary-hover">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add New Truck
-                </Button>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <Card className="card-elevated">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Total Trucks
-                        </CardTitle>
-                        <Truck className="h-4 w-4 text-primary" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-foreground">{mockTrucks.length}</div>
-                        <p className="text-xs text-muted-foreground">In fleet</p>
-                    </CardContent>
-                </Card>
+            {/* Custom Tabs */}
+            <CustomTabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                tabs={tabs}
+            />
 
-                <Card className="card-elevated">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Available
-                        </CardTitle>
-                        <Truck className="h-4 w-4 text-success" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-foreground">
-                            {mockTrucks.filter(t => t.status === 'available').length}
-                        </div>
-                        <p className="text-xs text-success">Ready for delivery</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="card-elevated">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            In Use
-                        </CardTitle>
-                        <Truck className="h-4 w-4 text-logistics-blue" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-foreground">
-                            {mockTrucks.filter(t => t.status === 'in_use').length}
-                        </div>
-                        <p className="text-xs text-logistics-blue">Currently delivering</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="card-elevated">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                            Maintenance
-                        </CardTitle>
-                        <Truck className="h-4 w-4 text-warning" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-foreground">
-                            {mockTrucks.filter(t => t.status === 'maintenance').length}
-                        </div>
-                        <p className="text-xs text-warning">Under maintenance</p>
-                    </CardContent>
-                </Card>
+            {/* Truck Table */}
+            <div className="mt-6">
+                <TruckTable
+                    trucks={getFilteredTrucks()}
+                    title={activeTab === 'all' ? 'All Trucks' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Trucks`}
+                    showSearch={true}
+                    showFilters={true}
+                    showPagination={true}
+                    itemsPerPage={10}
+                    onViewDetails={handleViewTruckDetails}
+                    onEditTruck={handleEditTruck}
+                    onDeleteTruck={handleDeleteTruck}
+                    onTrackTruck={handleTrackTruck}
+                    onAssignDriver={handleAssignDriver}
+                    onScheduleMaintenance={handleScheduleMaintenance}
+                    customActions={truckCustomActions}
+                />
             </div>
 
-            {/* Filters and Search */}
-            <Card className="card-elevated">
-                <CardHeader>
-                    <CardTitle>Filter & Search</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                                <Input
-                                    placeholder="Search by truck ID, model, or license plate..."
-                                    className="pl-10"
-                                />
+            {/* Truck Detail Modal */}
+            <TruckDetailModal
+                isOpen={isTruckDetailModalOpen}
+                onClose={() => {
+                    setIsTruckDetailModalOpen(false);
+                    setSelectedTruck(null);
+                }}
+                truck={selectedTruck}
+                onTrackTruck={handleTrackTruck}
+                onEditTruck={handleEditTruck}
+                onAssignDriver={handleAssignDriver}
+                onScheduleMaintenance={handleScheduleMaintenance}
+                onDownloadDocuments={handleDownloadTruckDocuments}
+            />
+
+            {/* Create Modal */}
+            <ModernModel
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                title="Add New Truck"
+            >
+                <div className="space-y-6">
+                    <Card>
+                        <CardContent className="p-4">
+                            <h4 className="font-semibold text-gray-900 mb-4">Basic Information</h4>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Model *</Label>
+                                        <Input placeholder="Enter truck model" />
+                                    </div>
+                                    <div>
+                                        <Label>License Plate *</Label>
+                                        <Input placeholder="Enter license plate" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Manufacturer *</Label>
+                                        <Input placeholder="Enter manufacturer" />
+                                    </div>
+                                    <div>
+                                        <Label>Year *</Label>
+                                        <Input type="number" placeholder="Enter year" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Capacity *</Label>
+                                        <Input placeholder="Enter capacity (e.g., 3 tons)" />
+                                    </div>
+                                    <div>
+                                        <Label>Engine Type</Label>
+                                        <Select>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select engine type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="diesel">Diesel</SelectItem>
+                                                <SelectItem value="petrol">Petrol</SelectItem>
+                                                <SelectItem value="electric">Electric</SelectItem>
+                                                <SelectItem value="hybrid">Hybrid</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <Select defaultValue="all">
-                            <SelectTrigger className="w-full md:w-48">
-                                <SelectValue placeholder="Filter by status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Status</SelectItem>
-                                <SelectItem value="available">Available</SelectItem>
-                                <SelectItem value="in_use">In Use</SelectItem>
-                                <SelectItem value="maintenance">Maintenance</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select defaultValue="all">
-                            <SelectTrigger className="w-full md:w-48">
-                                <SelectValue placeholder="Sort by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="id">Truck ID</SelectItem>
-                                <SelectItem value="deliveries">Total Deliveries</SelectItem>
-                                <SelectItem value="maintenance">Last Maintenance</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="p-4">
+                            <h4 className="font-semibold text-gray-900 mb-4">Status & Location</h4>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Status *</Label>
+                                        <Select>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="available">Available</SelectItem>
+                                                <SelectItem value="in_use">In Use</SelectItem>
+                                                <SelectItem value="maintenance">Maintenance</SelectItem>
+                                                <SelectItem value="out_of_service">Out of Service</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label>Current Location</Label>
+                                        <Input placeholder="Enter current location" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Assigned Driver</Label>
+                                        <Input placeholder="Enter assigned driver" />
+                                    </div>
+                                    <div>
+                                        <Label>Fuel Level (%)</Label>
+                                        <Input type="number" min="0" max="100" placeholder="Enter fuel level" />
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="p-4">
+                            <h4 className="font-semibold text-gray-900 mb-4">Documentation</h4>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Insurance Expiry Date</Label>
+                                        <Input type="date" />
+                                    </div>
+                                    <div>
+                                        <Label>Registration Expiry Date</Label>
+                                        <Input type="date" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Last Maintenance Date</Label>
+                                        <Input type="date" />
+                                    </div>
+                                    <div>
+                                        <Label>Initial Mileage (km)</Label>
+                                        <Input type="number" placeholder="Enter initial mileage" />
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div className="flex gap-3">
+                        <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setIsCreateModalOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            className="flex-1"
+                            onClick={() => handleSaveCreate({})}
+                        >
+                            Add Truck
+                        </Button>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </ModernModel>
 
-            {/* Trucks List */}
-            <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-foreground font-heading">Fleet Overview</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {mockTrucks.map((truck) => (
-                        <Card key={truck.id} className="card-elevated group hover:shadow-lg transition-all duration-300">
-                            <CardHeader className="pb-3">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Truck className="h-5 w-5 text-primary" />
-                                        <span className="font-semibold">{truck.id}</span>
+            {/* Edit Modal */}
+            <ModernModel
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setEditingTruck(null);
+                }}
+                title="Edit Truck"
+            >
+                {editingTruck && (
+                    <div className="space-y-6">
+                        <Card>
+                            <CardContent className="p-4">
+                                <h4 className="font-semibold text-gray-900 mb-4">Basic Information</h4>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label>Model *</Label>
+                                            <Input
+                                                placeholder="Enter truck model"
+                                                defaultValue={editingTruck.model}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>License Plate *</Label>
+                                            <Input
+                                                placeholder="Enter license plate"
+                                                defaultValue={editingTruck.licensePlate}
+                                            />
+                                        </div>
                                     </div>
-                                    <Badge className={
-                                        truck.status === 'available' ? 'bg-success/10 text-success border-success/20' :
-                                            truck.status === 'in_use' ? 'bg-logistics-blue/10 text-logistics-blue border-logistics-blue/20' :
-                                                'bg-warning/10 text-warning border-warning/20'
-                                    }>
-                                        {truck.status.replace('_', ' ').charAt(0).toUpperCase() + truck.status.replace('_', ' ').slice(1)}
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">Model:</span>
-                                        <span className="font-medium">{truck.model}</span>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label>Manufacturer *</Label>
+                                            <Input
+                                                placeholder="Enter manufacturer"
+                                                defaultValue={editingTruck.manufacturer}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Year *</Label>
+                                            <Input
+                                                type="number"
+                                                placeholder="Enter year"
+                                                defaultValue={editingTruck.year}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">License:</span>
-                                        <span className="font-medium">{truck.licensePlate}</span>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label>Capacity *</Label>
+                                            <Input
+                                                placeholder="Enter capacity (e.g., 3 tons)"
+                                                defaultValue={editingTruck.capacity}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Engine Type</Label>
+                                            <Select defaultValue={editingTruck.engineType}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select engine type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="diesel">Diesel</SelectItem>
+                                                    <SelectItem value="petrol">Petrol</SelectItem>
+                                                    <SelectItem value="electric">Electric</SelectItem>
+                                                    <SelectItem value="hybrid">Hybrid</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">Capacity:</span>
-                                        <span className="font-medium">{truck.capacity}</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <User className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-muted-foreground">Driver:</span>
-                                        <span className="font-medium">{truck.driver}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-muted-foreground">Location:</span>
-                                        <span className="font-medium">{truck.location}</span>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span className="text-muted-foreground">Deliveries:</span>
-                                        <p className="font-medium">{truck.totalDeliveries}</p>
-                                    </div>
-                                    <div>
-                                        <span className="text-muted-foreground">Fuel:</span>
-                                        <p className="font-medium">{truck.fuelLevel}%</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-2 border-t">
-                                    <div className="text-sm text-muted-foreground">
-                                        Last maintenance: {truck.lastMaintenance}
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" size="sm" className="flex-1">
-                                        <Eye className="h-4 w-4 mr-1" />
-                                        View
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="flex-1">
-                                        <Edit className="h-4 w-4 mr-1" />
-                                        Edit
-                                    </Button>
-                                    <Button variant="outline" size="sm" className="flex-1">
-                                        <Trash2 className="h-4 w-4 mr-1" />
-                                        Remove
-                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
-                    ))}
-                </div>
-            </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-center space-x-2 pt-4">
-                <Button variant="outline" size="sm" disabled>
-                    Previous
-                </Button>
-                <Button variant="outline" size="sm" className="bg-primary text-primary-foreground">
-                    1
-                </Button>
-                <Button variant="outline" size="sm">
-                    2
-                </Button>
-                <Button variant="outline" size="sm">
-                    3
-                </Button>
-                <Button variant="outline" size="sm">
-                    Next
-                </Button>
-            </div>
+                        <Card>
+                            <CardContent className="p-4">
+                                <h4 className="font-semibold text-gray-900 mb-4">Status & Location</h4>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label>Status *</Label>
+                                            <Select defaultValue={editingTruck.status}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="available">Available</SelectItem>
+                                                    <SelectItem value="in_use">In Use</SelectItem>
+                                                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                                                    <SelectItem value="out_of_service">Out of Service</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label>Current Location</Label>
+                                            <Input
+                                                placeholder="Enter current location"
+                                                defaultValue={editingTruck.location}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label>Assigned Driver</Label>
+                                            <Input
+                                                placeholder="Enter assigned driver"
+                                                defaultValue={editingTruck.driver}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Fuel Level (%)</Label>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                placeholder="Enter fuel level"
+                                                defaultValue={editingTruck.fuelLevel.toString()}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="p-4">
+                                <h4 className="font-semibold text-gray-900 mb-4">Performance & Documentation</h4>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label>Total Deliveries</Label>
+                                            <Input
+                                                type="number"
+                                                placeholder="Enter total deliveries"
+                                                defaultValue={editingTruck.totalDeliveries.toString()}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Current Mileage (km)</Label>
+                                            <Input
+                                                type="number"
+                                                placeholder="Enter current mileage"
+                                                defaultValue={editingTruck.mileage.toString()}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <Label>Insurance Expiry Date</Label>
+                                            <Input
+                                                type="date"
+                                                defaultValue={editingTruck.insuranceExpiry}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Registration Expiry Date</Label>
+                                            <Input
+                                                type="date"
+                                                defaultValue={editingTruck.registrationExpiry}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label>Last Maintenance Date</Label>
+                                        <Input
+                                            type="date"
+                                            defaultValue={editingTruck.lastMaintenance}
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditingTruck(null);
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                className="flex-1"
+                                onClick={() => handleSaveEdit({})}
+                            >
+                                Save Changes
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </ModernModel>
         </div>
     );
 };
