@@ -18,9 +18,10 @@ import {
   AiOutlineArrowDown
 } from "react-icons/ai";
 import { TrackingComponent } from "./TrackingComponent";
+import { StatsCard, StatItem } from "@/components/ui/StatsCard";
 
 // Mock data for cargo stats
-const cargoStatsData = [
+const cargoStatsData: StatItem[] = [
   {
     title: "Total Cargos",
     value: "12",
@@ -153,44 +154,8 @@ export function ClientDashboard() {
         </Button>
       </div>
 
-      {/* Stats Card - Single card with dividers */}
-      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-        <CardContent className="p-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-            {cargoStatsData.map((stat, index) => (
-              <div key={stat.title} className="relative">
-                <div className="p-4 md:p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 bg-${stat.color}-500 rounded-full`}></div>
-                      <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    </div>
-                    <stat.icon className={`w-5 h-5 text-${stat.color}-500`} />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl md:text-3xl font-bold text-gray-900">{stat.value}</span>
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${stat.changeType === 'increase'
-                      ? 'bg-green-100 text-green-600'
-                      : stat.changeType === 'active'
-                        ? 'bg-blue-100 text-blue-600'
-                        : stat.changeType === 'waiting'
-                          ? 'bg-yellow-100 text-yellow-600'
-                          : 'bg-green-100 text-green-600'
-                      }`}>
-                      {stat.changeType === 'increase' && <AiOutlineArrowUp className="w-3 h-3" />}
-                      {stat.change}
-                    </div>
-                  </div>
-                </div>
-                {/* Vertical divider */}
-                {index < cargoStatsData.length - 1 && (
-                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-px h-12 md:h-16 bg-gray-200"></div>
-                )}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Stats Card - Reusable component */}
+      <StatsCard stats={cargoStatsData} />
 
       {/* Live Tracking - Full Width */}
       <div>

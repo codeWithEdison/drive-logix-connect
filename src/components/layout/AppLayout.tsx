@@ -110,7 +110,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </header>
 
         {/* Mobile Content */}
-        <main className="flex-1 overflow-auto pb-20 bg-[#F9FAFE] min-h-screen">
+        <main className="flex-1 overflow-auto pb-24 bg-[#F9FAFE] min-h-screen">
           <div className="p-4">
             {children}
           </div>

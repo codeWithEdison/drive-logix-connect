@@ -13,6 +13,7 @@ import {
   AiOutlineBarChart,
   AiOutlineSafety
 } from 'react-icons/ai';
+import { Home, Package, Truck, History } from 'lucide-react';
 
 const navigationConfig = {
   client: [
@@ -23,9 +24,10 @@ const navigationConfig = {
     { title: 'History', url: '/history', icon: AiOutlineHistory },
   ],
   driver: [
-    { title: 'Dashboard', url: '/driver', icon: AiOutlineHome },
-    { title: 'Deliveries', url: '/driver/deliveries', icon: AiOutlineCar },
-    { title: 'History', url: '/driver/history', icon: AiOutlineHistory },
+    { title: 'Dashboard', url: '/driver', icon: Home },
+    { title: 'Cargos', url: '/driver/cargos', icon: Package },
+    { title: 'Deliveries', url: '/driver/deliveries', icon: Truck },
+    { title: 'History', url: '/driver/history', icon: History },
   ],
   admin: [
     { title: 'Dashboard', url: '/admin', icon: AiOutlineHome },

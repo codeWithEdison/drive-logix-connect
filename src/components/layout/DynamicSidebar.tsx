@@ -40,6 +40,7 @@ const navigationConfig = {
   ],
   driver: [
     { title: 'Dashboard', url: '/driver', icon: Home },
+    { title: 'Assigned Cargos', url: '/driver/cargos', icon: Package },
     { title: 'Active Deliveries', url: '/driver/deliveries', icon: Truck },
     { title: 'Delivery History', url: '/driver/history', icon: History },
   ],

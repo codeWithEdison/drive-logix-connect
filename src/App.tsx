@@ -25,6 +25,7 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import SuperAdminDashboard from '@/pages/SuperAdminDashboard';
 import DriverDeliveries from '@/pages/driver/DriverDeliveries';
 import DriverHistory from '@/pages/driver/DriverHistory';
+import { AssignedCargosPage } from '@/pages/AssignedCargosPage';
 import AdminCargos from '@/pages/admin/AdminCargos';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminTrucks from '@/pages/admin/AdminTrucks';
@@ -113,6 +114,11 @@ function AppContent() {
         <Route path="/driver" element={
           <ProtectedRoute allowedRoles={['driver']}>
             <DriverDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/driver/cargos" element={
+          <ProtectedRoute allowedRoles={['driver']}>
+            <AssignedCargosPage />
           </ProtectedRoute>
         } />
         <Route path="/driver/deliveries" element={
