@@ -1,280 +1,348 @@
 import React, { useState } from 'react';
-import { TruckAssignmentModal } from '@/components/admin/TruckAssignmentModal';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { CargoTable } from '@/components/ui/CargoTable';
+import { CargoDetailModal, CargoDetail } from '@/components/ui/CargoDetailModal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Plus, Truck } from 'lucide-react';
+import ModernModel from '@/components/modal/ModernModel';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Filter, Eye, Edit, Trash2, Truck, MapPin, Package, Clock, CheckCircle } from 'lucide-react';
 
-const allCargos = [
+// Mock data for admin cargos - Rwanda-based
+const adminCargos: CargoDetail[] = [
   {
     id: 'CRG-001',
     client: 'John Doe',
+    driver: 'Jean Baptiste',
+    phone: '+250 123 456 789',
     from: 'Kigali',
     to: 'Butare',
     type: 'Electronics',
     weight: '45kg',
-    status: 'in_transit',
-    driver: 'Jean Baptiste',
-    created: '2024-01-15',
-    priority: 'normal'
+    status: 'transit',
+    cost: 280000,
+    distance: '135 km',
+    createdDate: '2024-01-15',
+    estimatedTime: '2 hours',
+    priority: 'standard'
   },
   {
     id: 'CRG-002',
     client: 'Sarah Johnson',
+    driver: 'Unassigned',
+    phone: '+250 234 567 890',
     from: 'Kigali',
     to: 'Musanze',
     type: 'Furniture',
     weight: '120kg',
     status: 'pending',
-    driver: 'Unassigned',
-    created: '2024-01-16',
+    cost: 320000,
+    distance: '85 km',
+    createdDate: '2024-01-16',
+    estimatedTime: '1.5 hours',
     priority: 'urgent'
   },
   {
     id: 'CRG-003',
     client: 'Marie Claire',
+    driver: 'Alice Uwimana',
+    phone: '+250 345 678 901',
     from: 'Kigali',
     to: 'Rubavu',
     type: 'Documents',
     weight: '2kg',
     status: 'delivered',
-    driver: 'Alice Uwimana',
-    created: '2024-01-14',
-    priority: 'normal'
+    cost: 180000,
+    distance: '120 km',
+    createdDate: '2024-01-14',
+    estimatedTime: '2.5 hours',
+    priority: 'standard'
+  },
+  {
+    id: 'CRG-004',
+    client: 'Emmanuel Ndayisaba',
+    driver: 'Unassigned',
+    phone: '+250 456 789 012',
+    from: 'Butare',
+    to: 'Kigali',
+    type: 'Agricultural',
+    weight: '200kg',
+    status: 'pending',
+    cost: 450000,
+    distance: '135 km',
+    createdDate: '2024-01-17',
+    estimatedTime: '2 hours',
+    priority: 'urgent'
+  },
+  {
+    id: 'CRG-005',
+    client: 'Grace Uwase',
+    driver: 'Pierre Nkurunziza',
+    phone: '+250 567 890 123',
+    from: 'Musanze',
+    to: 'Kigali',
+    type: 'Textiles',
+    weight: '80kg',
+    status: 'transit',
+    cost: 250000,
+    distance: '85 km',
+    createdDate: '2024-01-15',
+    estimatedTime: '1.5 hours',
+    priority: 'standard'
   }
 ];
 
 export default function AdminCargos() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedCargo, setSelectedCargo] = useState<any>(null);
-  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+  const [cargos, setCargos] = useState<CargoDetail[]>(adminCargos);
+  const [selectedCargo, setSelectedCargo] = useState<CargoDetail | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isTruckAssignmentModalOpen, setIsTruckAssignmentModalOpen] = useState(false);
+  const [cargoForAssignment, setCargoForAssignment] = useState<CargoDetail | null>(null);
 
-  const handleAssignTruck = (cargoId: string, truckId: string, driverId: string) => {
-    console.log(`Assigning truck ${truckId} and driver ${driverId} to cargo ${cargoId}`);
-    // TODO: Implement truck assignment logic
-  };
-
-  const handleViewAssignment = (cargo: any) => {
+  const handleViewDetails = (cargo: CargoDetail) => {
     setSelectedCargo(cargo);
-    setIsAssignmentModalOpen(true);
+    setIsDetailModalOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-warning text-warning-foreground';
-      case 'in_transit': return 'bg-info text-info-foreground';
-      case 'delivered': return 'bg-success text-success-foreground';
-      case 'cancelled': return 'bg-destructive text-destructive-foreground';
-      default: return 'bg-secondary text-secondary-foreground';
+  const handleAssignTruck = (cargo: CargoDetail) => {
+    setCargoForAssignment(cargo);
+    setIsTruckAssignmentModalOpen(true);
+  };
+
+  const handleCreateNewCargo = () => {
+    // Navigate to create new cargo page
+    window.location.href = '/admin/cargos/new';
+  };
+
+  const handleCallClient = (phone: string) => {
+    console.log(`Calling client: ${phone}`);
+    // Implement call functionality
+  };
+
+  const handleCallDriver = (phone: string) => {
+    console.log(`Calling driver: ${phone}`);
+    // Implement call functionality
+  };
+
+  const handleTrackCargo = (cargoId: string) => {
+    console.log(`Tracking cargo: ${cargoId}`);
+    // Navigate to tracking page
+    window.location.href = `/admin/tracking/${cargoId}`;
+  };
+
+  const handleCancelCargo = (cargoId: string) => {
+    console.log(`Cancelling cargo: ${cargoId}`);
+    // Update cargo status to cancelled
+    setCargos(prev => prev.map(cargo =>
+      cargo.id === cargoId ? { ...cargo, status: 'cancelled' as const } : cargo
+    ));
+  };
+
+  const handleDownloadReceipt = (cargoId: string) => {
+    console.log(`Downloading receipt for: ${cargoId}`);
+    // Generate and download receipt
+    const cargo = cargos.find(c => c.id === cargoId);
+    if (cargo) {
+      const receiptData = {
+        id: cargo.id,
+        client: cargo.client,
+        cost: cargo.cost,
+        date: new Date().toISOString(),
+        type: 'receipt'
+      };
+
+      const blob = new Blob([JSON.stringify(receiptData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${cargoId}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-destructive text-destructive-foreground';
-      case 'high': return 'bg-warning text-warning-foreground';
-      default: return 'bg-secondary text-secondary-foreground';
-    }
+  const handleUploadPhoto = (cargoId: string) => {
+    console.log(`Uploading photo for: ${cargoId}`);
+    // Implement photo upload functionality
   };
 
-  const filteredCargos = allCargos.filter(cargo => {
-    const matchesSearch = cargo.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cargo.client.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || cargo.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const handleReportIssue = (cargoId: string) => {
+    console.log(`Reporting issue for: ${cargoId}`);
+    // Navigate to issue reporting page
+    window.location.href = `/admin/issues/${cargoId}`;
+  };
+
+  const handleTruckAssignment = (cargoId: string, truckId: string, driverId: string) => {
+    console.log(`Assigning truck ${truckId} and driver ${driverId} to cargo ${cargoId}`);
+    // Update cargo with assigned driver
+    setCargos(prev => prev.map(cargo =>
+      cargo.id === cargoId ? { ...cargo, driver: 'Assigned Driver', status: 'transit' as const } : cargo
+    ));
+    setIsTruckAssignmentModalOpen(false);
+    setCargoForAssignment(null);
+  };
+
+  // Custom actions for admin
+  const customActions = (
+    <Button onClick={handleCreateNewCargo}>
+      <Plus className="h-4 w-4 mr-2" />
+      Create New Cargo
+    </Button>
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Cargo Management</h1>
-          <p className="text-muted-foreground">Monitor and manage all cargo shipments</p>
-        </div>
-        <Button onClick={() => handleViewAssignment(allCargos[0])}>
-          <Truck className="h-4 w-4 mr-2" />
-          Assign Truck
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Cargos</p>
-                <p className="text-2xl font-bold">127</p>
-              </div>
-              <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Package className="h-4 w-4 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">In Transit</p>
-                <p className="text-2xl font-bold">23</p>
-              </div>
-              <div className="h-8 w-8 bg-info/10 rounded-lg flex items-center justify-center">
-                <Truck className="h-4 w-4 text-info" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold">8</p>
-              </div>
-              <div className="h-8 w-8 bg-warning/10 rounded-lg flex items-center justify-center">
-                <Clock className="h-4 w-4 text-warning" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Delivered Today</p>
-                <p className="text-2xl font-bold">12</p>
-              </div>
-              <div className="h-8 w-8 bg-success/10 rounded-lg flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-success" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter Cargos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by cargo ID or client name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="in_transit">In Transit</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Cargo Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Cargos</CardTitle>
-          <CardDescription>Complete list of cargo shipments</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cargo ID</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Route</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Driver</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCargos.map((cargo) => (
-                <TableRow key={cargo.id}>
-                  <TableCell className="font-medium">{cargo.id}</TableCell>
-                  <TableCell>{cargo.client}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <span>{cargo.from}</span>
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span>{cargo.to}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{cargo.type}</div>
-                      <div className="text-sm text-muted-foreground">{cargo.weight}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(cargo.status)}>
-                      {cargo.status.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{cargo.driver}</TableCell>
-                  <TableCell>
-                    <Badge className={getPriorityColor(cargo.priority)}>
-                      {cargo.priority.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      {cargo.driver === 'Unassigned' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewAssignment(cargo)}
-                        >
-                          <Truck className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Truck Assignment Modal */}
-      <TruckAssignmentModal
-        isOpen={isAssignmentModalOpen}
-        onClose={() => setIsAssignmentModalOpen(false)}
-        cargo={selectedCargo}
-        onAssign={handleAssignTruck}
+      <CargoTable
+        cargos={cargos}
+        title="Cargo Management"
+        showStats={true}
+        showSearch={true}
+        showFilters={true}
+        showPagination={true}
+        itemsPerPage={10}
+        onCallClient={handleCallClient}
+        onCallDriver={handleCallDriver}
+        onTrackCargo={handleTrackCargo}
+        onCancelCargo={handleCancelCargo}
+        onDownloadReceipt={handleDownloadReceipt}
+        onUploadPhoto={handleUploadPhoto}
+        onReportIssue={handleReportIssue}
+        onViewDetails={handleViewDetails}
+        customActions={customActions}
       />
+
+      {/* Cargo Detail Modal */}
+      <CargoDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedCargo(null);
+        }}
+        cargo={selectedCargo}
+        onCallClient={handleCallClient}
+        onCallDriver={handleCallDriver}
+        onUploadPhoto={handleUploadPhoto}
+        onReportIssue={handleReportIssue}
+      />
+
+      {/* Truck Assignment Modal using ModernModel */}
+      <ModernModel
+        isOpen={isTruckAssignmentModalOpen}
+        onClose={() => {
+          setIsTruckAssignmentModalOpen(false);
+          setCargoForAssignment(null);
+        }}
+        title="Assign Truck & Driver"
+      >
+        {cargoForAssignment && (
+          <div className="space-y-6">
+            {/* Cargo Details */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Cargo Details</h3>
+                  <Badge className={cargoForAssignment.priority === 'urgent' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}>
+                    {cargoForAssignment.priority?.toUpperCase()}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Cargo ID</p>
+                    <p className="text-lg font-semibold">{cargoForAssignment.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Client</p>
+                    <p className="text-lg">{cargoForAssignment.client}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Route</p>
+                    <p className="text-lg">{cargoForAssignment.from} → {cargoForAssignment.to}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Weight & Type</p>
+                    <p className="text-lg">{cargoForAssignment.weight} • {cargoForAssignment.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Distance</p>
+                    <p className="text-lg">{cargoForAssignment.distance}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Cost</p>
+                    <p className="text-lg font-semibold text-green-600">
+                      {new Intl.NumberFormat('rw-RW', {
+                        style: 'currency',
+                        currency: 'RWF',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(cargoForAssignment.cost || 0)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Assignment Form */}
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">Assignment Details</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Select Truck</label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Choose a truck..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="truck-1">Ford F-650 (ABC-123)</SelectItem>
+                        <SelectItem value="truck-2">Chevrolet Silverado (XYZ-789)</SelectItem>
+                        <SelectItem value="truck-3">Dodge Ram (DEF-456)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Select Driver</label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Choose a driver..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="driver-1">Albert Flores (4.8★)</SelectItem>
+                        <SelectItem value="driver-2">Mike Johnson (4.6★)</SelectItem>
+                        <SelectItem value="driver-3">Sarah Wilson (4.9★)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setIsTruckAssignmentModalOpen(false);
+                  setCargoForAssignment(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => handleTruckAssignment(cargoForAssignment.id, 'truck-1', 'driver-1')}
+              >
+                <Truck className="h-4 w-4 mr-2" />
+                Assign Truck & Driver
+              </Button>
+            </div>
+          </div>
+        )}
+      </ModernModel>
     </div>
   );
 }
