@@ -35,6 +35,10 @@ interface DeliveryDetailModalProps {
         rating?: number;
         earnings?: string;
     } | null;
+    onCallClient?: () => void;
+    onNavigate?: () => void;
+    onUploadPhoto?: () => void;
+    onReportIssue?: () => void;
 }
 
 const getStatusColor = (status: string) => {
@@ -54,7 +58,15 @@ const getPriorityColor = (priority: string) => {
     }
 };
 
-export function DeliveryDetailModal({ isOpen, onClose, delivery }: DeliveryDetailModalProps) {
+export function DeliveryDetailModal({
+    isOpen,
+    onClose,
+    delivery,
+    onCallClient,
+    onNavigate,
+    onUploadPhoto,
+    onReportIssue
+}: DeliveryDetailModalProps) {
     if (!delivery) return null;
 
     const isCompleted = delivery.status === 'delivered';
@@ -223,37 +235,36 @@ export function DeliveryDetailModal({ isOpen, onClose, delivery }: DeliveryDetai
                 {!isCompleted && (
                     <div className="space-y-4">
                         <div className="flex flex-col sm:flex-row gap-3">
-                            <Button className="flex-1 h-12 sm:h-10" onClick={handleNavigate}>
+                            <Button className="flex-1 h-12 sm:h-10" onClick={onNavigate}>
                                 <Navigation className="h-4 w-4 mr-2" />
                                 Navigate
                             </Button>
-                            <ContactDropdown
-                                contacts={contacts}
-                                onCall={handleCallContact}
-                                className="flex-1"
-                            />
+                            <Button
+                                variant="outline"
+                                className="flex-1 h-12 sm:h-10"
+                                onClick={onCallClient}
+                            >
+                                <Phone className="h-4 w-4 mr-2" />
+                                Call Client
+                            </Button>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
-                            {delivery.status === 'in_transit' && (
-                                <Button
-                                    variant="outline"
-                                    className="flex-1 h-12 sm:h-10"
-                                    onClick={handleMarkDelivered}
-                                >
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Mark Delivered
-                                </Button>
-                            )}
-                            {delivery.status === 'pickup_scheduled' && (
-                                <Button
-                                    variant="outline"
-                                    className="flex-1 h-12 sm:h-10"
-                                    onClick={handleStartPickup}
-                                >
-                                    <Truck className="h-4 w-4 mr-2" />
-                                    Start Pickup
-                                </Button>
-                            )}
+                            <Button
+                                variant="outline"
+                                className="flex-1 h-12 sm:h-10"
+                                onClick={onUploadPhoto}
+                            >
+                                <Package className="h-4 w-4 mr-2" />
+                                Upload Photo
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="flex-1 h-12 sm:h-10 text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
+                                onClick={onReportIssue}
+                            >
+                                <AlertCircle className="h-4 w-4 mr-2" />
+                                Report Issue
+                            </Button>
                         </div>
                     </div>
                 )}

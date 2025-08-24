@@ -15,6 +15,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { DriverNotifications } from '@/components/ui/DriverNotifications';
+import { useToast } from '@/hooks/use-toast';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -24,12 +26,32 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const isMobile = useIsMobile();
   const [currentLanguage, setCurrentLanguage] = useState('English');
+  const { toast } = useToast();
 
   const languages = [
     { code: 'en', name: 'English', flag: '🇺🇸' },
     { code: 'rw', name: 'Kinyarwanda', flag: '🇷🇼' },
     { code: 'fr', name: 'Français', flag: '🇫🇷' }
   ];
+
+  const handleNotificationAction = (action: string, data?: any) => {
+    switch (action) {
+      case 'accept':
+        toast({
+          title: "Assignment Accepted",
+          description: "Cargo assignment has been accepted.",
+        });
+        break;
+      case 'navigate':
+        // Handle navigation action
+        break;
+      case 'view':
+        // Handle view action
+        break;
+      default:
+        break;
+    }
+  };
 
   if (!user) {
     return <>{children}</>;
@@ -87,9 +109,14 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-600 hover:text-gray-900">
-                <Bell className="h-4 w-4" />
-              </Button>
+              {/* Mobile Notifications - Only show for drivers */}
+              {user.role === 'driver' && (
+                <DriverNotifications
+                  onAction={handleNotificationAction}
+                  className="ml-2"
+                />
+              )}
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -162,10 +189,18 @@ export function AppLayout({ children }: AppLayoutProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Button variant="ghost" size="sm" className="h-9 w-9 p-0 relative text-gray-600 hover:text-gray-900">
-                  <Bell className="h-4 w-4" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full text-xs"></span>
-                </Button>
+                {/* Desktop Notifications - Only show for drivers */}
+                {user.role === 'driver' ? (
+                  <DriverNotifications
+                    onAction={handleNotificationAction}
+                    className="ml-2"
+                  />
+                ) : (
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 relative text-gray-600 hover:text-gray-900">
+                    <Bell className="h-4 w-4" />
+                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full text-xs"></span>
+                  </Button>
+                )}
 
                 <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
                   <Avatar className="h-8 w-8">

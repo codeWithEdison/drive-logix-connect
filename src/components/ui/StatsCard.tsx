@@ -37,10 +37,19 @@ export function StatsCard({ stats, className = "" }: StatsCardProps) {
         }
     };
 
+    // Calculate the appropriate grid columns based on number of stats
+    const getGridCols = () => {
+        const count = stats.length;
+        if (count <= 2) return "grid-cols-2";
+        if (count <= 3) return "grid-cols-3";
+        if (count <= 4) return "grid-cols-4";
+        return "grid-cols-5";
+    };
+
     return (
         <Card className={`bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}>
             <CardContent className="p-0">
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-0">
+                <div className={`grid ${getGridCols()} gap-0`}>
                     {stats.map((stat, index) => (
                         <div key={stat.title} className="relative">
                             <div className="p-3 md:p-4 lg:p-6">
