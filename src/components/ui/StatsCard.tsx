@@ -61,7 +61,7 @@ export function StatsCard({ stats, className = "" }: StatsCardProps) {
                                     <stat.icon className={`w-4 h-4 md:w-5 md:h-5 text-${stat.color}-500 flex-shrink-0`} />
                                 </div>
                                 <div className="flex items-center gap-1 md:gap-2">
-                                    <span className="text-lg md:text-2xl lg:text-3xl font-bold text-gray-900 truncate">{stat.value}</span>
+                                    <span className="text-lg md:text-xl  lg:text-2xl font-bold text-gray-900 ">{stat.value}</span>
                                     <div className={`flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-xs font-medium flex-shrink-0 ${getChangeTypeStyles(stat.changeType)}`}>
                                         {stat.changeType === 'increase' && <ArrowUp className="w-2 h-2 md:w-3 md:h-3" />}
                                         <span className="truncate">{stat.change}</span>

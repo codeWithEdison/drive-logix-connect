@@ -29,6 +29,8 @@ import { AssignedCargosPage } from '@/pages/AssignedCargosPage';
 import AdminCargos from '@/pages/admin/AdminCargos';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminTrucks from '@/pages/admin/AdminTrucks';
+import AdminSettings from '@/pages/admin/AdminSettings';
+import AdminReports from '@/pages/admin/AdminReports';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -151,6 +153,16 @@ function AppContent() {
         <Route path="/admin/trucks" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <AdminTrucks />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/settings" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminSettings />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/reports" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminReports />
           </ProtectedRoute>
         } />
 

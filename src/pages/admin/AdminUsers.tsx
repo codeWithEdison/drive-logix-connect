@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import {
     Phone,
     MapPin
 } from 'lucide-react';
+import { ApprovalModal } from '@/components/admin/ApprovalModal';
 
 // Mock data for users and drivers
 const mockUsers = [
@@ -86,6 +87,24 @@ const mockUsers = [
 ];
 
 const AdminUsers = () => {
+    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+
+    const handleApprove = (id: string, type: string, reason?: string) => {
+        console.log(`Approving ${type} with ID: ${id}`, reason);
+        // TODO: Implement approval logic
+    };
+
+    const handleReject = (id: string, type: string, reason: string) => {
+        console.log(`Rejecting ${type} with ID: ${id}`, reason);
+        // TODO: Implement rejection logic
+    };
+
+    const handleViewApproval = (user: any) => {
+        setSelectedUser(user);
+        setIsApprovalModalOpen(true);
+    };
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -281,6 +300,17 @@ const AdminUsers = () => {
                                         <Eye className="h-4 w-4 mr-1" />
                                         View
                                     </Button>
+                                    {user.status === 'pending' && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex-1"
+                                            onClick={() => handleViewApproval(user)}
+                                        >
+                                            <UserCheck className="h-4 w-4 mr-1" />
+                                            Review
+                                        </Button>
+                                    )}
                                     <Button variant="outline" size="sm" className="flex-1">
                                         <Edit className="h-4 w-4 mr-1" />
                                         Edit
@@ -314,6 +344,15 @@ const AdminUsers = () => {
                     Next
                 </Button>
             </div>
+
+            {/* Approval Modal */}
+            <ApprovalModal
+                isOpen={isApprovalModalOpen}
+                onClose={() => setIsApprovalModalOpen(false)}
+                item={selectedUser}
+                onApprove={handleApprove}
+                onReject={handleReject}
+            />
         </div>
     );
 };

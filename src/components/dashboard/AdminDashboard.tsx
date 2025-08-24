@@ -1,357 +1,224 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { StatsCard } from '@/components/ui/StatsCard';
+import { RevenueChart } from './charts/RevenueChart';
+import { DeliveryStatusChart } from './charts/DeliveryStatusChart';
+import { FleetPerformanceChart } from './charts/FleetPerformanceChart';
+import { GeographicChart } from './charts/GeographicChart';
+import { DriverPerformanceChart } from './charts/DriverPerformanceChart';
+import { RecentDeliveriesTable } from './tables/RecentDeliveriesTable';
+import { PendingApprovalsTable } from './tables/PendingApprovalsTable';
+import { SystemAlertsTable } from './tables/SystemAlertsTable';
+import { FinancialTransactionsTable } from './tables/FinancialTransactionsTable';
 import {
-  AiOutlineInbox,
-  AiOutlineCar,
-  AiOutlineTeam,
-  AiOutlineDollar,
-  AiOutlineRise,
-  AiOutlineExclamationCircle,
-  AiOutlineClockCircle,
-  AiOutlineCheckCircle,
-  AiOutlineBarChart,
-  AiOutlineEnvironment,
-  AiOutlineSetting,
-  AiOutlineCheck,
-  AiOutlineFilter,
-  AiOutlinePlus
-} from "react-icons/ai";
+  TrendingUp,
+  Package,
+  Truck,
+  Users,
+  Clock,
+  CheckCircle,
+  DollarSign,
+  AlertTriangle,
+  Download,
+  Settings,
+  Filter,
+  Plus,
+  Eye
+} from 'lucide-react';
 
-// Mock data for admin
-const mockAdminData = {
-  stats: {
-    totalCargos: 1247,
-    activeCargos: 23,
-    totalDrivers: 89,
-    availableDrivers: 45,
-    totalTrucks: 67,
-    activeTrucks: 34,
-    monthlyRevenue: "$125,400",
-    revenueGrowth: "+12.5%"
+// Admin statistics data for StatsCard - Only 4 most important Rwanda-based stats
+const adminStats = [
+  {
+    title: "Monthly Revenue",
+    value: "RWF 15.2M",
+    change: "+12.5%",
+    changeType: "increase" as const,
+    icon: DollarSign,
+    color: "green"
   },
-  recentCargos: [
-    {
-      id: "#3565432",
-      status: "active" as const,
-      client: "John Smith",
-      driver: "Albert Flores",
-      route: "Allentown, NM → Utica, PA",
-      value: "$280",
-      priority: "urgent",
-      created: "2 hours ago"
-    },
-    {
-      id: "#4832920",
-      status: "pending" as const,
-      client: "Sarah Johnson",
-      driver: "Unassigned",
-      route: "Colma, DE → Inglewood, ME",
-      value: "$150",
-      priority: "standard",
-      created: "4 hours ago"
-    },
-    {
-      id: "#1442654",
-      status: "delivered" as const,
-      client: "Mike Wilson",
-      driver: "Guy Hawkins",
-      route: "Santa Ana, IL → Celina, DE",
-      value: "$320",
-      priority: "express",
-      created: "1 day ago"
-    }
-  ],
-  alerts: [
-    {
-      type: "warning",
-      message: "Truck TRK-045 requires maintenance",
-      time: "30 minutes ago"
-    },
-    {
-      type: "info",
-      message: "New driver registration pending approval",
-      time: "1 hour ago"
-    },
-    {
-      type: "urgent",
-      message: "Cargo #3565432 experiencing delays",
-      time: "45 minutes ago"
-    }
-  ]
-};
+  {
+    title: "Active Deliveries",
+    value: "23",
+    change: "+5",
+    changeType: "active" as const,
+    icon: Package,
+    color: "blue"
+  },
+  {
+    title: "Available Drivers",
+    value: "45/89",
+    change: "+3",
+    changeType: "ready" as const,
+    icon: Users,
+    color: "purple"
+  },
+  {
+    title: "Success Rate",
+    value: "94.2%",
+    change: "+2.1%",
+    changeType: "success" as const,
+    icon: CheckCircle,
+    color: "green"
+  }
+];
 
 export function AdminDashboard() {
-  const [selectedTab, setSelectedTab] = useState("overview");
+  const handleExportReport = () => {
+    // Generate and download report
+    const reportData = {
+      timestamp: new Date().toISOString(),
+      stats: adminStats,
+      generatedBy: 'Admin Dashboard'
+    };
 
-  const statusConfig = {
-    active: { label: "Active", color: "bg-logistics-blue text-logistics-blue-foreground" },
-    pending: { label: "Pending", color: "bg-logistics-orange text-logistics-orange-foreground" },
-    delivered: { label: "Delivered", color: "bg-success text-success-foreground" },
-    cancelled: { label: "Cancelled", color: "bg-destructive text-destructive-foreground" }
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `admin-report-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
-  const alertConfig = {
-    warning: { icon: AiOutlineExclamationCircle, color: "text-logistics-orange" },
-    info: { icon: AiOutlineClockCircle, color: "text-logistics-blue" },
-    urgent: { icon: AiOutlineExclamationCircle, color: "text-destructive" }
+  const handleSettings = () => {
+    // Navigate to settings page
+    window.location.href = '/admin/settings';
+  };
+
+  const handleFilter = () => {
+    // Open filter modal or sidebar
+    console.log('Opening filter panel');
+    // You can implement a filter modal here
+  };
+
+  const handleAddNew = () => {
+    // Navigate to add new item page
+    window.location.href = '/admin/cargos/new';
+  };
+
+  const handleViewAll = (type: string) => {
+    // Navigate to respective pages
+    switch (type) {
+      case 'deliveries':
+        window.location.href = '/admin/cargos';
+        break;
+      case 'approvals':
+        window.location.href = '/admin/users';
+        break;
+      case 'alerts':
+        window.location.href = '/admin/alerts';
+        break;
+      case 'transactions':
+        window.location.href = '/admin/reports';
+        break;
+      default:
+        break;
+    }
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground font-heading">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Monitor and manage all logistics operations</p>
+          <p className="text-muted-foreground">Monitor and manage all logistics operations in Rwanda</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline">
-            <AiOutlineFilter className="h-4 w-4 mr-2" />
+          <Button variant="outline" onClick={handleFilter}>
+            <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button className="bg-gradient-primary hover:bg-primary-hover">
-            <AiOutlinePlus className="h-4 w-4 mr-2" />
-            Quick Actions
+          <Button variant="outline" onClick={handleExportReport}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Report
+          </Button>
+          <Button onClick={handleAddNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add New
+          </Button>
+          <Button onClick={handleSettings}>
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
           </Button>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-white/80 backdrop-blur-sm border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Cargos
-            </CardTitle>
-            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900 mb-1">{mockAdminData.stats.totalCargos.toLocaleString()}</div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-blue-600 font-medium">{mockAdminData.stats.activeCargos}</span>
-              <span className="text-xs text-gray-500">active</span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Statistics Cards - Only 4 most important */}
+      <StatsCard stats={adminStats} />
 
-        <Card className="bg-white/80 backdrop-blur-sm border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Drivers
-            </CardTitle>
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900 mb-1">{mockAdminData.stats.totalDrivers}</div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-green-600 font-medium">{mockAdminData.stats.availableDrivers}</span>
-              <span className="text-xs text-gray-500">available</span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Charts Section */}
+      <div className="space-y-8">
+        {/* Revenue Trends Chart - Full Width */}
+        <RevenueChart />
 
-        <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Fleet Status
-            </CardTitle>
-            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900 mb-1">{mockAdminData.stats.totalTrucks}</div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-purple-600 font-medium">{mockAdminData.stats.activeTrucks}</span>
-              <span className="text-xs text-gray-500">on road</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Monthly Revenue
-            </CardTitle>
-            <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-          </CardHeader>
-          <CardContent className="px-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900 mb-1">{mockAdminData.stats.monthlyRevenue}</div>
-            <div className="flex items-center gap-1">
-              <AiOutlineRise className="h-3 w-3 text-green-600" />
-              <span className="text-sm text-green-600 font-medium">{mockAdminData.stats.revenueGrowth}</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Charts Grid - 2x2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <DeliveryStatusChart />
+          <FleetPerformanceChart />
+          <GeographicChart />
+          <DriverPerformanceChart />
+        </div>
       </div>
 
-      {/* Main Content */}
-      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="cargos">Cargos</TabsTrigger>
-          <TabsTrigger value="fleet">Fleet</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+      {/* Tables Section - 2 tables per row */}
+      <div className="space-y-8">
+        {/* Recent Deliveries and Pending Approvals - 2 columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <RecentDeliveriesTable onViewAll={() => handleViewAll('deliveries')} />
+          <PendingApprovalsTable onViewAll={() => handleViewAll('approvals')} />
+        </div>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Recent Cargos */}
-            <div className="lg:col-span-2">
-              <Card className="card-elevated">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AiOutlineInbox className="h-5 w-5 text-primary" />
-                    Recent Cargo Requests
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {mockAdminData.recentCargos.map((cargo) => (
-                    <div key={cargo.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-3">
-                          <span className="font-semibold">{cargo.id}</span>
-                          <Badge className={statusConfig[cargo.status].color}>
-                            {statusConfig[cargo.status].label}
-                          </Badge>
-                          {cargo.priority === 'urgent' && (
-                            <Badge variant="outline" className="text-destructive border-destructive">
-                              Urgent
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Client</p>
-                            <p className="font-medium">{cargo.client}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Driver</p>
-                            <p className="font-medium">{cargo.driver}</p>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{cargo.route}</p>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <p className="font-bold text-logistics-green">{cargo.value}</p>
-                        <p className="text-xs text-muted-foreground">{cargo.created}</p>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full">
-                    View All Cargos
-                  </Button>
-                </CardContent>
-              </Card>
+        {/* System Alerts and Financial Transactions - 2 columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <SystemAlertsTable onViewAll={() => handleViewAll('alerts')} />
+          <FinancialTransactionsTable onViewAll={() => handleViewAll('transactions')} />
+        </div>
+      </div>
+
+      {/* Recent Activities Messages - Simplified */}
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Package className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-gray-900">Deliveries</span>
             </div>
-
-            {/* System Alerts */}
-            <div>
-              <Card className="card-elevated">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AiOutlineExclamationCircle className="h-5 w-5 text-logistics-orange" />
-                    System Alerts
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {mockAdminData.alerts.map((alert, index) => {
-                    const AlertIcon = alertConfig[alert.type as keyof typeof alertConfig].icon;
-                    const iconColor = alertConfig[alert.type as keyof typeof alertConfig].color;
-
-                    return (
-                      <div key={index} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                        <AlertIcon className={`h-4 w-4 mt-0.5 ${iconColor}`} />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{alert.message}</p>
-                          <p className="text-xs text-muted-foreground">{alert.time}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <Button variant="outline" size="sm" className="w-full">
-                    View All Alerts
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions */}
-              <Card className="card-elevated mt-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AiOutlineSetting className="h-5 w-5 text-accent" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
-                    <AiOutlineCheck className="h-4 w-4 mr-2" />
-                    Approve Drivers
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <AiOutlineCar className="h-4 w-4 mr-2" />
-                    Add New Truck
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <AiOutlineBarChart className="h-4 w-4 mr-2" />
-                    Generate Report
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <AiOutlineSetting className="h-4 w-4 mr-2" />
-                    System Settings
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+            <p className="text-sm text-gray-600">Cargo #3565432 delivered to Butare</p>
+            <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
           </div>
-        </TabsContent>
 
-        <TabsContent value="cargos">
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>Cargo Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <AiOutlineInbox className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-semibold text-muted-foreground">Cargo Management Interface</p>
-                <p className="text-sm text-muted-foreground">Detailed cargo list and management tools will be here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-gray-900">Approvals</span>
+            </div>
+            <p className="text-sm text-gray-600">New driver: Michael Johnson</p>
+            <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
+          </div>
 
-        <TabsContent value="fleet">
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>Fleet Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <AiOutlineCar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-semibold text-muted-foreground">Fleet Management Interface</p>
-                <p className="text-sm text-muted-foreground">Truck and driver management tools will be here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <span className="text-sm font-medium text-gray-900">Alerts</span>
+            </div>
+            <p className="text-sm text-gray-600">Truck TRK-023 fuel level low</p>
+            <p className="text-xs text-gray-500 mt-1">30 minutes ago</p>
+          </div>
 
-        <TabsContent value="analytics">
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle>Analytics & Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <AiOutlineBarChart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-semibold text-muted-foreground">Analytics Dashboard</p>
-                <p className="text-sm text-muted-foreground">Charts and detailed analytics will be displayed here</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-gray-900">Financial</span>
+            </div>
+            <p className="text-sm text-gray-600">Payment: RWF 280,000 received</p>
+            <p className="text-xs text-gray-500 mt-1">1 hour ago</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TruckAssignmentModal } from '@/components/admin/TruckAssignmentModal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,18 @@ const allCargos = [
 export default function AdminCargos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedCargo, setSelectedCargo] = useState<any>(null);
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+
+  const handleAssignTruck = (cargoId: string, truckId: string, driverId: string) => {
+    console.log(`Assigning truck ${truckId} and driver ${driverId} to cargo ${cargoId}`);
+    // TODO: Implement truck assignment logic
+  };
+
+  const handleViewAssignment = (cargo: any) => {
+    setSelectedCargo(cargo);
+    setIsAssignmentModalOpen(true);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -71,7 +84,7 @@ export default function AdminCargos() {
 
   const filteredCargos = allCargos.filter(cargo => {
     const matchesSearch = cargo.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cargo.client.toLowerCase().includes(searchTerm.toLowerCase());
+      cargo.client.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || cargo.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -83,7 +96,7 @@ export default function AdminCargos() {
           <h1 className="text-3xl font-bold text-foreground">Cargo Management</h1>
           <p className="text-muted-foreground">Monitor and manage all cargo shipments</p>
         </div>
-        <Button>
+        <Button onClick={() => handleViewAssignment(allCargos[0])}>
           <Truck className="h-4 w-4 mr-2" />
           Assign Truck
         </Button>
@@ -231,6 +244,15 @@ export default function AdminCargos() {
                       <Button variant="ghost" size="sm">
                         <Eye className="h-4 w-4" />
                       </Button>
+                      {cargo.driver === 'Unassigned' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewAssignment(cargo)}
+                        >
+                          <Truck className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -245,6 +267,14 @@ export default function AdminCargos() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Truck Assignment Modal */}
+      <TruckAssignmentModal
+        isOpen={isAssignmentModalOpen}
+        onClose={() => setIsAssignmentModalOpen(false)}
+        cargo={selectedCargo}
+        onAssign={handleAssignTruck}
+      />
     </div>
   );
 }
