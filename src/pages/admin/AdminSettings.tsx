@@ -113,13 +113,13 @@ export default function AdminSettings() {
     const [rates, setRates] = useState(mockRates);
     const [surcharges, setSurcharges] = useState(mockSurcharges);
     const [promoCodes, setPromoCodes] = useState(mockPromoCodes);
-    
+
     // Modal states
     const [showSurchargeModal, setShowSurchargeModal] = useState(false);
     const [showPromoModal, setShowPromoModal] = useState(false);
     const [editingSurcharge, setEditingSurcharge] = useState<string | null>(null);
     const [editingPromo, setEditingPromo] = useState<string | null>(null);
-    
+
     // Form states
     const [surchargeForm, setSurchargeForm] = useState<SurchargeForm>({
         name: '',
@@ -128,7 +128,7 @@ export default function AdminSettings() {
         description: '',
         isActive: true
     });
-    
+
     const [promoForm, setPromoForm] = useState<PromoCodeForm>({
         code: '',
         discount: 0,
@@ -300,10 +300,25 @@ export default function AdminSettings() {
             </div>
 
             <Tabs defaultValue="rates" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="rates">Rates & Pricing</TabsTrigger>
-                    <TabsTrigger value="surcharges">Surcharges</TabsTrigger>
-                    <TabsTrigger value="promocodes">Promo Codes</TabsTrigger>
+                <TabsList className="w-full flex items-center gap-6 border-b border-gray-200 bg-transparent p-0">
+                    <TabsTrigger
+                        value="rates"
+                        className="rounded-none bg-transparent p-0 pb-3 text-sm font-medium text-gray-600 hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-blue-600"
+                    >
+                        Rates & Pricing
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="surcharges"
+                        className="rounded-none bg-transparent p-0 pb-3 text-sm font-medium text-gray-600 hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-blue-600"
+                    >
+                        Surcharges
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="promocodes"
+                        className="rounded-none bg-transparent p-0 pb-3 text-sm font-medium text-gray-600 hover:text-gray-900 data-[state=active]:text-gray-900 data-[state=active]:border-b-2 data-[state=active]:border-blue-600"
+                    >
+                        Promo Codes
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* Rates & Pricing Tab */}
@@ -407,8 +422,8 @@ export default function AdminSettings() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                {surcharge.type === 'percentage' 
-                                                    ? `${surcharge.value}%` 
+                                                {surcharge.type === 'percentage'
+                                                    ? `${surcharge.value}%`
                                                     : formatCurrency(surcharge.value)
                                                 }
                                             </TableCell>
@@ -421,15 +436,15 @@ export default function AdminSettings() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex gap-2">
-                                                    <Button 
-                                                        variant="outline" 
+                                                    <Button
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => openSurchargeModal(surcharge)}
                                                     >
                                                         <AiOutlineEdit className="h-4 w-4" />
                                                     </Button>
-                                                    <Button 
-                                                        variant="outline" 
+                                                    <Button
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => handleDeleteSurcharge(surcharge.id)}
                                                     >
@@ -477,8 +492,8 @@ export default function AdminSettings() {
                                         <TableRow key={promo.id}>
                                             <TableCell className="font-medium">{promo.code}</TableCell>
                                             <TableCell>
-                                                {promo.type === 'percentage' 
-                                                    ? `${promo.discount}%` 
+                                                {promo.type === 'percentage'
+                                                    ? `${promo.discount}%`
                                                     : formatCurrency(promo.discount)
                                                 }
                                             </TableCell>
@@ -496,15 +511,15 @@ export default function AdminSettings() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex gap-2">
-                                                    <Button 
-                                                        variant="outline" 
+                                                    <Button
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => openPromoModal(promo)}
                                                     >
                                                         <AiOutlineEdit className="h-4 w-4" />
                                                     </Button>
-                                                    <Button 
-                                                        variant="outline" 
+                                                    <Button
+                                                        variant="outline"
                                                         size="sm"
                                                         onClick={() => handleDeletePromo(promo.id)}
                                                     >
@@ -543,7 +558,7 @@ export default function AdminSettings() {
                         <Label htmlFor="surchargeType">Type</Label>
                         <Select
                             value={surchargeForm.type}
-                            onValueChange={(value: 'percentage' | 'fixed') => 
+                            onValueChange={(value: 'percentage' | 'fixed') =>
                                 setSurchargeForm(prev => ({ ...prev, type: value }))
                             }
                         >
@@ -596,8 +611,8 @@ export default function AdminSettings() {
                             <AiOutlineCheck className="w-4 h-4 mr-2" />
                             {editingSurcharge ? 'Update' : 'Create'}
                         </Button>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setShowSurchargeModal(false)}
                             className="flex-1"
                         >
@@ -630,7 +645,7 @@ export default function AdminSettings() {
                         <Label htmlFor="promoType">Discount Type</Label>
                         <Select
                             value={promoForm.type}
-                            onValueChange={(value: 'percentage' | 'fixed') => 
+                            onValueChange={(value: 'percentage' | 'fixed') =>
                                 setPromoForm(prev => ({ ...prev, type: value }))
                             }
                         >
@@ -704,8 +719,8 @@ export default function AdminSettings() {
                             <AiOutlineCheck className="w-4 h-4 mr-2" />
                             {editingPromo ? 'Update' : 'Create'}
                         </Button>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setShowPromoModal(false)}
                             className="flex-1"
                         >

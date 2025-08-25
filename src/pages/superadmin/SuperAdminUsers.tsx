@@ -9,6 +9,7 @@ import { DriverTable } from '@/components/ui/DriverTable';
 import { ClientTable } from '@/components/ui/ClientTable';
 import { DriverDetailModal } from '@/components/ui/DriverDetailModal';
 import { ClientDetailModal } from '@/components/ui/ClientDetailModal';
+import { UserDetailModal } from '@/components/ui/UserDetailModal';
 import Modal, { ModalSize } from '@/components/modal/Modal';
 import {
     Users,
@@ -217,8 +218,10 @@ export default function SuperAdminUsers() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDriver, setSelectedDriver] = useState<any>(null);
     const [selectedClient, setSelectedClient] = useState<any>(null);
+    const [selectedAdmin, setSelectedAdmin] = useState<any>(null);
     const [showDriverModal, setShowDriverModal] = useState(false);
     const [showClientModal, setShowClientModal] = useState(false);
+    const [showAdminDetailModal, setShowAdminDetailModal] = useState(false);
     const [showAdminModal, setShowAdminModal] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState<any>(null);
 
@@ -230,6 +233,31 @@ export default function SuperAdminUsers() {
     const handleViewClient = (client: any) => {
         setSelectedClient(client);
         setShowClientModal(true);
+    };
+
+    const handleViewAdmin = (admin: any) => {
+        // Transform admin data to match UserDetail interface
+        const adminUserData = {
+            id: admin.id,
+            name: admin.name,
+            email: admin.email,
+            phone: admin.phone,
+            role: 'admin' as const,
+            status: admin.status as 'active' | 'inactive' | 'pending' | 'suspended',
+            region: admin.location,
+            joinDate: admin.createdAt,
+            lastActive: admin.lastLogin,
+            adminData: {
+                permissions: admin.permissions,
+                managedRegions: [admin.location], // Using location as managed region for demo
+                totalUsersManaged: Math.floor(Math.random() * 100) + 50, // Mock data
+                systemActions: Math.floor(Math.random() * 500) + 100, // Mock data
+                lastLogin: admin.lastLogin,
+                accessLevel: 'full' as const
+            }
+        };
+        setSelectedAdmin(adminUserData);
+        setShowAdminDetailModal(true);
     };
 
     const handleEditAdmin = (admin: any) => {
@@ -355,7 +383,11 @@ export default function SuperAdminUsers() {
                                     </TableHeader>
                                     <TableBody>
                                         {filteredAdmins.map((admin, index) => (
-                                            <TableRow key={admin.id}>
+                                            <TableRow
+                                                key={admin.id}
+                                                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                                                onClick={() => handleViewAdmin(admin)}
+                                            >
                                                 <TableCell className="text-xs text-gray-500">{index + 1}</TableCell>
                                                 <TableCell className="font-medium text-sm">{admin.name}</TableCell>
                                                 <TableCell className="text-sm">{admin.email}</TableCell>
@@ -368,7 +400,7 @@ export default function SuperAdminUsers() {
                                                 </TableCell>
                                                 <TableCell className="text-sm">{admin.lastLogin}</TableCell>
                                                 <TableCell>
-                                                    <div className="flex gap-2">
+                                                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                                                         <Button
                                                             variant="outline"
                                                             size="sm"
@@ -428,6 +460,15 @@ export default function SuperAdminUsers() {
                     client={selectedClient}
                     isOpen={showClientModal}
                     onClose={() => setShowClientModal(false)}
+                />
+            )}
+
+            {/* Admin Detail Modal */}
+            {selectedAdmin && (
+                <UserDetailModal
+                    isOpen={showAdminDetailModal}
+                    onClose={() => setShowAdminDetailModal(false)}
+                    user={selectedAdmin}
                 />
             )}
 

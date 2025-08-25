@@ -4,14 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatsCard } from '@/components/ui/StatsCard';
 import { RevenueChart } from '@/components/dashboard/charts/RevenueChart';
-import { DeliveryStatusChart } from '@/components/dashboard/charts/DeliveryStatusChart';
-import { FleetPerformanceChart } from '@/components/dashboard/charts/FleetPerformanceChart';
-import { GeographicChart } from '@/components/dashboard/charts/GeographicChart';
-import { DriverPerformanceChart } from '@/components/dashboard/charts/DriverPerformanceChart';
-import { RecentDeliveriesTable } from '@/components/dashboard/tables/RecentDeliveriesTable';
+import { UsageTrendsChart } from '@/components/dashboard/charts/UsageTrendsChart';
+import { AdminPerformanceChart } from '@/components/dashboard/charts/AdminPerformanceChart';
+import { UsersDistributionChart } from '@/components/dashboard/charts/UsersDistributionChart';
 import { PendingApprovalsTable } from '@/components/dashboard/tables/PendingApprovalsTable';
 import { SystemAlertsTable } from '@/components/dashboard/tables/SystemAlertsTable';
-import { FinancialTransactionsTable } from '@/components/dashboard/tables/FinancialTransactionsTable';
 import {
     TrendingUp,
     Users,
@@ -67,81 +64,7 @@ const superAdminStats = [
     }
 ];
 
-// Mock data for charts - Rwanda-based
-const revenueData = [
-    { month: 'Jan', revenue: 3200000 },
-    { month: 'Feb', revenue: 3800000 },
-    { month: 'Mar', revenue: 4200000 },
-    { month: 'Apr', revenue: 3900000 },
-    { month: 'May', revenue: 4500000 },
-    { month: 'Jun', revenue: 4800000 }
-];
-
-const deliveryStatusData = [
-    { name: 'Delivered', value: 65, color: '#10B981' },
-    { name: 'In Transit', value: 20, color: '#3B82F6' },
-    { name: 'Pending', value: 10, color: '#F59E0B' },
-    { name: 'Cancelled', value: 5, color: '#EF4444' }
-];
-
-const fleetPerformanceData = [
-    { name: 'Toyota Dyna', deliveries: 45, efficiency: 92 },
-    { name: 'Isuzu NPR', deliveries: 38, efficiency: 88 },
-    { name: 'Mitsubishi Fuso', deliveries: 52, efficiency: 95 },
-    { name: 'Hino 300', deliveries: 28, efficiency: 85 },
-    { name: 'Nissan Atlas', deliveries: 33, efficiency: 90 }
-];
-
-const geographicData = [
-    { route: 'Kigali → Butare', revenue: 420000 },
-    { route: 'Kigali → Musanze', revenue: 380000 },
-    { route: 'Kigali → Rubavu', revenue: 410000 },
-    { route: 'Kigali → Karongi', revenue: 350000 },
-    { route: 'Kigali → Gicumbi', revenue: 320000 }
-];
-
-const driverPerformanceData = [
-    { name: 'Albert Flores', deliveries: 45, rating: 4.8 },
-    { name: 'Mike Johnson', deliveries: 38, rating: 4.6 },
-    { name: 'Alice Uwimana', deliveries: 52, rating: 4.9 },
-    { name: 'David Gasana', deliveries: 28, rating: 4.4 },
-    { name: 'Grace Uwase', deliveries: 33, rating: 4.7 }
-];
-
 // Mock data for tables - Rwanda-based
-const recentDeliveries = [
-    {
-        id: 'DEL-001',
-        client: 'Jean Baptiste',
-        driver: 'Albert Flores',
-        from: 'Kigali',
-        to: 'Butare',
-        status: 'delivered',
-        income: 280000,
-        date: '2024-01-15'
-    },
-    {
-        id: 'DEL-002',
-        client: 'Marie Claire',
-        driver: 'Mike Johnson',
-        from: 'Kigali',
-        to: 'Musanze',
-        status: 'in_transit',
-        income: 320000,
-        date: '2024-01-16'
-    },
-    {
-        id: 'DEL-003',
-        client: 'Pierre Ndayisaba',
-        driver: 'Alice Uwimana',
-        from: 'Kigali',
-        to: 'Rubavu',
-        status: 'pending',
-        income: 250000,
-        date: '2024-01-17'
-    }
-];
-
 const pendingApprovals = [
     {
         id: 'APP-001',
@@ -193,27 +116,46 @@ const systemAlerts = [
     }
 ];
 
-const financialTransactions = [
+const recentLogs = [
     {
-        id: 'TXN-001',
-        type: 'delivery_payment',
-        amount: 280000,
-        status: 'completed',
-        date: '2024-01-15'
+        id: 'LOG-001',
+        type: 'user_login',
+        user: 'john.doe@lovelycargo.rw',
+        action: 'User logged in',
+        ip: '192.168.1.100',
+        timestamp: '2024-01-15 14:30:25'
     },
     {
-        id: 'TXN-002',
-        type: 'subscription_payment',
-        amount: 500000,
-        status: 'pending',
-        date: '2024-01-16'
+        id: 'LOG-002',
+        type: 'system_config',
+        user: 'admin@lovelycargo.rw',
+        action: 'Updated system settings',
+        ip: '192.168.1.101',
+        timestamp: '2024-01-15 15:45:12'
     },
     {
-        id: 'TXN-003',
-        type: 'refund',
-        amount: 150000,
-        status: 'completed',
-        date: '2024-01-17'
+        id: 'LOG-003',
+        type: 'data_export',
+        user: 'superadmin@lovelycargo.rw',
+        action: 'Exported financial report',
+        ip: '192.168.1.102',
+        timestamp: '2024-01-15 16:20:33'
+    },
+    {
+        id: 'LOG-004',
+        type: 'user_creation',
+        user: 'admin@lovelycargo.rw',
+        action: 'Created new driver account',
+        ip: '192.168.1.101',
+        timestamp: '2024-01-15 17:10:45'
+    },
+    {
+        id: 'LOG-005',
+        type: 'security_alert',
+        user: 'system',
+        action: 'Failed login attempt detected',
+        ip: '192.168.1.105',
+        timestamp: '2024-01-15 18:05:18'
     }
 ];
 
@@ -277,7 +219,7 @@ export default function SuperAdminDashboard() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <TrendingUp className="h-5 w-5" />
-                            System Revenue Trends
+                            Revenue Trends
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -285,63 +227,48 @@ export default function SuperAdminDashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Delivery Status Chart */}
+                {/* Usage Trends Chart */}
                 <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Package className="h-5 w-5" />
-                            Delivery Status Distribution
+                            <Activity className="h-5 w-5" />
+                            Usage Trends
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <DeliveryStatusChart />
+                        <UsageTrendsChart />
                     </CardContent>
                 </Card>
 
-                {/* Fleet Performance Chart */}
+                {/* Admin Performance Chart */}
+                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Users className="h-5 w-5" />
+                            Admin Performance
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <AdminPerformanceChart />
+                    </CardContent>
+                </Card>
+
+                {/* Users Distribution Chart */}
                 <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <BarChart3 className="h-5 w-5" />
-                            Fleet Performance
+                            Users Distribution
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <FleetPerformanceChart />
-                    </CardContent>
-                </Card>
-
-                {/* Geographic Chart */}
-                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <MapPin className="h-5 w-5" />
-                            Top Routes by Revenue
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <GeographicChart />
+                        <UsersDistributionChart />
                     </CardContent>
                 </Card>
             </div>
 
             {/* Tables Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Recent Deliveries */}
-                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Package className="h-5 w-5" />
-                            Recent Deliveries
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <RecentDeliveriesTable
-                            onViewAll={() => handleViewAll('deliveries')}
-                        />
-                    </CardContent>
-                </Card>
-
                 {/* Pending Approvals */}
                 <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
                     <CardHeader>
@@ -372,18 +299,39 @@ export default function SuperAdminDashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Financial Transactions */}
+                {/* Recent Logs */}
                 <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <DollarSign className="h-5 w-5" />
-                            Financial Transactions
+                            <Database className="h-5 w-5" />
+                            Recent Logs
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <FinancialTransactionsTable
-                            onViewAll={() => handleViewAll('transactions')}
-                        />
+                        <div className="space-y-3">
+                            {recentLogs.map((log) => (
+                                <div key={log.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-sm font-medium text-gray-900">{log.user}</span>
+                                            <Badge variant="outline" className="text-xs">
+                                                {log.type.replace('_', ' ')}
+                                            </Badge>
+                                        </div>
+                                        <p className="text-sm text-gray-600">{log.action}</p>
+                                        <p className="text-xs text-gray-500 mt-1">IP: {log.ip}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-gray-500">{log.timestamp}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <Button variant="outline" size="sm" className="w-full" onClick={() => handleViewAll('logs')}>
+                                View All Logs
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
