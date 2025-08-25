@@ -578,14 +578,14 @@ export function CargoTable({
             )}
 
             {/* Cargos Table */}
-            <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden hidden md:block">
+            <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden hidden md:block w-full  ">
                 <CardHeader className="pb-4">
                     <CardTitle className="text-gray-900">{title}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
-                        <div className="min-w-[800px]">
-                            <Table>
+                        <div className="w-full">
+                            <Table className="w-ful-l">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="text-xs font-medium text-gray-600 w-16">#</TableHead>
@@ -593,9 +593,9 @@ export function CargoTable({
                                         {user?.role === 'driver' ? (
                                             <TableHead className="text-xs font-medium text-gray-600 w-32">Client</TableHead>
                                         ) : (
-                                            <TableHead className="text-xs font-medium text-gray-600 w-32">Driver</TableHead>
+                                            <TableHead className="text-xs font-medium text-gray-600 w-36">Driver</TableHead>
                                         )}
-                                        <TableHead className="text-xs font-medium text-gray-600 w-48">Route</TableHead>
+                                        <TableHead className="text-xs font-medium text-gray-600 w-64">Route</TableHead>
                                         <TableHead className="text-xs font-medium text-gray-600 w-24">Status</TableHead>
                                         {user?.role === 'driver' && (
                                             <TableHead className="text-xs font-medium text-gray-600 w-24">Priority</TableHead>
@@ -630,14 +630,9 @@ export function CargoTable({
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="max-w-xs">
+                                                    <div className="max-w-xs ">
                                                         <div className="flex items-start gap-2">
-                                                            <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
-                                                            <div className="text-xs">
-                                                                <p className="font-medium text-gray-900 truncate">{data.from}</p>
-                                                                <p className="text-gray-500">to</p>
-                                                                <p className="font-medium text-blue-600 truncate">{data.to}</p>
-                                                            </div>
+                                                            <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" /> {data.from} <span className="text-gray-500">to</span> {data.to}
                                                         </div>
                                                         <p className="text-xs text-gray-500 mt-1">{data.distance}</p>
                                                     </div>

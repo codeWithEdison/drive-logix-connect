@@ -71,7 +71,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     return (
       <div className="flex flex-col min-h-screen w-full bg-[#F9FAFE]">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20">
+        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 relative group">
           <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <img
@@ -134,6 +134,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               </Button>
             </div>
           </div>
+          <div className="pointer-events-none absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
         </header>
 
         {/* Mobile Content */}
@@ -156,7 +157,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         <div className="flex-1 flex flex-col">
           {/* Desktop Header */}
-          <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20">
+          <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 relative group">
             <div className="flex h-16 items-center gap-4 px-6">
               <SidebarTrigger className="h-9 w-9 text-gray-600 hover:text-blue-600" />
 
@@ -220,6 +221,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </div>
               </div>
             </div>
+            <div className="pointer-events-none absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
           </header>
 
           {/* Desktop Content */}

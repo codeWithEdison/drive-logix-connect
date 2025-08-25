@@ -48,13 +48,9 @@ export function StatsCard({ stats, className = "" }: StatsCardProps) {
         }
     };
 
-    // Calculate the appropriate grid columns based on number of stats
+    // Responsive grid for better mobile layout
     const getGridCols = () => {
-        const count = stats.length;
-        if (count <= 2) return "grid-cols-2";
-        if (count <= 3) return "grid-cols-3";
-        if (count <= 4) return "grid-cols-4";
-        return "grid-cols-5";
+        return "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5";
     };
 
     return (
@@ -83,7 +79,7 @@ export function StatsCard({ stats, className = "" }: StatsCardProps) {
                             {index < stats.length - 1 && (
                                 <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-px h-8 md:h-12 lg:h-16 bg-gray-200 hidden md:block"></div>
                             )}
-                            {/* Horizontal divider - only show on mobile */}
+                            {/* Horizontal divider - only show on mobile (after each pair) */}
                             {index < stats.length - 1 && index % 2 === 1 && (
                                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gray-200 md:hidden"></div>
                             )}
