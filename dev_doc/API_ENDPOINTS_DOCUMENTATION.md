@@ -4,6 +4,13 @@
 
 This document outlines all the API endpoints required for the Logistics Platform backend. The API follows RESTful principles and uses JSON for data exchange.
 
+## Data Model Alignment (Database Compatibility)
+
+- All IDs exposed by the API are UUID strings. Internally, the database stores these as BINARY(16) using UUID_TO_BIN(..., TRUE) and returns them using BIN_TO_UUID(..., TRUE).
+- Path params and body fields named "..._id" MUST be valid UUID strings.
+- For list endpoints, prefer filters that match indexed columns: status, created_at, user_id, cargo_id, driver_id, vehicle_id, and recorded_at.
+- Date/time filters should be inclusive ranges using ISO 8601 timestamps.
+
 ## Base URL
 ```
 https://api.logistics-platform.com/v1
@@ -126,7 +133,19 @@ POST /auth/verify-email
 }
 ```
 
-### 1.6 Logout
+### 1.6 Resend Verification Email
+```http
+POST /auth/resend-verification
+```
+
+**Request Body:**
+```json
+{
+  "email": "john@example.com"
+}
+```
+
+### 1.7 Logout
 ```http
 POST /auth/logout
 ```
@@ -168,7 +187,7 @@ PUT /users/change-password
 }
 ```
 
-### 2.4 Get Users (Admin Only)
+### 2.4 Get Users (Admin  and superadmin  Only)
 ```http
 GET /users?role=driver&status=active&page=1&limit=10
 ```
@@ -178,6 +197,19 @@ GET /users?role=driver&status=active&page=1&limit=10
 - `status`: active, inactive
 - `page`: page number
 - `limit`: items per page
+
+### 2.5 Approve or Reject User (Admin, Super Admin)
+```http
+PUT /admin/users/{user_id}/approval
+```
+
+**Request Body:**
+```json
+{
+  "approved": true,
+  "reason": "All documents verified"
+}
+```
 
 ---
 
@@ -279,12 +311,17 @@ PUT /drivers/status
 }
 ```
 
+### 4.7 Get Driver Assignments
+```http
+GET /drivers/assignments?status=active&page=1&limit=10
+```
+
 ### 4.6 Get Driver Performance
 ```http
 GET /drivers/performance
 ```
 
-### 4.7 Get Available Drivers (Admin)
+### 4.8 Get Available Drivers (Admin)
 ```http
 GET /drivers/available?location=kigali&vehicle_type=truck
 ```
@@ -331,7 +368,20 @@ POST /vehicles
 PUT /vehicles/{vehicle_id}
 ```
 
-### 5.5 Add Vehicle Maintenance Record
+### 5.5 Approve or Reject Vehicle (Admin)
+```http
+PUT /admin/vehicles/{vehicle_id}/approval
+```
+
+**Request Body:**
+```json
+{
+  "approved": true,
+  "reason": "Inspection passed"
+}
+```
+
+### 5.6 Add Vehicle Maintenance Record
 ```http
 POST /vehicles/{vehicle_id}/maintenance
 ```
@@ -350,12 +400,12 @@ POST /vehicles/{vehicle_id}/maintenance
 }
 ```
 
-### 5.6 Get Vehicle Maintenance History
+### 5.7 Get Vehicle Maintenance History
 ```http
 GET /vehicles/{vehicle_id}/maintenance
 ```
 
-### 5.7 Get Available Vehicles
+### 5.8 Get Available Vehicles
 ```http
 GET /vehicles/available?type=truck&capacity_min=500
 ```
@@ -420,12 +470,12 @@ PUT /cargos/{cargo_id}/status
 
 ### 6.4 Get Client Cargos
 ```http
-GET /clients/cargos?status=delivered&page=1&limit=10
+GET /clients/cargos?status=delivered&page=1&limit=10&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 6.5 Get Driver Cargos
 ```http
-GET /drivers/cargos?status=assigned&page=1&limit=10
+GET /drivers/cargos?status=assigned&page=1&limit=10&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 6.6 Cancel Cargo
@@ -437,6 +487,20 @@ POST /cargos/{cargo_id}/cancel
 ```json
 {
   "reason": "Client requested cancellation"
+}
+```
+
+### 6.7 Admin Assign Driver and Vehicle to Cargo
+```http
+POST /delivery-assignments
+```
+
+**Request Body:**
+```json
+{
+  "cargo_id": "cargo_uuid",
+  "driver_id": "driver_uuid",
+  "vehicle_id": "vehicle_uuid"
 }
 ```
 
@@ -562,6 +626,30 @@ PUT /deliveries/{cargo_id}/status
 }
 ```
 
+### 9.2.1 Confirm Delivery via OTP
+```http
+POST /deliveries/{cargo_id}/confirm-otp
+```
+
+**Request Body:**
+```json
+{
+  "otp": "123456"
+}
+```
+
+### 9.2.2 Confirm Delivery via QR
+```http
+POST /deliveries/{cargo_id}/confirm-qr
+```
+
+**Request Body:**
+```json
+{
+  "qr_token": "scanned_qr_token"
+}
+```
+
 ### 9.3 Complete Delivery
 ```http
 POST /deliveries/{cargo_id}/complete
@@ -575,6 +663,19 @@ POST /deliveries/{cargo_id}/complete
   "confirmation_method": "signature",
   "recipient_name": "Jane Smith",
   "recipient_signature": "signature_data",
+  "rating": 5,
+  "review": "Excellent service, on time delivery"
+}
+```
+
+### 9.6 Rate Delivery and Driver
+```http
+POST /deliveries/{cargo_id}/rating
+```
+
+**Request Body:**
+```json
+{
   "rating": 5,
   "review": "Excellent service, on time delivery"
 }
@@ -669,7 +770,7 @@ POST /payments
 
 ### 11.2 Get Payment History
 ```http
-GET /payments?invoice_id=invoice_uuid&page=1&limit=10
+GET /payments?invoice_id=invoice_uuid&page=1&limit=10&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 11.3 Request Refund
@@ -771,6 +872,10 @@ GET /gps/vehicles/{vehicle_id}/location
 GET /gps/vehicles/{vehicle_id}/history?start_time=2024-01-20T08:00:00Z&end_time=2024-01-20T18:00:00Z
 ```
 
+Guidelines:
+- Always provide both start_time and end_time to leverage `(vehicle_id, recorded_at)` index.
+- Use pagination for long ranges: `page`, `limit`.
+
 ### 13.4 Get Live Tracking
 ```http
 GET /gps/vehicles/{vehicle_id}/live
@@ -828,7 +933,7 @@ GET /admin/dashboard
 
 ### 15.2 Get System Logs
 ```http
-GET /admin/logs?user_id=user_uuid&action=login&page=1&limit=50
+GET /admin/logs?user_id=user_uuid&action=login&page=1&limit=50&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 15.3 Get User Management
@@ -894,6 +999,21 @@ PUT /operational/operating-hours
 }
 ```
 
+### 16.6 Approvals (Unified)
+```http
+PUT /admin/approvals
+```
+
+**Request Body:**
+```json
+{
+  "entity_type": "user|vehicle|driver",
+  "entity_id": "uuid",
+  "approved": true,
+  "reason": "Optional notes"
+}
+```
+
 ### 16.4 Get Cargo Categories
 ```http
 GET /operational/cargo-categories?is_active=true
@@ -912,6 +1032,9 @@ GET /operational/pricing-policies?is_active=true&vehicle_type=truck
 ```http
 GET /localization/translations?language=en
 ```
+
+Notes:
+- Backed by `translations` table. Use keys to fetch localized text for UI.
 
 ### 17.2 Update Translation
 ```http

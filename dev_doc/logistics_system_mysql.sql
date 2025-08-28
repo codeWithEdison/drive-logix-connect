@@ -3,15 +3,15 @@
 -- Normalized database design for ERD conversion
 -- ========================================
 
-CREATE DATABASE IF NOT EXISTS logistics_platform;
-USE logistics_platform;
+CREATE DATABASE IF NOT EXISTS loveway_logistics;
+USE loveway_logistics;
 
 -- ========================================
 -- 1. USER MANAGEMENT (Core Entity)
 -- ========================================
 
 CREATE TABLE users (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(20) UNIQUE,
@@ -29,8 +29,8 @@ CREATE TABLE users (
 );
 
 CREATE TABLE user_sessions (
-    id CHAR(36) PRIMARY KEY,
-    user_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16) NOT NULL,
     token_hash TEXT NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     ip_address VARCHAR(45),
@@ -39,12 +39,29 @@ CREATE TABLE user_sessions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Combined verification/reset tokens
+CREATE TABLE user_verification_tokens (
+    id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16) NOT NULL,
+    token_hash TEXT NOT NULL,
+    token_type ENUM('password_reset', 'email_verification') NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    used_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_uvt_user_id (user_id),
+    INDEX idx_uvt_token_type (token_type),
+    INDEX idx_uvt_expires_at (expires_at),
+    INDEX idx_uvt_token_hash (token_hash(64))
+);
+
 -- ========================================
 -- 2. CLIENT MANAGEMENT (Subtype of Users)
 -- ========================================
 
 CREATE TABLE clients (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     company_name VARCHAR(100),
     business_type ENUM('individual', 'corporate', 'government') DEFAULT 'individual',
     tax_id VARCHAR(50),
@@ -65,7 +82,7 @@ CREATE TABLE clients (
 -- ========================================
 
 CREATE TABLE drivers (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     license_number VARCHAR(50) UNIQUE,
     license_expiry DATE,
     license_type ENUM('A', 'B', 'C', 'D', 'E') NOT NULL,
@@ -84,14 +101,14 @@ CREATE TABLE drivers (
 );
 
 CREATE TABLE driver_documents (
-    id CHAR(36) PRIMARY KEY,
-    driver_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    driver_id BINARY(16) NOT NULL,
     document_type ENUM('license', 'medical_cert', 'insurance', 'vehicle_registration', 'other'),
     document_number VARCHAR(100),
     file_url TEXT,
     expiry_date DATE,
     is_verified BOOLEAN DEFAULT FALSE,
-    verified_by CHAR(36),
+    verified_by BINARY(16),
     verified_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (driver_id) REFERENCES drivers(id) ON DELETE CASCADE,
@@ -103,7 +120,7 @@ CREATE TABLE driver_documents (
 -- ========================================
 
 CREATE TABLE vehicles (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     plate_number VARCHAR(20) UNIQUE NOT NULL,
     make VARCHAR(50),
     model VARCHAR(50),
@@ -125,8 +142,8 @@ CREATE TABLE vehicles (
 );
 
 CREATE TABLE vehicle_maintenance (
-    id CHAR(36) PRIMARY KEY,
-    vehicle_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    vehicle_id BINARY(16) NOT NULL,
     maintenance_type ENUM('routine', 'repair', 'inspection', 'emergency'),
     description TEXT,
     cost DECIMAL(10,2),
@@ -144,7 +161,7 @@ CREATE TABLE vehicle_maintenance (
 -- ========================================
 
 CREATE TABLE locations (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     type ENUM('warehouse', 'pickup_point', 'delivery_point', 'office'),
     address TEXT NOT NULL,
@@ -165,7 +182,7 @@ CREATE TABLE locations (
 -- ========================================
 
 CREATE TABLE cargo_categories (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     base_rate_multiplier DECIMAL(3,2) DEFAULT 1.00,
@@ -179,19 +196,19 @@ CREATE TABLE cargo_categories (
 -- ========================================
 
 CREATE TABLE cargos (
-    id CHAR(36) PRIMARY KEY,
-    client_id CHAR(36) NOT NULL,
-    category_id CHAR(36),
+    id BINARY(16) PRIMARY KEY,
+    client_id BINARY(16) NOT NULL,
+    category_id BINARY(16),
     type VARCHAR(100),
     weight_kg FLOAT NOT NULL,
     volume FLOAT,
     dimensions JSON,
-    pickup_location_id CHAR(36),
+    pickup_location_id BINARY(16),
     pickup_address TEXT,
     pickup_contact VARCHAR(100),
     pickup_phone VARCHAR(20),
     pickup_instructions TEXT,
-    destination_location_id CHAR(36),
+    destination_location_id BINARY(16),
     destination_address TEXT,
     destination_contact VARCHAR(100),
     destination_phone VARCHAR(20),
@@ -215,7 +232,9 @@ CREATE TABLE cargos (
     FOREIGN KEY (pickup_location_id) REFERENCES locations(id),
     FOREIGN KEY (destination_location_id) REFERENCES locations(id),
     INDEX idx_cargos_client_id (client_id),
-    INDEX idx_cargos_status (status)
+    INDEX idx_cargos_status (status),
+    INDEX idx_cargos_status_created (status, created_at),
+    INDEX idx_cargos_client_created (client_id, created_at)
 );
 
 -- ========================================
@@ -223,17 +242,18 @@ CREATE TABLE cargos (
 -- ========================================
 
 CREATE TABLE delivery_assignments (
-    id CHAR(36) PRIMARY KEY,
-    cargo_id CHAR(36) NOT NULL,
-    driver_id CHAR(36) NOT NULL,
-    vehicle_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    cargo_id BINARY(16) NOT NULL,
+    driver_id BINARY(16) NOT NULL,
+    vehicle_id BINARY(16) NOT NULL,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cargo_id) REFERENCES cargos(id) ON DELETE CASCADE,
     FOREIGN KEY (driver_id) REFERENCES drivers(id),
     FOREIGN KEY (vehicle_id) REFERENCES vehicles(id),
     UNIQUE KEY unique_cargo_assignment (cargo_id),
     INDEX idx_delivery_assignments_driver_id (driver_id),
-    INDEX idx_delivery_assignments_vehicle_id (vehicle_id)
+    INDEX idx_delivery_assignments_vehicle_id (vehicle_id),
+    INDEX idx_delivery_assignments_driver_assigned (driver_id, assigned_at)
 );
 
 -- ========================================
@@ -241,8 +261,8 @@ CREATE TABLE delivery_assignments (
 -- ========================================
 
 CREATE TABLE routes (
-    id CHAR(36) PRIMARY KEY,
-    cargo_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    cargo_id BINARY(16) NOT NULL,
     route_name VARCHAR(100),
     total_distance_km DECIMAL(8,2),
     estimated_duration_minutes INT,
@@ -252,8 +272,8 @@ CREATE TABLE routes (
 );
 
 CREATE TABLE route_waypoints (
-    id CHAR(36) PRIMARY KEY,
-    route_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    route_id BINARY(16) NOT NULL,
     waypoint_order INT NOT NULL,
     latitude DECIMAL(10,8) NOT NULL,
     longitude DECIMAL(11,8) NOT NULL,
@@ -272,8 +292,8 @@ CREATE TABLE route_waypoints (
 -- ========================================
 
 CREATE TABLE deliveries (
-    id CHAR(36) PRIMARY KEY,
-    cargo_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    cargo_id BINARY(16) NOT NULL,
     start_time TIMESTAMP NULL,
     end_time TIMESTAMP NULL,
     actual_pickup_time TIMESTAMP NULL,
@@ -288,23 +308,25 @@ CREATE TABLE deliveries (
     delivery_notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cargo_id) REFERENCES cargos(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_cargo_delivery (cargo_id)
+    UNIQUE KEY unique_cargo_delivery (cargo_id),
+    INDEX idx_deliveries_cargo_created (cargo_id, created_at)
 );
 
 CREATE TABLE delivery_status_updates (
-    id CHAR(36) PRIMARY KEY,
-    cargo_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    cargo_id BINARY(16) NOT NULL,
     status ENUM('pending', 'quoted', 'accepted', 'assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled', 'disputed'),
     location_latitude DECIMAL(10,8),
     location_longitude DECIMAL(11,8),
     location_address TEXT,
     notes TEXT,
-    updated_by CHAR(36),
+    updated_by BINARY(16),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cargo_id) REFERENCES cargos(id) ON DELETE CASCADE,
     FOREIGN KEY (updated_by) REFERENCES users(id),
     INDEX idx_delivery_status_cargo_id (cargo_id),
-    INDEX idx_delivery_status_created_at (created_at)
+    INDEX idx_delivery_status_created_at (created_at),
+    INDEX idx_delivery_status_cargo_id_created_at (cargo_id, created_at)
 );
 
 -- ========================================
@@ -312,7 +334,7 @@ CREATE TABLE delivery_status_updates (
 -- ========================================
 
 CREATE TABLE pricing_policies (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     base_rate_per_km DECIMAL(10,2) NOT NULL,
     rate_per_kg DECIMAL(10,2) NOT NULL,
@@ -332,14 +354,14 @@ CREATE TABLE pricing_policies (
 -- ========================================
 
 CREATE TABLE invoices (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     invoice_number VARCHAR(50) UNIQUE NOT NULL,
-    cargo_id CHAR(36) NOT NULL,
+    cargo_id BINARY(16) NOT NULL,
     subtotal DECIMAL(10,2) NOT NULL,
     tax_amount DECIMAL(10,2) DEFAULT 0.00,
     discount_amount DECIMAL(10,2) DEFAULT 0.00,
     total_amount DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(3) DEFAULT 'USD',
+    currency VARCHAR(3) DEFAULT 'RWF',
     status ENUM('draft', 'sent', 'paid', 'overdue', 'cancelled') DEFAULT 'draft',
     due_date DATE,
     paid BOOLEAN DEFAULT FALSE,
@@ -351,7 +373,8 @@ CREATE TABLE invoices (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (cargo_id) REFERENCES cargos(id),
     UNIQUE KEY unique_cargo_invoice (cargo_id),
-    INDEX idx_invoices_status (status)
+    INDEX idx_invoices_status (status),
+    INDEX idx_invoices_status_created (status, created_at)
 );
 
 -- ========================================
@@ -359,8 +382,8 @@ CREATE TABLE invoices (
 -- ========================================
 
 CREATE TABLE payment_transactions (
-    id CHAR(36) PRIMARY KEY,
-    invoice_id CHAR(36),
+    id BINARY(16) PRIMARY KEY,
+    invoice_id BINARY(16),
     amount DECIMAL(10,2) NOT NULL,
     payment_method ENUM('cash', 'mobile_money', 'card', 'online', 'bank_transfer'),
     transaction_id VARCHAR(100),
@@ -374,8 +397,8 @@ CREATE TABLE payment_transactions (
 );
 
 CREATE TABLE refunds (
-    id CHAR(36) PRIMARY KEY,
-    invoice_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    invoice_id BINARY(16) NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     reason TEXT,
     status ENUM('pending', 'approved', 'processed', 'rejected'),
@@ -390,8 +413,8 @@ CREATE TABLE refunds (
 -- ========================================
 
 CREATE TABLE insurance_policies (
-    id CHAR(36) PRIMARY KEY,
-    cargo_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    cargo_id BINARY(16) NOT NULL,
     policy_number VARCHAR(100),
     coverage_amount DECIMAL(10,2),
     premium_amount DECIMAL(10,2),
@@ -405,8 +428,8 @@ CREATE TABLE insurance_policies (
 );
 
 CREATE TABLE insurance_claims (
-    id CHAR(36) PRIMARY KEY,
-    cargo_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    cargo_id BINARY(16) NOT NULL,
     claim_number VARCHAR(100),
     claim_amount DECIMAL(10,2),
     claim_reason TEXT,
@@ -424,8 +447,8 @@ CREATE TABLE insurance_claims (
 -- ========================================
 
 CREATE TABLE gps_tracking (
-    id CHAR(36) PRIMARY KEY,
-    vehicle_id CHAR(36),
+    id BINARY(16) PRIMARY KEY,
+    vehicle_id BINARY(16),
     latitude DECIMAL(10,8) NOT NULL,
     longitude DECIMAL(11,8) NOT NULL,
     altitude DECIMAL(8,2),
@@ -436,7 +459,8 @@ CREATE TABLE gps_tracking (
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (vehicle_id) REFERENCES vehicles(id),
     INDEX idx_gps_tracking_vehicle_id (vehicle_id),
-    INDEX idx_gps_tracking_recorded_at (recorded_at)
+    INDEX idx_gps_tracking_recorded_at (recorded_at),
+    INDEX idx_gps_tracking_vehicle_recorded (vehicle_id, recorded_at)
 );
 
 -- ========================================
@@ -444,11 +468,11 @@ CREATE TABLE gps_tracking (
 -- ========================================
 
 CREATE TABLE system_logs (
-    id CHAR(36) PRIMARY KEY,
-    user_id CHAR(36),
+    id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16),
     action VARCHAR(255) NOT NULL,
     entity_type VARCHAR(50),
-    entity_id CHAR(36),
+    entity_id BINARY(16),
     description TEXT,
     ip_address VARCHAR(45),
     user_agent TEXT,
@@ -459,8 +483,8 @@ CREATE TABLE system_logs (
 );
 
 CREATE TABLE notifications (
-    id CHAR(36) PRIMARY KEY,
-    user_id CHAR(36) NOT NULL,
+    id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16) NOT NULL,
     title VARCHAR(255),
     message TEXT NOT NULL,
     type ENUM('sms', 'email', 'push', 'in_app') NOT NULL,
@@ -478,7 +502,7 @@ CREATE TABLE notifications (
 -- ========================================
 
 CREATE TABLE service_areas (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     city VARCHAR(100),
     country VARCHAR(100),
@@ -488,9 +512,9 @@ CREATE TABLE service_areas (
 );
 
 CREATE TABLE operating_hours (
-    id CHAR(36) PRIMARY KEY,
+    id BINARY(16) PRIMARY KEY,
     entity_type ENUM('location', 'driver', 'vehicle') NOT NULL,
-    entity_id CHAR(36) NOT NULL,
+    entity_id BINARY(16) NOT NULL,
     day_of_week INT CHECK (day_of_week BETWEEN 0 AND 6),
     start_time TIME,
     end_time TIME,
@@ -517,25 +541,22 @@ CREATE TABLE translations (
 -- SAMPLE DATA
 -- ========================================
 
--- Sample cargo categories
 INSERT INTO cargo_categories (id, name, description, base_rate_multiplier, special_handling_required) VALUES
-(UUID(), 'Electronics', 'Computers, phones, gadgets', 1.25, TRUE),
-(UUID(), 'Fragile Items', 'Glass, ceramics, artwork', 1.30, TRUE),
-(UUID(), 'Food & Beverages', 'Perishable food items', 1.35, TRUE),
-(UUID(), 'Documents', 'Paper files, packages', 0.90, FALSE),
-(UUID(), 'General Cargo', 'Mixed items, household goods', 1.00, FALSE);
+(UUID_TO_BIN(UUID(), TRUE), 'Electronics', 'Computers, phones, gadgets', 1.25, TRUE),
+(UUID_TO_BIN(UUID(), TRUE), 'Fragile Items', 'Glass, ceramics, artwork', 1.30, TRUE),
+(UUID_TO_BIN(UUID(), TRUE), 'Food & Beverages', 'Perishable food items', 1.35, TRUE),
+(UUID_TO_BIN(UUID(), TRUE), 'Documents', 'Paper files, packages', 0.90, FALSE),
+(UUID_TO_BIN(UUID(), TRUE), 'General Cargo', 'Mixed items, household goods', 1.00, FALSE);
 
--- Sample service areas
 INSERT INTO service_areas (id, name, city, country, coverage_radius_km) VALUES
-(UUID(), 'Kigali Central', 'Kigali', 'Rwanda', 25.00),
-(UUID(), 'Western Province', 'Gisenyi', 'Rwanda', 75.00),
-(UUID(), 'Southern Region', 'Butare', 'Rwanda', 60.00);
+(UUID_TO_BIN(UUID(), TRUE), 'Kigali Central', 'Kigali', 'Rwanda', 25.00),
+(UUID_TO_BIN(UUID(), TRUE), 'Western Province', 'Gisenyi', 'Rwanda', 75.00),
+(UUID_TO_BIN(UUID(), TRUE), 'Southern Region', 'Butare', 'Rwanda', 60.00);
 
--- Sample pricing policies
 INSERT INTO pricing_policies (id, name, base_rate_per_km, rate_per_kg, minimum_fare) VALUES
-(UUID(), 'Standard Rate', 2.00, 0.50, 10.00),
-(UUID(), 'Express Delivery', 3.00, 0.75, 15.00),
-(UUID(), 'Economy Rate', 1.50, 0.30, 8.00);
+(UUID_TO_BIN(UUID(), TRUE), 'Standard Rate', 2.00, 0.50, 10.00),
+(UUID_TO_BIN(UUID(), TRUE), 'Express Delivery', 3.00, 0.75, 15.00),
+(UUID_TO_BIN(UUID(), TRUE), 'Economy Rate', 1.50, 0.30, 8.00);
 
 -- ========================================
 -- VIEWS FOR ERD ANALYSIS
@@ -544,7 +565,7 @@ INSERT INTO pricing_policies (id, name, base_rate_per_km, rate_per_kg, minimum_f
 -- Active deliveries view
 CREATE VIEW active_deliveries AS
 SELECT 
-    c.id as cargo_id,
+    BIN_TO_UUID(c.id, TRUE) as cargo_id,
     c.type as cargo_type,
     c.status as cargo_status,
     c.priority,
@@ -564,7 +585,7 @@ WHERE c.status IN ('assigned', 'picked_up', 'in_transit');
 -- Driver performance view
 CREATE VIEW driver_performance AS
 SELECT 
-    d.id as driver_id,
+    BIN_TO_UUID(d.id, TRUE) as driver_id,
     u.full_name,
     d.rating,
     d.total_deliveries,

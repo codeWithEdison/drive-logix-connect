@@ -209,10 +209,10 @@ export function TrackingMap() {
             <Phone className="h-3 w-3 mr-1" />
             Call
           </Button>
-          <Button size="sm" variant="outline" className="flex-1">
+          {/* <Button size="sm" variant="outline" className="flex-1">
             <MessageCircle className="h-3 w-3 mr-1" />
             Chat
-          </Button>
+          </Button> */}
         </div>
       </div>
 

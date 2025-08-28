@@ -224,10 +224,10 @@ const TrackingPage = () => {
                   <Phone className="h-3 w-3 mr-1" />
                   Call
                 </Button>
-                <Button size="sm" variant="outline" className="w-full">
+                {/* <Button size="sm" variant="outline" className="w-full">
                   <MessageCircle className="h-3 w-3 mr-1" />
                   Chat
-                </Button>
+                </Button> */}
               </div>
             </CardContent>
           </Card>
