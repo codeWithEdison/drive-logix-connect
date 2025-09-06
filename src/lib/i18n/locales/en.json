@@ -22,6 +22,7 @@
     "refresh": "Refresh",
     "retry": "Retry",
     "view": "View",
+    "viewAll": "View All",
     "download": "Download",
     "upload": "Upload",
     "call": "Call",
@@ -258,6 +259,8 @@
     "admin": "Admin"
   },
   "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Welcome to your cargo management dashboard",
     "welcome": "Welcome",
     "overview": "Overview",
     "totalCargos": "Total Cargos",
@@ -268,8 +271,19 @@
     "recentActivity": "Recent Activity",
     "quickActions": "Quick Actions",
     "createCargo": "Create Cargo",
+    "createNewCargo": "Create New Cargo",
     "trackDelivery": "Track Delivery",
-    "viewReports": "View Reports"
+    "viewReports": "View Reports",
+    "liveTracking": "Live Tracking",
+    "noRecentActivity": "No recent activity",
+    "recentInvoices": "Recent Invoices",
+    "invoiceNo": "Invoice #",
+    "cargoId": "Cargo ID",
+    "client": "Client",
+    "amount": "Amount",
+    "status": "Status",
+    "noRecentInvoices": "No recent invoices",
+    "loadError": "Failed to load dashboard data"
   },
   "cargo": {
     "createCargo": "Create Cargo",
@@ -418,7 +432,15 @@
     "downloadPDF": "Download PDF",
     "markAsPaid": "Mark as Paid",
     "invoiceGenerated": "Invoice generated successfully",
-    "invoiceUpdated": "Invoice updated successfully"
+    "invoiceUpdated": "Invoice updated successfully",
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "overdue": "Overdue",
+      "draft": "Draft",
+      "sent": "Sent",
+      "cancelled": "Cancelled"
+    }
   },
   "payment": {
     "paymentDetails": "Payment Details",

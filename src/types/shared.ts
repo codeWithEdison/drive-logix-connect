@@ -243,8 +243,10 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   user: User;
-  token: string;
-  refresh_token?: string;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
 }
 
 // ===========================================

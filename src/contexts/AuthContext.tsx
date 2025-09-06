@@ -57,7 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await AuthService.login(loginData);
 
       if (result.success && result.data) {
-        const { user, token, refresh_token } = result.data;
+        const { user, tokens } = result.data;
+        const { accessToken, refreshToken } = tokens;
 
         // Check if user's email is verified
         if (!user.is_verified) {
@@ -68,9 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Store user data and tokens
         localStorage.setItem("logistics_user", JSON.stringify(user));
-        localStorage.setItem("access_token", token);
-        if (refresh_token) {
-          localStorage.setItem("refresh_token", refresh_token);
+        localStorage.setItem("access_token", accessToken);
+        if (refreshToken) {
+          localStorage.setItem("refresh_token", refreshToken);
         }
 
         setUser(user);

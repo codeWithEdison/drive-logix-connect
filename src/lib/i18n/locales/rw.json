@@ -22,6 +22,7 @@
     "refresh": "Subira",
     "retry": "Gerageza nanone",
     "view": "Reba",
+    "viewAll": "Reba byose",
     "download": "Kuramo",
     "upload": "Ohereza",
     "call": "Hamagara",
@@ -261,6 +262,8 @@
     "admin": "Umuyobozi"
   },
   "dashboard": {
+    "title": "Ikinyabwoba",
+    "subtitle": "Murakaza neza ku kinyabwoba cyawe cyo gucunga ibintu",
     "welcome": "Murakaza neza",
     "overview": "Icyegeranyo",
     "totalCargos": "Ibintu byose",
@@ -271,8 +274,19 @@
     "recentActivity": "Ibyakozwe vuba",
     "quickActions": "Ibyo gukora vuba",
     "createCargo": "Kurema ikintu",
+    "createNewCargo": "Kurema ikintu gishya",
     "trackDelivery": "Kurikirana kohereza",
-    "viewReports": "Reba raporo"
+    "viewReports": "Reba raporo",
+    "liveTracking": "Kurikirana mu Buryo",
+    "noRecentActivity": "Nta byakozwe byabaye",
+    "recentInvoices": "Amafunguzo yabaye",
+    "invoiceNo": "Amafunguzo #",
+    "cargoId": "ID y'ikintu",
+    "client": "Umukiriya",
+    "amount": "Amafaranga",
+    "status": "Imiterere",
+    "noRecentInvoices": "Nta mafunguzo yabaye",
+    "loadError": "Ntabwo byakozwe neza gufungura amakuru y'ikinyabwoba"
   },
   "cargo": {
     "createCargo": "Kurema ikintu",
@@ -421,7 +435,15 @@
     "downloadPDF": "Kuramo PDF",
     "markAsPaid": "Kwandika nk'ishyuwe",
     "invoiceGenerated": "Akarita karemwe neza",
-    "invoiceUpdated": "Akarita kahinduwe neza"
+    "invoiceUpdated": "Akarita kahinduwe neza",
+    "status": {
+      "paid": "Ryishyuwe",
+      "pending": "Gitegereje",
+      "overdue": "Cyarenze igihe",
+      "draft": "Gutangira",
+      "sent": "Cyatumijwe",
+      "cancelled": "Cyahagaritswe"
+    }
   },
   "payment": {
     "paymentDetails": "Ibyerekeye kwishyura",

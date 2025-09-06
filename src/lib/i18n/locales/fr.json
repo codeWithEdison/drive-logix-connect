@@ -22,6 +22,7 @@
     "refresh": "Actualiser",
     "retry": "Réessayer",
     "view": "Voir",
+    "viewAll": "Voir tout",
     "download": "Télécharger",
     "upload": "Téléverser",
     "call": "Appeler",
@@ -258,6 +259,8 @@
     "admin": "Administration"
   },
   "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Bienvenue sur votre tableau de bord de gestion de cargaison",
     "welcome": "Bienvenue",
     "overview": "Aperçu",
     "totalCargos": "Total des cargasions",
@@ -268,8 +271,19 @@
     "recentActivity": "Activité récente",
     "quickActions": "Actions rapides",
     "createCargo": "Créer une cargaison",
+    "createNewCargo": "Créer une nouvelle cargaison",
     "trackDelivery": "Suivre la livraison",
-    "viewReports": "Voir les rapports"
+    "viewReports": "Voir les rapports",
+    "liveTracking": "Suivi en direct",
+    "noRecentActivity": "Aucune activité récente",
+    "recentInvoices": "Factures récentes",
+    "invoiceNo": "Facture #",
+    "cargoId": "ID de cargaison",
+    "client": "Client",
+    "amount": "Montant",
+    "status": "Statut",
+    "noRecentInvoices": "Aucune facture récente",
+    "loadError": "Échec du chargement des données du tableau de bord"
   },
   "cargo": {
     "createCargo": "Créer une cargaison",
@@ -418,7 +432,15 @@
     "downloadPDF": "Télécharger PDF",
     "markAsPaid": "Marquer comme payé",
     "invoiceGenerated": "Facture générée avec succès",
-    "invoiceUpdated": "Facture mise à jour avec succès"
+    "invoiceUpdated": "Facture mise à jour avec succès",
+    "status": {
+      "paid": "Payé",
+      "pending": "En attente",
+      "overdue": "En retard",
+      "draft": "Brouillon",
+      "sent": "Envoyé",
+      "cancelled": "Annulé"
+    }
   },
   "payment": {
     "paymentDetails": "Détails du paiement",
