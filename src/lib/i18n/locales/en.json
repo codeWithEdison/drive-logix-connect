@@ -137,7 +137,10 @@
     "on": "On",
     "off": "Off",
     "true": "True",
-    "false": "False"
+    "false": "False",
+    "fromLastMonth": "from last month",
+    "fromLastWeek": "from last week",
+    "fromLastYear": "from last year"
   },
   "auth": {
     "login": "Login",
@@ -481,7 +484,45 @@
     "startTime": "Start Time",
     "endTime": "End Time",
     "duration": "Duration",
-    "distance": "Distance"
+    "distance": "Distance",
+    "title": "Live Tracking",
+    "subtitle": "Track your cargo in real-time",
+    "enterCargoIdPlaceholder": "Enter cargo ID to track...",
+    "track": "Track",
+    "liveGpsTracking": "Live GPS Tracking",
+    "routeProgress": "Route Progress",
+    "progress": "Progress",
+    "from": "FROM",
+    "to": "TO",
+    "cargoDetails": "Cargo Details",
+    "cargoId": "Cargo ID",
+    "eta": "ETA",
+    "driverInformation": "Driver Information",
+    "rating": "Rating",
+    "truckId": "Truck ID",
+    "phone": "Phone",
+    "noPhone": "No phone available",
+    "call": "Call",
+    "deliveryTimeline": "Delivery Timeline",
+    "noCargoId": "No Cargo ID",
+    "noCargoIdDescription": "Please enter a cargo ID to start tracking",
+    "noTrackingData": "No Tracking Data",
+    "noTrackingDataDescription": "Tracking information is not available for this cargo",
+    "loadError": "Failed to load tracking data",
+    "enterCargoId": "Please enter a cargo ID",
+    "noDriverPhone": "Driver phone number not available",
+    "locationUnknown": "Location unknown",
+    "etaUnknown": "ETA unknown",
+    "status": {
+      "pending": "Pending",
+      "assigned": "Assigned",
+      "active": "Active",
+      "pickup_completed": "Pickup Completed",
+      "in_transit": "In Transit",
+      "out_for_delivery": "Out for Delivery",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    }
   },
   "status": {
     "pending": "Pending",
@@ -546,7 +587,10 @@
     "validationError": "Validation error. Please check your input.",
     "serverError": "Server error. Please try again later.",
     "timeout": "Request timeout. Please try again.",
-    "unknownError": "An unknown error occurred."
+    "unknownError": "An unknown error occurred.",
+    "networkErrorDescription": "Please check your internet connection and try again",
+    "unauthorizedDescription": "You don't have permission to access this resource. Please login again.",
+    "notFoundDescription": "The requested resource could not be found. Please check the URL or try again later."
   },
   "validation": {
     "required": "This field is required",
@@ -855,15 +899,5 @@
       "bank_transfer": "Bank Transfer",
       "online": "Online"
     }
-  },
-  "errors": {
-    "networkErrorDescription": "Please check your internet connection and try again",
-    "unauthorizedDescription": "You don't have permission to access this resource. Please login again.",
-    "notFoundDescription": "The requested resource could not be found. Please check the URL or try again later."
-  },
-  "common": {
-    "fromLastMonth": "from last month",
-    "fromLastWeek": "from last week",
-    "fromLastYear": "from last year"
   }
 }

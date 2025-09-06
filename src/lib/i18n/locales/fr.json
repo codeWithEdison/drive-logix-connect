@@ -137,7 +137,10 @@
     "on": "Activé",
     "off": "Désactivé",
     "true": "Vrai",
-    "false": "Faux"
+    "false": "Faux",
+    "fromLastMonth": "du mois dernier",
+    "fromLastWeek": "de la semaine dernière",
+    "fromLastYear": "de l'année dernière"
   },
   "auth": {
     "login": "Connexion",
@@ -546,7 +549,10 @@
     "validationError": "Erreur de validation. Vérifiez vos entrées.",
     "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
     "timeout": "Délai d'attente dépassé. Veuillez réessayer.",
-    "unknownError": "Une erreur inconnue s'est produite."
+    "unknownError": "Une erreur inconnue s'est produite.",
+    "networkErrorDescription": "Veuillez vérifier votre connexion internet et réessayer",
+    "unauthorizedDescription": "Vous n'avez pas la permission d'accéder à cette ressource. Veuillez vous reconnecter.",
+    "notFoundDescription": "La ressource demandée n'a pas pu être trouvée. Veuillez vérifier l'URL ou réessayer plus tard."
   },
   "validation": {
     "required": "Ce champ est requis",
@@ -855,15 +861,5 @@
       "bank_transfer": "Virement bancaire",
       "online": "En ligne"
     }
-  },
-  "errors": {
-    "networkErrorDescription": "Veuillez vérifier votre connexion internet et réessayer",
-    "unauthorizedDescription": "Vous n'avez pas la permission d'accéder à cette ressource. Veuillez vous reconnecter.",
-    "notFoundDescription": "La ressource demandée n'a pas pu être trouvée. Veuillez vérifier l'URL ou réessayer plus tard."
-  },
-  "common": {
-    "fromLastMonth": "du mois dernier",
-    "fromLastWeek": "de la semaine dernière",
-    "fromLastYear": "de l'année dernière"
   }
 }
