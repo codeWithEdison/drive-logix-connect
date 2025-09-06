@@ -10,9 +10,7 @@ import {
 import { customToast } from "@/lib/utils/toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
-export { UserRole } from "@/types/shared";
-
-export interface AuthContextType {
+interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: CreateUserRequest) => Promise<boolean>;
@@ -139,13 +137,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getDefaultRoute = (role: UserRole): string => {
     switch (role) {
-      case UserRole.CLIENT:
+      case "client":
         return "/";
-      case UserRole.DRIVER:
+      case "driver":
         return "/driver";
-      case UserRole.ADMIN:
+      case "admin":
         return "/admin";
-      case UserRole.SUPER_ADMIN:
+      case "super_admin":
         return "/super-admin";
       default:
         return "/";

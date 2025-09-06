@@ -6,7 +6,6 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types/shared";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Toaster } from "@/components/ui/toaster";
@@ -90,7 +89,7 @@ function AppContent() {
         <Route
           path="/"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
+            <ProtectedRoute allowedRoles={["client"]}>
               <Index />
             </ProtectedRoute>
           }
@@ -98,7 +97,7 @@ function AppContent() {
         <Route
           path="/create-cargo"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
+            <ProtectedRoute allowedRoles={["client"]}>
               <CreateCargo />
             </ProtectedRoute>
           }
@@ -106,7 +105,7 @@ function AppContent() {
         <Route
           path="/my-cargos"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
+            <ProtectedRoute allowedRoles={["client"]}>
               <MyCargos />
             </ProtectedRoute>
           }
@@ -114,7 +113,7 @@ function AppContent() {
         <Route
           path="/tracking"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
+            <ProtectedRoute allowedRoles={["client"]}>
               <TrackingPage />
             </ProtectedRoute>
           }
@@ -122,7 +121,7 @@ function AppContent() {
         <Route
           path="/history"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
+            <ProtectedRoute allowedRoles={["client"]}>
               <History />
             </ProtectedRoute>
           }
@@ -130,7 +129,7 @@ function AppContent() {
         <Route
           path="/payment/:invoiceId?"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
+            <ProtectedRoute allowedRoles={["client"]}>
               <PaymentPage />
             </ProtectedRoute>
           }
@@ -138,7 +137,7 @@ function AppContent() {
         <Route
           path="/invoices"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
+            <ProtectedRoute allowedRoles={["client"]}>
               <Invoices />
             </ProtectedRoute>
           }
@@ -146,7 +145,7 @@ function AppContent() {
         <Route
           path="/payment-success"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.CLIENT]}>
+            <ProtectedRoute allowedRoles={["client"]}>
               <PaymentSuccess />
             </ProtectedRoute>
           }
@@ -156,7 +155,7 @@ function AppContent() {
         <Route
           path="/driver"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.DRIVER]}>
+            <ProtectedRoute allowedRoles={["driver"]}>
               <DriverDashboard />
             </ProtectedRoute>
           }
@@ -164,7 +163,7 @@ function AppContent() {
         <Route
           path="/driver/cargos"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.DRIVER]}>
+            <ProtectedRoute allowedRoles={["driver"]}>
               <AssignedCargosPage />
             </ProtectedRoute>
           }
@@ -172,7 +171,7 @@ function AppContent() {
         <Route
           path="/driver/deliveries"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.DRIVER]}>
+            <ProtectedRoute allowedRoles={["driver"]}>
               <DriverDeliveries />
             </ProtectedRoute>
           }
@@ -180,7 +179,7 @@ function AppContent() {
         <Route
           path="/driver/history"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.DRIVER]}>
+            <ProtectedRoute allowedRoles={["driver"]}>
               <DriverHistory />
             </ProtectedRoute>
           }
@@ -190,7 +189,7 @@ function AppContent() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboard />
             </ProtectedRoute>
           }
@@ -198,7 +197,7 @@ function AppContent() {
         <Route
           path="/admin/cargos"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminCargos />
             </ProtectedRoute>
           }
@@ -206,7 +205,7 @@ function AppContent() {
         <Route
           path="/admin/users"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminUsers />
             </ProtectedRoute>
           }
@@ -214,7 +213,7 @@ function AppContent() {
         <Route
           path="/admin/trucks"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminTrucks />
             </ProtectedRoute>
           }
@@ -222,7 +221,7 @@ function AppContent() {
         <Route
           path="/admin/settings"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminSettings />
             </ProtectedRoute>
           }
@@ -230,7 +229,7 @@ function AppContent() {
         <Route
           path="/admin/reports"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminReports />
             </ProtectedRoute>
           }
@@ -240,7 +239,7 @@ function AppContent() {
         <Route
           path="/super-admin"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+            <ProtectedRoute allowedRoles={["super_admin"]}>
               <SuperAdminDashboard />
             </ProtectedRoute>
           }
@@ -248,7 +247,7 @@ function AppContent() {
         <Route
           path="/super-admin/users"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+            <ProtectedRoute allowedRoles={["super_admin"]}>
               <SuperAdminUsers />
             </ProtectedRoute>
           }
@@ -256,7 +255,7 @@ function AppContent() {
         <Route
           path="/super-admin/settings"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+            <ProtectedRoute allowedRoles={["super_admin"]}>
               <SuperAdminSettings />
             </ProtectedRoute>
           }
@@ -264,7 +263,7 @@ function AppContent() {
         <Route
           path="/super-admin/logs"
           element={
-            <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+            <ProtectedRoute allowedRoles={["super_admin"]}>
               <SuperAdminLogs />
             </ProtectedRoute>
           }
