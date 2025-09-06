@@ -18,6 +18,8 @@ import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+import VerifyEmail from "@/pages/VerifyEmail";
 import Index from "@/pages/Index";
 import CreateCargo from "@/pages/CreateCargo";
 import MyCargos from "@/pages/MyCargos";
@@ -43,10 +45,13 @@ import NotFound from "@/pages/NotFound";
 import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
 
 function AppContent() {
-  const { isAuthenticated, user, getDefaultRoute } = useAuth();
+  const { isAuthenticated, user, getDefaultRoute, isInitialized } = useAuth();
 
-  // Show loading state while auth is being determined
-  if (user === null && localStorage.getItem("logistics_user")) {
+  // Debug: Log current state (remove in production)
+  // console.log("AppContent - isAuthenticated:", isAuthenticated, "user:", user, "isInitialized:", isInitialized, "pathname:", window.location.pathname);
+
+  // Show loading state while auth is being initialized
+  if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -63,6 +68,9 @@ function AppContent() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );

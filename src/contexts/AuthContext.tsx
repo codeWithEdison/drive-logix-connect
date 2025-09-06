@@ -8,6 +8,7 @@ import {
   CreateUserRequest,
 } from "@/types/shared";
 import { customToast } from "@/lib/utils/toast";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface AuthContextType {
   user: User | null;
@@ -17,13 +18,16 @@ interface AuthContextType {
   isAuthenticated: boolean;
   getDefaultRoute: (role: UserRole) => string;
   isLoading: boolean;
+  isInitialized: boolean;
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Check for stored user on mount
@@ -41,6 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("refresh_token");
       }
     }
+
+    // Mark as initialized after checking localStorage
+    setIsInitialized(true);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -51,6 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (result.success && result.data) {
         const { user, token, refresh_token } = result.data;
+
+        // Check if user's email is verified
+        if (!user.is_verified) {
+          customToast.error(t("auth.emailNotVerified"));
+          setIsLoading(false);
+          return false;
+        }
 
         // Store user data and tokens
         localStorage.setItem("logistics_user", JSON.stringify(user));
@@ -85,23 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await AuthService.register(data);
 
-      if (result.success && result.data) {
-        const { user, token, refresh_token } = result.data;
-
-        // Store user data and tokens
-        localStorage.setItem("logistics_user", JSON.stringify(user));
-        localStorage.setItem("access_token", token);
-        if (refresh_token) {
-          localStorage.setItem("refresh_token", refresh_token);
-        }
-
-        setUser(user);
-        customToast.auth.registerSuccess(user.full_name);
-
-        // Navigate to appropriate route based on user role
-        const defaultRoute = getDefaultRoute(user.role);
-        navigate(defaultRoute);
-
+      if (result.success) {
+        // Don't store tokens during registration - user needs to verify email first
+        customToast.auth.registerSuccess(data.full_name);
         return true;
       }
       return false;
@@ -159,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         getDefaultRoute,
         isLoading,
+        isInitialized,
       }}
     >
       {children}

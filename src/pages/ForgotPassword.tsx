@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,27 +10,86 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, Clock } from "lucide-react";
 import { customToast } from "@/lib/utils/toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
+import { useRequestPasswordReset } from "@/lib/api/hooks";
 
 export default function ForgotPassword() {
   const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [canResend, setCanResend] = useState(false);
+
+  // API hook for password reset request
+  const requestPasswordResetMutation = useRequestPasswordReset();
+
+  // Timer effect for resend functionality
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock password reset request
-    setTimeout(() => {
-      customToast.success(t("auth.passwordResetSent"));
-      setIsSubmitted(true);
+    try {
+      const result = await requestPasswordResetMutation.mutateAsync(email);
+
+      if (result.success) {
+        customToast.success(t("auth.passwordResetSent"));
+        setIsSubmitted(true);
+        setResendTimer(60); // 60 seconds timer
+        setCanResend(false);
+      } else {
+        customToast.error(result.message || t("auth.passwordResetFailed"));
+      }
+    } catch (error: any) {
+      console.error("Password reset request error:", error);
+      customToast.error(
+        error?.error?.message || error?.message || t("auth.passwordResetFailed")
+      );
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    setIsLoading(true);
+
+    try {
+      const result = await requestPasswordResetMutation.mutateAsync(email);
+
+      if (result.success) {
+        customToast.success(t("auth.emailSentAgain"));
+        setResendTimer(60); // Reset timer to 60 seconds
+        setCanResend(false);
+      } else {
+        customToast.error(result.message || t("auth.passwordResetFailed"));
+      }
+    } catch (error: any) {
+      console.error("Resend password reset error:", error);
+      customToast.error(
+        error?.error?.message || error?.message || t("auth.passwordResetFailed")
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -57,6 +116,46 @@ export default function ForgotPassword() {
                 <p className="text-sm text-muted-foreground">
                   {t("auth.passwordResetInstructions")}
                 </p>
+                <p className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <strong>💡 {t("auth.checkSpamFolder")}</strong>
+                </p>
+
+                {/* Resend Email Section */}
+                <div className="pt-4 space-y-3">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {t("auth.didntReceiveEmail")}
+                    </p>
+
+                    {canResend ? (
+                      <Button
+                        onClick={handleResendEmail}
+                        disabled={isLoading}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Clock className="h-4 w-4 mr-2 animate-spin" />
+                            {t("auth.sending")}
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="h-4 w-4 mr-2" />
+                            {t("auth.sendAnotherEmail")}
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {t("auth.resendIn")} {resendTimer} {t("auth.seconds")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="pt-4">
                   <Link to="/login">
                     <Button variant="outline" className="w-full">
