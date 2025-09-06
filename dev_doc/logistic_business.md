@@ -4,26 +4,26 @@ Functions and features
 Client (Cargo Owner) Functions
 Clients are users who need to send cargo using trucks or moto.
 
-- Register / Login / Reset Password
-- Enter cargo details (type, size in kg or volume, pickup location, destination)
-- Get automatic cost estimation
-- Select truck based on capacity and availability
-- View current and past registered cargos
-- Cancel pending cargos (before approval)
+- Register / Login / Reset Password ✅
+- Enter cargo details (type, size in kg or volume, pickup location, destination) ✅
+- Get automatic cost estimation ✅
+- Select truck based on capacity and availability ✅
+- View current and past registered cargos✅
+- Cancel pending cargos (before approval)   ✅
 - Live GPS tracking of truck on map (real-time)
 - See estimated time of arrival (ETA)
 - Receive notification when cargo is delivered
 - Confirm cargo received (via OTP or digital signature)
 - Rate driver & service quality
-- Pay online (optional feature)
+- Pay online (via flutter wave )
 - View invoices or receipts
 
 2. Driver (Truck Operator) Functions
 
-- Register / Login
-- Set truck status (Available / On Duty / Unavailable)
+- Register / Login ✅
+- Set truck status (Available / On Duty / Unavailable)✅
 - Accept or reject assigned cargos
-- View assigned cargo details
+- View assigned cargo details✅
 - Start delivery → GPS tracking starts
 - Real-time location sharing
 - Update cargo delivery status

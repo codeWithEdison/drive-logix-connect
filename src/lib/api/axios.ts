@@ -1,0 +1,109 @@
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { ApiResponse, ApiError } from "../../types/shared";
+
+// Base configuration
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const API_VERSION = "v1";
+
+// Create axios instance
+const axiosInstance: AxiosInstance = axios.create({
+  baseURL: `${API_BASE_URL}/${API_VERSION}`,
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+// Request interceptor
+axiosInstance.interceptors.request.use(
+  (config) => {
+    // Add auth token if available
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Add language header
+    const language = localStorage.getItem("preferred_language") || "en";
+    config.headers["Accept-Language"] = language;
+
+    // Add request ID for tracking
+    config.headers["X-Request-ID"] = `req_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+axiosInstance.interceptors.response.use(
+  (response: AxiosResponse<ApiResponse>) => {
+    // Store tokens if present
+    if (response.data.data?.tokens) {
+      const { accessToken, refreshToken } = response.data.data.tokens;
+      if (accessToken) localStorage.setItem("access_token", accessToken);
+      if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
+    }
+
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle 401 errors (token expired)
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = localStorage.getItem("refresh_token");
+      if (refreshToken) {
+        try {
+          const response = await axiosInstance.post("/auth/refresh", {
+            refresh_token: refreshToken,
+          });
+
+          const { accessToken, refreshToken: newRefreshToken } =
+            response.data.data.tokens;
+          localStorage.setItem("access_token", accessToken);
+          localStorage.setItem("refresh_token", newRefreshToken);
+
+          // Retry original request
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          return axiosInstance(originalRequest);
+        } catch (refreshError) {
+          // Refresh failed, redirect to login
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          window.location.href = "/login";
+          return Promise.reject(refreshError);
+        }
+      } else {
+        // No refresh token, redirect to login
+        window.location.href = "/login";
+      }
+    }
+
+    // Transform error response to match our ApiError interface
+    if (error.response?.data) {
+      const apiError: ApiError = {
+        success: false,
+        error: {
+          code: error.response.data.error?.code || "UNKNOWN_ERROR",
+          message: error.response.data.error?.message || error.message,
+          details: error.response.data.error?.details || null,
+        },
+        timestamp: new Date().toISOString(),
+      };
+      return Promise.reject(apiError);
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default axiosInstance;

@@ -1,38 +1,48 @@
-# Logistics Platform API Endpoints Documentation
+# Lovely Cargo Platform API Endpoints Documentation
 
 ## Overview
 
-This document outlines all the API endpoints required for the Logistics Platform backend. The API follows RESTful principles and uses JSON for data exchange.
+This document outlines all the API endpoints for the Lovely Cargo Platform backend. The API follows RESTful principles and uses JSON for data exchange. The platform provides comprehensive logistics and cargo management capabilities.
 
 ## Data Model Alignment (Database Compatibility)
 
 - All IDs exposed by the API are UUID strings. Internally, the database stores these as BINARY(16) using UUID_TO_BIN(..., TRUE) and returns them using BIN_TO_UUID(..., TRUE).
-- Path params and body fields named "..._id" MUST be valid UUID strings.
+- Path params and body fields named "...\_id" MUST be valid UUID strings.
 - For list endpoints, prefer filters that match indexed columns: status, created_at, user_id, cargo_id, driver_id, vehicle_id, and recorded_at.
 - Date/time filters should be inclusive ranges using ISO 8601 timestamps.
 
 ## Base URL
+
 ```
-https://api.logistics-platform.com/v1
+http://localhost:3000/v1
 ```
 
 ## Authentication
+
 All endpoints (except public ones) require Bearer token authentication:
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 ## Response Format
+
 ```json
 {
   "success": true,
   "data": {},
   "message": "Operation successful",
-  "timestamp": "2024-01-15T10:30:00Z"
+  "meta": {
+    "timestamp": "2024-01-15T10:30:00Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
 }
 ```
 
 ## Error Response Format
+
 ```json
 {
   "success": false,
@@ -41,7 +51,66 @@ Authorization: Bearer <jwt_token>
     "message": "Invalid input data",
     "details": {}
   },
-  "timestamp": "2024-01-15T10:30:00Z"
+  "meta": {
+    "timestamp": "2024-01-15T10:30:00Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+## System Endpoints
+
+### Health Check
+
+```http
+GET /health
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "uptime": 12345.67,
+    "memory": {
+      "rss": 12345678,
+      "heapTotal": 9876543,
+      "heapUsed": 5432109,
+      "external": 123456
+    },
+    "version": "1.0.0"
+  },
+  "message": "Server is healthy",
+  "meta": {
+    "timestamp": "2024-01-15T10:30:00Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### Ready Check
+
+```http
+GET /ready
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Server is ready",
+  "meta": {
+    "timestamp": "2024-01-15T10:30:00Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
 }
 ```
 
@@ -50,23 +119,26 @@ Authorization: Bearer <jwt_token>
 ## 1. AUTHENTICATION ENDPOINTS
 
 ### 1.1 User Registration
+
 ```http
 POST /auth/register
 ```
 
 **Request Body:**
+
 ```json
 {
-  "full_name": "John Doe",
   "email": "john@example.com",
-  "phone": "+250789123456",
   "password": "securePassword123",
+  "full_name": "John Doe",
+  "phone": "+250789123456",
   "role": "client",
   "preferred_language": "en"
 }
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -78,17 +150,23 @@ POST /auth/register
       "role": "client",
       "is_verified": false
     },
-    "token": "jwt_token_here"
-  }
+    "tokens": {
+      "accessToken": "jwt_access_token_here",
+      "refreshToken": "jwt_refresh_token_here"
+    }
+  },
+  "message": "User registered successfully"
 }
 ```
 
 ### 1.2 User Login
+
 ```http
 POST /auth/login
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -96,24 +174,105 @@ POST /auth/login
 }
 ```
 
-### 1.3 Password Reset Request
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "uuid",
+      "full_name": "John Doe",
+      "email": "john@example.com",
+      "role": "client",
+      "is_verified": true
+    },
+    "tokens": {
+      "accessToken": "jwt_access_token_here",
+      "refreshToken": "jwt_refresh_token_here"
+    }
+  },
+  "message": "Login successful"
+}
+```
+
+### 1.3 Refresh Token
+
+```http
+POST /auth/refresh
+```
+
+**Request Body:**
+
+```json
+{
+  "refresh_token": "jwt_refresh_token_here"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "new_jwt_access_token_here",
+    "refreshToken": "new_jwt_refresh_token_here"
+  },
+  "message": "Token refreshed successfully"
+}
+```
+
+### 1.4 Logout
+
+```http
+POST /auth/logout
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Logout successful"
+}
+```
+
+### 1.5 Password Reset Request
+
 ```http
 POST /auth/password-reset-request
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com"
 }
 ```
 
-### 1.4 Password Reset
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Password reset email sent"
+}
+```
+
+### 1.6 Password Reset
+
 ```http
 POST /auth/password-reset
 ```
 
 **Request Body:**
+
 ```json
 {
   "token": "reset_token",
@@ -121,33 +280,59 @@ POST /auth/password-reset
 }
 ```
 
-### 1.5 Email Verification
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Password reset successful"
+}
+```
+
+### 1.7 Email Verification
+
 ```http
 POST /auth/verify-email
 ```
 
 **Request Body:**
+
 ```json
 {
   "token": "verification_token"
 }
 ```
 
-### 1.6 Resend Verification Email
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Email verified successfully"
+}
+```
+
+### 1.8 Resend Verification Email
+
 ```http
 POST /auth/resend-verification
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com"
 }
 ```
 
-### 1.7 Logout
-```http
-POST /auth/logout
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Verification email sent"
+}
 ```
 
 ---
@@ -155,31 +340,106 @@ POST /auth/logout
 ## 2. USER MANAGEMENT ENDPOINTS
 
 ### 2.1 Get User Profile
+
 ```http
 GET /users/profile
 ```
 
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User profile retrieved successfully",
+  "data": {
+    "id": "uuid-string",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+250788123456",
+    "role": "client",
+    "preferred_language": "en",
+    "avatar_url": "https://example.com/avatar.jpg",
+    "is_active": true,
+    "is_verified": false,
+    "last_login": "2025-09-01T15:30:00.000Z",
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:30:00.000Z"
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:30:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
 ### 2.2 Update User Profile
+
 ```http
 PUT /users/profile
 ```
 
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
 **Request Body:**
+
 ```json
 {
-  "full_name": "John Doe Updated",
-  "phone": "+250789123457",
-  "preferred_language": "rw",
+  "full_name": "John Doe",
+  "phone": "+250788123456",
+  "preferred_language": "en",
   "avatar_url": "https://example.com/avatar.jpg"
 }
 ```
 
-### 2.3 Change Password
-```http
-PUT /users/change-password
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User profile updated successfully",
+  "data": {
+    "id": "uuid-string",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+250788123456",
+    "role": "client",
+    "preferred_language": "en",
+    "avatar_url": "https://example.com/avatar.jpg",
+    "is_active": true,
+    "is_verified": false,
+    "last_login": "2025-09-01T15:30:00.000Z",
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:35:00.000Z"
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
 ```
 
+### 2.3 Change Password
+
+```http
+POST /users/change-password
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
 **Request Body:**
+
 ```json
 {
   "current_password": "oldPassword123",
@@ -187,27 +447,807 @@ PUT /users/change-password
 }
 ```
 
-### 2.4 Get Users (Admin  and superadmin  Only)
-```http
-GET /users?role=driver&status=active&page=1&limit=10
-```
+**Response:**
 
-**Query Parameters:**
-- `role`: client, driver, admin, super_admin
-- `status`: active, inactive
-- `page`: page number
-- `limit`: items per page
-
-### 2.5 Approve or Reject User (Admin, Super Admin)
-```http
-PUT /admin/users/{user_id}/approval
-```
-
-**Request Body:**
 ```json
 {
-  "approved": true,
+  "success": true,
+  "message": "Password changed successfully",
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### 2.4 Get Users (Admin and Super Admin Only)
+
+```http
+GET /users?role=client&is_active=true&is_verified=false&search=john&page=1&limit=10
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Query Parameters:**
+
+- `role`: client, driver, admin, super_admin
+- `is_active`: true, false
+- `is_verified`: true, false
+- `search`: search in name, email, or phone
+- `page`: page number (default: 1)
+- `limit`: items per page (default: 10, max: 100)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Users retrieved successfully",
+  "data": [
+    {
+      "id": "uuid-string",
+      "full_name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+250788123456",
+      "role": "client",
+      "preferred_language": "en",
+      "avatar_url": null,
+      "is_active": true,
+      "is_verified": false,
+      "last_login": null,
+      "created_at": "2025-09-01T15:00:00.000Z",
+      "updated_at": "2025-09-01T15:30:00.000Z"
+    }
+  ],
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123",
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 25,
+      "totalPages": 3,
+      "hasNext": true,
+      "hasPrev": false
+    }
+  }
+}
+```
+
+### 2.5 Get User by ID (Admin and Super Admin Only)
+
+```http
+GET /users/{userId}
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User retrieved successfully",
+  "data": {
+    "id": "uuid-string",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+250788123456",
+    "role": "client",
+    "preferred_language": "en",
+    "avatar_url": null,
+    "is_active": true,
+    "is_verified": false,
+    "last_login": null,
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:30:00.000Z"
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### 2.6 Approve or Reject User (Admin and Super Admin Only)
+
+```http
+POST /users/{userId}/approve
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Request Body:**
+
+```json
+{
+  "is_active": true,
   "reason": "All documents verified"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User approved successfully",
+  "data": {
+    "id": "uuid-string",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+250788123456",
+    "role": "client",
+    "preferred_language": "en",
+    "avatar_url": null,
+    "is_active": true,
+    "is_verified": false,
+    "last_login": null,
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:35:00.000Z"
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### 2.7 Get User Statistics (Admin and Super Admin Only)
+
+```http
+GET /users/statistics
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User statistics retrieved successfully",
+  "data": {
+    "total": 25,
+    "active": 20,
+    "inactive": 5,
+    "verified": 15,
+    "unverified": 10,
+    "byRole": {
+      "client": 15,
+      "driver": 8,
+      "admin": 1,
+      "super_admin": 1
+    }
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+---
+
+## 3. CARGO CATEGORIES ENDPOINTS
+
+### 3.1 Get Cargo Categories
+
+```http
+GET /cargo-categories?is_active=true&search=electronics
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Query Parameters:**
+
+- `is_active`: true, false
+- `search`: search by name or description
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-string",
+      "name": "Electronics",
+      "description": "Electronic devices and equipment",
+      "base_rate_multiplier": 1.5,
+      "special_handling_required": true,
+      "is_active": true,
+      "created_at": "2025-09-01T15:00:00.000Z",
+      "updated_at": "2025-09-01T15:00:00.000Z"
+    }
+  ],
+  "message": "Cargo categories retrieved successfully"
+}
+```
+
+### 3.2 Get Cargo Category by ID
+
+```http
+GET /cargo-categories/{id}
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-string",
+    "name": "Electronics",
+    "description": "Electronic devices and equipment",
+    "base_rate_multiplier": 1.5,
+    "special_handling_required": true,
+    "is_active": true,
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:00:00.000Z"
+  },
+  "message": "Cargo category retrieved successfully"
+}
+```
+
+### 3.3 Create Cargo Category (Admin Only)
+
+```http
+POST /cargo-categories
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Request Body:**
+
+```json
+{
+  "name": "Electronics",
+  "description": "Electronic devices and equipment",
+  "base_rate_multiplier": 1.5,
+  "special_handling_required": true,
+  "is_active": true
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-string",
+    "name": "Electronics",
+    "description": "Electronic devices and equipment",
+    "base_rate_multiplier": 1.5,
+    "special_handling_required": true,
+    "is_active": true,
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:00:00.000Z"
+  },
+  "message": "Cargo category created successfully"
+}
+```
+
+### 3.4 Update Cargo Category (Admin Only)
+
+```http
+PUT /cargo-categories/{id}
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Request Body:**
+
+```json
+{
+  "name": "Electronics & Gadgets",
+  "description": "Electronic devices and gadgets",
+  "base_rate_multiplier": 1.6,
+  "special_handling_required": true,
+  "is_active": true
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-string",
+    "name": "Electronics & Gadgets",
+    "description": "Electronic devices and gadgets",
+    "base_rate_multiplier": 1.6,
+    "special_handling_required": true,
+    "is_active": true,
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:35:00.000Z"
+  },
+  "message": "Cargo category updated successfully"
+}
+```
+
+### 3.5 Delete Cargo Category (Admin Only)
+
+```http
+DELETE /cargo-categories/{id}
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Cargo category deleted successfully"
+}
+```
+
+---
+
+## 4. FILE MANAGEMENT ENDPOINTS
+
+### 4.1 Upload File
+
+```http
+POST /files/upload
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+- `Content-Type: multipart/form-data`
+
+**Request Body (multipart/form-data):**
+
+```json
+{
+  "file": "file_data",
+  "type": "document",
+  "category": "driver_license"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-string",
+    "filename": "generated_filename.pdf",
+    "original_name": "license.pdf",
+    "mime_type": "application/pdf",
+    "size": 1024000,
+    "file_url": "https://example.com/files/generated_filename.pdf",
+    "type": "document",
+    "category": "driver_license",
+    "uploaded_by": "user_uuid",
+    "created_at": "2025-09-01T15:00:00.000Z"
+  },
+  "message": "File uploaded successfully"
+}
+```
+
+### 4.2 Get File URL
+
+```http
+GET /files/{file_id}/url
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "file_url": "https://example.com/files/generated_filename.pdf",
+    "expires_at": "2025-09-01T16:00:00.000Z"
+  },
+  "message": "File URL retrieved successfully"
+}
+```
+
+### 4.3 Delete File
+
+```http
+DELETE /files/{file_id}
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "File deleted successfully"
+}
+```
+
+### 4.4 Get User Files
+
+```http
+GET /files?type=document&category=driver_license&page=1&limit=10
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Query Parameters:**
+
+- `type`: document, image, video, audio, other
+- `category`: optional category filter
+- `page`: page number (default: 1)
+- `limit`: items per page (default: 10, max: 100)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-string",
+      "filename": "generated_filename.pdf",
+      "original_name": "license.pdf",
+      "mime_type": "application/pdf",
+      "size": 1024000,
+      "file_url": "https://example.com/files/generated_filename.pdf",
+      "type": "document",
+      "category": "driver_license",
+      "uploaded_by": "user_uuid",
+      "created_at": "2025-09-01T15:00:00.000Z"
+    }
+  ],
+  "message": "Files retrieved successfully",
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 25,
+      "totalPages": 3,
+      "hasNext": true,
+      "hasPrev": false
+    }
+  }
+}
+```
+
+- `Authorization: Bearer <token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User profile retrieved successfully",
+  "data": {
+    "id": "uuid-string",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+250788123456",
+    "role": "client",
+    "preferred_language": "en",
+    "avatar_url": "https://example.com/avatar.jpg",
+    "is_active": true,
+    "is_verified": false,
+    "last_login": "2025-09-01T15:30:00.000Z",
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:30:00.000Z"
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:30:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### 2.2 Update User Profile
+
+```http
+PUT /v1/users/profile
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "full_name": "John Doe",
+  "phone": "+250788123456",
+  "preferred_language": "en",
+  "avatar_url": "https://example.com/avatar.jpg"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User profile updated successfully",
+  "data": {
+    "id": "uuid-string",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+250788123456",
+    "role": "client",
+    "preferred_language": "en",
+    "avatar_url": "https://example.com/avatar.jpg",
+    "is_active": true,
+    "is_verified": false,
+    "last_login": "2025-09-01T15:30:00.000Z",
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:35:00.000Z"
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### 2.3 Change Password
+
+```http
+POST /v1/users/change-password
+```
+
+**Headers:**
+
+- `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "current_password": "oldPassword123",
+  "new_password": "newPassword123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Password changed successfully",
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### 2.4 Get Users (Admin and Super Admin Only)
+
+```http
+GET /v1/users?role=client&is_active=true&is_verified=false&search=john&page=1&limit=10
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Query Parameters:**
+
+- `role`: client, driver, admin, super_admin
+- `is_active`: true, false
+- `is_verified`: true, false
+- `search`: search in name, email, or phone
+- `page`: page number (default: 1)
+- `limit`: items per page (default: 10, max: 100)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Users retrieved successfully",
+  "data": [
+    {
+      "id": "uuid-string",
+      "full_name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+250788123456",
+      "role": "client",
+      "preferred_language": "en",
+      "avatar_url": null,
+      "is_active": true,
+      "is_verified": false,
+      "last_login": null,
+      "created_at": "2025-09-01T15:00:00.000Z",
+      "updated_at": "2025-09-01T15:30:00.000Z"
+    }
+  ],
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123",
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 25,
+      "totalPages": 3,
+      "hasNext": true,
+      "hasPrev": false
+    }
+  }
+}
+```
+
+### 2.5 Get User by ID (Admin and Super Admin Only)
+
+```http
+GET /v1/users/{userId}
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User retrieved successfully",
+  "data": {
+    "id": "uuid-string",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+250788123456",
+    "role": "client",
+    "preferred_language": "en",
+    "avatar_url": null,
+    "is_active": true,
+    "is_verified": false,
+    "last_login": null,
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:30:00.000Z"
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### 2.6 Approve or Reject User (Admin and Super Admin Only)
+
+```http
+POST /v1/users/{userId}/approve
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Request Body:**
+
+```json
+{
+  "is_active": true,
+  "reason": "All documents verified"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User approved successfully",
+  "data": {
+    "id": "uuid-string",
+    "full_name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+250788123456",
+    "role": "client",
+    "preferred_language": "en",
+    "avatar_url": null,
+    "is_active": true,
+    "is_verified": false,
+    "last_login": null,
+    "created_at": "2025-09-01T15:00:00.000Z",
+    "updated_at": "2025-09-01T15:35:00.000Z"
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
+}
+```
+
+### 2.7 Get User Statistics (Admin and Super Admin Only)
+
+```http
+GET /v1/users/statistics
+```
+
+**Headers:**
+
+- `Authorization: Bearer <admin_token>`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "User statistics retrieved successfully",
+  "data": {
+    "total": 25,
+    "active": 20,
+    "inactive": 5,
+    "verified": 15,
+    "unverified": 10,
+    "byRole": {
+      "client": 15,
+      "driver": 8,
+      "admin": 1,
+      "super_admin": 1
+    }
+  },
+  "meta": {
+    "timestamp": "2025-09-01T15:35:00.000Z",
+    "version": "1.0.0",
+    "language": "en",
+    "requestId": "req_1234567890_abc123"
+  }
 }
 ```
 
@@ -216,16 +1256,19 @@ PUT /admin/users/{user_id}/approval
 ## 3. CLIENT MANAGEMENT ENDPOINTS
 
 ### 3.1 Get Client Profile
+
 ```http
 GET /clients/profile
 ```
 
 ### 3.2 Update Client Profile
+
 ```http
 PUT /clients/profile
 ```
 
 **Request Body:**
+
 ```json
 {
   "company_name": "ABC Logistics",
@@ -236,17 +1279,19 @@ PUT /clients/profile
   "country": "Rwanda",
   "postal_code": "12345",
   "contact_person": "Jane Smith",
-  "credit_limit": 5000.00,
+  "credit_limit": 5000.0,
   "payment_terms": 30
 }
 ```
 
 ### 3.3 Get Client Credit Status
+
 ```http
 GET /clients/credit-status
 ```
 
 ### 3.4 Get Client Invoices
+
 ```http
 GET /clients/invoices?status=paid&page=1&limit=10
 ```
@@ -256,16 +1301,19 @@ GET /clients/invoices?status=paid&page=1&limit=10
 ## 4. DRIVER MANAGEMENT ENDPOINTS
 
 ### 4.1 Get Driver Profile
+
 ```http
 GET /drivers/profile
 ```
 
 ### 4.2 Update Driver Profile
+
 ```http
 PUT /drivers/profile
 ```
 
 **Request Body:**
+
 ```json
 {
   "license_number": "LIC123456",
@@ -280,11 +1328,13 @@ PUT /drivers/profile
 ```
 
 ### 4.3 Upload Driver Document
+
 ```http
 POST /drivers/documents
 ```
 
 **Request Body (multipart/form-data):**
+
 ```json
 {
   "document_type": "license",
@@ -295,16 +1345,19 @@ POST /drivers/documents
 ```
 
 ### 4.4 Get Driver Documents
+
 ```http
 GET /drivers/documents
 ```
 
 ### 4.5 Update Driver Status
+
 ```http
 PUT /drivers/status
 ```
 
 **Request Body:**
+
 ```json
 {
   "status": "available"
@@ -312,16 +1365,19 @@ PUT /drivers/status
 ```
 
 ### 4.7 Get Driver Assignments
+
 ```http
 GET /drivers/assignments?status=active&page=1&limit=10
 ```
 
 ### 4.6 Get Driver Performance
+
 ```http
 GET /drivers/performance
 ```
 
 ### 4.8 Get Available Drivers (Admin)
+
 ```http
 GET /drivers/available?location=kigali&vehicle_type=truck
 ```
@@ -331,21 +1387,25 @@ GET /drivers/available?location=kigali&vehicle_type=truck
 ## 5. VEHICLE MANAGEMENT ENDPOINTS
 
 ### 5.1 Get Vehicles
+
 ```http
 GET /vehicles?status=active&type=truck&page=1&limit=10
 ```
 
 ### 5.2 Get Vehicle Details
+
 ```http
 GET /vehicles/{vehicle_id}
 ```
 
 ### 5.3 Create Vehicle (Admin)
+
 ```http
 POST /vehicles
 ```
 
 **Request Body:**
+
 ```json
 {
   "plate_number": "RAB123A",
@@ -364,16 +1424,19 @@ POST /vehicles
 ```
 
 ### 5.4 Update Vehicle
+
 ```http
 PUT /vehicles/{vehicle_id}
 ```
 
 ### 5.5 Approve or Reject Vehicle (Admin)
+
 ```http
 PUT /admin/vehicles/{vehicle_id}/approval
 ```
 
 **Request Body:**
+
 ```json
 {
   "approved": true,
@@ -382,16 +1445,18 @@ PUT /admin/vehicles/{vehicle_id}/approval
 ```
 
 ### 5.6 Add Vehicle Maintenance Record
+
 ```http
 POST /vehicles/{vehicle_id}/maintenance
 ```
 
 **Request Body:**
+
 ```json
 {
   "maintenance_type": "routine",
   "description": "Oil change and filter replacement",
-  "cost": 150.00,
+  "cost": 150.0,
   "service_provider": "AutoCare Center",
   "service_date": "2024-01-15",
   "next_service_date": "2024-04-15",
@@ -401,11 +1466,13 @@ POST /vehicles/{vehicle_id}/maintenance
 ```
 
 ### 5.7 Get Vehicle Maintenance History
+
 ```http
 GET /vehicles/{vehicle_id}/maintenance
 ```
 
 ### 5.8 Get Available Vehicles
+
 ```http
 GET /vehicles/available?type=truck&capacity_min=500
 ```
@@ -415,11 +1482,13 @@ GET /vehicles/available?type=truck&capacity_min=500
 ## 6. CARGO MANAGEMENT ENDPOINTS
 
 ### 6.1 Create Cargo Request
+
 ```http
 POST /cargos
 ```
 
 **Request Body:**
+
 ```json
 {
   "category_id": "category_uuid",
@@ -441,7 +1510,7 @@ POST /cargos
   "delivery_instructions": "Leave with security guard",
   "special_requirements": "Handle with care",
   "insurance_required": true,
-  "insurance_amount": 1000.00,
+  "insurance_amount": 1000.0,
   "fragile": true,
   "temperature_controlled": false,
   "priority": "normal",
@@ -451,16 +1520,19 @@ POST /cargos
 ```
 
 ### 6.2 Get Cargo Details
+
 ```http
 GET /cargos/{cargo_id}
 ```
 
 ### 6.3 Update Cargo Status
+
 ```http
 PUT /cargos/{cargo_id}/status
 ```
 
 **Request Body:**
+
 ```json
 {
   "status": "in_transit",
@@ -469,21 +1541,25 @@ PUT /cargos/{cargo_id}/status
 ```
 
 ### 6.4 Get Client Cargos
+
 ```http
 GET /clients/cargos?status=delivered&page=1&limit=10&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 6.5 Get Driver Cargos
+
 ```http
 GET /drivers/cargos?status=assigned&page=1&limit=10&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 6.6 Cancel Cargo
+
 ```http
 POST /cargos/{cargo_id}/cancel
 ```
 
 **Request Body:**
+
 ```json
 {
   "reason": "Client requested cancellation"
@@ -491,11 +1567,13 @@ POST /cargos/{cargo_id}/cancel
 ```
 
 ### 6.7 Admin Assign Driver and Vehicle to Cargo
+
 ```http
 POST /delivery-assignments
 ```
 
 **Request Body:**
+
 ```json
 {
   "cargo_id": "cargo_uuid",
@@ -505,6 +1583,7 @@ POST /delivery-assignments
 ```
 
 ### 6.7 Get Cargo Tracking
+
 ```http
 GET /cargos/{cargo_id}/tracking
 ```
@@ -514,11 +1593,13 @@ GET /cargos/{cargo_id}/tracking
 ## 7. DELIVERY ASSIGNMENT ENDPOINTS
 
 ### 7.1 Assign Driver to Cargo (Admin)
+
 ```http
 POST /delivery-assignments
 ```
 
 **Request Body:**
+
 ```json
 {
   "cargo_id": "cargo_uuid",
@@ -528,16 +1609,19 @@ POST /delivery-assignments
 ```
 
 ### 7.2 Get Delivery Assignment
+
 ```http
 GET /delivery-assignments/{cargo_id}
 ```
 
 ### 7.3 Update Assignment
+
 ```http
 PUT /delivery-assignments/{assignment_id}
 ```
 
 ### 7.4 Get Driver Assignments
+
 ```http
 GET /drivers/assignments?status=active&page=1&limit=10
 ```
@@ -547,11 +1631,13 @@ GET /drivers/assignments?status=active&page=1&limit=10
 ## 8. ROUTE MANAGEMENT ENDPOINTS
 
 ### 8.1 Create Route
+
 ```http
 POST /routes
 ```
 
 **Request Body:**
+
 ```json
 {
   "cargo_id": "cargo_uuid",
@@ -580,16 +1666,19 @@ POST /routes
 ```
 
 ### 8.2 Get Route Details
+
 ```http
 GET /routes/{cargo_id}
 ```
 
 ### 8.3 Update Route Waypoint
+
 ```http
 PUT /routes/{route_id}/waypoints/{waypoint_id}
 ```
 
 ### 8.4 Get Route Progress
+
 ```http
 GET /routes/{cargo_id}/progress
 ```
@@ -599,11 +1688,13 @@ GET /routes/{cargo_id}/progress
 ## 9. DELIVERY EXECUTION ENDPOINTS
 
 ### 9.1 Start Delivery
+
 ```http
 POST /deliveries/{cargo_id}/start
 ```
 
 **Request Body:**
+
 ```json
 {
   "start_time": "2024-01-20T08:00:00Z"
@@ -611,11 +1702,13 @@ POST /deliveries/{cargo_id}/start
 ```
 
 ### 9.2 Update Delivery Status
+
 ```http
 PUT /deliveries/{cargo_id}/status
 ```
 
 **Request Body:**
+
 ```json
 {
   "status": "picked_up",
@@ -627,11 +1720,13 @@ PUT /deliveries/{cargo_id}/status
 ```
 
 ### 9.2.1 Confirm Delivery via OTP
+
 ```http
 POST /deliveries/{cargo_id}/confirm-otp
 ```
 
 **Request Body:**
+
 ```json
 {
   "otp": "123456"
@@ -639,11 +1734,13 @@ POST /deliveries/{cargo_id}/confirm-otp
 ```
 
 ### 9.2.2 Confirm Delivery via QR
+
 ```http
 POST /deliveries/{cargo_id}/confirm-qr
 ```
 
 **Request Body:**
+
 ```json
 {
   "qr_token": "scanned_qr_token"
@@ -651,11 +1748,13 @@ POST /deliveries/{cargo_id}/confirm-qr
 ```
 
 ### 9.3 Complete Delivery
+
 ```http
 POST /deliveries/{cargo_id}/complete
 ```
 
 **Request Body:**
+
 ```json
 {
   "end_time": "2024-01-20T11:30:00Z",
@@ -669,11 +1768,13 @@ POST /deliveries/{cargo_id}/complete
 ```
 
 ### 9.6 Rate Delivery and Driver
+
 ```http
 POST /deliveries/{cargo_id}/rating
 ```
 
 **Request Body:**
+
 ```json
 {
   "rating": 5,
@@ -682,16 +1783,19 @@ POST /deliveries/{cargo_id}/rating
 ```
 
 ### 9.4 Get Delivery Details
+
 ```http
 GET /deliveries/{cargo_id}
 ```
 
 ### 9.5 Upload Delivery Proof
+
 ```http
 POST /deliveries/{cargo_id}/proof
 ```
 
 **Request Body (multipart/form-data):**
+
 ```json
 {
   "confirmation_method": "photo",
@@ -704,38 +1808,44 @@ POST /deliveries/{cargo_id}/proof
 ## 10. INVOICE MANAGEMENT ENDPOINTS
 
 ### 10.1 Generate Invoice
+
 ```http
 POST /invoices
 ```
 
 **Request Body:**
+
 ```json
 {
   "cargo_id": "cargo_uuid",
-  "subtotal": 150.00,
-  "tax_amount": 15.00,
-  "discount_amount": 0.00,
+  "subtotal": 150.0,
+  "tax_amount": 15.0,
+  "discount_amount": 0.0,
   "currency": "USD",
   "due_date": "2024-02-20"
 }
 ```
 
 ### 10.2 Get Invoice Details
+
 ```http
 GET /invoices/{invoice_id}
 ```
 
 ### 10.3 Get Client Invoices
+
 ```http
 GET /clients/invoices?status=paid&page=1&limit=10
 ```
 
 ### 10.4 Update Invoice Status
+
 ```http
 PUT /invoices/{invoice_id}/status
 ```
 
 **Request Body:**
+
 ```json
 {
   "status": "paid",
@@ -745,6 +1855,7 @@ PUT /invoices/{invoice_id}/status
 ```
 
 ### 10.5 Download Invoice PDF
+
 ```http
 GET /invoices/{invoice_id}/pdf
 ```
@@ -754,40 +1865,46 @@ GET /invoices/{invoice_id}/pdf
 ## 11. PAYMENT MANAGEMENT ENDPOINTS
 
 ### 11.1 Process Payment
+
 ```http
 POST /payments
 ```
 
 **Request Body:**
+
 ```json
 {
   "invoice_id": "invoice_uuid",
-  "amount": 165.00,
+  "amount": 165.0,
   "payment_method": "mobile_money",
   "transaction_id": "MM123456"
 }
 ```
 
 ### 11.2 Get Payment History
+
 ```http
 GET /payments?invoice_id=invoice_uuid&page=1&limit=10&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 11.3 Request Refund
+
 ```http
 POST /refunds
 ```
 
 **Request Body:**
+
 ```json
 {
   "invoice_id": "invoice_uuid",
-  "amount": 50.00,
+  "amount": 50.0,
   "reason": "Service not as expected"
 }
 ```
 
 ### 11.4 Get Refund Status
+
 ```http
 GET /refunds/{refund_id}
 ```
@@ -797,17 +1914,19 @@ GET /refunds/{refund_id}
 ## 12. INSURANCE MANAGEMENT ENDPOINTS
 
 ### 12.1 Create Insurance Policy
+
 ```http
 POST /insurance/policies
 ```
 
 **Request Body:**
+
 ```json
 {
   "cargo_id": "cargo_uuid",
   "policy_number": "INS123456",
-  "coverage_amount": 1000.00,
-  "premium_amount": 25.00,
+  "coverage_amount": 1000.0,
+  "premium_amount": 25.0,
   "insurance_provider": "Rwanda Insurance Co.",
   "policy_start_date": "2024-01-20",
   "policy_end_date": "2024-01-21"
@@ -815,26 +1934,30 @@ POST /insurance/policies
 ```
 
 ### 12.2 Get Insurance Policy
+
 ```http
 GET /insurance/policies/{cargo_id}
 ```
 
 ### 12.3 File Insurance Claim
+
 ```http
 POST /insurance/claims
 ```
 
 **Request Body:**
+
 ```json
 {
   "cargo_id": "cargo_uuid",
   "claim_number": "CLM123456",
-  "claim_amount": 500.00,
+  "claim_amount": 500.0,
   "claim_reason": "Cargo damaged during transit"
 }
 ```
 
 ### 12.4 Get Claim Status
+
 ```http
 GET /insurance/claims/{claim_id}
 ```
@@ -844,11 +1967,13 @@ GET /insurance/claims/{claim_id}
 ## 13. GPS TRACKING ENDPOINTS
 
 ### 13.1 Update GPS Location
+
 ```http
 POST /gps/tracking
 ```
 
 **Request Body:**
+
 ```json
 {
   "vehicle_id": "vehicle_uuid",
@@ -863,20 +1988,24 @@ POST /gps/tracking
 ```
 
 ### 13.2 Get Vehicle Location
+
 ```http
 GET /gps/vehicles/{vehicle_id}/location
 ```
 
 ### 13.3 Get Tracking History
+
 ```http
 GET /gps/vehicles/{vehicle_id}/history?start_time=2024-01-20T08:00:00Z&end_time=2024-01-20T18:00:00Z
 ```
 
 Guidelines:
+
 - Always provide both start_time and end_time to leverage `(vehicle_id, recorded_at)` index.
 - Use pagination for long ranges: `page`, `limit`.
 
 ### 13.4 Get Live Tracking
+
 ```http
 GET /gps/vehicles/{vehicle_id}/live
 ```
@@ -886,31 +2015,37 @@ GET /gps/vehicles/{vehicle_id}/live
 ## 14. NOTIFICATION ENDPOINTS
 
 ### 14.1 Get User Notifications
+
 ```http
 GET /notifications?type=delivery_update&is_read=false&page=1&limit=10
 ```
 
 ### 14.2 Mark Notification as Read
+
 ```http
 PUT /notifications/{notification_id}/read
 ```
 
 ### 14.3 Mark All Notifications as Read
+
 ```http
 PUT /notifications/read-all
 ```
 
 ### 14.4 Get Notification Settings
+
 ```http
 GET /notifications/settings
 ```
 
 ### 14.5 Update Notification Settings
+
 ```http
 PUT /notifications/settings
 ```
 
 **Request Body:**
+
 ```json
 {
   "email_notifications": true,
@@ -927,26 +2062,31 @@ PUT /notifications/settings
 ## 15. ADMIN MANAGEMENT ENDPOINTS
 
 ### 15.1 Get Dashboard Statistics
+
 ```http
 GET /admin/dashboard
 ```
 
 ### 15.2 Get System Logs
+
 ```http
 GET /admin/logs?user_id=user_uuid&action=login&page=1&limit=50&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 15.3 Get User Management
+
 ```http
 GET /admin/users?role=driver&status=active&page=1&limit=10
 ```
 
 ### 15.4 Update User Status (Admin)
+
 ```http
 PUT /admin/users/{user_id}/status
 ```
 
 **Request Body:**
+
 ```json
 {
   "is_active": false,
@@ -955,11 +2095,13 @@ PUT /admin/users/{user_id}/status
 ```
 
 ### 15.5 Get Financial Reports
+
 ```http
 GET /admin/reports/financial?start_date=2024-01-01&end_date=2024-01-31&group_by=day
 ```
 
 ### 15.6 Get Performance Reports
+
 ```http
 GET /admin/reports/performance?driver_id=driver_uuid&start_date=2024-01-01&end_date=2024-01-31
 ```
@@ -969,21 +2111,25 @@ GET /admin/reports/performance?driver_id=driver_uuid&start_date=2024-01-01&end_d
 ## 16. OPERATIONAL ENDPOINTS
 
 ### 16.1 Get Service Areas
+
 ```http
 GET /operational/service-areas?city=kigali&is_active=true
 ```
 
 ### 16.2 Get Operating Hours
+
 ```http
 GET /operational/operating-hours?entity_type=location&entity_id=location_uuid
 ```
 
 ### 16.3 Update Operating Hours
+
 ```http
 PUT /operational/operating-hours
 ```
 
 **Request Body:**
+
 ```json
 {
   "entity_type": "location",
@@ -1000,11 +2146,13 @@ PUT /operational/operating-hours
 ```
 
 ### 16.6 Approvals (Unified)
+
 ```http
 PUT /admin/approvals
 ```
 
 **Request Body:**
+
 ```json
 {
   "entity_type": "user|vehicle|driver",
@@ -1015,11 +2163,13 @@ PUT /admin/approvals
 ```
 
 ### 16.4 Get Cargo Categories
+
 ```http
 GET /operational/cargo-categories?is_active=true
 ```
 
 ### 16.5 Get Pricing Policies
+
 ```http
 GET /operational/pricing-policies?is_active=true&vehicle_type=truck
 ```
@@ -1029,19 +2179,23 @@ GET /operational/pricing-policies?is_active=true&vehicle_type=truck
 ## 17. LOCALIZATION ENDPOINTS
 
 ### 17.1 Get Translations
+
 ```http
 GET /localization/translations?language=en
 ```
 
 Notes:
+
 - Backed by `translations` table. Use keys to fetch localized text for UI.
 
 ### 17.2 Update Translation
+
 ```http
 PUT /localization/translations/{key}
 ```
 
 **Request Body:**
+
 ```json
 {
   "en": "English text",
@@ -1055,11 +2209,13 @@ PUT /localization/translations/{key}
 ## 18. FILE UPLOAD ENDPOINTS
 
 ### 18.1 Upload File
+
 ```http
 POST /files/upload
 ```
 
 **Request Body (multipart/form-data):**
+
 ```json
 {
   "file": "file_data",
@@ -1069,11 +2225,13 @@ POST /files/upload
 ```
 
 ### 18.2 Get File URL
+
 ```http
 GET /files/{file_id}/url
 ```
 
 ### 18.3 Delete File
+
 ```http
 DELETE /files/{file_id}
 ```
@@ -1083,16 +2241,19 @@ DELETE /files/{file_id}
 ## 19. SEARCH ENDPOINTS
 
 ### 19.1 Search Cargos
+
 ```http
 GET /search/cargos?q=electronics&status=delivered&date_from=2024-01-01&date_to=2024-01-31
 ```
 
 ### 19.2 Search Users
+
 ```http
 GET /search/users?q=john&role=driver&status=active
 ```
 
 ### 19.3 Search Vehicles
+
 ```http
 GET /search/vehicles?q=toyota&type=truck&status=active
 ```
@@ -1102,21 +2263,25 @@ GET /search/vehicles?q=toyota&type=truck&status=active
 ## 20. ANALYTICS ENDPOINTS
 
 ### 20.1 Get Cargo Analytics
+
 ```http
 GET /analytics/cargos?period=month&start_date=2024-01-01&end_date=2024-01-31
 ```
 
 ### 20.2 Get Driver Analytics
+
 ```http
 GET /analytics/drivers?driver_id=driver_uuid&period=week
 ```
 
 ### 20.3 Get Financial Analytics
+
 ```http
 GET /analytics/financial?period=month&group_by=category
 ```
 
 ### 20.4 Get Performance Analytics
+
 ```http
 GET /analytics/performance?metric=delivery_time&period=month
 ```
@@ -1126,46 +2291,54 @@ GET /analytics/performance?metric=delivery_time&period=month
 ## Implementation Notes
 
 ### 1. Authentication & Authorization
+
 - Use JWT tokens for authentication
 - Implement role-based access control (RBAC)
 - Validate permissions for each endpoint
 - Implement token refresh mechanism
 
 ### 2. Validation
+
 - Validate all input data
 - Implement proper error handling
 - Return meaningful error messages
 - Use HTTP status codes correctly
 
 ### 3. Rate Limiting
+
 - Implement rate limiting for all endpoints
 - Different limits for different user roles
 - Monitor API usage
 
 ### 4. Security
+
 - Use HTTPS for all endpoints
 - Implement CORS properly
 - Sanitize all inputs
 - Log security events
 
 ### 5. Performance
+
 - Implement pagination for list endpoints
 - Use database indexes efficiently
 - Implement caching where appropriate
 - Monitor response times
 
 ### 6. Documentation
+
 - Use OpenAPI/Swagger for API documentation
 - Provide example requests and responses
 - Document error codes and messages
 
 ### 7. Testing
+
 - Write unit tests for all endpoints
 - Implement integration tests
 - Test error scenarios
 - Performance testing
 
 ### 8. Monitoring
+
 - Log all API calls
 - Monitor error rates
 - Track response times

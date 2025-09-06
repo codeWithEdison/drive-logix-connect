@@ -1,0 +1,166 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { InvoiceService, PaymentService } from "../services";
+import { queryKeys } from "../queryClient";
+import {
+  CreateInvoiceRequest,
+  InvoiceStatus,
+  PaymentMethod,
+} from "../../../types/shared";
+
+// Invoice hooks
+export const useGenerateInvoice = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateInvoiceRequest) =>
+      InvoiceService.generateInvoice(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.invoices.clientInvoices(),
+      });
+    },
+  });
+};
+
+export const useInvoiceById = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.invoices.detail(id),
+    queryFn: () => InvoiceService.getInvoiceById(id),
+    select: (data) => data.data,
+    enabled: !!id,
+  });
+};
+
+export const useUpdateInvoiceStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        status: InvoiceStatus;
+        payment_method?: PaymentMethod;
+        payment_reference?: string;
+      };
+    }) => InvoiceService.updateInvoiceStatus(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.invoices.detail(id),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.invoices.all() });
+    },
+  });
+};
+
+export const useClientInvoices = (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  return useQuery({
+    queryKey: queryKeys.invoices.clientInvoices(params),
+    queryFn: () => InvoiceService.getClientInvoices(params),
+    select: (data) => data.data,
+  });
+};
+
+export const useDownloadInvoicePDF = () => {
+  return useMutation({
+    mutationFn: (id: string) => InvoiceService.downloadInvoicePDF(id),
+  });
+};
+
+export const useAllInvoices = (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  return useQuery({
+    queryKey: queryKeys.invoices.all(params),
+    queryFn: () => InvoiceService.getAllInvoices(params),
+    select: (data) => data.data,
+  });
+};
+
+// Payment hooks
+export const useProcessPayment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      invoice_id: string;
+      amount: number;
+      payment_method: PaymentMethod;
+      transaction_id: string;
+    }) => PaymentService.processPayment(data),
+    onSuccess: (_, { invoice_id }) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.invoices.detail(invoice_id),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.payments.all() });
+    },
+  });
+};
+
+export const usePaymentHistory = (params?: {
+  invoice_id?: string;
+  page?: number;
+  limit?: number;
+  date_from?: string;
+  date_to?: string;
+}) => {
+  return useQuery({
+    queryKey: queryKeys.payments.all(params),
+    queryFn: () => PaymentService.getPaymentHistory(params),
+    select: (data) => data.data,
+  });
+};
+
+export const usePaymentById = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.payments.detail(id),
+    queryFn: () => PaymentService.getPaymentById(id),
+    select: (data) => data.data,
+    enabled: !!id,
+  });
+};
+
+export const useUserPayments = (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  return useQuery({
+    queryKey: queryKeys.payments.userPayments(params),
+    queryFn: () => PaymentService.getUserPayments(params),
+    select: (data) => data.data,
+  });
+};
+
+export const useRequestRefund = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      invoice_id: string;
+      amount: number;
+      reason: string;
+    }) => PaymentService.requestRefund(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.payments.all() });
+    },
+  });
+};
+
+export const useRefundStatus = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.refunds.detail(id),
+    queryFn: () => PaymentService.getRefundStatus(id),
+    select: (data) => data.data,
+    enabled: !!id,
+  });
+};

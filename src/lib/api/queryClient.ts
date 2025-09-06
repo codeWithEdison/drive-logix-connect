@@ -1,0 +1,216 @@
+import { QueryClient } from "@tanstack/react-query";
+
+// Create React Query client with proper defaults
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache data for 5 minutes by default
+      staleTime: 5 * 60 * 1000,
+      // Keep data in cache for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      // Retry failed requests 3 times
+      retry: 3,
+      // Don't refetch on window focus by default
+      refetchOnWindowFocus: false,
+      // Don't refetch on reconnect by default
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      // Retry failed mutations once
+      retry: 1,
+    },
+  },
+});
+
+// Query keys factory for consistent key management
+export const queryKeys = {
+  // Auth
+  auth: {
+    profile: ["auth", "profile"] as const,
+    user: (id: string) => ["auth", "user", id] as const,
+  },
+
+  // Users
+  users: {
+    all: ["users"] as const,
+    list: (params?: Record<string, any>) => ["users", "list", params] as const,
+    detail: (id: string) => ["users", "detail", id] as const,
+    statistics: ["users", "statistics"] as const,
+  },
+
+  // Clients
+  clients: {
+    profile: ["clients", "profile"] as const,
+    creditStatus: ["clients", "credit-status"] as const,
+    invoices: (params?: Record<string, any>) =>
+      ["clients", "invoices", params] as const,
+  },
+
+  // Drivers
+  drivers: {
+    profile: ["drivers", "profile"] as const,
+    documents: ["drivers", "documents"] as const,
+    assignments: (params?: Record<string, any>) =>
+      ["drivers", "assignments", params] as const,
+    performance: ["drivers", "performance"] as const,
+    available: (params?: Record<string, any>) =>
+      ["drivers", "available", params] as const,
+    all: (params?: Record<string, any>) => ["drivers", "all", params] as const,
+    detail: (id: string) => ["drivers", "detail", id] as const,
+  },
+
+  // Vehicles
+  vehicles: {
+    all: (params?: Record<string, any>) => ["vehicles", "all", params] as const,
+    detail: (id: string) => ["vehicles", "detail", id] as const,
+    maintenance: (id: string) => ["vehicles", "maintenance", id] as const,
+    available: (params?: Record<string, any>) =>
+      ["vehicles", "available", params] as const,
+  },
+
+  // Cargos
+  cargos: {
+    all: (params?: Record<string, any>) => ["cargos", "all", params] as const,
+    detail: (id: string) => ["cargos", "detail", id] as const,
+    tracking: (id: string) => ["cargos", "tracking", id] as const,
+    clientCargos: (params?: Record<string, any>) =>
+      ["cargos", "client", params] as const,
+    driverCargos: (params?: Record<string, any>) =>
+      ["cargos", "driver", params] as const,
+    estimateCost: ["cargos", "estimate-cost"] as const,
+  },
+
+  // Cargo Categories
+  cargoCategories: {
+    all: (params?: Record<string, any>) =>
+      ["cargo-categories", "all", params] as const,
+    detail: (id: string) => ["cargo-categories", "detail", id] as const,
+  },
+
+  // Deliveries
+  deliveries: {
+    all: (params?: Record<string, any>) =>
+      ["deliveries", "all", params] as const,
+    detail: (id: string) => ["deliveries", "detail", id] as const,
+    driverDeliveries: (params?: Record<string, any>) =>
+      ["deliveries", "driver", params] as const,
+  },
+
+  // Delivery Assignments
+  deliveryAssignments: {
+    detail: (id: string) => ["delivery-assignments", "detail", id] as const,
+  },
+
+  // Routes
+  routes: {
+    detail: (id: string) => ["routes", "detail", id] as const,
+    progress: (id: string) => ["routes", "progress", id] as const,
+  },
+
+  // Invoices
+  invoices: {
+    all: (params?: Record<string, any>) => ["invoices", "all", params] as const,
+    detail: (id: string) => ["invoices", "detail", id] as const,
+    pdf: (id: string) => ["invoices", "pdf", id] as const,
+    clientInvoices: (params?: Record<string, any>) =>
+      ["invoices", "client", params] as const,
+  },
+
+  // Payments
+  payments: {
+    all: (params?: Record<string, any>) => ["payments", "all", params] as const,
+    detail: (id: string) => ["payments", "detail", id] as const,
+    userPayments: (params?: Record<string, any>) =>
+      ["payments", "user", params] as const,
+  },
+
+  // Refunds
+  refunds: {
+    detail: (id: string) => ["refunds", "detail", id] as const,
+  },
+
+  // Insurance
+  insurance: {
+    policy: (id: string) => ["insurance", "policy", id] as const,
+    claim: (id: string) => ["insurance", "claim", id] as const,
+  },
+
+  // GPS Tracking
+  gps: {
+    location: ["gps", "location"] as const,
+    history: (params?: Record<string, any>) =>
+      ["gps", "history", params] as const,
+    vehicleLocation: (id: string) =>
+      ["gps", "vehicle", "location", id] as const,
+    vehicleHistory: (id: string, params?: Record<string, any>) =>
+      ["gps", "vehicle", "history", id, params] as const,
+    live: (id: string) => ["gps", "vehicle", "live", id] as const,
+  },
+
+  // Notifications
+  notifications: {
+    all: (params?: Record<string, any>) =>
+      ["notifications", "all", params] as const,
+    settings: ["notifications", "settings"] as const,
+  },
+
+  // Admin
+  admin: {
+    dashboard: ["admin", "dashboard"] as const,
+    logs: (params?: Record<string, any>) => ["admin", "logs", params] as const,
+    users: (params?: Record<string, any>) =>
+      ["admin", "users", params] as const,
+    financialReports: (params?: Record<string, any>) =>
+      ["admin", "reports", "financial", params] as const,
+    performanceReports: (params?: Record<string, any>) =>
+      ["admin", "reports", "performance", params] as const,
+  },
+
+  // Operational
+  operational: {
+    serviceAreas: (params?: Record<string, any>) =>
+      ["operational", "service-areas", params] as const,
+    operatingHours: (params?: Record<string, any>) =>
+      ["operational", "operating-hours", params] as const,
+    cargoCategories: (params?: Record<string, any>) =>
+      ["operational", "cargo-categories", params] as const,
+    pricingPolicies: (params?: Record<string, any>) =>
+      ["operational", "pricing-policies", params] as const,
+  },
+
+  // Localization
+  localization: {
+    translations: (language: string) =>
+      ["localization", "translations", language] as const,
+  },
+
+  // Files
+  files: {
+    all: (params?: Record<string, any>) => ["files", "all", params] as const,
+    url: (id: string) => ["files", "url", id] as const,
+  },
+
+  // Search
+  search: {
+    cargos: (params?: Record<string, any>) =>
+      ["search", "cargos", params] as const,
+    users: (params?: Record<string, any>) =>
+      ["search", "users", params] as const,
+    vehicles: (params?: Record<string, any>) =>
+      ["search", "vehicles", params] as const,
+  },
+
+  // Analytics
+  analytics: {
+    cargos: (params?: Record<string, any>) =>
+      ["analytics", "cargos", params] as const,
+    drivers: (params?: Record<string, any>) =>
+      ["analytics", "drivers", params] as const,
+    financial: (params?: Record<string, any>) =>
+      ["analytics", "financial", params] as const,
+    performance: (params?: Record<string, any>) =>
+      ["analytics", "performance", params] as const,
+  },
+};
+
+export default queryClient;
