@@ -10,7 +10,7 @@ import {
   differenceInHours,
   differenceInMinutes,
 } from "date-fns";
-import { enUS, fr, rw } from "date-fns/locale";
+import { enUS, fr } from "date-fns/locale";
 import { Language } from "../../types/shared";
 
 // ===========================================
@@ -20,7 +20,7 @@ import { Language } from "../../types/shared";
 const dateLocales = {
   en: enUS,
   fr: fr,
-  rw: rw,
+  rw: enUS, // Fallback to enUS for Kinyarwanda
 };
 
 export const formatDate = (
