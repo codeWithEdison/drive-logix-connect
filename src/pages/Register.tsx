@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, User, Mail, Phone, Building, Lock } from "lucide-react";
-import { toast } from "sonner";
+import { customToast } from "@/lib/utils/toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,12 +51,12 @@ export default function Register() {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error(t("auth.passwordsDoNotMatch"));
+      customToast.validation.passwordsNotMatch();
       return;
     }
 
     if (!formData.agreeToTerms) {
-      toast.error(t("auth.agreeToTermsError"));
+      customToast.validation.requiredField("Terms and Conditions");
       return;
     }
 
@@ -71,7 +71,7 @@ export default function Register() {
 
     const success = await register(registrationData);
     if (success) {
-      toast.success(t("auth.registerSuccess"));
+      customToast.success(t("auth.registerSuccess"));
       // Navigation is handled by AuthContext
     }
   };

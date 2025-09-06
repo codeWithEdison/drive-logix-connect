@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLogin, useRegister, useLogout } from "@/lib/api/hooks";
+import { AuthService } from "@/lib/api/services";
 import {
   User,
   UserRole,
   LoginRequest,
   CreateUserRequest,
 } from "@/types/shared";
-import { toast } from "sonner";
+import { customToast } from "@/lib/utils/toast";
 
 interface AuthContextType {
   user: User | null;
@@ -24,9 +24,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const loginMutation = useLogin();
-  const registerMutation = useRegister();
-  const logoutMutation = useLogout();
 
   useEffect(() => {
     // Check for stored user on mount
@@ -50,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const loginData: LoginRequest = { email, password };
-      const result = await loginMutation.mutateAsync(loginData);
+      const result = await AuthService.login(loginData);
 
       if (result.success && result.data) {
         const { user, token, refresh_token } = result.data;
@@ -63,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setUser(user);
-        toast.success("Login successful!");
+        customToast.auth.loginSuccess(user.full_name);
 
         // Navigate to appropriate route based on user role
         const defaultRoute = getDefaultRoute(user.role);
@@ -74,7 +71,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error?.error?.message || "Login failed. Please try again.");
+      customToast.auth.loginError(
+        error?.error?.message || "Login failed. Please try again."
+      );
       return false;
     } finally {
       setIsLoading(false);
@@ -84,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (data: CreateUserRequest): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const result = await registerMutation.mutateAsync(data);
+      const result = await AuthService.register(data);
 
       if (result.success && result.data) {
         const { user, token, refresh_token } = result.data;
@@ -97,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setUser(user);
-        toast.success("Registration successful!");
+        customToast.auth.registerSuccess(user.full_name);
 
         // Navigate to appropriate route based on user role
         const defaultRoute = getDefaultRoute(user.role);
@@ -108,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error(
+      customToast.auth.registerError(
         error?.error?.message || "Registration failed. Please try again."
       );
       return false;
@@ -121,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Call logout API if user is authenticated
       if (user) {
-        await logoutMutation.mutateAsync();
+        await AuthService.logout();
       }
     } catch (error) {
       console.error("Logout error:", error);
@@ -131,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("logistics_user");
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
-      toast.success("Logged out successfully");
+      customToast.auth.logoutSuccess();
     }
   };
 

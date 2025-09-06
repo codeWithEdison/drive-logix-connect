@@ -29,11 +29,6 @@ axiosInstance.interceptors.request.use(
     const language = localStorage.getItem("preferred_language") || "en";
     config.headers["Accept-Language"] = language;
 
-    // Add request ID for tracking
-    config.headers["X-Request-ID"] = `req_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
-
     return config;
   },
   (error) => {

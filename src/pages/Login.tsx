@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { customToast } from "@/lib/utils/toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
 
@@ -29,11 +29,11 @@ export default function Login() {
 
     const success = await login(email, password);
     if (success) {
-      toast.success(t("auth.loginSuccess"));
+      customToast.success(t("auth.loginSuccess"));
       // Navigation will be handled by AuthContext after successful login
       // The user data is already stored in AuthContext
     } else {
-      toast.error(t("auth.invalidCredentials"));
+      customToast.error(t("auth.invalidCredentials"));
     }
   };
 
@@ -93,6 +93,7 @@ export default function Login() {
                       placeholder={t("auth.password")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
                       required
                     />
                     <Button

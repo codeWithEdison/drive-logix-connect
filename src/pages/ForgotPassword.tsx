@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
+import { customToast } from "@/lib/utils/toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
 
@@ -27,7 +27,7 @@ export default function ForgotPassword() {
 
     // Mock password reset request
     setTimeout(() => {
-      toast.success(t("auth.passwordResetSent"));
+      customToast.success(t("auth.passwordResetSent"));
       setIsSubmitted(true);
       setIsLoading(false);
     }, 2000);

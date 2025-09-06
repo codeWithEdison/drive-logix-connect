@@ -1,0 +1,205 @@
+import { toast } from "sonner";
+
+// Custom toast types with specific behaviors and styling
+export const customToast = {
+  // Success toasts - Green with checkmark icon
+  success: (message: string, description?: string) => {
+    return toast.success(message, {
+      description,
+      duration: 4000,
+      icon: "✅",
+      style: {
+        background: "var(--green-50)",
+        border: "1px solid var(--green-200)",
+        color: "var(--green-800)",
+      },
+    });
+  },
+
+  // Error toasts - Red with X icon
+  error: (message: string, description?: string) => {
+    return toast.error(message, {
+      description,
+      duration: 6000, // Longer duration for errors
+      icon: "❌",
+      style: {
+        background: "var(--red-50)",
+        border: "1px solid var(--red-200)",
+        color: "var(--red-800)",
+      },
+    });
+  },
+
+  // Warning toasts - Yellow with warning icon
+  warning: (message: string, description?: string) => {
+    return toast.warning(message, {
+      description,
+      duration: 5000,
+      icon: "⚠️",
+      style: {
+        background: "var(--yellow-50)",
+        border: "1px solid var(--yellow-200)",
+        color: "var(--yellow-800)",
+      },
+    });
+  },
+
+  // Info toasts - Blue with info icon
+  info: (message: string, description?: string) => {
+    return toast.info(message, {
+      description,
+      duration: 4000,
+      icon: "ℹ️",
+      style: {
+        background: "var(--blue-50)",
+        border: "1px solid var(--blue-200)",
+        color: "var(--blue-800)",
+      },
+    });
+  },
+
+  // Loading toasts - Purple with spinner
+  loading: (message: string, description?: string) => {
+    return toast.loading(message, {
+      description,
+      icon: "⏳",
+      style: {
+        background: "var(--purple-50)",
+        border: "1px solid var(--purple-200)",
+        color: "var(--purple-800)",
+      },
+    });
+  },
+
+  // Authentication specific toasts
+  auth: {
+    loginSuccess: (userName?: string) => {
+      return customToast.success(
+        "Welcome back!",
+        userName ? `Logged in as ${userName}` : "Login successful"
+      );
+    },
+    loginError: (message?: string) => {
+      return customToast.error(
+        "Login Failed",
+        message || "Please check your credentials and try again"
+      );
+    },
+    registerSuccess: (userName?: string) => {
+      return customToast.success(
+        "Account Created!",
+        userName ? `Welcome ${userName}` : "Registration successful"
+      );
+    },
+    registerError: (message?: string) => {
+      return customToast.error(
+        "Registration Failed",
+        message || "Please check your information and try again"
+      );
+    },
+    logoutSuccess: () => {
+      return customToast.info(
+        "Logged Out",
+        "You have been successfully logged out"
+      );
+    },
+    sessionExpired: () => {
+      return customToast.warning(
+        "Session Expired",
+        "Please log in again to continue"
+      );
+    },
+  },
+
+  // API specific toasts
+  api: {
+    requestFailed: (endpoint?: string) => {
+      return customToast.error(
+        "Request Failed",
+        endpoint ? `Failed to connect to ${endpoint}` : "Network error occurred"
+      );
+    },
+    serverError: () => {
+      return customToast.error(
+        "Server Error",
+        "Something went wrong on our end. Please try again later."
+      );
+    },
+    networkError: () => {
+      return customToast.error(
+        "Network Error",
+        "Please check your internet connection"
+      );
+    },
+  },
+
+  // Form validation toasts
+  validation: {
+    requiredField: (fieldName: string) => {
+      return customToast.warning("Required Field", `${fieldName} is required`);
+    },
+    invalidFormat: (fieldName: string) => {
+      return customToast.warning(
+        "Invalid Format",
+        `Please enter a valid ${fieldName}`
+      );
+    },
+    passwordsNotMatch: () => {
+      return customToast.warning("Password Mismatch", "Passwords do not match");
+    },
+  },
+
+  // Cargo/Delivery specific toasts
+  cargo: {
+    created: (cargoId?: string) => {
+      return customToast.success(
+        "Cargo Created",
+        cargoId
+          ? `Cargo #${cargoId} has been created`
+          : "Cargo created successfully"
+      );
+    },
+    updated: (cargoId?: string) => {
+      return customToast.info(
+        "Cargo Updated",
+        cargoId
+          ? `Cargo #${cargoId} has been updated`
+          : "Cargo updated successfully"
+      );
+    },
+    deleted: (cargoId?: string) => {
+      return customToast.warning(
+        "Cargo Deleted",
+        cargoId
+          ? `Cargo #${cargoId} has been deleted`
+          : "Cargo deleted successfully"
+      );
+    },
+  },
+
+  // Payment specific toasts
+  payment: {
+    success: (amount?: string) => {
+      return customToast.success(
+        "Payment Successful",
+        amount
+          ? `Payment of ${amount} completed`
+          : "Payment processed successfully"
+      );
+    },
+    failed: (reason?: string) => {
+      return customToast.error(
+        "Payment Failed",
+        reason || "Payment could not be processed"
+      );
+    },
+    pending: () => {
+      return customToast.info(
+        "Payment Pending",
+        "Your payment is being processed"
+      );
+    },
+  },
+};
+
+export default customToast;
