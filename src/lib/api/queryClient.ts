@@ -255,6 +255,45 @@ export const queryKeys = {
     health: ["system", "health"] as const,
     ready: ["system", "ready"] as const,
   },
+
+  // Dashboard
+  dashboard: {
+    all: () => ["dashboard"] as const,
+    driver: () => ["dashboard", "driver"] as const,
+    client: () => ["dashboard", "client"] as const,
+    admin: () => ["dashboard", "admin"] as const,
+    superAdmin: () => ["dashboard", "super-admin"] as const,
+    charts: {
+      revenue: (params?: Record<string, any>) =>
+        ["dashboard", "charts", "revenue", params] as const,
+      deliveryStatus: (params?: Record<string, any>) =>
+        ["dashboard", "charts", "delivery-status", params] as const,
+      fleetPerformance: (params?: Record<string, any>) =>
+        ["dashboard", "charts", "fleet-performance", params] as const,
+      geographic: (params?: Record<string, any>) =>
+        ["dashboard", "charts", "geographic", params] as const,
+      driverPerformance: (params?: Record<string, any>) =>
+        ["dashboard", "charts", "driver-performance", params] as const,
+      usageTrends: (params?: Record<string, any>) =>
+        ["dashboard", "charts", "usage-trends", params] as const,
+      adminPerformance: (params?: Record<string, any>) =>
+        ["dashboard", "charts", "admin-performance", params] as const,
+      usersDistribution: (params?: Record<string, any>) =>
+        ["dashboard", "charts", "users-distribution", params] as const,
+    },
+    tables: {
+      recentDeliveries: (params?: Record<string, any>) =>
+        ["dashboard", "tables", "recent-deliveries", params] as const,
+      pendingApprovals: (params?: Record<string, any>) =>
+        ["dashboard", "tables", "pending-approvals", params] as const,
+      systemAlerts: (params?: Record<string, any>) =>
+        ["dashboard", "tables", "system-alerts", params] as const,
+      financialTransactions: (params?: Record<string, any>) =>
+        ["dashboard", "tables", "financial-transactions", params] as const,
+    },
+    systemHealth: () => ["dashboard", "system-health"] as const,
+    filters: () => ["dashboard", "filters"] as const,
+  },
 };
 
 export default queryClient;

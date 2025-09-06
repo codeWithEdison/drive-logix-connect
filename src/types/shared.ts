@@ -966,3 +966,299 @@ export interface DriverAnalytics {
     average_rating: number;
   }>;
 }
+
+// ===========================================
+// DASHBOARD INTERFACES
+// ===========================================
+
+// Main Dashboard Overview
+export interface DashboardOverview {
+  summary: DashboardStats;
+  recent_activities: RecentActivity[];
+  alerts: DashboardAlert[];
+  quick_stats: QuickStats;
+}
+
+// Enhanced Dashboard Stats
+export interface DashboardStats {
+  // User Statistics
+  total_users: number;
+  active_users: number;
+  new_users_today: number;
+  new_users_this_week: number;
+  users_by_role: Record<UserRole, number>;
+
+  // Driver Statistics
+  total_drivers: number;
+  active_drivers: number;
+  available_drivers: number;
+  drivers_on_duty: number;
+  average_driver_rating: number;
+
+  // Vehicle Statistics
+  total_vehicles: number;
+  active_vehicles: number;
+  vehicles_in_maintenance: number;
+  vehicles_available: number;
+  vehicle_utilization_rate: number;
+
+  // Cargo & Delivery Statistics
+  total_cargos: number;
+  pending_cargos: number;
+  active_deliveries: number;
+  completed_deliveries_today: number;
+  completed_deliveries_this_week: number;
+  cancelled_deliveries: number;
+
+  // Financial Statistics
+  total_revenue: number;
+  revenue_today: number;
+  revenue_this_week: number;
+  revenue_this_month: number;
+  pending_payments: number;
+  total_outstanding_amount: number;
+  average_order_value: number;
+
+  // Performance Metrics
+  on_time_delivery_rate: number;
+  average_delivery_time_hours: number;
+  customer_satisfaction_score: number;
+  system_uptime_percentage: number;
+}
+
+// Quick Stats for Dashboard Cards
+export interface QuickStats {
+  today_deliveries: number;
+  today_revenue: number;
+  pending_approvals: number;
+  system_alerts: number;
+  active_support_tickets: number;
+  maintenance_due: number;
+}
+
+// Recent Activities
+export interface RecentActivity {
+  id: UUID;
+  type: ActivityType;
+  title: string;
+  description: string;
+  user_id?: UUID;
+  user_name?: string;
+  entity_type?: string;
+  entity_id?: UUID;
+  timestamp: string;
+  severity: ActivitySeverity;
+}
+
+export enum ActivityType {
+  DELIVERY_CREATED = "delivery_created",
+  DELIVERY_COMPLETED = "delivery_completed",
+  PAYMENT_RECEIVED = "payment_received",
+  USER_REGISTERED = "user_registered",
+  DRIVER_ASSIGNED = "driver_assigned",
+  VEHICLE_MAINTENANCE = "vehicle_maintenance",
+  SYSTEM_ALERT = "system_alert",
+  INVOICE_GENERATED = "invoice_generated",
+  REFUND_PROCESSED = "refund_processed",
+}
+
+export enum ActivitySeverity {
+  LOW = "low",
+  MEDIUM = "medium",
+  HIGH = "high",
+  CRITICAL = "critical",
+}
+
+// Dashboard Alerts
+export interface DashboardAlert {
+  id: UUID;
+  type: AlertType;
+  title: string;
+  message: string;
+  severity: ActivitySeverity;
+  is_read: boolean;
+  created_at: string;
+  expires_at?: string;
+  action_required: boolean;
+  action_url?: string;
+}
+
+export enum AlertType {
+  PAYMENT_OVERDUE = "payment_overdue",
+  VEHICLE_MAINTENANCE_DUE = "vehicle_maintenance_due",
+  DRIVER_LICENSE_EXPIRING = "driver_license_expiring",
+  INSURANCE_EXPIRING = "insurance_expiring",
+  SYSTEM_ERROR = "system_error",
+  HIGH_CANCELLATION_RATE = "high_cancellation_rate",
+  LOW_DRIVER_RATING = "low_driver_rating",
+}
+
+// Charts Data Interfaces
+export interface ChartData {
+  labels: string[];
+  datasets: ChartDataset[];
+}
+
+export interface ChartDataset {
+  label: string;
+  data: number[];
+  backgroundColor?: string | string[];
+  borderColor?: string | string[];
+  borderWidth?: number;
+}
+
+// Revenue Chart Data
+export interface RevenueChartData {
+  daily_revenue: Array<{
+    date: string;
+    revenue: number;
+    deliveries: number;
+  }>;
+  monthly_revenue: Array<{
+    month: string;
+    revenue: number;
+    growth_percentage: number;
+  }>;
+  revenue_by_payment_method: Record<PaymentMethod, number>;
+}
+
+// Delivery Performance Chart
+export interface DeliveryPerformanceChart {
+  delivery_times: Array<{
+    date: string;
+    average_time_hours: number;
+    on_time_percentage: number;
+  }>;
+  status_distribution: Record<CargoStatus, number>;
+  priority_distribution: Record<CargoPriority, number>;
+}
+
+// Geographic Analytics
+export interface GeographicAnalytics {
+  top_pickup_locations: Array<{
+    location: string;
+    count: number;
+    revenue: number;
+  }>;
+  top_delivery_locations: Array<{
+    location: string;
+    count: number;
+    revenue: number;
+  }>;
+  route_efficiency: Array<{
+    route: string;
+    average_time: number;
+    distance_km: number;
+    efficiency_score: number;
+  }>;
+}
+
+// Driver Performance Dashboard
+export interface DriverPerformanceDashboard {
+  top_performers: Array<{
+    driver_id: UUID;
+    driver_name: string;
+    deliveries_completed: number;
+    average_rating: number;
+    total_distance_km: number;
+    on_time_percentage: number;
+  }>;
+  performance_trends: Array<{
+    date: string;
+    average_rating: number;
+    deliveries_completed: number;
+  }>;
+  driver_status_distribution: Record<DriverStatus, number>;
+}
+
+// Vehicle Analytics Dashboard
+export interface VehicleAnalyticsDashboard {
+  vehicle_utilization: Array<{
+    vehicle_id: UUID;
+    plate_number: string;
+    utilization_percentage: number;
+    total_distance_km: number;
+    maintenance_cost: number;
+  }>;
+  fuel_efficiency: Array<{
+    vehicle_id: UUID;
+    plate_number: string;
+    fuel_efficiency_km_per_liter: number;
+    total_fuel_cost: number;
+  }>;
+  maintenance_schedule: Array<{
+    vehicle_id: UUID;
+    plate_number: string;
+    next_maintenance_date: string;
+    maintenance_type: MaintenanceType;
+    estimated_cost: number;
+  }>;
+}
+
+// Client Analytics Dashboard
+export interface ClientAnalyticsDashboard {
+  top_clients: Array<{
+    client_id: UUID;
+    client_name: string;
+    total_orders: number;
+    total_revenue: number;
+    average_order_value: number;
+    last_order_date: string;
+  }>;
+  client_growth: Array<{
+    date: string;
+    new_clients: number;
+    active_clients: number;
+  }>;
+  business_type_distribution: Record<BusinessType, number>;
+}
+
+// System Health Dashboard
+export interface SystemHealthDashboard {
+  api_performance: {
+    average_response_time_ms: number;
+    error_rate_percentage: number;
+    uptime_percentage: number;
+  };
+  database_metrics: {
+    connection_count: number;
+    query_performance_ms: number;
+    storage_usage_percentage: number;
+  };
+  server_resources: {
+    cpu_usage_percentage: number;
+    memory_usage_percentage: number;
+    disk_usage_percentage: number;
+  };
+}
+
+// Dashboard Response Types
+export interface DashboardResponse {
+  overview: DashboardOverview;
+  charts: {
+    revenue: RevenueChartData;
+    delivery_performance: DeliveryPerformanceChart;
+    geographic: GeographicAnalytics;
+  };
+  analytics: {
+    driver_performance: DriverPerformanceDashboard;
+    vehicle_analytics: VehicleAnalyticsDashboard;
+    client_analytics: ClientAnalyticsDashboard;
+    system_health: SystemHealthDashboard;
+  };
+  last_updated: string;
+}
+
+// Dashboard Filter Parameters
+export interface DashboardFilters {
+  date_range?: {
+    start_date: string;
+    end_date: string;
+  };
+  period?: "today" | "week" | "month" | "quarter" | "year";
+  user_role?: UserRole;
+  driver_status?: DriverStatus;
+  vehicle_type?: VehicleType;
+  cargo_status?: CargoStatus;
+  payment_method?: PaymentMethod;
+}

@@ -18,3 +18,4 @@ export { AdminService } from "./adminService";
 export { FileService } from "./utilityService";
 export { SystemService } from "./systemService";
 export { LocalizationService, OperationalService } from "./localizationService";
+export { DashboardService } from "./dashboardService";
