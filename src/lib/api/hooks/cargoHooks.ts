@@ -57,7 +57,16 @@ export const useClientCargos = (params?: CargoSearchParams) => {
   return useQuery({
     queryKey: queryKeys.cargos.clientCargos(params),
     queryFn: () => CargoService.getClientCargos(params),
-    select: (data) => data.data,
+    select: (data) => {
+      // Handle the actual API response structure
+      // API returns: { success: true, data: Cargo[], meta: { pagination } }
+      // We need to return the data array directly
+      console.log("🔍 useClientCargos select - raw data:", data);
+      console.log("🔍 useClientCargos select - data.data:", data.data);
+      return data.data;
+    },
+    staleTime: 0, // Force fresh data
+    cacheTime: 0, // Don't cache
   });
 };
 

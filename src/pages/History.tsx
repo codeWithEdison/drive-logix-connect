@@ -32,6 +32,10 @@ import { useClientCargos } from "@/lib/api/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import {
+  CargoDetailModal,
+  CargoDetail,
+} from "@/components/ui/CargoDetailModal";
 
 // Mock historical cargo data
 const historicalCargos = [
@@ -83,6 +87,10 @@ export default function History() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateRange, setDateRange] = useState("all");
 
+  // State for modal
+  const [selectedCargo, setSelectedCargo] = useState<CargoDetail | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // API hooks
   const { data: cargosData, isLoading, error, refetch } = useClientCargos();
 
@@ -90,8 +98,48 @@ export default function History() {
     refetch();
   };
 
-  const handleViewDetails = (cargoId: string) => {
-    navigate(`/tracking/${cargoId}`);
+  const handleViewDetails = (cargo: any) => {
+    // Transform API cargo to CargoDetail format
+    const cargoDetail: CargoDetail = {
+      id: cargo.id,
+      status:
+        cargo.status === "delivered"
+          ? "delivered"
+          : cargo.status === "cancelled"
+          ? "cancelled"
+          : cargo.status === "in_transit"
+          ? "transit"
+          : cargo.status === "pending"
+          ? "pending"
+          : "active",
+      from: cargo.pickup_address || "Unknown Location",
+      to: cargo.destination_address || "Unknown Location",
+      driver: (cargo as any).delivery_assignment?.driver?.user?.full_name || "",
+      phone: (cargo as any).delivery_assignment?.driver?.emergency_phone || "",
+      weight: `${cargo.weight_kg || 0} kg`,
+      type: cargo.type || "Unknown Type",
+      cost: parseFloat(String(cargo.estimated_cost || cargo.final_cost || "0")),
+      pickupDate: cargo.pickup_date ? cargo.pickup_date.split("T")[0] : "",
+      deliveryDate: cargo.delivery_date
+        ? cargo.delivery_date.split("T")[0]
+        : "",
+      description: cargo.special_requirements || "",
+      specialInstructions: cargo.special_requirements || "",
+      vehicleType: (cargo as any).delivery_assignment?.vehicle
+        ? `${(cargo as any).delivery_assignment.vehicle.make} ${
+            (cargo as any).delivery_assignment.vehicle.model
+          }`
+        : "Unknown Vehicle",
+      distance: cargo.distance_km ? `${cargo.distance_km} km` : "Unknown",
+      pickupContact: cargo.pickup_contact || "",
+      pickupContactPhone: cargo.pickup_phone || "",
+      deliveryContact: cargo.destination_contact || "",
+      deliveryContactPhone: cargo.destination_phone || "",
+      createdDate: cargo.created_at?.split("T")[0] || "",
+    };
+
+    setSelectedCargo(cargoDetail);
+    setIsModalOpen(true);
   };
 
   const handleReorder = (cargoId: string) => {
@@ -119,7 +167,7 @@ export default function History() {
 
   // Filter cargos based on search and filters
   const filteredCargos =
-    cargosData?.data?.filter((cargo: any) => {
+    (cargosData as any[])?.filter((cargo: any) => {
       const matchesSearch =
         searchQuery === "" ||
         cargo.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -397,7 +445,7 @@ export default function History() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleViewDetails(cargo.id)}
+                      onClick={() => handleViewDetails(cargo)}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       {t("history.details")}
@@ -418,6 +466,25 @@ export default function History() {
           ))
         )}
       </div>
+
+      {/* Cargo Detail Modal */}
+      <CargoDetailModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        cargo={selectedCargo}
+        onCallDriver={(phone) => {
+          console.log("Calling driver:", phone);
+          window.open(`tel:${phone}`, "_self");
+        }}
+        onUploadPhoto={(cargoId) => {
+          console.log("Uploading photo for cargo:", cargoId);
+          toast.info(t("history.uploadPhoto"));
+        }}
+        onReportIssue={(cargoId) => {
+          console.log("Reporting issue for cargo:", cargoId);
+          toast.info(t("history.reportIssue"));
+        }}
+      />
     </div>
   );
 }

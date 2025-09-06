@@ -41,10 +41,14 @@ export class CargoService {
   // Get client cargos
   static async getClientCargos(
     params?: CargoSearchParams
-  ): Promise<ApiResponse<PaginationResponse<Cargo>>> {
+  ): Promise<ApiResponse<Cargo[]>> {
     const response = await axiosInstance.get("/cargos/clients/cargos", {
       params,
     });
+    console.log(
+      "🔍 CargoService.getClientCargos - raw response:",
+      response.data
+    );
     return response.data;
   }
 

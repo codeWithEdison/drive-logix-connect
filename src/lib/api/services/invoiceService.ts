@@ -45,7 +45,7 @@ export class InvoiceService {
     status?: string;
     page?: number;
     limit?: number;
-  }): Promise<ApiResponse<PaginationResponse<Invoice>>> {
+  }): Promise<ApiResponse<{ invoices: Invoice[]; pagination: any }>> {
     const response = await axiosInstance.get("/clients/invoices", { params });
     return response.data;
   }

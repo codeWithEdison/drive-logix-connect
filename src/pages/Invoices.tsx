@@ -32,6 +32,7 @@ import {
   AlertCircle,
   MoreHorizontal,
   RefreshCw,
+  MapPin,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,6 +45,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClientInvoices } from "@/lib/api/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import {
+  InvoiceDetailModal,
+  InvoiceDetail,
+} from "@/components/ui/InvoiceDetailModal";
 
 // Mock invoice data based on database schema
 const mockInvoices = [
@@ -142,8 +147,22 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
+  // Modal state
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceDetail | null>(
+    null
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // API hooks
   const { data: invoicesData, isLoading, error, refetch } = useClientInvoices();
+
+  // Debug: Let's see what we're getting
+  console.log("🔍 DEBUGGING Invoices:");
+  console.log("📊 invoicesData:", invoicesData);
+  console.log("📊 Array.isArray(invoicesData):", Array.isArray(invoicesData));
+  console.log("📊 invoicesData type:", typeof invoicesData);
+  console.log("📊 isLoading:", isLoading);
+  console.log("📊 error:", error);
 
   const handleRefresh = () => {
     refetch();
@@ -156,11 +175,9 @@ export default function Invoices() {
     // In real app, this would trigger a PDF download
   };
 
-  const handleViewInvoice = (invoiceId: string) => {
-    // Mock view functionality
-    console.log(`Viewing invoice ${invoiceId}`);
-    toast.info(t("invoices.viewInfo"));
-    // In real app, this would open a modal or navigate to invoice detail
+  const handleViewInvoice = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setIsModalOpen(true);
   };
 
   const handlePayNow = (invoiceId: string) => {
@@ -176,18 +193,18 @@ export default function Invoices() {
   };
 
   // Filter and sort invoices
-  const filteredInvoices =
-    invoicesData?.data?.filter((invoice: any) => {
-      const matchesSearch =
-        searchTerm === "" ||
-        invoice.invoice_number
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        invoice.cargo_id?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        statusFilter === "all" || invoice.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    }) || [];
+  const actualInvoices = Array.isArray(invoicesData) ? invoicesData : [];
+  const filteredInvoices = actualInvoices.filter((invoice: any) => {
+    const matchesSearch =
+      searchTerm === "" ||
+      invoice.invoice_number
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      invoice.cargo_id?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || invoice.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const sortedInvoices = [...filteredInvoices].sort((a: any, b: any) => {
     switch (sortBy) {
@@ -208,14 +225,12 @@ export default function Invoices() {
     }
   });
 
-  const totalPaid =
-    invoicesData?.data
-      ?.filter((inv: any) => inv.status === "paid")
-      .reduce((sum: number, inv: any) => sum + inv.total_amount, 0) || 0;
-  const totalOutstanding =
-    invoicesData?.data
-      ?.filter((inv: any) => inv.status === "sent" || inv.status === "overdue")
-      .reduce((sum: number, inv: any) => sum + inv.total_amount, 0) || 0;
+  const totalPaid = actualInvoices
+    .filter((inv: any) => inv.status === "paid")
+    .reduce((sum: number, inv: any) => sum + inv.total_amount, 0);
+  const totalOutstanding = actualInvoices
+    .filter((inv: any) => inv.status === "sent" || inv.status === "overdue")
+    .reduce((sum: number, inv: any) => sum + inv.total_amount, 0);
 
   // Loading state
   if (isLoading) {
@@ -370,7 +385,7 @@ export default function Invoices() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {invoicesData?.data?.length || 0}
+              {actualInvoices.length}
             </div>
             <p className="text-xs text-muted-foreground">
               {t("invoices.allTime")}
@@ -480,10 +495,9 @@ export default function Invoices() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("invoices.invoiceNumber")}</TableHead>
-                  <TableHead>{t("invoices.cargoId")}</TableHead>
-                  <TableHead>{t("invoices.type")}</TableHead>
+                  <TableHead>{t("invoices.cargo")}</TableHead>
                   <TableHead>{t("invoices.amount")}</TableHead>
-                  <TableHead>{t("invoices.status")}</TableHead>
+                  <TableHead>{t("invoices.statusLabel")}</TableHead>
                   <TableHead>{t("invoices.dueDate")}</TableHead>
                   <TableHead>{t("invoices.created")}</TableHead>
                   <TableHead className="text-right">
@@ -501,19 +515,25 @@ export default function Invoices() {
                         {invoice.invoice_number || invoice.id}
                       </TableCell>
                       <TableCell>
-                        {invoice.cargo_id || t("invoices.noCargoId")}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">
-                            {invoice.cargo_type || t("invoices.unknownType")}
+                        <div className="space-y-1">
+                          <div className="font-medium text-sm">
+                            {invoice.cargo?.type || t("invoices.unknownType")}
                           </div>
-                          <div className="text-xs text-muted-foreground truncate max-w-32">
-                            {invoice.pickup_address ||
-                              t("invoices.unknownLocation")}{" "}
-                            →{" "}
-                            {invoice.destination_address ||
-                              t("invoices.unknownLocation")}
+                          <div className="text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              <span className="truncate max-w-40">
+                                {invoice.cargo?.pickup_address ||
+                                  t("invoices.unknownLocation")}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              <span className="truncate max-w-40">
+                                {invoice.cargo?.destination_address ||
+                                  t("invoices.unknownLocation")}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </TableCell>
@@ -544,7 +564,9 @@ export default function Invoices() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {invoice.due_date || t("invoices.noDueDate")}
+                          {invoice.due_date
+                            ? new Date(invoice.due_date).toLocaleDateString()
+                            : t("invoices.noDueDate")}
                         </div>
                         {invoice.status === "paid" && invoice.paid_at && (
                           <div className="text-xs text-muted-foreground">
@@ -567,7 +589,7 @@ export default function Invoices() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => handleViewInvoice(invoice.id)}
+                              onClick={() => handleViewInvoice(invoice)}
                             >
                               <Eye className="h-4 w-4 mr-2" />
                               {t("invoices.viewDetails")}
@@ -609,6 +631,21 @@ export default function Invoices() {
           )}
         </CardContent>
       </Card>
+
+      {/* Invoice Detail Modal */}
+      <InvoiceDetailModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        invoice={selectedInvoice}
+        onDownload={(invoiceId) => {
+          console.log("Downloading invoice:", invoiceId);
+          toast.info(t("invoices.downloadInfo"));
+        }}
+        onPay={(invoiceId) => {
+          console.log("Paying invoice:", invoiceId);
+          toast.info(t("invoices.payInfo"));
+        }}
+      />
     </div>
   );
 }

@@ -65,7 +65,18 @@ export const useClientInvoices = (params?: {
   return useQuery({
     queryKey: queryKeys.invoices.clientInvoices(params),
     queryFn: () => InvoiceService.getClientInvoices(params),
-    select: (data) => data.data,
+    select: (data) => {
+      // Handle the actual API response structure
+      // API returns: { success: true, data: { invoices: Invoice[], pagination: {...} } }
+      // We need to return the invoices array directly
+      console.log("🔍 useClientInvoices select - raw data:", data);
+      console.log("🔍 useClientInvoices select - data.data:", data.data);
+      console.log(
+        "🔍 useClientInvoices select - data.data.invoices:",
+        data.data.invoices
+      );
+      return data.data.invoices;
+    },
   });
 };
 

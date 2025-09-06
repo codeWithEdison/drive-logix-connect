@@ -826,13 +826,25 @@
     "driverAssigned": "Driver Assigned",
     "noDriverAssigned": "No Driver Assigned",
     "reorderInfo": "Redirecting to create cargo page",
+    "type": "Type",
+    "weight": "Weight",
+    "driver": "Driver",
+    "cost": "Cost",
+    "details": "Details",
+    "reorder": "Reorder",
+    "uploadPhoto": "Upload photo functionality coming soon",
+    "reportIssue": "Report issue functionality coming soon",
     "status": {
       "pending": "Pending",
+      "quoted": "Quoted",
+      "accepted": "Accepted",
       "assigned": "Assigned",
       "active": "Active",
+      "picked_up": "Picked Up",
       "in_transit": "In Transit",
       "delivered": "Delivered",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "disputed": "Disputed"
     }
   },
   "invoices": {
@@ -862,9 +874,10 @@
     "allInvoices": "All Invoices",
     "invoiceNumber": "Invoice #",
     "cargoId": "Cargo ID",
+    "cargo": "Cargo",
     "type": "Type",
     "amount": "Amount",
-    "status": "Status",
+    "statusLabel": "Status",
     "dueDate": "Due Date",
     "created": "Created",
     "actions": "Actions",

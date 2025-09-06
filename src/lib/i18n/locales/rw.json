@@ -778,13 +778,25 @@
     "driverAssigned": "Umushoferi yahagijwe",
     "noDriverAssigned": "Nta mushoferi yahagijwe",
     "reorderInfo": "Kujya ku rupapuro rwo gukora ikintu",
+    "type": "Ubwoko",
+    "weight": "Uburemere",
+    "driver": "Umushoferi",
+    "cost": "Amafaranga",
+    "details": "Ibyingenzi",
+    "reorder": "Gukora nanone",
+    "uploadPhoto": "Gushyiraho amashusho bizaza vuba",
+    "reportIssue": "Gusakaza ikibazo bizaza vuba",
     "status": {
       "pending": "Gitegereje",
+      "quoted": "Cyasuzumwe",
+      "accepted": "Cyemewe",
       "assigned": "Cyahagijwe",
       "active": "Cikora",
+      "picked_up": "Cyakuye",
       "in_transit": "Mu nzira",
       "delivered": "Cyahoherejwe",
-      "cancelled": "Cyahagaritswe"
+      "cancelled": "Cyahagaritswe",
+      "disputed": "Cyahanganye"
     }
   },
   "invoices": {
@@ -814,9 +826,10 @@
     "allInvoices": "Amafunguzo yose",
     "invoiceNumber": "Amafunguzo #",
     "cargoId": "ID y'ikintu",
+    "cargo": "Ikintu",
     "type": "Ubwoko",
     "amount": "Amafaranga",
-    "status": "Imiterere",
+    "statusLabel": "Imiterere",
     "dueDate": "Itariki y'igihe",
     "created": "Cyaremwe",
     "actions": "Ibyakozwe",
