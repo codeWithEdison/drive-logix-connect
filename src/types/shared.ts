@@ -179,6 +179,13 @@ export enum PaymentStatus {
   REFUNDED = "refunded",
 }
 
+export enum RefundStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  PROCESSED = "processed",
+}
+
 export enum NotificationType {
   SMS = "sms",
   EMAIL = "email",
@@ -639,7 +646,7 @@ export interface Refund {
   invoice_id: UUID;
   amount: number;
   reason: string;
-  status: PaymentStatus;
+  status: RefundStatus;
   processed_at?: string;
   created_at: string;
   updated_at: string;
@@ -734,4 +741,228 @@ export interface CargoTracking {
   status_updates: DeliveryStatusUpdate[];
   estimated_delivery_time?: string;
   last_updated: string;
+}
+
+// ===========================================
+// ROUTE INTERFACES
+// ===========================================
+
+export interface Route {
+  id: UUID;
+  cargo_id: UUID;
+  route_name: string;
+  total_distance_km: number;
+  estimated_duration_minutes: number;
+  waypoints: RouteWaypoint[];
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RouteWaypoint {
+  id: UUID;
+  route_id: UUID;
+  waypoint_order: number;
+  latitude: number;
+  longitude: number;
+  address: string;
+  waypoint_type: "pickup" | "delivery" | "waypoint";
+  estimated_time?: string;
+  actual_time?: string;
+  status: string;
+}
+
+export interface RouteProgress {
+  route_id: UUID;
+  current_waypoint: number;
+  total_waypoints: number;
+  progress_percentage: number;
+  estimated_completion_time?: string;
+  current_location?: {
+    latitude: number;
+    longitude: number;
+  };
+  completed_waypoints: RouteWaypoint[];
+  remaining_waypoints: RouteWaypoint[];
+}
+
+export interface CreateRouteRequest {
+  cargo_id: UUID;
+  route_name: string;
+  total_distance_km: number;
+  estimated_duration_minutes: number;
+  waypoints: Omit<
+    RouteWaypoint,
+    "id" | "route_id" | "actual_time" | "status"
+  >[];
+}
+
+// ===========================================
+// PAYMENT INTERFACES
+// ===========================================
+
+export interface Payment {
+  id: UUID;
+  invoice_id: UUID;
+  amount: number;
+  payment_method: PaymentMethod;
+  transaction_id?: string;
+  status: PaymentStatus;
+  processed_at?: string;
+  created_at: string;
+}
+
+export interface CreatePaymentRequest {
+  invoice_id: UUID;
+  amount: number;
+  payment_method: PaymentMethod;
+  transaction_id?: string;
+}
+
+export interface PaymentHistoryParams {
+  invoice_id?: UUID;
+  status?: PaymentStatus;
+  page?: number;
+  limit?: number;
+  date_from?: string;
+  date_to?: string;
+}
+
+export interface CreateRefundRequest {
+  invoice_id: UUID;
+  amount: number;
+  reason: string;
+}
+
+// ===========================================
+// INSURANCE INTERFACES
+// ===========================================
+
+export interface InsurancePolicy {
+  id: UUID;
+  cargo_id: UUID;
+  policy_number: string;
+  coverage_amount: number;
+  premium_amount: number;
+  insurance_provider: string;
+  policy_start_date: string;
+  policy_end_date: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateInsurancePolicyRequest {
+  cargo_id: UUID;
+  policy_number: string;
+  coverage_amount: number;
+  premium_amount: number;
+  insurance_provider: string;
+  policy_start_date: string;
+  policy_end_date: string;
+}
+
+export interface InsuranceClaim {
+  id: UUID;
+  cargo_id: UUID;
+  policy_id: UUID;
+  claim_number: string;
+  claim_amount: number;
+  claim_reason: string;
+  status: string;
+  approved_by?: UUID;
+  approved_at?: string;
+  processed_at?: string;
+  created_at: string;
+}
+
+export interface CreateInsuranceClaimRequest {
+  cargo_id: UUID;
+  policy_id: UUID;
+  claim_number: string;
+  claim_amount: number;
+  claim_reason: string;
+}
+
+// ===========================================
+// SEARCH INTERFACES
+// ===========================================
+
+export interface SearchParams {
+  q: string;
+  entity_type?: string;
+  filters?: Record<string, any>;
+  page?: number;
+  limit?: number;
+}
+
+export interface SearchResults {
+  results: any[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  facets?: Record<string, any>;
+}
+
+// ===========================================
+// ANALYTICS INTERFACES
+// ===========================================
+
+export interface AnalyticsParams {
+  period?: string;
+  start_date?: string;
+  end_date?: string;
+  group_by?: string;
+  filters?: Record<string, any>;
+}
+
+export interface AnalyticsData {
+  metrics: Record<string, number>;
+  trends: Array<{
+    date: string;
+    value: number;
+  }>;
+  breakdown: Record<string, any>;
+}
+
+export interface PerformanceMetrics {
+  average_delivery_time: number;
+  on_time_delivery_rate: number;
+  customer_satisfaction_score: number;
+  driver_performance_score: number;
+  vehicle_utilization_rate: number;
+}
+
+export interface FinancialAnalytics {
+  total_revenue: number;
+  total_costs: number;
+  profit_margin: number;
+  revenue_by_period: Array<{
+    period: string;
+    revenue: number;
+  }>;
+  cost_breakdown: Record<string, number>;
+}
+
+export interface CargoAnalytics {
+  total_cargos: number;
+  delivered_cargos: number;
+  pending_cargos: number;
+  cancelled_cargos: number;
+  cargo_by_category: Record<string, number>;
+  cargo_by_status: Record<string, number>;
+}
+
+export interface DriverAnalytics {
+  total_drivers: number;
+  active_drivers: number;
+  average_rating: number;
+  total_deliveries: number;
+  performance_by_driver: Array<{
+    driver_id: UUID;
+    driver_name: string;
+    deliveries_count: number;
+    average_rating: number;
+  }>;
 }

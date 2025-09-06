@@ -31,15 +31,3 @@ export const useClientCreditStatus = () => {
     select: (data) => data.data,
   });
 };
-
-export const useClientInvoices = (params?: {
-  status?: string;
-  page?: number;
-  limit?: number;
-}) => {
-  return useQuery({
-    queryKey: queryKeys.clients.invoices(params),
-    queryFn: () => ClientService.getInvoices(params),
-    select: (data) => data.data,
-  });
-};

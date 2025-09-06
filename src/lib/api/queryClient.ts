@@ -98,11 +98,14 @@ export const queryKeys = {
 
   // Delivery Assignments
   deliveryAssignments: {
+    all: (params?: Record<string, any>) =>
+      ["delivery-assignments", "all", params] as const,
     detail: (id: string) => ["delivery-assignments", "detail", id] as const,
   },
 
   // Routes
   routes: {
+    all: (params?: Record<string, any>) => ["routes", "all", params] as const,
     detail: (id: string) => ["routes", "detail", id] as const,
     progress: (id: string) => ["routes", "progress", id] as const,
   },
@@ -120,19 +123,32 @@ export const queryKeys = {
   payments: {
     all: (params?: Record<string, any>) => ["payments", "all", params] as const,
     detail: (id: string) => ["payments", "detail", id] as const,
+    history: (params?: Record<string, any>) =>
+      ["payments", "history", params] as const,
+    methods: ["payments", "methods"] as const,
     userPayments: (params?: Record<string, any>) =>
       ["payments", "user", params] as const,
   },
 
   // Refunds
   refunds: {
+    all: (params?: Record<string, any>) => ["refunds", "all", params] as const,
     detail: (id: string) => ["refunds", "detail", id] as const,
+    history: (params?: Record<string, any>) =>
+      ["refunds", "history", params] as const,
   },
 
   // Insurance
   insurance: {
+    policies: ["insurance", "policies"] as const,
+    policiesList: (params?: Record<string, any>) =>
+      ["insurance", "policies", "list", params] as const,
     policy: (id: string) => ["insurance", "policy", id] as const,
+    claims: ["insurance", "claims"] as const,
+    claimsList: (params?: Record<string, any>) =>
+      ["insurance", "claims", "list", params] as const,
     claim: (id: string) => ["insurance", "claim", id] as const,
+    providers: ["insurance", "providers"] as const,
   },
 
   // GPS Tracking
@@ -198,6 +214,16 @@ export const queryKeys = {
       ["search", "users", params] as const,
     vehicles: (params?: Record<string, any>) =>
       ["search", "vehicles", params] as const,
+    drivers: (params?: Record<string, any>) =>
+      ["search", "drivers", params] as const,
+    invoices: (params?: Record<string, any>) =>
+      ["search", "invoices", params] as const,
+    global: (query: string, entityTypes?: string[]) =>
+      ["search", "global", query, entityTypes] as const,
+    suggestions: (query: string, entityType?: string) =>
+      ["search", "suggestions", query, entityType] as const,
+    recent: ["search", "recent"] as const,
+    statistics: ["search", "statistics"] as const,
   },
 
   // Analytics
@@ -210,6 +236,24 @@ export const queryKeys = {
       ["analytics", "financial", params] as const,
     performance: (params?: Record<string, any>) =>
       ["analytics", "performance", params] as const,
+    vehicles: (params?: Record<string, any>) =>
+      ["analytics", "vehicles", params] as const,
+    users: (params?: Record<string, any>) =>
+      ["analytics", "users", params] as const,
+    dashboard: (period?: string) => ["analytics", "dashboard", period] as const,
+    revenue: (params?: Record<string, any>) =>
+      ["analytics", "revenue", params] as const,
+    deliveryTime: (params?: Record<string, any>) =>
+      ["analytics", "delivery-time", params] as const,
+    geographic: (params?: Record<string, any>) =>
+      ["analytics", "geographic", params] as const,
+    filters: ["analytics", "filters"] as const,
+  },
+
+  // System
+  system: {
+    health: ["system", "health"] as const,
+    ready: ["system", "ready"] as const,
   },
 };
 

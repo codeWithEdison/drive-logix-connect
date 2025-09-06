@@ -1,11 +1,86 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { GPSService, NotificationService, AdminService } from "../services";
+import {
+  GPSService,
+  NotificationService,
+  AdminService,
+  FileService,
+} from "../services";
 import { queryKeys } from "../queryClient";
 import {
   UpdateGPSLocationRequest,
   NotificationType,
   NotificationCategory,
 } from "../../../types/shared";
+
+// File management hooks
+export const useUploadFile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      file,
+      type,
+      category,
+    }: {
+      file: File;
+      type: string;
+      category?: string;
+    }) => FileService.uploadFile(file, type, category),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.files.all() });
+    },
+  });
+};
+
+export const useGetFileUrl = (id: string) => {
+  return useQuery({
+    queryKey: queryKeys.files.url(id),
+    queryFn: () => FileService.getFileUrl(id),
+    select: (data) => data.data,
+    enabled: !!id,
+  });
+};
+
+export const useDeleteFile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => FileService.deleteFile(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.files.all() });
+    },
+  });
+};
+
+export const useUserFiles = (params?: {
+  type?: string;
+  category?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  return useQuery({
+    queryKey: queryKeys.files.all(params),
+    queryFn: () => FileService.getUserFiles(params),
+    select: (data) => data.data,
+  });
+};
+
+export const useFileById = (id: string) => {
+  return useQuery({
+    queryKey: ["files", "detail", id],
+    queryFn: () => FileService.getFileById(id),
+    select: (data) => data.data,
+    enabled: !!id,
+  });
+};
+
+export const useFileStatistics = () => {
+  return useQuery({
+    queryKey: ["files", "statistics"],
+    queryFn: () => FileService.getFileStatistics(),
+    select: (data) => data.data,
+  });
+};
 
 // GPS hooks
 export const useUpdateLocation = () => {
@@ -243,7 +318,7 @@ export const useApproveEntity = () => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.users.detail(entity_id),
         });
-        queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.list() });
       } else if (entity_type === "vehicle") {
         queryClient.invalidateQueries({
           queryKey: queryKeys.vehicles.detail(entity_id),

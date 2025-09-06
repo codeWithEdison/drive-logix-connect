@@ -3,12 +3,46 @@ import { ApiResponse } from "../../../types/shared";
 
 export class LocalizationService {
   // Get translations
-  static async getTranslations(
-    language: string
-  ): Promise<ApiResponse<Record<string, string>>> {
+  static async getTranslations(language?: string): Promise<
+    ApiResponse<
+      Array<{
+        key: string;
+        en: string;
+        rw: string;
+        fr: string;
+        created_at: string;
+        updated_at: string;
+      }>
+    >
+  > {
     const response = await axiosInstance.get("/localization/translations", {
       params: { language },
     });
+    return response.data;
+  }
+
+  // Create translation (Admin)
+  static async createTranslation(
+    key: string,
+    translations: {
+      en: string;
+      rw?: string;
+      fr?: string;
+    }
+  ): Promise<
+    ApiResponse<{
+      key: string;
+      en: string;
+      rw: string;
+      fr: string;
+      created_at: string;
+      updated_at: string;
+    }>
+  > {
+    const response = await axiosInstance.post(
+      `/localization/translations/${key}`,
+      translations
+    );
     return response.data;
   }
 
@@ -20,10 +54,27 @@ export class LocalizationService {
       rw?: string;
       fr?: string;
     }
-  ): Promise<ApiResponse<any>> {
+  ): Promise<
+    ApiResponse<{
+      key: string;
+      en: string;
+      rw: string;
+      fr: string;
+      created_at: string;
+      updated_at: string;
+    }>
+  > {
     const response = await axiosInstance.put(
       `/localization/translations/${key}`,
       translations
+    );
+    return response.data;
+  }
+
+  // Delete translation (Admin)
+  static async deleteTranslation(key: string): Promise<ApiResponse<null>> {
+    const response = await axiosInstance.delete(
+      `/localization/translations/${key}`
     );
     return response.data;
   }
@@ -88,45 +139,6 @@ export class OperationalService {
     const response = await axiosInstance.get("/operational/pricing-policies", {
       params,
     });
-    return response.data;
-  }
-}
-
-export class InsuranceService {
-  // Create insurance policy
-  static async createPolicy(data: {
-    cargo_id: string;
-    policy_number: string;
-    coverage_amount: number;
-    premium_amount: number;
-    insurance_provider: string;
-    policy_start_date: string;
-    policy_end_date: string;
-  }): Promise<ApiResponse<any>> {
-    const response = await axiosInstance.post("/insurance/policies", data);
-    return response.data;
-  }
-
-  // Get insurance policy
-  static async getPolicy(cargoId: string): Promise<ApiResponse<any>> {
-    const response = await axiosInstance.get(`/insurance/policies/${cargoId}`);
-    return response.data;
-  }
-
-  // File insurance claim
-  static async fileClaim(data: {
-    cargo_id: string;
-    claim_number: string;
-    claim_amount: number;
-    claim_reason: string;
-  }): Promise<ApiResponse<any>> {
-    const response = await axiosInstance.post("/insurance/claims", data);
-    return response.data;
-  }
-
-  // Get claim status
-  static async getClaimStatus(claimId: string): Promise<ApiResponse<any>> {
-    const response = await axiosInstance.get(`/insurance/claims/${claimId}`);
     return response.data;
   }
 }

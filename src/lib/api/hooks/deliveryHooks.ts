@@ -13,7 +13,7 @@ export const useCreateDeliveryAssignment = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.deliveries.all() });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.deliveryAssignments.detail,
+        queryKey: queryKeys.deliveryAssignments.all(),
       });
     },
   });
@@ -44,18 +44,6 @@ export const useUpdateAssignment = () => {
         queryKey: queryKeys.deliveryAssignments.detail(id),
       });
     },
-  });
-};
-
-export const useDriverAssignments = (params?: {
-  status?: string;
-  page?: number;
-  limit?: number;
-}) => {
-  return useQuery({
-    queryKey: queryKeys.drivers.assignments(params),
-    queryFn: () => DeliveryService.getDriverAssignments(params),
-    select: (data) => data.data,
   });
 };
 

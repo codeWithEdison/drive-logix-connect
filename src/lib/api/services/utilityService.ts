@@ -61,86 +61,23 @@ export class FileService {
     const response = await axiosInstance.get("/files", { params });
     return response.data;
   }
-}
 
-export class SearchService {
-  // Search cargos
-  static async searchCargos(params?: {
-    q?: string;
-    status?: string;
-    date_from?: string;
-    date_to?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<ApiResponse<PaginationResponse<any>>> {
-    const response = await axiosInstance.get("/search/cargos", { params });
+  // Get file by ID
+  static async getFileById(id: string): Promise<ApiResponse<any>> {
+    const response = await axiosInstance.get(`/files/${id}`);
     return response.data;
   }
 
-  // Search users
-  static async searchUsers(params?: {
-    q?: string;
-    role?: string;
-    status?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<ApiResponse<PaginationResponse<any>>> {
-    const response = await axiosInstance.get("/search/users", { params });
-    return response.data;
-  }
-
-  // Search vehicles
-  static async searchVehicles(params?: {
-    q?: string;
-    type?: string;
-    status?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<ApiResponse<PaginationResponse<any>>> {
-    const response = await axiosInstance.get("/search/vehicles", { params });
-    return response.data;
-  }
-}
-
-export class AnalyticsService {
-  // Get cargo analytics
-  static async getCargoAnalytics(params?: {
-    period?: string;
-    start_date?: string;
-    end_date?: string;
-  }): Promise<ApiResponse<any>> {
-    const response = await axiosInstance.get("/analytics/cargos", { params });
-    return response.data;
-  }
-
-  // Get driver analytics
-  static async getDriverAnalytics(params?: {
-    driver_id?: string;
-    period?: string;
-  }): Promise<ApiResponse<any>> {
-    const response = await axiosInstance.get("/analytics/drivers", { params });
-    return response.data;
-  }
-
-  // Get financial analytics
-  static async getFinancialAnalytics(params?: {
-    period?: string;
-    group_by?: string;
-  }): Promise<ApiResponse<any>> {
-    const response = await axiosInstance.get("/analytics/financial", {
-      params,
-    });
-    return response.data;
-  }
-
-  // Get performance analytics
-  static async getPerformanceAnalytics(params?: {
-    metric?: string;
-    period?: string;
-  }): Promise<ApiResponse<any>> {
-    const response = await axiosInstance.get("/analytics/performance", {
-      params,
-    });
+  // Get file statistics
+  static async getFileStatistics(): Promise<
+    ApiResponse<{
+      total_files: number;
+      total_size: number;
+      by_type: Record<string, number>;
+      by_category: Record<string, number>;
+    }>
+  > {
+    const response = await axiosInstance.get("/files/statistics");
     return response.data;
   }
 }

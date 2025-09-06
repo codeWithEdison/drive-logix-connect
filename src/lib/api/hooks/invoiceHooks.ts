@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { InvoiceService, PaymentService } from "../services";
+import { InvoiceService } from "../services";
+import { PaymentService } from "../services/paymentService";
 import { queryKeys } from "../queryClient";
 import {
   CreateInvoiceRequest,
@@ -138,29 +139,5 @@ export const useUserPayments = (params?: {
     queryKey: queryKeys.payments.userPayments(params),
     queryFn: () => PaymentService.getUserPayments(params),
     select: (data) => data.data,
-  });
-};
-
-export const useRequestRefund = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: {
-      invoice_id: string;
-      amount: number;
-      reason: string;
-    }) => PaymentService.requestRefund(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.payments.all() });
-    },
-  });
-};
-
-export const useRefundStatus = (id: string) => {
-  return useQuery({
-    queryKey: queryKeys.refunds.detail(id),
-    queryFn: () => PaymentService.getRefundStatus(id),
-    select: (data) => data.data,
-    enabled: !!id,
   });
 };
