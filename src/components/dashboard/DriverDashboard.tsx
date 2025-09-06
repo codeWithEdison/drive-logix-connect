@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Select,
@@ -32,107 +31,73 @@ import {
 } from "lucide-react";
 import { TrackingComponent } from "./TrackingComponent";
 import { StatsCard, StatItem } from "@/components/ui/StatsCard";
-
-// Mock data for driver
-const mockDriverData = {
-  name: "Albert Flores",
-  truckId: "TRK-001",
-  rating: 4.8,
-  completedDeliveries: 156,
-  status: "available" as const,
-  assignedCargos: 5,
-  activeDeliveries: 2,
-  truckStatus: "Active & Ready",
-  assignedCargosList: [
-    {
-      id: "#3565432",
-      status: "active" as const,
-      from: "4140 Parker Rd, Allentown, NM",
-      to: "3517 W. Gray St. Utica, PA",
-      client: "John Smith",
-      phone: "+1 (555) 123-4567",
-      weight: "25 kg",
-      type: "Electronics",
-      pickupTime: "10:00 AM",
-      estimatedDelivery: "2:30 PM",
-      priority: "urgent"
-    },
-    {
-      id: "#4832920",
-      status: "pending" as const,
-      from: "1050 Elden St. Colma, DE",
-      to: "6502 Preston Rd. Inglewood, ME",
-      client: "Sarah Johnson",
-      phone: "+1 (555) 987-6543",
-      weight: "15 kg",
-      type: "Documents",
-      pickupTime: "3:00 PM",
-      estimatedDelivery: "5:30 PM",
-      priority: "standard"
-    },
-    {
-      id: "#1442654",
-      status: "pending" as const,
-      from: "2972 Westheimer Rd. Santa Ana, IL",
-      to: "6391 Elgin St. Celina, DE",
-      client: "Kathryn Murphy",
-      phone: "+1 (555) 456-7890",
-      weight: "40 kg",
-      type: "Furniture",
-      pickupTime: "1:00 PM",
-      estimatedDelivery: "4:00 PM",
-      priority: "standard"
-    }
-  ]
-};
-
-// Stats data for driver dashboard
-const driverStatsData: StatItem[] = [
-  {
-    title: "Assigned Cargo",
-    value: "5",
-    change: "+2",
-    changeType: "increase",
-    icon: Package,
-    color: "orange"
-  },
-  {
-    title: "Active Deliveries",
-    value: "2",
-    change: "In Progress",
-    changeType: "active",
-    icon: Clock,
-    color: "green"
-  },
-  {
-    title: "Completed",
-    value: "156",
-    change: "Total",
-    changeType: "success",
-    icon: CheckCircle,
-    color: "blue"
-  },
-  {
-    title: "Rating",
-    value: "4.8",
-    change: "★★★★☆",
-    changeType: "rating",
-    icon: Star,
-    color: "pink"
-  }
-];
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { 
+  useDriverProfile, 
+  useDriverAssignments, 
+  useDriverPerformance,
+  useUpdateDriverStatus 
+} from "@/lib/api/hooks";
+import { DriverStatus } from "@/types/shared";
+import { customToast } from "@/lib/utils/toast";
 
 export function DriverDashboard() {
-  const [driverStatus, setDriverStatus] = useState<'available' | 'on_duty' | 'unavailable'>('available');
-  const [activeDelivery, setActiveDelivery] = useState(mockDriverData.assignedCargosList[0]);
   const [showLiveTracking, setShowLiveTracking] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
+  // Backend API calls
+  const { data: driverProfile, isLoading: profileLoading } = useDriverProfile();
+  const { data: assignments, isLoading: assignmentsLoading } = useDriverAssignments({ 
+    status: 'assigned',
+    limit: 10 
+  });
+  const { data: performance } = useDriverPerformance();
+  const updateStatusMutation = useUpdateDriverStatus();
+
+  const activeDelivery = assignments?.data?.[0];
 
   const statusConfig = {
-    available: { label: "Available", color: "bg-green-100 text-green-600" },
-    on_duty: { label: "On Duty", color: "bg-blue-100 text-blue-600" },
-    unavailable: { label: "Unavailable", color: "bg-gray-100 text-gray-600" }
+    [DriverStatus.AVAILABLE]: { label: t("status.available"), color: "bg-green-100 text-green-600" },
+    [DriverStatus.ON_DUTY]: { label: t("status.onDuty"), color: "bg-blue-100 text-blue-600" },
+    [DriverStatus.UNAVAILABLE]: { label: t("status.unavailable"), color: "bg-gray-100 text-gray-600" }
   };
+
+  // Stats data from backend
+  const driverStatsData: StatItem[] = [
+    {
+      title: t("navigation.assignedCargos"),
+      value: assignments?.pagination?.total?.toString() || "0",
+      change: `+${assignments?.data?.length || 0}`,
+      changeType: "increase",
+      icon: Package,
+      color: "orange"
+    },
+    {
+      title: t("navigation.activeDeliveries"), 
+      value: assignments?.data?.filter(a => a.cargo?.status === 'in_transit')?.length?.toString() || "0",
+      change: t("status.inTransit"),
+      changeType: "active",
+      icon: Clock,
+      color: "green"
+    },
+    {
+      title: t("status.completed"),
+      value: performance?.total_deliveries?.toString() || "0",
+      change: t("driver.totalDeliveries"),
+      changeType: "success",
+      icon: CheckCircle,
+      color: "blue"
+    },
+    {
+      title: t("delivery.rating"),
+      value: performance?.average_rating?.toFixed(1) || "0.0",
+      change: "★★★★☆",
+      changeType: "rating",
+      icon: Star,
+      color: "pink"
+    }
+  ];
 
   const handleViewAllCargos = () => {
     navigate('/driver/cargos');
@@ -143,83 +108,97 @@ export function DriverDashboard() {
   };
 
   const handleViewAllCompleted = () => {
-    navigate('/driver/completed');
-  };
-
-  const handleViewAllRatings = () => {
-    navigate('/driver/ratings');
-  };
-
-  const handleViewAllTrucks = () => {
-    navigate('/driver/trucks');
+    navigate('/driver/history');
   };
 
   const handleStartDelivery = () => {
     setShowLiveTracking(true);
   };
 
-  const handleStatusChange = (newStatus: 'available' | 'on_duty' | 'unavailable') => {
-    setDriverStatus(newStatus);
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      await updateStatusMutation.mutateAsync(newStatus as DriverStatus);
+      customToast.success(t("driver.statusUpdated"));
+    } catch (error) {
+      customToast.error(t("errors.unknownError"));
+    }
   };
+
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">{t("common.loading")}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Driver Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {mockDriverData.name}</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("navigation.dashboard")}</h1>
+          <p className="text-muted-foreground">{t("dashboard.welcome")}, {driverProfile?.full_name}</p>
         </div>
         <div className="flex items-center gap-4">
-          <Badge className={statusConfig[driverStatus].color}>
-            {statusConfig[driverStatus].label}
+          <Badge className={statusConfig[driverProfile?.status || DriverStatus.UNAVAILABLE].color}>
+            {statusConfig[driverProfile?.status || DriverStatus.UNAVAILABLE].label}
           </Badge>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Status:</span>
-            <Select onValueChange={handleStatusChange} defaultValue={driverStatus}>
+            <span className="text-sm font-medium">{t("cargo.status")}:</span>
+            <Select 
+              onValueChange={handleStatusChange} 
+              defaultValue={driverProfile?.status}
+              disabled={updateStatusMutation.isPending}
+            >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Status" />
+                <SelectValue placeholder={t("driver.driverStatus")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="on_duty">On Duty</SelectItem>
-                <SelectItem value="unavailable">Unavailable</SelectItem>
+                <SelectItem value={DriverStatus.AVAILABLE}>{t("status.available")}</SelectItem>
+                <SelectItem value={DriverStatus.ON_DUTY}>{t("status.onDuty")}</SelectItem>
+                <SelectItem value={DriverStatus.UNAVAILABLE}>{t("status.unavailable")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards - Reusable component */}
+      {/* Stats Cards */}
       <StatsCard stats={driverStatsData} />
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Active Delivery with Live Tracking */}
+        {/* Active Delivery */}
         <div className="lg:col-span-2">
-          <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+          <Card className="bg-card shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-gray-900">
-                <Navigation className="h-5 w-5 text-blue-600" />
-                Active Delivery
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <Navigation className="h-5 w-5 text-primary" />
+                {t("navigation.activeDeliveries")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {activeDelivery.status === 'active' ? (
+              {activeDelivery ? (
                 <>
                   {showLiveTracking ? (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold">{activeDelivery.id}</h3>
-                          <p className="text-sm text-muted-foreground">Client: {activeDelivery.client}</p>
+                          <h3 className="text-lg font-semibold">{activeDelivery.cargo?.id}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t("client.clientDetails")}: {activeDelivery.cargo?.client?.full_name}
+                          </p>
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setShowLiveTracking(false)}
                         >
-                          Hide Tracking
+                          {t("tracking.tracking")}
                         </Button>
                       </div>
                       <TrackingComponent height="h-80" />
@@ -228,38 +207,38 @@ export function DriverDashboard() {
                     <>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold">{activeDelivery.id}</h3>
-                          <p className="text-sm text-muted-foreground">Client: {activeDelivery.client}</p>
+                          <h3 className="text-lg font-semibold">{activeDelivery.cargo?.id}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t("client.clientDetails")}: {activeDelivery.cargo?.client?.full_name}
+                          </p>
                         </div>
-                        <Badge className={activeDelivery.priority === 'urgent' ?
+                        <Badge className={activeDelivery.cargo?.priority === 'urgent' ?
                           "bg-orange-100 text-orange-600" :
                           "bg-blue-100 text-blue-600"
                         }>
-                          {activeDelivery.priority}
+                          {t(`priority.${activeDelivery.cargo?.priority || 'normal'}`)}
                         </Badge>
                       </div>
 
                       {/* Route */}
-                      <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="space-y-4 p-4 bg-muted rounded-lg">
                         <div className="flex items-start gap-3">
                           <div className="w-3 h-3 bg-green-500 rounded-full mt-1"></div>
                           <div>
-                            <p className="text-xs text-muted-foreground font-medium">PICKUP</p>
-                            <p className="text-sm font-semibold">{activeDelivery.from}</p>
-                            <p className="text-xs text-green-600">{activeDelivery.pickupTime}</p>
+                            <p className="text-xs text-muted-foreground font-medium">{t("cargo.pickupAddress").toUpperCase()}</p>
+                            <p className="text-sm font-semibold">{activeDelivery.cargo?.pickup_address}</p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3 pl-6">
-                          <div className="w-px h-8 bg-gray-300"></div>
+                          <div className="w-px h-8 bg-border"></div>
                         </div>
 
                         <div className="flex items-start gap-3">
                           <div className="w-3 h-3 bg-red-500 rounded-full mt-1"></div>
                           <div>
-                            <p className="text-xs text-muted-foreground font-medium">DELIVERY</p>
-                            <p className="text-sm font-semibold">{activeDelivery.to}</p>
-                            <p className="text-xs text-red-600">{activeDelivery.estimatedDelivery}</p>
+                            <p className="text-xs text-muted-foreground font-medium">{t("cargo.destinationAddress").toUpperCase()}</p>
+                            <p className="text-sm font-semibold">{activeDelivery.cargo?.destination_address}</p>
                           </div>
                         </div>
                       </div>
@@ -267,35 +246,35 @@ export function DriverDashboard() {
                       {/* Cargo Details */}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs text-muted-foreground">Type</p>
-                          <p className="font-semibold">{activeDelivery.type}</p>
+                          <p className="text-xs text-muted-foreground">{t("cargo.cargoType")}</p>
+                          <p className="font-semibold">{activeDelivery.cargo?.type || t("common.loading")}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Weight</p>
-                          <p className="font-semibold">{activeDelivery.weight}</p>
+                          <p className="text-xs text-muted-foreground">{t("cargo.weight")}</p>
+                          <p className="font-semibold">{activeDelivery.cargo?.weight_kg} kg</p>
                         </div>
                       </div>
 
                       {/* Action Buttons */}
                       <div className="grid grid-cols-2 gap-3">
                         <Button
-                          className="bg-gradient-primary hover:bg-primary-hover"
+                          className="bg-gradient-primary hover:bg-primary/90"
                           onClick={handleStartDelivery}
                         >
                           <MapPin className="h-4 w-4 mr-2" />
-                          Start Delivery
+                          {t("delivery.startDelivery")}
                         </Button>
                         <Button variant="outline">
                           <Phone className="h-4 w-4 mr-2" />
-                          Call Client
+                          {t("client.clientDetails")}
                         </Button>
                         <Button variant="outline">
                           <Camera className="h-4 w-4 mr-2" />
-                          Upload Photo
+                          {t("delivery.uploadProof")}
                         </Button>
                         <Button variant="outline" className="text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white">
                           <AlertCircle className="h-4 w-4 mr-2" />
-                          Report Issue
+                          {t("common.loading")}
                         </Button>
                       </div>
                     </>
@@ -304,90 +283,95 @@ export function DriverDashboard() {
               ) : (
                 <div className="text-center py-8">
                   <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-semibold text-muted-foreground">No Active Delivery</p>
-                  <p className="text-sm text-muted-foreground">Accept a cargo request to start</p>
+                  <p className="text-lg font-semibold text-muted-foreground">{t("common.loading")}</p>
+                  <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Assigned Cargos with Destination Locations */}
+        {/* Assigned Cargos */}
         <div>
-          <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+          <Card className="bg-card shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-gray-900">
-                  <Route className="h-5 w-5 text-blue-600" />
-                  Assigned Cargos
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Route className="h-5 w-5 text-primary" />
+                  {t("navigation.assignedCargos")}
                 </CardTitle>
                 <Button variant="outline" size="sm" onClick={handleViewAllCargos}>
-                  View All
+                  {t("common.loading")}
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="h-96 overflow-y-auto">
-              <div className="space-y-4 pr-2">
-                {mockDriverData.assignedCargosList.map((cargo) => (
-                  <div key={cargo.id} className="p-4 bg-gray-50 rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm">{cargo.id}</span>
-                      <Badge className={cargo.status === 'active' ?
-                        "bg-green-100 text-green-600" :
-                        "bg-yellow-100 text-yellow-600"
-                      }>
-                        {cargo.status}
-                      </Badge>
+              {assignmentsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div className="space-y-4 pr-2">
+                  {assignments?.data?.map((assignment) => (
+                    <div key={assignment.id} className="p-4 bg-muted rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-sm">{assignment.cargo?.id}</span>
+                        <Badge className={assignment.cargo?.status === 'in_transit' ?
+                          "bg-green-100 text-green-600" :
+                          "bg-yellow-100 text-yellow-600"
+                        }>
+                          {t(`status.${assignment.cargo?.status || 'pending'}`)}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs text-muted-foreground">{t("client.clientDetails")}</p>
+                          <p className="text-sm font-medium">{assignment.cargo?.client?.full_name}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-muted-foreground">{t("cargo.destinationAddress")}</p>
+                          <p className="text-sm font-medium text-primary">{assignment.cargo?.destination_address}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <p className="text-muted-foreground">{t("cargo.cargoType")}</p>
+                          <p className="font-medium">{assignment.cargo?.type || t("common.loading")}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">{t("cargo.weight")}</p>
+                          <p className="font-medium">{assignment.cargo?.weight_kg} kg</p>
+                        </div>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant={assignment.cargo?.status === 'in_transit' ? 'default' : 'outline'}
+                        className="w-full"
+                      >
+                        {assignment.cargo?.status === 'in_transit' ? t("common.loading") : t("common.loading")}
+                      </Button>
                     </div>
-
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Client</p>
-                        <p className="text-sm font-medium">{cargo.client}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs text-muted-foreground">Destination</p>
-                        <p className="text-sm font-medium text-blue-600">{cargo.to}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <p className="text-muted-foreground">Type</p>
-                        <p className="font-medium">{cargo.type}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Weight</p>
-                        <p className="font-medium">{cargo.weight}</p>
-                      </div>
-                    </div>
-
-                    <Button
-                      size="sm"
-                      variant={cargo.status === 'active' ? 'default' : 'outline'}
-                      className="w-full"
-                      onClick={() => setActiveDelivery(cargo)}
-                    >
-                      {cargo.status === 'active' ? 'Continue' : 'Accept'}
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Additional Cards with View All Buttons */}
+      {/* Additional Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Deliveries */}
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+        <Card className="bg-card shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-gray-900">Recent Deliveries</CardTitle>
+              <CardTitle className="text-foreground">{t("dashboard.recentActivity")}</CardTitle>
               <Button variant="outline" size="sm" onClick={handleViewAllDeliveries}>
-                View All
+                {t("common.loading")}
               </Button>
             </div>
           </CardHeader>
@@ -395,26 +379,28 @@ export function DriverDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs font-medium text-gray-600">Cargo ID</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600">Client</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600">Status</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600">Date</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">{t("cargo.cargoDetails")}</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">{t("client.clientDetails")}</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">{t("cargo.status")}</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">{t("common.loading")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockDriverData.assignedCargosList.slice(0, 3).map((cargo) => (
-                  <TableRow key={cargo.id}>
-                    <TableCell className="text-sm font-medium text-gray-900">{cargo.id}</TableCell>
-                    <TableCell className="text-sm text-gray-600">{cargo.client}</TableCell>
+                {assignments?.data?.slice(0, 3).map((assignment) => (
+                  <TableRow key={assignment.id}>
+                    <TableCell className="text-sm font-medium text-foreground">{assignment.cargo?.id}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{assignment.cargo?.client?.full_name}</TableCell>
                     <TableCell>
-                      <Badge className={cargo.status === 'active' ?
+                      <Badge className={assignment.cargo?.status === 'in_transit' ?
                         "bg-green-100 text-green-600" :
                         "bg-yellow-100 text-yellow-600"
                       }>
-                        {cargo.status}
+                        {t(`status.${assignment.cargo?.status || 'pending'}`)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">Today</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(assignment.assigned_at).toLocaleDateString()}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -423,39 +409,45 @@ export function DriverDashboard() {
         </Card>
 
         {/* Driver Performance */}
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+        <Card className="bg-card shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-gray-900">Performance</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleViewAllRatings}>
-                View All
+              <CardTitle className="text-foreground">{t("common.loading")}</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleViewAllCompleted}>
+                {t("common.loading")}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Rating</span>
+              <span className="text-sm text-muted-foreground">{t("delivery.rating")}</span>
               <div className="flex items-center gap-2">
-                <span className="font-semibold">{mockDriverData.rating}</span>
+                <span className="font-semibold">{performance?.average_rating?.toFixed(1) || "0.0"}</span>
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${i < Math.floor(mockDriverData.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                      className={`w-4 h-4 ${i < Math.floor(performance?.average_rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
                     />
                   ))}
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Completed Deliveries</span>
-              <span className="font-semibold">{mockDriverData.completedDeliveries}</span>
+              <span className="text-sm text-muted-foreground">{t("driver.totalDeliveries")}</span>
+              <span className="font-semibold">{performance?.total_deliveries || 0}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Truck Status</span>
-              <Badge className="bg-green-100 text-green-600">
-                {mockDriverData.truckStatus}
-              </Badge>
+              <span className="text-sm text-muted-foreground">{t("driver.totalDistance")}</span>
+              <span className="font-semibold">{performance?.total_distance_km || 0} km</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">{t("driver.onTimeDeliveries")}</span>
+              <span className="font-semibold">{performance?.on_time_deliveries || 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">{t("driver.completionRate")}</span>
+              <span className="font-semibold">{performance?.completion_rate?.toFixed(1) || "0.0"}%</span>
             </div>
           </CardContent>
         </Card>

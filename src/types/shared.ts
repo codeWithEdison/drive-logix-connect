@@ -448,6 +448,11 @@ export interface DeliveryAssignment {
   driver_id: UUID;
   vehicle_id: UUID;
   assigned_at: string;
+  cargo?: Cargo & {
+    client?: User;
+  };
+  driver?: Driver;
+  vehicle?: Vehicle;
 }
 
 export interface CreateDeliveryAssignmentRequest {
