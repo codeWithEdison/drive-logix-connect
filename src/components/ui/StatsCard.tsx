@@ -1,92 +1,266 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowUp } from "lucide-react";
-
-export interface StatItem {
-    title: string;
-    value: string;
-    change: string;
-    changeType: 'increase' | 'decrease' | 'active' | 'waiting' | 'success' | 'rating' | 'ready';
-    icon: React.ComponentType<{ className?: string }>;
-    color: string;
-}
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import {
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Star,
+} from "lucide-react";
 
 interface StatsCardProps {
-    stats: StatItem[];
-    className?: string;
+  title: string;
+  value: string | number;
+  description?: string;
+  icon?: LucideIcon;
+  trend?: {
+    value: number;
+    label: string;
+    isPositive?: boolean;
+  };
+  className?: string;
+  iconColor?: string;
+  valueColor?: string;
 }
 
-export function StatsCard({ stats, className = "" }: StatsCardProps) {
-    // Safety check for undefined or null stats
-    if (!stats || !Array.isArray(stats) || stats.length === 0) {
-        return (
-            <Card className={`bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}>
-                <CardContent className="p-6">
-                    <p className="text-muted-foreground text-center">No statistics available</p>
-                </CardContent>
-            </Card>
-        );
-    }
+export function StatsCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+  trend,
+  className,
+  iconColor = "text-primary",
+  valueColor = "text-foreground",
+}: StatsCardProps) {
+  return (
+    <Card className={cn("card-elevated", className)}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
+        {Icon && <Icon className={cn("h-4 w-4", iconColor)} />}
+      </CardHeader>
+      <CardContent>
+        <div className={cn("text-2xl font-bold", valueColor)}>{value}</div>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        )}
+        {trend && (
+          <div className="flex items-center mt-2">
+            <span
+              className={cn(
+                "text-xs font-medium",
+                trend.isPositive ? "text-green-600" : "text-red-600"
+              )}
+            >
+              {trend.isPositive ? "+" : ""}
+              {trend.value}%
+            </span>
+            <span className="text-xs text-muted-foreground ml-1">
+              {trend.label}
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-    const getChangeTypeStyles = (changeType: StatItem['changeType']) => {
-        switch (changeType) {
-            case 'increase':
-                return 'bg-green-100 text-green-600';
-            case 'decrease':
-                return 'bg-red-100 text-red-600';
-            case 'active':
-                return 'bg-blue-100 text-blue-600';
-            case 'waiting':
-                return 'bg-yellow-100 text-yellow-600';
-            case 'success':
-                return 'bg-green-100 text-green-600';
-            case 'rating':
-                return 'bg-yellow-100 text-yellow-600';
-            case 'ready':
-                return 'bg-purple-100 text-purple-600';
-            default:
-                return 'bg-gray-100 text-gray-600';
-        }
-    };
+// Specific stats card components for common use cases
+interface CargoStatsCardProps {
+  titleKey: string;
+  value: string | number;
+  descriptionKey?: string;
+  icon?: LucideIcon;
+  trend?: {
+    value: number;
+    labelKey: string;
+    isPositive?: boolean;
+  };
+  className?: string;
+  iconColor?: string;
+  valueColor?: string;
+}
 
-    // Responsive grid for better mobile layout
-    const getGridCols = () => {
-        return "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5";
-    };
+export function CargoStatsCard({
+  titleKey,
+  value,
+  descriptionKey,
+  icon,
+  trend,
+  className,
+  iconColor,
+  valueColor,
+}: CargoStatsCardProps) {
+  const { t } = useLanguage();
 
-    return (
-        <Card className={`bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}>
-            <CardContent className="p-0">
-                <div className={`grid ${getGridCols()} gap-0`}>
-                    {stats.map((stat, index) => (
-                        <div key={stat.title} className="relative">
-                            <div className="p-3 md:p-4 lg:p-6">
-                                <div className="flex items-center justify-between mb-2 md:mb-3">
-                                    <div className="flex items-center gap-1 md:gap-2">
-                                        <div className={`w-2 h-2 md:w-3 md:h-3 bg-${stat.color}-500 rounded-full`}></div>
-                                        <p className="text-xs md:text-sm font-medium text-gray-600 truncate">{stat.title}</p>
-                                    </div>
-                                    <stat.icon className={`w-4 h-4 md:w-5 md:h-5 text-${stat.color}-500 flex-shrink-0`} />
-                                </div>
-                                <div className="flex items-center gap-1 md:gap-2">
-                                    <span className="text-lg md:text-xl  lg:text-2xl font-bold text-gray-900 ">{stat.value}</span>
-                                    <div className={`flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-xs font-medium flex-shrink-0 ${getChangeTypeStyles(stat.changeType)}`}>
-                                        {stat.changeType === 'increase' && <ArrowUp className="w-2 h-2 md:w-3 md:h-3" />}
-                                        <span className="truncate">{stat.change}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Vertical divider - only show on larger screens */}
-                            {index < stats.length - 1 && (
-                                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-px h-8 md:h-12 lg:h-16 bg-gray-200 hidden md:block"></div>
-                            )}
-                            {/* Horizontal divider - only show on mobile (after each pair) */}
-                            {index < stats.length - 1 && index % 2 === 1 && (
-                                <div className="absolute bottom-0 left-0 right-0 h-px bg-gray-200 md:hidden"></div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <StatsCard
+      title={t(titleKey)}
+      value={value}
+      description={descriptionKey ? t(descriptionKey) : undefined}
+      icon={icon}
+      trend={
+        trend
+          ? {
+              ...trend,
+              label: t(trend.labelKey),
+            }
+          : undefined
+      }
+      className={className}
+      iconColor={iconColor}
+      valueColor={valueColor}
+    />
+  );
+}
+
+// Pre-configured stats cards for specific metrics
+export function TotalCargosCard({
+  value,
+  trend,
+}: {
+  value: number;
+  trend?: { value: number; isPositive?: boolean };
+}) {
+  return (
+    <CargoStatsCard
+      titleKey="clientDashboard.totalCargos"
+      value={value}
+      icon={Package}
+      trend={
+        trend
+          ? {
+              ...trend,
+              labelKey: "common.fromLastMonth",
+            }
+          : undefined
+      }
+    />
+  );
+}
+
+export function ActiveDeliveriesCard({
+  value,
+  trend,
+}: {
+  value: number;
+  trend?: { value: number; isPositive?: boolean };
+}) {
+  return (
+    <CargoStatsCard
+      titleKey="clientDashboard.activeDeliveries"
+      value={value}
+      icon={Truck}
+      trend={
+        trend
+          ? {
+              ...trend,
+              labelKey: "common.fromLastWeek",
+            }
+          : undefined
+      }
+    />
+  );
+}
+
+export function CompletedDeliveriesCard({
+  value,
+  trend,
+}: {
+  value: number;
+  trend?: { value: number; isPositive?: boolean };
+}) {
+  return (
+    <CargoStatsCard
+      titleKey="clientDashboard.completedDeliveries"
+      value={value}
+      icon={CheckCircle}
+      trend={
+        trend
+          ? {
+              ...trend,
+              labelKey: "common.fromLastMonth",
+            }
+          : undefined
+      }
+    />
+  );
+}
+
+export function PendingPaymentsCard({
+  value,
+  trend,
+}: {
+  value: string;
+  trend?: { value: number; isPositive?: boolean };
+}) {
+  return (
+    <CargoStatsCard
+      titleKey="clientDashboard.pendingPayments"
+      value={value}
+      icon={Clock}
+      trend={
+        trend
+          ? {
+              ...trend,
+              labelKey: "common.fromLastWeek",
+            }
+          : undefined
+      }
+    />
+  );
+}
+
+export function TotalSpentCard({
+  value,
+  trend,
+}: {
+  value: string;
+  trend?: { value: number; isPositive?: boolean };
+}) {
+  return (
+    <CargoStatsCard
+      titleKey="clientDashboard.totalSpent"
+      value={value}
+      icon={DollarSign}
+      trend={
+        trend
+          ? {
+              ...trend,
+              labelKey: "common.fromLastMonth",
+            }
+          : undefined
+      }
+    />
+  );
+}
+
+export function AverageRatingCard({
+  value,
+  trend,
+}: {
+  value: number;
+  trend?: { value: number; isPositive?: boolean };
+}) {
+  return (
+    <CargoStatsCard
+      titleKey="clientDashboard.averageRating"
+      value={`${value}/5`}
+      icon={Star}
+      trend={
+        trend
+          ? {
+              ...trend,
+              labelKey: "common.fromLastMonth",
+            }
+          : undefined
+      }
+    />
+  );
 }

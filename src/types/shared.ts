@@ -741,6 +741,20 @@ export interface CargoTracking {
   status_updates: DeliveryStatusUpdate[];
   estimated_delivery_time?: string;
   last_updated: string;
+  driver?: {
+    id: UUID;
+    full_name: string;
+    phone?: string;
+    rating: number;
+  };
+  vehicle?: {
+    id: UUID;
+    license_plate: string;
+    make?: string;
+    model?: string;
+  };
+  current_location?: string;
+  progress_percentage?: number;
 }
 
 // ===========================================

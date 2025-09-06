@@ -4,9 +4,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PaymentComponent } from "./PaymentComponent";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  useCreateCargo,
+  useAvailableVehicles,
+  useEstimateCargoCost,
+} from "@/lib/api/hooks";
+import { CreateCargoRequest, CargoPriority } from "@/types/shared";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import {
   MapPin,
   Package,
@@ -20,9 +36,40 @@ import {
   Search,
   User,
   Phone,
-  Save
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
+
+// Mock vehicle data for form display - in real app, this would come from API
+const mockVehicleData = [
+  {
+    id: "moto-001",
+    type: "moto",
+    name: "Motorcycle Delivery",
+    capacity: 50,
+    base_rate: 1500,
+    estimated_time: "2-4 hours",
+    description: "Fast delivery for small packages",
+  },
+  {
+    id: "truck-001",
+    type: "truck",
+    name: "Small Truck",
+    capacity: 500,
+    base_rate: 2000,
+    estimated_time: "4-6 hours",
+    description: "Medium capacity for larger shipments",
+  },
+  {
+    id: "truck-002",
+    type: "truck",
+    name: "Large Truck",
+    capacity: 2000,
+    base_rate: 2500,
+    estimated_time: "6-8 hours",
+    description: "High capacity for heavy cargo",
+  },
+];
 
 // Mock vehicle data based on availability and capacity
 const availableVehicles = [
@@ -35,7 +82,7 @@ const availableVehicles = [
     availability: true,
     estimatedTime: "2-4 hours",
     icon: Bike,
-    description: "Fast delivery for small packages"
+    description: "Fast delivery for small packages",
   },
   {
     id: "truck-001",
@@ -46,7 +93,7 @@ const availableVehicles = [
     availability: true,
     estimatedTime: "4-6 hours",
     icon: Truck,
-    description: "Medium capacity for larger shipments"
+    description: "Medium capacity for larger shipments",
   },
   {
     id: "truck-002",
@@ -57,11 +104,13 @@ const availableVehicles = [
     availability: true,
     estimatedTime: "6-8 hours",
     icon: Truck,
-    description: "High capacity for heavy cargo"
-  }
+    description: "High capacity for heavy cargo",
+  },
 ];
 
 export function CreateCargoForm() {
+  const { t } = useLanguage();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     cargoType: "",
@@ -89,7 +138,7 @@ export function CreateCargoForm() {
     selectedVehicle: "",
     distance: 0,
     savePickupData: false,
-    saveDestinationData: false
+    saveDestinationData: false,
   });
 
   const [estimatedCost, setEstimatedCost] = useState(0);
@@ -97,30 +146,60 @@ export function CreateCargoForm() {
   const [pickupSearchQuery, setPickupSearchQuery] = useState("");
   const [destinationSearchQuery, setDestinationSearchQuery] = useState("");
   const [pickupSearchResults, setPickupSearchResults] = useState<any[]>([]);
-  const [destinationSearchResults, setDestinationSearchResults] = useState<any[]>([]);
+  const [destinationSearchResults, setDestinationSearchResults] = useState<
+    any[]
+  >([]);
   const [isSearchingPickup, setIsSearchingPickup] = useState(false);
   const [isSearchingDestination, setIsSearchingDestination] = useState(false);
 
-  // Filter vehicles based on cargo weight
+  // API hooks
+  const createCargoMutation = useCreateCargo();
+  const {
+    data: availableVehiclesData,
+    isLoading: vehiclesLoading,
+    error: vehiclesError,
+  } = useAvailableVehicles({
+    capacity_min: parseFloat(formData.weight || "0"),
+  });
+  const estimateCostMutation = useEstimateCargoCost();
+
+  // Filter vehicles based on cargo weight - using mock data for now
   const getAvailableVehicles = () => {
     const cargoWeight = parseFloat(formData.weight || "0");
-    return availableVehicles.filter(vehicle =>
-      vehicle.availability && vehicle.capacity >= cargoWeight
-    );
+    return mockVehicleData.filter((vehicle) => vehicle.capacity >= cargoWeight);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 2) {
-      // Calculate estimated cost based on form data and selected vehicle
-      const selectedVehicle = availableVehicles.find(v => v.id === formData.selectedVehicle);
-      if (selectedVehicle) {
-        const weightRate = 500; // RWF per kg
-        const urgencyMultiplier = formData.urgency === "urgent" ? 1.5 : 1;
-
-        // Use actual distance from form data or fallback to mock distance
-        const distance = formData.distance || 25; // km
-        const cost = (selectedVehicle.baseRate * distance + weightRate * parseFloat(formData.weight || "0")) * urgencyMultiplier;
-        setEstimatedCost(cost);
+      // Use API cost calculation
+      try {
+        const costEstimate = await estimateCostMutation.mutateAsync({
+          weight_kg: parseFloat(formData.weight),
+          pickup_address: formData.pickupAddress,
+          destination_address: formData.destinationAddress,
+          priority:
+            formData.urgency === "standard"
+              ? CargoPriority.NORMAL
+              : CargoPriority.HIGH,
+        });
+        setEstimatedCost(costEstimate.data?.estimated_cost || 0);
+      } catch (error) {
+        console.error("Error estimating cost:", error);
+        // Fallback to manual calculation
+        // Fallback to manual calculation using mock data
+        const selectedVehicle = mockVehicleData.find(
+          (v) => v.id === formData.selectedVehicle
+        );
+        if (selectedVehicle) {
+          const weightRate = 500; // RWF per kg
+          const urgencyMultiplier = formData.urgency === "urgent" ? 1.5 : 1;
+          const distance = formData.distance || 25; // km
+          const cost =
+            (selectedVehicle.base_rate * distance +
+              weightRate * parseFloat(formData.weight || "0")) *
+            urgencyMultiplier;
+          setEstimatedCost(cost);
+        }
       }
     }
     if (step === 4) {
@@ -140,21 +219,59 @@ export function CreateCargoForm() {
     setStep(4); // Go back to confirmation step
   };
 
-  const handleSubmit = () => {
-    // In real app, submit to API
-    console.log("Cargo request submitted:", formData);
-    handleNext();
+  const handleSubmit = async () => {
+    try {
+      const cargoRequest: CreateCargoRequest = {
+        type:
+          formData.cargoType === "other"
+            ? formData.otherCargoType
+            : formData.cargoType,
+        weight_kg: parseFloat(formData.weight),
+        dimensions: {
+          length: parseFloat(formData.length || "0"),
+          width: parseFloat(formData.width || "0"),
+          height: parseFloat(formData.height || "0"),
+        },
+        pickup_address: formData.pickupAddress,
+        pickup_contact: formData.pickupContactName,
+        pickup_phone: formData.pickupContactPhone,
+        pickup_instructions: formData.pickupOpeningHours,
+        destination_address: formData.destinationAddress,
+        destination_contact: formData.destinationContactName,
+        destination_phone: formData.destinationContactPhone,
+        delivery_instructions: formData.destinationOpeningHours,
+        special_requirements: formData.specialInstructions,
+        pickup_date: formData.pickupDate,
+        priority:
+          formData.urgency === "standard"
+            ? CargoPriority.NORMAL
+            : CargoPriority.HIGH,
+      };
+
+      await createCargoMutation.mutateAsync(cargoRequest);
+      toast.success(t("createCargo.success"));
+      handleNext();
+    } catch (error) {
+      console.error("Error creating cargo:", error);
+      toast.error(t("createCargo.error"));
+    }
   };
 
   const availableVehiclesList = getAvailableVehicles();
-  const selectedVehicle = availableVehicles.find(v => v.id === formData.selectedVehicle);
+  const selectedVehicle = mockVehicleData.find(
+    (v) => v.id === formData.selectedVehicle
+  );
 
   // Google Maps search functions
   const searchLocation = async (query: string, isPickup: boolean) => {
     if (!query.trim()) return;
 
-    const isSearching = isPickup ? setIsSearchingPickup : setIsSearchingDestination;
-    const setResults = isPickup ? setPickupSearchResults : setDestinationSearchResults;
+    const isSearching = isPickup
+      ? setIsSearchingPickup
+      : setIsSearchingDestination;
+    const setResults = isPickup
+      ? setPickupSearchResults
+      : setDestinationSearchResults;
 
     isSearching(true);
 
@@ -166,31 +283,31 @@ export function CreateCargoForm() {
           description: `${query} - Kigali, Rwanda`,
           structured_formatting: {
             main_text: query,
-            secondary_text: "Kigali, Rwanda"
-          }
+            secondary_text: "Kigali, Rwanda",
+          },
         },
         {
           place_id: "2",
           description: `${query} - Remera, Kigali, Rwanda`,
           structured_formatting: {
             main_text: query,
-            secondary_text: "Remera, Kigali, Rwanda"
-          }
+            secondary_text: "Remera, Kigali, Rwanda",
+          },
         },
         {
           place_id: "3",
           description: `${query} - Nyarugenge, Kigali, Rwanda`,
           structured_formatting: {
             main_text: query,
-            secondary_text: "Nyarugenge, Kigali, Rwanda"
-          }
-        }
+            secondary_text: "Nyarugenge, Kigali, Rwanda",
+          },
+        },
       ];
 
       setResults(mockResults);
     } catch (error) {
-      console.error('Error searching location:', error);
-      toast.error('Failed to search location');
+      console.error("Error searching location:", error);
+      toast.error("Failed to search location");
     } finally {
       isSearching(false);
     }
@@ -203,16 +320,18 @@ export function CreateCargoForm() {
 
     const updatedFormData = {
       ...formData,
-      ...(isPickup ? {
-        pickupAddress: address,
-        pickupLat: lat.toString(),
-        pickupLng: lng.toString()
-      } : {
-        destinationAddress: address,
-        destinationLat: lat.toString(),
-        destinationLng: lng.toString()
-      }),
-      distance: 0 // Reset distance to show loading state
+      ...(isPickup
+        ? {
+            pickupAddress: address,
+            pickupLat: lat.toString(),
+            pickupLng: lng.toString(),
+          }
+        : {
+            destinationAddress: address,
+            destinationLat: lat.toString(),
+            destinationLng: lng.toString(),
+          }),
+      distance: 0, // Reset distance to show loading state
     };
 
     setFormData(updatedFormData);
@@ -230,13 +349,18 @@ export function CreateCargoForm() {
       setTimeout(() => {
         // Mock distance calculation - in real app, use Google Maps Distance Matrix API
         const distance = Math.random() * 50 + 10; // 10-60 km
-        setFormData(prev => ({ ...prev, distance: Math.round(distance) }));
+        setFormData((prev) => ({ ...prev, distance: Math.round(distance) }));
       }, 500); // Small delay to show loading state
     }
   };
 
   const calculateDistance = () => {
-    if (formData.pickupLat && formData.pickupLng && formData.destinationLat && formData.destinationLng) {
+    if (
+      formData.pickupLat &&
+      formData.pickupLng &&
+      formData.destinationLat &&
+      formData.destinationLng
+    ) {
       // Mock distance calculation - in real app, use Google Maps Distance Matrix API
       const distance = Math.random() * 50 + 10; // 10-60 km
       setFormData({ ...formData, distance: Math.round(distance) });
@@ -249,19 +373,29 @@ export function CreateCargoForm() {
       <div className="flex items-center justify-between mb-8 overflow-x-auto  p-2">
         {[1, 2, 3, 4, 5, 6].map((number) => (
           <div key={number} className="flex items-center flex-shrink-0">
-            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs md:text-sm font-medium transition-all duration-300 shadow-sm ${step === number
-              ? "bg-blue-500 text-white ring-2 md:ring-4 ring-blue-100" // Current step - blue
-              : step > number
-                ? "bg-green-500 text-white" // Completed step - green
-                : "bg-gray-200 text-gray-500" // Future step - gray
-              }`}>
-              {number === 6 ? <CheckCircle className="h-4 w-4 md:h-5 md:w-5" /> : number}
+            <div
+              className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs md:text-sm font-medium transition-all duration-300 shadow-sm ${
+                step === number
+                  ? "bg-blue-500 text-white ring-2 md:ring-4 ring-blue-100" // Current step - blue
+                  : step > number
+                  ? "bg-green-500 text-white" // Completed step - green
+                  : "bg-gray-200 text-gray-500" // Future step - gray
+              }`}
+            >
+              {number === 6 ? (
+                <CheckCircle className="h-4 w-4 md:h-5 md:w-5" />
+              ) : (
+                number
+              )}
             </div>
             {number < 6 && (
-              <div className={`w-8 md:w-16 h-1 mx-1 md:mx-3 transition-all duration-300 rounded-full ${step > number
-                ? "bg-green-500" // Completed line - green
-                : "bg-gray-200" // Future line - gray
-                }`} />
+              <div
+                className={`w-8 md:w-16 h-1 mx-1 md:mx-3 transition-all duration-300 rounded-full ${
+                  step > number
+                    ? "bg-green-500" // Completed line - green
+                    : "bg-gray-200" // Future line - gray
+                }`}
+              />
             )}
           </div>
         ))}
@@ -273,109 +407,175 @@ export function CreateCargoForm() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5 text-primary" />
-              Cargo Details
+              {t("createCargo.steps.cargoDetails.title")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cargoType">Cargo Type</Label>
-                <Select value={formData.cargoType} onValueChange={(value) => setFormData({ ...formData, cargoType: value })}>
+                <Label htmlFor="cargoType">
+                  {t("createCargo.steps.cargoDetails.cargoType")}
+                </Label>
+                <Select
+                  value={formData.cargoType}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, cargoType: value })
+                  }
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select cargo type" />
+                    <SelectValue
+                      placeholder={t(
+                        "createCargo.steps.cargoDetails.selectCargoType"
+                      )}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="electronics">Electronics</SelectItem>
-                    <SelectItem value="furniture">Furniture</SelectItem>
-                    <SelectItem value="documents">Documents</SelectItem>
-                    <SelectItem value="food">Food Items</SelectItem>
-                    <SelectItem value="clothing">Clothing</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="electronics">
+                      {t("createCargo.steps.cargoDetails.types.electronics")}
+                    </SelectItem>
+                    <SelectItem value="furniture">
+                      {t("createCargo.steps.cargoDetails.types.furniture")}
+                    </SelectItem>
+                    <SelectItem value="documents">
+                      {t("createCargo.steps.cargoDetails.types.documents")}
+                    </SelectItem>
+                    <SelectItem value="food">
+                      {t("createCargo.steps.cargoDetails.types.food")}
+                    </SelectItem>
+                    <SelectItem value="clothing">
+                      {t("createCargo.steps.cargoDetails.types.clothing")}
+                    </SelectItem>
+                    <SelectItem value="other">
+                      {t("createCargo.steps.cargoDetails.types.other")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {formData.cargoType === "other" && (
                 <div className="space-y-2">
-                  <Label htmlFor="otherCargoType">Specify Cargo Type</Label>
+                  <Label htmlFor="otherCargoType">
+                    {t("createCargo.steps.cargoDetails.specifyType")}
+                  </Label>
                   <Input
                     id="otherCargoType"
-                    placeholder="Enter cargo type..."
+                    placeholder={t(
+                      "createCargo.steps.cargoDetails.enterCargoType"
+                    )}
                     value={formData.otherCargoType}
-                    onChange={(e) => setFormData({ ...formData, otherCargoType: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        otherCargoType: e.target.value,
+                      })
+                    }
                   />
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="weight">Weight (kg)</Label>
+                <Label htmlFor="weight">
+                  {t("createCargo.steps.cargoDetails.weight")}
+                </Label>
                 <Input
                   id="weight"
                   type="number"
                   placeholder="25"
                   value={formData.weight}
-                  onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, weight: e.target.value })
+                  }
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Cargo Description</Label>
+              <Label htmlFor="description">
+                {t("createCargo.steps.cargoDetails.description")}
+              </Label>
               <Textarea
                 id="description"
-                placeholder="Describe your cargo in detail..."
+                placeholder={t(
+                  "createCargo.steps.cargoDetails.descriptionPlaceholder"
+                )}
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={3}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Dimensions (cm)</Label>
+              <Label>{t("createCargo.steps.cargoDetails.dimensions")}</Label>
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Input
                     id="length"
-                    placeholder="Length"
+                    placeholder={t("createCargo.steps.cargoDetails.length")}
                     value={formData.length}
-                    onChange={(e) => setFormData({ ...formData, length: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, length: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Input
                     id="width"
-                    placeholder="Width"
+                    placeholder={t("createCargo.steps.cargoDetails.width")}
                     value={formData.width}
-                    onChange={(e) => setFormData({ ...formData, width: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, width: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Input
                     id="height"
-                    placeholder="Height"
+                    placeholder={t("createCargo.steps.cargoDetails.height")}
                     value={formData.height}
-                    onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, height: e.target.value })
+                    }
                   />
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="urgency">Delivery Urgency</Label>
-              <Select value={formData.urgency} onValueChange={(value) => setFormData({ ...formData, urgency: value })}>
+              <Label htmlFor="urgency">
+                {t("createCargo.steps.cargoDetails.urgency")}
+              </Label>
+              <Select
+                value={formData.urgency}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, urgency: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="standard">Standard (2-3 days)</SelectItem>
-                  <SelectItem value="express">Express (1-2 days)</SelectItem>
-                  <SelectItem value="urgent">Urgent (Same day)</SelectItem>
+                  <SelectItem value="standard">
+                    {t(
+                      "createCargo.steps.cargoDetails.urgencyOptions.standard"
+                    )}
+                  </SelectItem>
+                  <SelectItem value="express">
+                    {t("createCargo.steps.cargoDetails.urgencyOptions.express")}
+                  </SelectItem>
+                  <SelectItem value="urgent">
+                    {t("createCargo.steps.cargoDetails.urgencyOptions.urgent")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <Button onClick={handleNext} className="w-full bg-gradient-primary hover:bg-primary-hover">
-              Next: Pickup & Delivery
+            <Button
+              onClick={handleNext}
+              className="w-full bg-gradient-primary hover:bg-primary-hover"
+            >
+              {t("createCargo.steps.cargoDetails.nextButton")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </CardContent>
@@ -392,7 +592,6 @@ export function CreateCargoForm() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-8">
-
             {/* Pickup Location Section */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
@@ -439,8 +638,12 @@ export function CreateCargoForm() {
                           className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                           onClick={() => selectLocation(result, true)}
                         >
-                          <div className="font-medium">{result.structured_formatting.main_text}</div>
-                          <div className="text-sm text-gray-600">{result.structured_formatting.secondary_text}</div>
+                          <div className="font-medium">
+                            {result.structured_formatting.main_text}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {result.structured_formatting.secondary_text}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -451,14 +654,23 @@ export function CreateCargoForm() {
                   placeholder="Enter complete pickup address..."
                   value={formData.pickupAddress}
                   onChange={(e) => {
-                    const newFormData = { ...formData, pickupAddress: e.target.value };
+                    const newFormData = {
+                      ...formData,
+                      pickupAddress: e.target.value,
+                    };
                     setFormData(newFormData);
 
                     // Calculate distance if both addresses are set
-                    if (newFormData.pickupAddress && newFormData.destinationAddress) {
+                    if (
+                      newFormData.pickupAddress &&
+                      newFormData.destinationAddress
+                    ) {
                       setTimeout(() => {
                         const distance = Math.random() * 50 + 10; // 10-60 km
-                        setFormData(prev => ({ ...prev, distance: Math.round(distance) }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          distance: Math.round(distance),
+                        }));
                       }, 500); // Small delay to show loading state
                     }
                   }}
@@ -476,7 +688,12 @@ export function CreateCargoForm() {
                       id="pickupContactName"
                       placeholder="Contact name"
                       value={formData.pickupContactName}
-                      onChange={(e) => setFormData({ ...formData, pickupContactName: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          pickupContactName: e.target.value,
+                        })
+                      }
                       className="pl-10"
                     />
                   </div>
@@ -490,7 +707,12 @@ export function CreateCargoForm() {
                       id="pickupContactPhone"
                       placeholder="+250 123 456 789"
                       value={formData.pickupContactPhone}
-                      onChange={(e) => setFormData({ ...formData, pickupContactPhone: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          pickupContactPhone: e.target.value,
+                        })
+                      }
                       className="pl-10"
                     />
                   </div>
@@ -505,7 +727,12 @@ export function CreateCargoForm() {
                     id="pickupOpeningHours"
                     placeholder="e.g., Mon-Fri 8AM-6PM, Sat 9AM-3PM"
                     value={formData.pickupOpeningHours}
-                    onChange={(e) => setFormData({ ...formData, pickupOpeningHours: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        pickupOpeningHours: e.target.value,
+                      })
+                    }
                     className="pl-10"
                   />
                 </div>
@@ -516,10 +743,18 @@ export function CreateCargoForm() {
                   type="checkbox"
                   id="savePickupData"
                   checked={formData.savePickupData}
-                  onChange={(e) => setFormData({ ...formData, savePickupData: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      savePickupData: e.target.checked,
+                    })
+                  }
                   className="rounded"
                 />
-                <Label htmlFor="savePickupData" className="text-sm flex items-center gap-1">
+                <Label
+                  htmlFor="savePickupData"
+                  className="text-sm flex items-center gap-1"
+                >
                   <Save className="h-4 w-4" />
                   Save pickup details for future use
                 </Label>
@@ -556,7 +791,9 @@ export function CreateCargoForm() {
                     </div>
                     <Button
                       variant="outline"
-                      onClick={() => searchLocation(destinationSearchQuery, false)}
+                      onClick={() =>
+                        searchLocation(destinationSearchQuery, false)
+                      }
                       disabled={isSearchingDestination}
                     >
                       {isSearchingDestination ? "Searching..." : "Search"}
@@ -572,8 +809,12 @@ export function CreateCargoForm() {
                           className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                           onClick={() => selectLocation(result, false)}
                         >
-                          <div className="font-medium">{result.structured_formatting.main_text}</div>
-                          <div className="text-sm text-gray-600">{result.structured_formatting.secondary_text}</div>
+                          <div className="font-medium">
+                            {result.structured_formatting.main_text}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {result.structured_formatting.secondary_text}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -584,14 +825,23 @@ export function CreateCargoForm() {
                   placeholder="Enter complete delivery address..."
                   value={formData.destinationAddress}
                   onChange={(e) => {
-                    const newFormData = { ...formData, destinationAddress: e.target.value };
+                    const newFormData = {
+                      ...formData,
+                      destinationAddress: e.target.value,
+                    };
                     setFormData(newFormData);
 
                     // Calculate distance if both addresses are set
-                    if (newFormData.pickupAddress && newFormData.destinationAddress) {
+                    if (
+                      newFormData.pickupAddress &&
+                      newFormData.destinationAddress
+                    ) {
                       setTimeout(() => {
                         const distance = Math.random() * 50 + 10; // 10-60 km
-                        setFormData(prev => ({ ...prev, distance: Math.round(distance) }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          distance: Math.round(distance),
+                        }));
                       }, 500); // Small delay to show loading state
                     }
                   }}
@@ -609,7 +859,12 @@ export function CreateCargoForm() {
                       id="destinationContactName"
                       placeholder="Contact name"
                       value={formData.destinationContactName}
-                      onChange={(e) => setFormData({ ...formData, destinationContactName: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          destinationContactName: e.target.value,
+                        })
+                      }
                       className="pl-10"
                     />
                   </div>
@@ -623,7 +878,12 @@ export function CreateCargoForm() {
                       id="destinationContactPhone"
                       placeholder="+250 123 456 789"
                       value={formData.destinationContactPhone}
-                      onChange={(e) => setFormData({ ...formData, destinationContactPhone: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          destinationContactPhone: e.target.value,
+                        })
+                      }
                       className="pl-10"
                     />
                   </div>
@@ -638,7 +898,12 @@ export function CreateCargoForm() {
                     id="destinationOpeningHours"
                     placeholder="e.g., Mon-Fri 8AM-6PM, Sat 9AM-3PM"
                     value={formData.destinationOpeningHours}
-                    onChange={(e) => setFormData({ ...formData, destinationOpeningHours: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        destinationOpeningHours: e.target.value,
+                      })
+                    }
                     className="pl-10"
                   />
                 </div>
@@ -649,10 +914,18 @@ export function CreateCargoForm() {
                   type="checkbox"
                   id="saveDestinationData"
                   checked={formData.saveDestinationData}
-                  onChange={(e) => setFormData({ ...formData, saveDestinationData: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      saveDestinationData: e.target.checked,
+                    })
+                  }
                   className="rounded"
                 />
-                <Label htmlFor="saveDestinationData" className="text-sm flex items-center gap-1">
+                <Label
+                  htmlFor="saveDestinationData"
+                  className="text-sm flex items-center gap-1"
+                >
                   <Save className="h-4 w-4" />
                   Save delivery details for future use
                 </Label>
@@ -667,17 +940,26 @@ export function CreateCargoForm() {
                   id="pickupDate"
                   type="date"
                   value={formData.pickupDate}
-                  onChange={(e) => setFormData({ ...formData, pickupDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, pickupDate: e.target.value })
+                  }
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="specialInstructions">Special Instructions (Optional)</Label>
+                <Label htmlFor="specialInstructions">
+                  Special Instructions (Optional)
+                </Label>
                 <Textarea
                   id="specialInstructions"
                   placeholder="Any special handling requirements, delivery instructions, or additional notes..."
                   value={formData.specialInstructions}
-                  onChange={(e) => setFormData({ ...formData, specialInstructions: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      specialInstructions: e.target.value,
+                    })
+                  }
                   rows={3}
                 />
               </div>
@@ -692,8 +974,7 @@ export function CreateCargoForm() {
                     <span className="font-medium">
                       {formData.distance > 0
                         ? `Estimated Distance: ${formData.distance} km`
-                        : "Calculating distance..."
-                      }
+                        : "Calculating distance..."}
                     </span>
                   </div>
                   {formData.distance === 0 && (
@@ -704,7 +985,11 @@ export function CreateCargoForm() {
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="flex-1"
+              >
                 Back
               </Button>
               <Button
@@ -725,37 +1010,80 @@ export function CreateCargoForm() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Truck className="h-5 w-5 text-primary" />
-              Select Vehicle
+              {t("createCargo.steps.vehicleSelection.title")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2">Available Vehicles</h3>
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  {t("createCargo.steps.vehicleSelection.availableVehicles")}
+                </h3>
                 <p className="text-sm text-blue-700">
-                  Based on your cargo weight of <strong>{formData.weight} kg</strong>,
-                  here are the available vehicles that can handle your shipment:
+                  {t("createCargo.steps.vehicleSelection.description", {
+                    weight: formData.weight,
+                  })}
                 </p>
               </div>
 
-              {availableVehiclesList.length === 0 ? (
+              {vehiclesLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="border rounded-lg p-4">
+                      <div className="flex items-start gap-4">
+                        <Skeleton className="w-12 h-12 rounded-lg" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-48" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                        <Skeleton className="w-5 h-5 rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : vehiclesError ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
+                  <h3 className="text-lg font-semibold text-red-600">
+                    {t("createCargo.steps.vehicleSelection.loadError")}
+                  </h3>
+                  <p className="text-red-500 mb-4">{vehiclesError.message}</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => window.location.reload()}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    {t("common.retry")}
+                  </Button>
+                </div>
+              ) : availableVehiclesList.length === 0 ? (
                 <div className="text-center py-8">
                   <Truck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">No vehicles available</h3>
+                  <h3 className="text-lg font-semibold text-muted-foreground">
+                    {t("createCargo.steps.vehicleSelection.noVehicles")}
+                  </h3>
                   <p className="text-muted-foreground">
-                    No vehicles can handle your cargo weight. Please reduce the weight or contact support.
+                    {t(
+                      "createCargo.steps.vehicleSelection.noVehiclesDescription"
+                    )}
                   </p>
                 </div>
               ) : (
                 <RadioGroup
                   value={formData.selectedVehicle}
-                  onValueChange={(value) => setFormData({ ...formData, selectedVehicle: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, selectedVehicle: value })
+                  }
                   className="space-y-4"
                 >
                   {availableVehiclesList.map((vehicle) => {
-                    const Icon = vehicle.icon;
+                    const Icon = vehicle.type === "moto" ? Bike : Truck;
                     return (
-                      <div key={vehicle.id} className="border rounded-lg p-4 hover:border-primary transition-colors">
+                      <div
+                        key={vehicle.id}
+                        className="border rounded-lg p-4 hover:border-primary transition-colors"
+                      >
                         <RadioGroupItem
                           value={vehicle.id}
                           id={vehicle.id}
@@ -770,17 +1098,31 @@ export function CreateCargoForm() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-2">
-                              <h3 className="font-semibold text-foreground">{vehicle.name}</h3>
+                              <h3 className="font-semibold text-foreground">
+                                {vehicle.name}
+                              </h3>
                               <div className="text-sm text-muted-foreground">
-                                Capacity: {vehicle.capacity} kg
+                                {t(
+                                  "createCargo.steps.vehicleSelection.capacity",
+                                  { capacity: vehicle.capacity }
+                                )}
                               </div>
                             </div>
                             <p className="text-sm text-muted-foreground mb-2">
                               {vehicle.description}
                             </p>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>Est. Time: {vehicle.estimatedTime}</span>
-                              <span>Rate: RWF {vehicle.baseRate.toLocaleString()}/km</span>
+                              <span>
+                                {t(
+                                  "createCargo.steps.vehicleSelection.estimatedTime",
+                                  { time: vehicle.estimated_time }
+                                )}
+                              </span>
+                              <span>
+                                {t("createCargo.steps.vehicleSelection.rate", {
+                                  rate: vehicle.base_rate,
+                                })}
+                              </span>
                             </div>
                           </div>
                           <div className="flex items-center justify-center w-5 h-5 border-2 border-gray-300 rounded-full">
@@ -797,15 +1139,19 @@ export function CreateCargoForm() {
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
-                Back
+              <Button
+                variant="outline"
+                onClick={() => setStep(2)}
+                className="flex-1"
+              >
+                {t("common.back")}
               </Button>
               <Button
                 onClick={handleNext}
-                disabled={!formData.selectedVehicle}
+                disabled={!formData.selectedVehicle || vehiclesLoading}
                 className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
               >
-                Get Cost Estimate
+                {t("createCargo.steps.vehicleSelection.getCostEstimate")}
                 <Calculator className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -819,7 +1165,7 @@ export function CreateCargoForm() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calculator className="h-5 w-5 text-primary" />
-              Cost Estimate & Confirmation
+              {t("createCargo.steps.confirmation.title")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -828,19 +1174,31 @@ export function CreateCargoForm() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-2">
                   {(() => {
-                    const Icon = selectedVehicle.icon;
+                    const Icon = selectedVehicle.type === "moto" ? Bike : Truck;
                     return <Icon className="h-5 w-5 text-blue-600" />;
                   })()}
-                  <h3 className="font-semibold text-blue-900">Selected Vehicle: {selectedVehicle.name}</h3>
+                  <h3 className="font-semibold text-blue-900">
+                    {t("createCargo.steps.confirmation.selectedVehicle", {
+                      name: selectedVehicle.name,
+                    })}
+                  </h3>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-blue-700">Capacity:</span>
-                    <span className="ml-2 font-medium">{selectedVehicle.capacity} kg</span>
+                    <span className="text-blue-700">
+                      {t("createCargo.steps.confirmation.capacity")}:
+                    </span>
+                    <span className="ml-2 font-medium">
+                      {selectedVehicle.capacity} kg
+                    </span>
                   </div>
                   <div>
-                    <span className="text-blue-700">Est. Time:</span>
-                    <span className="ml-2 font-medium">{selectedVehicle.estimatedTime}</span>
+                    <span className="text-blue-700">
+                      {t("createCargo.steps.confirmation.estimatedTime")}:
+                    </span>
+                    <span className="ml-2 font-medium">
+                      {selectedVehicle.estimated_time}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -848,91 +1206,171 @@ export function CreateCargoForm() {
 
             {/* Cost Breakdown */}
             <div className="bg-muted rounded-lg p-4 space-y-3">
-              <h3 className="font-semibold text-foreground">Cost Breakdown</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Base delivery fee ({formData.distance || 25} km)</span>
-                  <span>RWF {selectedVehicle ? (selectedVehicle.baseRate * (formData.distance || 25)).toLocaleString() : '0'}</span>
+              <h3 className="font-semibold text-foreground">
+                {t("createCargo.steps.confirmation.costBreakdown")}
+              </h3>
+              {estimateCostMutation.isPending ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Weight charge ({formData.weight} kg)</span>
-                  <span>RWF {(parseFloat(formData.weight || "0") * 500).toLocaleString()}</span>
+              ) : estimateCostMutation.error ? (
+                <div className="text-center py-4">
+                  <AlertCircle className="h-8 w-8 mx-auto text-red-500 mb-2" />
+                  <p className="text-red-600 text-sm">
+                    {t("createCargo.steps.confirmation.costError")}
+                  </p>
                 </div>
-                {formData.urgency === "urgent" && (
+              ) : (
+                <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Urgent delivery surcharge (50%)</span>
-                    <span>RWF {selectedVehicle ? (selectedVehicle.baseRate * (formData.distance || 25) * 0.5).toLocaleString() : '0'}</span>
+                    <span className="text-muted-foreground">
+                      {t("createCargo.steps.confirmation.baseFee", {
+                        distance: formData.distance || 25,
+                      })}
+                    </span>
+                    <span>
+                      RWF{" "}
+                      {selectedVehicle
+                        ? (
+                            selectedVehicle.base_rate *
+                            (formData.distance || 25)
+                          ).toLocaleString()
+                        : "0"}
+                    </span>
                   </div>
-                )}
-                <div className="border-t border-border pt-2 flex justify-between font-semibold text-lg">
-                  <span>Total Estimated Cost</span>
-                  <span className="text-primary">RWF {estimatedCost.toLocaleString()}</span>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {t("createCargo.steps.confirmation.weightCharge", {
+                        weight: formData.weight,
+                      })}
+                    </span>
+                    <span>
+                      RWF{" "}
+                      {(
+                        parseFloat(formData.weight || "0") * 500
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+                  {formData.urgency === "urgent" && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {t("createCargo.steps.confirmation.urgentSurcharge")}
+                      </span>
+                      <span>
+                        RWF{" "}
+                        {selectedVehicle
+                          ? (
+                              selectedVehicle.base_rate *
+                              (formData.distance || 25) *
+                              0.5
+                            ).toLocaleString()
+                          : "0"}
+                      </span>
+                    </div>
+                  )}
+                  <div className="border-t border-border pt-2 flex justify-between font-semibold text-lg">
+                    <span>{t("createCargo.steps.confirmation.totalCost")}</span>
+                    <span className="text-primary">
+                      RWF {estimatedCost.toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Summary */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">Shipment Summary</h3>
+              <h3 className="font-semibold text-foreground">
+                {t("createCargo.steps.confirmation.shipmentSummary")}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Cargo Type</p>
+                  <p className="text-muted-foreground">
+                    {t("createCargo.steps.confirmation.cargoType")}
+                  </p>
                   <p className="font-medium capitalize">
-                    {formData.cargoType === "other" ? formData.otherCargoType : formData.cargoType}
+                    {formData.cargoType === "other"
+                      ? formData.otherCargoType
+                      : formData.cargoType}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Weight</p>
+                  <p className="text-muted-foreground">
+                    {t("createCargo.steps.confirmation.weight")}
+                  </p>
                   <p className="font-medium">{formData.weight} kg</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Vehicle</p>
+                  <p className="text-muted-foreground">
+                    {t("createCargo.steps.confirmation.vehicle")}
+                  </p>
                   <p className="font-medium">{selectedVehicle?.name}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Distance</p>
+                  <p className="text-muted-foreground">
+                    {t("createCargo.steps.confirmation.distance")}
+                  </p>
                   <p className="font-medium">{formData.distance} km</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Dimensions</p>
+                  <p className="text-muted-foreground">
+                    {t("createCargo.steps.confirmation.dimensions")}
+                  </p>
                   <p className="font-medium">
                     {formData.length && formData.width && formData.height
                       ? `${formData.length} × ${formData.width} × ${formData.height} cm`
-                      : 'Not specified'
-                    }
+                      : t("createCargo.steps.confirmation.notSpecified")}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Urgency</p>
+                  <p className="text-muted-foreground">
+                    {t("createCargo.steps.confirmation.urgency")}
+                  </p>
                   <p className="font-medium capitalize">{formData.urgency}</p>
                 </div>
               </div>
 
               {/* Location Details */}
               <div className="space-y-3">
-                <h4 className="font-medium text-foreground">Location Details</h4>
+                <h4 className="font-medium text-foreground">
+                  {t("createCargo.steps.confirmation.locationDetails")}
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-green-600" />
-                      <span className="font-medium text-green-600">Pickup</span>
+                      <span className="font-medium text-green-600">
+                        {t("createCargo.steps.confirmation.pickup")}
+                      </span>
                     </div>
-                    <p className="text-muted-foreground">{formData.pickupAddress}</p>
+                    <p className="text-muted-foreground">
+                      {formData.pickupAddress}
+                    </p>
                     {formData.pickupContactName && (
                       <p className="text-xs text-muted-foreground">
-                        Contact: {formData.pickupContactName} • {formData.pickupContactPhone}
+                        {t("createCargo.steps.confirmation.contact")}:{" "}
+                        {formData.pickupContactName} •{" "}
+                        {formData.pickupContactPhone}
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-red-600" />
-                      <span className="font-medium text-red-600">Delivery</span>
+                      <span className="font-medium text-red-600">
+                        {t("createCargo.steps.confirmation.delivery")}
+                      </span>
                     </div>
-                    <p className="text-muted-foreground">{formData.destinationAddress}</p>
+                    <p className="text-muted-foreground">
+                      {formData.destinationAddress}
+                    </p>
                     {formData.destinationContactName && (
                       <p className="text-xs text-muted-foreground">
-                        Contact: {formData.destinationContactName} • {formData.destinationContactPhone}
+                        {t("createCargo.steps.confirmation.contact")}:{" "}
+                        {formData.destinationContactName} •{" "}
+                        {formData.destinationContactPhone}
                       </p>
                     )}
                   </div>
@@ -941,11 +1379,21 @@ export function CreateCargoForm() {
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
-                Back
+              <Button
+                variant="outline"
+                onClick={() => setStep(3)}
+                className="flex-1"
+              >
+                {t("common.back")}
               </Button>
-              <Button onClick={handleSubmit} className="flex-1 bg-gradient-primary hover:bg-primary-hover">
-                Proceed to Payment
+              <Button
+                onClick={handleSubmit}
+                disabled={createCargoMutation.isPending}
+                className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
+              >
+                {createCargoMutation.isPending
+                  ? t("common.loading")
+                  : t("createCargo.steps.confirmation.proceedToPayment")}
                 <Clock className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -973,37 +1421,58 @@ export function CreateCargoForm() {
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-foreground">Cargo Created Successfully!</h2>
+                <h2 className="text-2xl font-bold text-foreground">
+                  {t("createCargo.steps.success.title")}
+                </h2>
                 <p className="text-muted-foreground">
-                  Your cargo has been created and payment processed. You'll receive tracking information shortly.
+                  {t("createCargo.steps.success.description")}
                 </p>
               </div>
 
               <div className="bg-muted rounded-lg p-4 space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Cargo ID</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("createCargo.steps.success.cargoId")}
+                  </span>
                   <span className="font-medium">{cargoId}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Vehicle</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("createCargo.steps.success.vehicle")}
+                  </span>
                   <span className="font-medium">{selectedVehicle?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Total Amount</span>
-                  <span className="font-bold">RWF {estimatedCost.toLocaleString()}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("createCargo.steps.success.totalAmount")}
+                  </span>
+                  <span className="font-bold">
+                    RWF {estimatedCost.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <span className="text-green-600 font-medium">Payment Confirmed</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("createCargo.steps.success.status")}
+                  </span>
+                  <span className="text-green-600 font-medium">
+                    {t("createCargo.steps.success.paymentConfirmed")}
+                  </span>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <Button className="w-full" onClick={() => window.location.href = '/my-cargos'}>
-                  View My Cargos
+                <Button
+                  className="w-full"
+                  onClick={() => (window.location.href = "/my-cargos")}
+                >
+                  {t("createCargo.steps.success.viewMyCargos")}
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => window.location.href = '/create-cargo'}>
-                  Create Another Cargo
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => (window.location.href = "/create-cargo")}
+                >
+                  {t("createCargo.steps.success.createAnotherCargo")}
                 </Button>
               </div>
             </div>
