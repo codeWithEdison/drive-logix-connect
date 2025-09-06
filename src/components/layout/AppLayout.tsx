@@ -1,22 +1,23 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { DynamicSidebar } from './DynamicSidebar';
-import { MobileBottomNav } from './MobileBottomNav';
-import { Button } from '@/components/ui/button';
-import { Bell, Menu } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { DynamicSidebar } from "./DynamicSidebar";
+import { MobileBottomNav } from "./MobileBottomNav";
+import { Button } from "@/components/ui/button";
+import { Bell, Menu } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { FaLanguage } from "react-icons/fa6";
-import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { DriverNotifications } from '@/components/ui/DriverNotifications';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/dropdown-menu";
+import { DriverNotifications } from "@/components/ui/DriverNotifications";
+import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -25,27 +26,21 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const isMobile = useIsMobile();
-  const [currentLanguage, setCurrentLanguage] = useState('English');
+  const { currentLanguage } = useLanguage();
   const { toast } = useToast();
-
-  const languages = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'rw', name: 'Kinyarwanda', flag: '🇷🇼' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' }
-  ];
 
   const handleNotificationAction = (action: string, data?: any) => {
     switch (action) {
-      case 'accept':
+      case "accept":
         toast({
           title: "Assignment Accepted",
           description: "Cargo assignment has been accepted.",
         });
         break;
-      case 'navigate':
+      case "navigate":
         // Handle navigation action
         break;
-      case 'view':
+      case "view":
         // Handle view action
         break;
       default:
@@ -59,11 +54,16 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'client': return 'hsl(var(--primary))';
-      case 'driver': return 'hsl(var(--success))';
-      case 'admin': return 'hsl(var(--info))';
-      case 'super_admin': return 'hsl(var(--accent))';
-      default: return 'hsl(var(--primary))';
+      case "client":
+        return "hsl(var(--primary))";
+      case "driver":
+        return "hsl(var(--success))";
+      case "admin":
+        return "hsl(var(--info))";
+      case "super_admin":
+        return "hsl(var(--accent))";
+      default:
+        return "hsl(var(--primary))";
     }
   };
 
@@ -80,37 +80,18 @@ export function AppLayout({ children }: AppLayoutProps) {
                 className="w-8 h-8 object-contain"
               />
               <div>
-                <h1 className="font-bold text-base text-gray-900">Loveway Logistic</h1>
+                <h1 className="font-bold text-base text-gray-900">
+                  Loveway Logistic
+                </h1>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               {/* Mobile Language Selector */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-gray-600 hover:text-gray-900">
-                    <FaLanguage className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {languages.map((language) => (
-                    <DropdownMenuItem
-                      key={language.code}
-                      onClick={() => setCurrentLanguage(language.name)}
-                      className="flex items-center gap-3 cursor-pointer"
-                    >
-                      <span className="text-lg">{language.flag}</span>
-                      <span className="font-medium">{language.name}</span>
-                      {currentLanguage === language.name && (
-                        <span className="ml-auto text-blue-600">✓</span>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <LanguageSwitcher />
 
               {/* Mobile Notifications - Only show for drivers */}
-              {user.role === 'driver' && (
+              {user.role === "driver" && (
                 <DriverNotifications
                   onAction={handleNotificationAction}
                   className="ml-2"
@@ -128,7 +109,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                     style={{ backgroundColor: getRoleColor(user.role) }}
                     className="text-white font-bold text-xs"
                   >
-                    {user.name.charAt(0)}
+                    {user.full_name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -139,9 +120,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Mobile Content */}
         <main className="flex-1 overflow-auto pb-24 bg-[#F9FAFE] min-h-screen">
-          <div className="p-4">
-            {children}
-          </div>
+          <div className="p-4">{children}</div>
         </main>
 
         {/* Mobile Bottom Navigation */}
@@ -161,43 +140,24 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="flex h-16 items-center gap-4 px-6">
               <SidebarTrigger className="h-9 w-9 text-gray-600 hover:text-blue-600" />
 
-              <div className="flex-1 flex items-center gap-4">
-              </div>
+              <div className="flex-1 flex items-center gap-4"></div>
 
               <div className="flex items-center gap-3">
                 {/* Language Selector */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-9 px-3 text-gray-600 hover:text-gray-900 flex items-center gap-2">
-                      <FaLanguage className="h-4 w-4" />
-                      <span className="hidden sm:block text-sm font-medium">{currentLanguage}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    {languages.map((language) => (
-                      <DropdownMenuItem
-                        key={language.code}
-                        onClick={() => setCurrentLanguage(language.name)}
-                        className="flex items-center gap-3 cursor-pointer"
-                      >
-                        <span className="text-lg">{language.flag}</span>
-                        <span className="font-medium">{language.name}</span>
-                        {currentLanguage === language.name && (
-                          <span className="ml-auto text-blue-600">✓</span>
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <LanguageSwitcher />
 
                 {/* Desktop Notifications - Only show for drivers */}
-                {user.role === 'driver' ? (
+                {user.role === "driver" ? (
                   <DriverNotifications
                     onAction={handleNotificationAction}
                     className="ml-2"
                   />
                 ) : (
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 relative text-gray-600 hover:text-gray-900">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 p-0 relative text-gray-600 hover:text-gray-900"
+                  >
                     <Bell className="h-4 w-4" />
                     <span className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full text-xs"></span>
                   </Button>
@@ -209,13 +169,15 @@ export function AppLayout({ children }: AppLayoutProps) {
                       style={{ backgroundColor: getRoleColor(user.role) }}
                       className="text-white font-bold"
                     >
-                      {user.name.charAt(0)}
+                      {user.full_name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden xl:block">
-                    <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {user.full_name}
+                    </p>
                     <p className="text-xs text-gray-500 capitalize">
-                      {user.role.replace('_', ' ')}
+                      {user.role.replace("_", " ")}
                     </p>
                   </div>
                 </div>
@@ -226,9 +188,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {/* Desktop Content */}
           <main className="flex-1 overflow-auto bg-[#F9FAFE] min-h-screen">
-            <div className="container mx-auto p-6">
-              {children}
-            </div>
+            <div className="container mx-auto p-6">{children}</div>
           </main>
         </div>
       </div>

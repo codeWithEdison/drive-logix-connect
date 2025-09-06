@@ -1,6 +1,7 @@
-import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import React from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   AiOutlineHome,
   AiOutlinePlus,
@@ -11,46 +12,92 @@ import {
   AiOutlineTeam,
   AiOutlineSetting,
   AiOutlineBarChart,
-  AiOutlineSafety
-} from 'react-icons/ai';
-import { Home, Package, Truck, History } from 'lucide-react';
+  AiOutlineSafety,
+} from "react-icons/ai";
+import { Home, Package, Truck, History } from "lucide-react";
 
-const navigationConfig = {
+const getNavigationConfig = (t: (key: string) => string) => ({
   client: [
-    { title: 'Dashboard', url: '/', icon: AiOutlineHome },
-    { title: 'Create', url: '/create-cargo', icon: AiOutlinePlus },
-    { title: 'My Cargos', url: '/my-cargos', icon: AiOutlineInbox },
-    { title: 'Tracking', url: '/tracking', icon: AiOutlineEnvironment },
-    { title: 'History', url: '/history', icon: AiOutlineHistory },
+    { title: t("navigation.dashboard"), url: "/", icon: AiOutlineHome },
+    {
+      title: t("navigation.create"),
+      url: "/create-cargo",
+      icon: AiOutlinePlus,
+    },
+    {
+      title: t("navigation.myCargos"),
+      url: "/my-cargos",
+      icon: AiOutlineInbox,
+    },
+    {
+      title: t("navigation.tracking"),
+      url: "/tracking",
+      icon: AiOutlineEnvironment,
+    },
+    { title: t("navigation.history"), url: "/history", icon: AiOutlineHistory },
   ],
   driver: [
-    { title: 'Dashboard', url: '/driver', icon: Home },
-    { title: 'Cargos', url: '/driver/cargos', icon: Package },
-    { title: 'Deliveries', url: '/driver/deliveries', icon: Truck },
-    { title: 'History', url: '/driver/history', icon: History },
+    { title: t("navigation.dashboard"), url: "/driver", icon: Home },
+    { title: t("navigation.cargos"), url: "/driver/cargos", icon: Package },
+    {
+      title: t("navigation.deliveries"),
+      url: "/driver/deliveries",
+      icon: Truck,
+    },
+    { title: t("navigation.history"), url: "/driver/history", icon: History },
   ],
   admin: [
-    { title: 'Dashboard', url: '/admin', icon: AiOutlineHome },
-    { title: 'Cargos', url: '/admin/cargos', icon: AiOutlineInbox },
-    { title: 'Users', url: '/admin/users', icon: AiOutlineTeam },
-    { title: 'Trucks', url: '/admin/trucks', icon: AiOutlineCar },
-    { title: 'Settings', url: '/admin/settings', icon: AiOutlineSetting },
+    { title: t("navigation.dashboard"), url: "/admin", icon: AiOutlineHome },
+    {
+      title: t("navigation.cargos"),
+      url: "/admin/cargos",
+      icon: AiOutlineInbox,
+    },
+    { title: t("navigation.users"), url: "/admin/users", icon: AiOutlineTeam },
+    { title: t("navigation.trucks"), url: "/admin/trucks", icon: AiOutlineCar },
+    {
+      title: t("navigation.settings"),
+      url: "/admin/settings",
+      icon: AiOutlineSetting,
+    },
   ],
   super_admin: [
-    { title: 'Dashboard', url: '/super-admin', icon: AiOutlineHome },
-    { title: 'Users', url: '/super-admin/users', icon: AiOutlineTeam },
-    { title: 'Admins', url: '/super-admin/admins', icon: AiOutlineSafety },
-    { title: 'Analytics', url: '/super-admin/analytics', icon: AiOutlineBarChart },
-    { title: 'Settings', url: '/super-admin/settings', icon: AiOutlineSetting },
-  ]
-};
+    {
+      title: t("navigation.dashboard"),
+      url: "/super-admin",
+      icon: AiOutlineHome,
+    },
+    {
+      title: t("navigation.users"),
+      url: "/super-admin/users",
+      icon: AiOutlineTeam,
+    },
+    {
+      title: t("navigation.admins"),
+      url: "/super-admin/admins",
+      icon: AiOutlineSafety,
+    },
+    {
+      title: t("navigation.analytics"),
+      url: "/super-admin/analytics",
+      icon: AiOutlineBarChart,
+    },
+    {
+      title: t("navigation.settings"),
+      url: "/super-admin/settings",
+      icon: AiOutlineSetting,
+    },
+  ],
+});
 
 export function MobileBottomNav() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
 
   if (!user) return null;
 
+  const navigationConfig = getNavigationConfig(t);
   const navigation = navigationConfig[user.role] || [];
   const isActive = (path: string) => location.pathname === path;
 
@@ -68,13 +115,20 @@ export function MobileBottomNav() {
             <NavLink
               key={item.title}
               to={item.url}
-              className={`flex flex-col items-center justify-center gap-1 py-2 px-1 min-w-0 flex-1 transition-colors duration-200 ${active
-                ? 'text-green-600'
-                : 'text-gray-500'
-                }`}
+              className={`flex flex-col items-center justify-center gap-1 py-2 px-1 min-w-0 flex-1 transition-colors duration-200 ${
+                active ? "text-green-600" : "text-gray-500"
+              }`}
             >
-              <Icon className={`h-6 w-6 ${active ? 'text-green-600' : 'text-gray-500'}`} />
-              <span className={`text-xs font-medium truncate max-w-full ${active ? 'text-green-600' : 'text-gray-500'}`}>
+              <Icon
+                className={`h-6 w-6 ${
+                  active ? "text-green-600" : "text-gray-500"
+                }`}
+              />
+              <span
+                className={`text-xs font-medium truncate max-w-full ${
+                  active ? "text-green-600" : "text-gray-500"
+                }`}
+              >
                 {item.title}
               </span>
             </NavLink>

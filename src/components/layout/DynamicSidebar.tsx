@@ -1,6 +1,7 @@
-import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import React from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
   Sidebar,
   SidebarContent,
@@ -12,8 +13,8 @@ import {
   SidebarHeader,
   SidebarFooter,
   useSidebar,
-} from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import {
   Package,
   MapPin,
@@ -29,60 +30,88 @@ import {
   Receipt,
   Activity,
   Database,
-} from 'lucide-react';
+} from "lucide-react";
 
-const navigationConfig = {
+const getNavigationConfig = (t: (key: string) => string) => ({
   client: [
-    { title: 'Dashboard', url: '/', icon: Home },
-    { title: 'Create Cargo', url: '/create-cargo', icon: Plus },
-    { title: 'My Cargos', url: '/my-cargos', icon: Package },
-    { title: 'Live Tracking', url: '/tracking', icon: MapPin },
-    { title: 'History', url: '/history', icon: History },
-    { title: 'Invoices', url: '/invoices', icon: Receipt },
+    { title: t("navigation.dashboard"), url: "/", icon: Home },
+    { title: t("navigation.createCargo"), url: "/create-cargo", icon: Plus },
+    { title: t("navigation.myCargos"), url: "/my-cargos", icon: Package },
+    { title: t("navigation.liveTracking"), url: "/tracking", icon: MapPin },
+    { title: t("navigation.history"), url: "/history", icon: History },
+    { title: t("navigation.invoices"), url: "/invoices", icon: Receipt },
   ],
   driver: [
-    { title: 'Dashboard', url: '/driver', icon: Home },
-    { title: 'Assigned Cargos', url: '/driver/cargos', icon: Package },
-    { title: 'Active Deliveries', url: '/driver/deliveries', icon: Truck },
-    { title: 'Delivery History', url: '/driver/history', icon: History },
+    { title: t("navigation.dashboard"), url: "/driver", icon: Home },
+    {
+      title: t("navigation.assignedCargos"),
+      url: "/driver/cargos",
+      icon: Package,
+    },
+    {
+      title: t("navigation.activeDeliveries"),
+      url: "/driver/deliveries",
+      icon: Truck,
+    },
+    {
+      title: t("navigation.deliveryHistory"),
+      url: "/driver/history",
+      icon: History,
+    },
   ],
   admin: [
-    { title: 'Dashboard', url: '/admin', icon: Home },
-    { title: 'All Cargos', url: '/admin/cargos', icon: Package },
-    { title: 'Users', url: '/admin/users', icon: Users },
-    { title: 'Trucks', url: '/admin/trucks', icon: Truck },
-    { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
-    { title: 'Settings', url: '/admin/settings', icon: Settings },
+    { title: t("navigation.dashboard"), url: "/admin", icon: Home },
+    { title: t("navigation.allCargos"), url: "/admin/cargos", icon: Package },
+    { title: t("navigation.users"), url: "/admin/users", icon: Users },
+    { title: t("navigation.trucks"), url: "/admin/trucks", icon: Truck },
+    { title: t("navigation.reports"), url: "/admin/reports", icon: BarChart3 },
+    { title: t("navigation.settings"), url: "/admin/settings", icon: Settings },
   ],
   super_admin: [
-    { title: 'Dashboard', url: '/super-admin', icon: Home },
-    { title: 'User Management', url: '/super-admin/users', icon: Users },
-    { title: 'System Settings', url: '/super-admin/settings', icon: Settings },
-    { title: 'System Logs', url: '/super-admin/logs', icon: Activity },
-  ]
-};
+    { title: t("navigation.dashboard"), url: "/super-admin", icon: Home },
+    {
+      title: t("navigation.userManagement"),
+      url: "/super-admin/users",
+      icon: Users,
+    },
+    {
+      title: t("navigation.systemSettings"),
+      url: "/super-admin/settings",
+      icon: Settings,
+    },
+    {
+      title: t("navigation.systemLogs"),
+      url: "/super-admin/logs",
+      icon: Activity,
+    },
+  ],
+});
 
 export function DynamicSidebar() {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const { state } = useSidebar();
   const location = useLocation();
-  const collapsed = state === 'collapsed';
+  const collapsed = state === "collapsed";
 
   if (!user) return null;
 
+  const navigationConfig = getNavigationConfig(t);
   const navigation = navigationConfig[user.role] || [];
   const isActive = (path: string) => location.pathname === path;
 
-
-
   return (
-    <Sidebar className={`${collapsed ? "w-16" : "w-64"} transition-all duration-300 bg-[#EBF3FD]`}>
+    <Sidebar
+      className={`${
+        collapsed ? "w-16" : "w-64"
+      } transition-all duration-300 bg-[#EBF3FD]`}
+    >
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
           <img
             src="/logo-text.png"
             alt="Loveway Logistics"
-            className={`${collapsed ? 'w-8' : 'w-36'} h-auto object-contain`}
+            className={`${collapsed ? "w-8" : "w-36"} h-auto object-contain`}
           />
         </div>
       </SidebarHeader>
@@ -101,14 +130,31 @@ export function DynamicSidebar() {
                       <NavLink
                         to={item.url}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-200 font-medium    ${isActive
-                            ? 'bg-blue-500 text-white'
-                            : 'text-gray-600 hover:text-gray-900'
-                          } ${collapsed ? 'justify-center' : ''} `
+                          `flex items-center gap-3 px-4 py-3 rounded-full transition-all duration-200 font-medium    ${
+                            isActive
+                              ? "bg-blue-500 text-white"
+                              : "text-gray-600 hover:text-gray-900"
+                          } ${collapsed ? "justify-center" : ""} `
                         }
                       >
-                        <Icon className={`flex-shrink-0 ${active ? 'text-primary h-8 w-8' : 'text-gray-600 h-5 w-5'}`} />
-                        {!collapsed && <span className={`text-sm ${active ? 'font-bold text-primary' : 'text-gray-600'}`}>{item.title}</span>}
+                        <Icon
+                          className={`flex-shrink-0 ${
+                            active
+                              ? "text-primary h-8 w-8"
+                              : "text-gray-600 h-5 w-5"
+                          }`}
+                        />
+                        {!collapsed && (
+                          <span
+                            className={`text-sm ${
+                              active
+                                ? "font-bold text-primary"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            {item.title}
+                          </span>
+                        )}
                         {collapsed && (
                           <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                             {item.title}
@@ -133,7 +179,7 @@ export function DynamicSidebar() {
             className="w-full justify-start gap-3 text-gray-600 hover:text-gray-900 p-3"
           >
             <LogOut className="h-4 w-4" />
-            Log Out
+            {t("auth.logout")}
           </Button>
         ) : (
           <Button

@@ -270,19 +270,19 @@ function AppContent() {
 
 function App() {
   return (
-    <ApiProvider>
-      <LanguageProvider>
-        <TooltipProvider>
-          <AuthProvider>
-            <Router>
+    <Router>
+      <ApiProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <AuthProvider>
               <AppContent />
               <Toaster />
               <Sonner />
-            </Router>
-          </AuthProvider>
-        </TooltipProvider>
-      </LanguageProvider>
-    </ApiProvider>
+            </AuthProvider>
+          </TooltipProvider>
+        </LanguageProvider>
+      </ApiProvider>
+    </Router>
   );
 }
 

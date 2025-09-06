@@ -1,123 +1,167 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-export type UserRole = 'client' | 'driver' | 'admin' | 'super_admin';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  avatar?: string;
-  phone?: string;
-  status?: 'active' | 'inactive' | 'pending';
-}
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLogin, useRegister, useLogout } from "@/lib/api/hooks";
+import {
+  User,
+  UserRole,
+  LoginRequest,
+  CreateUserRequest,
+} from "@/types/shared";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  loginWithDemo: (role: UserRole) => void;
+  register: (data: CreateUserRequest) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   getDefaultRoute: (role: UserRole) => string;
+  isLoading: boolean;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Mock users data
-export const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'client@demo.com',
-    role: 'client',
-    phone: '+1234567890',
-    status: 'active'
-  },
-  {
-    id: '2',
-    name: 'Mike Johnson',
-    email: 'driver@demo.com',
-    role: 'driver',
-    phone: '+1234567891',
-    status: 'active'
-  },
-  {
-    id: '3',
-    name: 'Sarah Admin',
-    email: 'admin@demo.com',
-    role: 'admin',
-    phone: '+1234567892',
-    status: 'active'
-  },
-  {
-    id: '4',
-    name: 'Super Admin',
-    email: 'superadmin@demo.com',
-    role: 'super_admin',
-    phone: '+1234567893',
-    status: 'active'
-  }
-];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
+  const logoutMutation = useLogout();
 
   useEffect(() => {
     // Check for stored user on mount
-    const storedUser = localStorage.getItem('logistics_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const storedUser = localStorage.getItem("logistics_user");
+    const storedToken = localStorage.getItem("access_token");
+
+    if (storedUser && storedToken) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error("Error parsing stored user:", error);
+        localStorage.removeItem("logistics_user");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+      }
     }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Simple mock authentication
-    const foundUser = mockUsers.find(u => u.email === email);
-    if (foundUser && password === 'demo123') {
-      setUser(foundUser);
-      localStorage.setItem('logistics_user', JSON.stringify(foundUser));
-      return true;
+    setIsLoading(true);
+    try {
+      const loginData: LoginRequest = { email, password };
+      const result = await loginMutation.mutateAsync(loginData);
+
+      if (result.success && result.data) {
+        const { user, token, refresh_token } = result.data;
+
+        // Store user data and tokens
+        localStorage.setItem("logistics_user", JSON.stringify(user));
+        localStorage.setItem("access_token", token);
+        if (refresh_token) {
+          localStorage.setItem("refresh_token", refresh_token);
+        }
+
+        setUser(user);
+        toast.success("Login successful!");
+
+        // Navigate to appropriate route based on user role
+        const defaultRoute = getDefaultRoute(user.role);
+        navigate(defaultRoute);
+
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Login error:", error);
+      toast.error(error?.error?.message || "Login failed. Please try again.");
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    return false;
   };
 
-  const loginWithDemo = (role: UserRole) => {
-    const demoUser = mockUsers.find(u => u.role === role);
-    if (demoUser) {
-      setUser(demoUser);
-      localStorage.setItem('logistics_user', JSON.stringify(demoUser));
+  const register = async (data: CreateUserRequest): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const result = await registerMutation.mutateAsync(data);
+
+      if (result.success && result.data) {
+        const { user, token, refresh_token } = result.data;
+
+        // Store user data and tokens
+        localStorage.setItem("logistics_user", JSON.stringify(user));
+        localStorage.setItem("access_token", token);
+        if (refresh_token) {
+          localStorage.setItem("refresh_token", refresh_token);
+        }
+
+        setUser(user);
+        toast.success("Registration successful!");
+
+        // Navigate to appropriate route based on user role
+        const defaultRoute = getDefaultRoute(user.role);
+        navigate(defaultRoute);
+
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast.error(
+        error?.error?.message || "Registration failed. Please try again."
+      );
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('logistics_user');
+  const logout = async () => {
+    try {
+      // Call logout API if user is authenticated
+      if (user) {
+        await logoutMutation.mutateAsync();
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear local storage and state regardless of API call result
+      setUser(null);
+      localStorage.removeItem("logistics_user");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      toast.success("Logged out successfully");
+    }
   };
 
   const getDefaultRoute = (role: UserRole): string => {
     switch (role) {
-      case 'client':
-        return '/';
-      case 'driver':
-        return '/driver';
-      case 'admin':
-        return '/admin';
-      case 'super_admin':
-        return '/super-admin';
+      case "client":
+        return "/";
+      case "driver":
+        return "/driver";
+      case "admin":
+        return "/admin";
+      case "super_admin":
+        return "/super-admin";
       default:
-        return '/';
+        return "/";
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      loginWithDemo,
-      logout,
-      isAuthenticated: !!user,
-      getDefaultRoute
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
+        getDefaultRoute,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -126,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

@@ -1,270 +1,359 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, EyeOff, User, Mail, Phone, Building, Lock } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Eye, EyeOff, User, Mail, Phone, Building, Lock } from "lucide-react";
+import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  CreateUserRequest,
+  BusinessType,
+  Language,
+  UserRole,
+} from "@/types/shared";
 
 export default function Register() {
-    const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [formData, setFormData] = useState({
-        fullName: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: '',
-        businessType: 'individual',
-        companyName: '',
-        preferredLanguage: 'en',
-        agreeToTerms: false
-    });
+  const { register, isLoading } = useAuth();
+  const { t } = useLanguage();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    businessType: "individual" as BusinessType,
+    companyName: "",
+    preferredLanguage: "en" as Language,
+    agreeToTerms: false,
+  });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-        if (formData.password !== formData.confirmPassword) {
-            toast.error('Passwords do not match');
-            return;
-        }
+    if (formData.password !== formData.confirmPassword) {
+      toast.error(t("auth.passwordsDoNotMatch"));
+      return;
+    }
 
-        if (!formData.agreeToTerms) {
-            toast.error('Please agree to the terms and conditions');
-            return;
-        }
+    if (!formData.agreeToTerms) {
+      toast.error(t("auth.agreeToTermsError"));
+      return;
+    }
 
-        setIsLoading(true);
-
-        // Mock registration - in real app would call API
-        setTimeout(() => {
-            toast.success('Registration successful! Please check your email for verification.');
-            navigate('/login');
-            setIsLoading(false);
-        }, 2000);
+    const registrationData: CreateUserRequest = {
+      full_name: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      role: "client" as UserRole, // Default role for registration
+      preferred_language: formData.preferredLanguage,
     };
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
-            <div className="w-full max-w-2xl">
-                {/* Header */}
-                <div className="text-center space-y-4 mb-8">
-                    <div className="flex justify-center">
-                        <img
-                            src="/lovewaylogistic.png"
-                            alt="Loveway Logistics"
-                            className="w-16 h-16 object-contain"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <h1 className="text-3xl font-bold text-foreground">Create Account</h1>
-                        <p className="text-muted-foreground">Join Loveway Logistics to start shipping</p>
-                    </div>
+    const success = await register(registrationData);
+    if (success) {
+      toast.success(t("auth.registerSuccess"));
+      // Navigation is handled by AuthContext
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center p-4">
+      {/* Language Selector - Top Right */}
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+
+      <div className="w-full max-w-2xl">
+        {/* Header - Logo and Title on same row */}
+        <div className="text-center space-y-4 mb-6">
+          <div className="flex items-center justify-center gap-4">
+            <img
+              src="/lovewaylogistic.png"
+              alt="Loveway Logistics"
+              className="w-12 h-12 object-contain"
+            />
+            <div className="text-left">
+              <h1 className="text-2xl font-bold text-foreground">
+                {t("auth.createAccount")}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {t("auth.joinLogistics")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Card className="card-elevated">
+          <CardHeader>
+            <CardTitle>{t("auth.registerAsClient")}</CardTitle>
+            <CardDescription>{t("auth.fillDetails")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Personal Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  {t("auth.personalInformation")}
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">{t("auth.fullName")} *</Label>
+                    <Input
+                      id="fullName"
+                      placeholder={t("auth.fullName")}
+                      value={formData.fullName}
+                      onChange={(e) =>
+                        setFormData({ ...formData, fullName: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{t("auth.email")} *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder={t("auth.email")}
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
                 </div>
 
-                <Card className="card-elevated">
-                    <CardHeader>
-                        <CardTitle>Register as Client</CardTitle>
-                        <CardDescription>Fill in your details to create your account</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Personal Information */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
-                                    <User className="h-5 w-5" />
-                                    Personal Information
-                                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">{t("auth.phone")} *</Label>
+                    <Input
+                      id="phone"
+                      placeholder={t("auth.phone")}
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="fullName">Full Name *</Label>
-                                        <Input
-                                            id="fullName"
-                                            placeholder="John Doe"
-                                            value={formData.fullName}
-                                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                            required
-                                        />
-                                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="preferredLanguage">
+                      {t("auth.preferredLanguage")}
+                    </Label>
+                    <Select
+                      value={formData.preferredLanguage}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          preferredLanguage: value as Language,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="rw">Kinyarwanda</SelectItem>
+                        <SelectItem value="fr">Français</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email Address *</Label>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            placeholder="john@example.com"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                </div>
+              {/* Business Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  {t("auth.businessInformation")}
+                </h3>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="phone">Phone Number *</Label>
-                                        <Input
-                                            id="phone"
-                                            placeholder="+250789123456"
-                                            value={formData.phone}
-                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                            required
-                                        />
-                                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="businessType">
+                      {t("client.businessType")}
+                    </Label>
+                    <Select
+                      value={formData.businessType}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          businessType: value as BusinessType,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="individual">
+                          {t("businessType.individual")}
+                        </SelectItem>
+                        <SelectItem value="corporate">
+                          {t("businessType.corporate")}
+                        </SelectItem>
+                        <SelectItem value="government">
+                          {t("businessType.government")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="preferredLanguage">Preferred Language</Label>
-                                        <Select value={formData.preferredLanguage} onValueChange={(value) => setFormData({ ...formData, preferredLanguage: value })}>
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="en">English</SelectItem>
-                                                <SelectItem value="rw">Kinyarwanda</SelectItem>
-                                                <SelectItem value="fr">Français</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">
+                      {t("client.companyName")} ({t("auth.optional")})
+                    </Label>
+                    <Input
+                      id="companyName"
+                      placeholder={t("client.companyName")}
+                      value={formData.companyName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          companyName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
 
-                            {/* Business Information */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
-                                    <Building className="h-5 w-5" />
-                                    Business Information
-                                </h3>
+              {/* Security */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Lock className="h-5 w-5" />
+                  {t("auth.security")}
+                </h3>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="businessType">Business Type</Label>
-                                        <Select value={formData.businessType} onValueChange={(value) => setFormData({ ...formData, businessType: value })}>
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="individual">Individual</SelectItem>
-                                                <SelectItem value="corporate">Corporate</SelectItem>
-                                                <SelectItem value="government">Government</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{t("auth.password")} *</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder={t("auth.password")}
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="companyName">Company Name (Optional)</Label>
-                                        <Input
-                                            id="companyName"
-                                            placeholder="ABC Logistics Ltd"
-                                            value={formData.companyName}
-                                            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">
+                      {t("auth.confirmPassword")} *
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder={t("auth.confirmPassword")}
+                        value={formData.confirmPassword}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                            {/* Security */}
-                            <div className="space-y-4">
-                                <h3 className="text-lg font-semibold flex items-center gap-2">
-                                    <Lock className="h-5 w-5" />
-                                    Security
-                                </h3>
+              {/* Terms and Conditions */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      agreeToTerms: checked as boolean,
+                    })
+                  }
+                />
+                <Label htmlFor="agreeToTerms" className="text-sm">
+                  {t("auth.agreeToTerms")}
+                </Label>
+              </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="password">Password *</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="password"
-                                                type={showPassword ? 'text' : 'password'}
-                                                placeholder="Create a strong password"
-                                                value={formData.password}
-                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                required
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                            >
-                                                {showPassword ? (
-                                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                                ) : (
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading
+                  ? t("auth.creatingAccount")
+                  : t("auth.createAccount")}
+              </Button>
+            </form>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="confirmPassword"
-                                                type={showConfirmPassword ? 'text' : 'password'}
-                                                placeholder="Confirm your password"
-                                                value={formData.confirmPassword}
-                                                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                                required
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            >
-                                                {showConfirmPassword ? (
-                                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                                ) : (
-                                                    <Eye className="h-4 w-4 text-muted-foreground" />
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Terms and Conditions */}
-                            <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id="agreeToTerms"
-                                    checked={formData.agreeToTerms}
-                                    onCheckedChange={(checked) => setFormData({ ...formData, agreeToTerms: checked as boolean })}
-                                />
-                                <Label htmlFor="agreeToTerms" className="text-sm">
-                                    I agree to the{' '}
-                                    <Link to="/terms" className="text-primary hover:underline">
-                                        Terms and Conditions
-                                    </Link>{' '}
-                                    and{' '}
-                                    <Link to="/privacy" className="text-primary hover:underline">
-                                        Privacy Policy
-                                    </Link>
-                                </Label>
-                            </div>
-
-                            <Button type="submit" className="w-full" disabled={isLoading}>
-                                {isLoading ? 'Creating Account...' : 'Create Account'}
-                            </Button>
-                        </form>
-
-                        <div className="mt-6 text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <Link to="/login" className="text-primary hover:underline font-medium">
-                                Sign in here
-                            </Link>
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+              {t("auth.alreadyHaveAccount")}{" "}
+              <Link
+                to="/login"
+                className="text-primary hover:underline font-medium"
+              >
+                {t("auth.signIn")}
+              </Link>
             </div>
-        </div>
-    );
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
