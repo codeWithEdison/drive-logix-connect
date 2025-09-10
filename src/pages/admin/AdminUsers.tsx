@@ -54,10 +54,73 @@ const AdminUsers = () => {
   const updateUserStatusMutation = useUpdateUserStatus();
 
   // Transform API data
+  console.log("🔍 AdminUsers Debug - usersData:", usersData);
+  console.log("🔍 AdminUsers Debug - usersData structure:", {
+    hasData: !!usersData,
+    dataType: typeof usersData,
+    isArray: Array.isArray(usersData),
+    dataLength: Array.isArray(usersData) ? usersData.length : "not array",
+    firstItem: Array.isArray(usersData) ? usersData[0] : "not array",
+  });
+
   const drivers: Driver[] =
-    usersData?.data?.filter((user: any) => user.role === "driver") || [];
+    usersData
+      ?.filter((user: any) => user.role === "driver")
+      .map((user: any) => ({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        license_number: user.driver?.license_number || "N/A",
+        license_expiry: user.driver?.license_expiry || "N/A",
+        license_type: user.driver?.license_type || "B",
+        date_of_birth: user.driver?.date_of_birth || "N/A",
+        emergency_contact: user.driver?.emergency_contact || "N/A",
+        emergency_phone: user.driver?.emergency_phone || "N/A",
+        blood_type: user.driver?.blood_type || "N/A",
+        medical_certificate_expiry:
+          user.driver?.medical_certificate_expiry || "N/A",
+        status: user.driver?.status || "available",
+        rating: user.driver?.rating || 0,
+        total_deliveries: user.driver?.total_deliveries || 0,
+        total_distance_km: user.driver?.total_distance_km || 0,
+        location: user.driver?.location || "Unknown",
+        registeredDate: user.created_at,
+        lastActive: user.last_login || "Never",
+        avatar_url: user.avatar_url,
+        is_active: user.is_active,
+        is_verified: user.is_verified,
+      })) || [];
   const clients: Client[] =
-    usersData?.data?.filter((user: any) => user.role === "client") || [];
+    usersData
+      ?.filter((user: any) => user.role === "client")
+      .map((user: any) => ({
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        company_name: user.client?.company_name || "N/A",
+        business_type: user.client?.business_type || "individual",
+        tax_id: user.client?.tax_id || "N/A",
+        address: user.client?.address || "N/A",
+        city: user.client?.city || "N/A",
+        country: user.client?.country || "N/A",
+        postal_code: user.client?.postal_code || "N/A",
+        contact_person: user.client?.contact_person || "N/A",
+        credit_limit: user.client?.credit_limit || 0,
+        payment_terms: user.client?.payment_terms || 30,
+        status: user.is_active ? "active" : "inactive",
+        location: user.client?.city || "Unknown",
+        registeredDate: user.created_at,
+        lastActive: user.last_login || "Never",
+        totalCargos: user.client?.total_cargos || 0,
+        avatar_url: user.avatar_url,
+        is_active: user.is_active,
+        is_verified: user.is_verified,
+      })) || [];
+
+  console.log("🔍 AdminUsers Debug - drivers:", drivers);
+  console.log("🔍 AdminUsers Debug - clients:", clients);
 
   // Driver handlers
   const handleViewDriverDetails = (driver: Driver) => {

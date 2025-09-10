@@ -66,7 +66,6 @@ export const useClientCargos = (params?: CargoSearchParams) => {
       return data.data;
     },
     staleTime: 0, // Force fresh data
-    cacheTime: 0, // Don't cache
   });
 };
 
@@ -82,7 +81,24 @@ export const useAllCargos = (params?: CargoSearchParams) => {
   return useQuery({
     queryKey: queryKeys.cargos.all(params),
     queryFn: () => CargoService.getAllCargos(params),
-    select: (data) => data.data,
+    placeholderData: (previousData) => previousData, // Keep existing data while loading new data
+    select: (data) => {
+      console.log("🔍 useAllCargos select - raw data:", data);
+      console.log("🔍 useAllCargos select - data.data:", data.data);
+      console.log("🔍 useAllCargos select - data.meta:", (data as any).meta);
+      // Return both the data array and pagination metadata
+      return {
+        data: data.data || [],
+        pagination: (data as any).meta?.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    },
   });
 };
 

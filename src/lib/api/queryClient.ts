@@ -44,6 +44,7 @@ export const queryKeys = {
     creditStatus: ["clients", "credit-status"] as const,
     invoices: (params?: Record<string, any>) =>
       ["clients", "invoices", params] as const,
+    all: (params?: Record<string, any>) => ["clients", "all", params] as const,
   },
 
   // Drivers

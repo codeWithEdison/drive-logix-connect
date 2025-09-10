@@ -177,7 +177,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                       {user.full_name}
                     </p>
                     <p className="text-xs text-gray-500 capitalize">
-                      {user.role.replace("_", " ")}
+                      {user.role?.replace("_", " ") || "Unknown"}
                     </p>
                   </div>
                 </div>

@@ -20,6 +20,7 @@
     "no": "No",
     "ok": "OK",
     "refresh": "Refresh",
+    "refreshed": "Refreshed",
     "retry": "Retry",
     "daily": "Daily",
     "weekly": "Weekly",
@@ -946,7 +947,9 @@
     "navigationFailed": "Unable to start navigation. Please try again.",
     "uploadFailed": "Failed to upload photos. Please try again.",
     "signatureFailed": "Failed to save signature. Please try again.",
-    "completionFailed": "Failed to mark delivery as completed. Please try again."
+    "assignmentFailed": "Assignment failed. Please try again.",
+    "updateFailed": "Update failed. Please try again.",
+    "cancellationFailed": "Cancellation failed. Please try again."
   },
   "validation": {
     "required": "This field is required",

@@ -14,6 +14,20 @@ export interface ApiResponse<T = any> {
   data?: T;
   message?: string;
   timestamp: string;
+  meta?: {
+    timestamp: string;
+    version: string;
+    language: string;
+    requestId: string;
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  };
 }
 
 export interface ApiError {

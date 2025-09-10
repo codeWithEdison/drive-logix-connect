@@ -279,7 +279,8 @@ export function FinancialTransactionsTable({
                     <TableCell className="text-gray-700 text-xs whitespace-nowrap">
                       {transaction.payment_method ? (
                         <Badge variant="outline" className="text-xs">
-                          {transaction.payment_method.replace("_", " ")}
+                          {transaction.payment_method?.replace("_", " ") ||
+                            "Unknown"}
                         </Badge>
                       ) : (
                         "-"

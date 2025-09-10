@@ -11,7 +11,17 @@ export const useVehicles = (params?: VehicleSearchParams) => {
   return useQuery({
     queryKey: queryKeys.vehicles.all(params),
     queryFn: () => VehicleService.getVehicles(params),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 useVehicles hook - raw data:", data);
+      // The API returns data directly in the data property
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data;
+      } else if (Array.isArray(data)) {
+        return data;
+      } else {
+        return [];
+      }
+    },
   });
 };
 

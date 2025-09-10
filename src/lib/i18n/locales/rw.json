@@ -20,6 +20,7 @@
     "no": "Oya",
     "ok": "Sawa",
     "refresh": "Subira",
+    "refreshed": "Subijwe",
     "retry": "Gerageza nanone",
     "daily": "Burimunsi",
     "weekly": "Buri cyumweru",
@@ -586,7 +587,10 @@
   "errors": {
     "networkErrorDescription": "Reba ko uruganda rwawe rukora neza hanyuma gerageza nanone",
     "unauthorizedDescription": "Nta bushobozi buhari bwo kujya muri iki gikoresho. Injira nanone.",
-    "notFoundDescription": "Iki gikoresho cyasabye ntikiboneka. Reba ko URL niyo yemewe cyangwa gerageza nanone."
+    "notFoundDescription": "Iki gikoresho cyasabye ntikiboneka. Reba ko URL niyo yemewe cyangwa gerageza nanone.",
+    "assignmentFailed": "Gutanga umurimo byanze. Gerageza nanone.",
+    "updateFailed": "Gusubiramo byanze. Gerageza nanone.",
+    "cancellationFailed": "Guhagarika byanze. Gerageza nanone."
   },
   "superAdminDashboard": {
     "title": "Ikibaho cy'Umuyobozi Mukuru",

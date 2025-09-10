@@ -15,7 +15,15 @@ export const useCargoAnalytics = (params: AnalyticsParams) => {
   return useQuery({
     queryKey: queryKeys.analytics.cargos(params),
     queryFn: () => AnalyticsService.getCargoAnalytics(params),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 useCargoAnalytics hook - raw data:", data);
+      // The API returns data directly in the data property
+      if (data?.data) {
+        return data.data;
+      } else {
+        return data;
+      }
+    },
   });
 };
 
@@ -23,7 +31,15 @@ export const useDriverAnalytics = (params: AnalyticsParams) => {
   return useQuery({
     queryKey: queryKeys.analytics.drivers(params),
     queryFn: () => AnalyticsService.getDriverAnalytics(params),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 useDriverAnalytics hook - raw data:", data);
+      // The API returns data directly in the data property
+      if (data?.data) {
+        return data.data;
+      } else {
+        return data;
+      }
+    },
   });
 };
 
@@ -31,7 +47,15 @@ export const useFinancialAnalytics = (params: AnalyticsParams) => {
   return useQuery({
     queryKey: queryKeys.analytics.financial(params),
     queryFn: () => AnalyticsService.getFinancialAnalytics(params),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 useFinancialAnalytics hook - raw data:", data);
+      // The API returns data directly in the data property
+      if (data?.data) {
+        return data.data;
+      } else {
+        return data;
+      }
+    },
   });
 };
 

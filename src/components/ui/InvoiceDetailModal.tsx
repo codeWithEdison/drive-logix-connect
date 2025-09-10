@@ -270,7 +270,7 @@ export function InvoiceDetailModal({
                   <div className="flex justify-between">
                     <span className="text-gray-600">Payment Method:</span>
                     <span className="font-semibold capitalize">
-                      {invoice.payment_method.replace("_", " ")}
+                      {invoice.payment_method?.replace("_", " ") || "Unknown"}
                     </span>
                   </div>
                 )}

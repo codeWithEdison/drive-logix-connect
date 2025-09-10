@@ -331,7 +331,7 @@ export default function SuperAdminDashboard() {
                         {log.user}
                       </span>
                       <Badge variant="outline" className="text-xs">
-                        {log.type.replace("_", " ")}
+                        {log.type?.replace("_", " ") || "Unknown"}
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600">{log.action}</p>

@@ -20,6 +20,7 @@
     "no": "Non",
     "ok": "OK",
     "refresh": "Actualiser",
+    "refreshed": "Actualisé",
     "retry": "Réessayer",
     "daily": "Quotidien",
     "weekly": "Hebdomadaire",
@@ -570,7 +571,10 @@
     "unknownError": "Une erreur inconnue s'est produite.",
     "networkErrorDescription": "Veuillez vérifier votre connexion internet et réessayer",
     "unauthorizedDescription": "Vous n'avez pas la permission d'accéder à cette ressource. Veuillez vous reconnecter.",
-    "notFoundDescription": "La ressource demandée n'a pas pu être trouvée. Veuillez vérifier l'URL ou réessayer plus tard."
+    "notFoundDescription": "La ressource demandée n'a pas pu être trouvée. Veuillez vérifier l'URL ou réessayer plus tard.",
+    "assignmentFailed": "L'assignation a échoué. Veuillez réessayer.",
+    "updateFailed": "La mise à jour a échoué. Veuillez réessayer.",
+    "cancellationFailed": "L'annulation a échoué. Veuillez réessayer."
   },
   "validation": {
     "required": "Ce champ est requis",

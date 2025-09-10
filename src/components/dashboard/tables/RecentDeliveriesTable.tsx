@@ -253,7 +253,7 @@ export function RecentDeliveriesTable({
                         >
                           {(
                             delivery.status || delivery.delivery_status
-                          )?.replace("_", " ")}
+                          )?.replace("_", " ") || "Unknown"}
                         </Badge>
                         {delivery.priority &&
                           delivery.priority !== "standard" && (

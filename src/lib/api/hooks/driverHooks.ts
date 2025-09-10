@@ -85,7 +85,7 @@ export const useAvailableDrivers = (params?: {
   });
 };
 
-export const useAllDrivers = (params?: {
+export const usePaginatedDrivers = (params?: {
   status?: string;
   page?: number;
   limit?: number;
@@ -93,7 +93,8 @@ export const useAllDrivers = (params?: {
   return useQuery({
     queryKey: queryKeys.drivers.all(params),
     queryFn: () => DriverService.getAllDrivers(params),
-    select: (data) => data.data,
+    select: (data) => data,
+    placeholderData: (previousData) => previousData, // Keep existing data while loading new data
   });
 };
 

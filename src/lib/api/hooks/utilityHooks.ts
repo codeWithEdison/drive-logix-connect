@@ -185,7 +185,15 @@ export const useNotificationSettings = () => {
   return useQuery({
     queryKey: queryKeys.notifications.settings,
     queryFn: () => NotificationService.getSettings(),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 useNotificationSettings hook - raw data:", data);
+      // The API returns data directly in the data property
+      if (data?.data) {
+        return data.data;
+      } else {
+        return data;
+      }
+    },
   });
 };
 
@@ -256,7 +264,17 @@ export const useUserManagement = (params?: {
   return useQuery({
     queryKey: queryKeys.admin.users(params),
     queryFn: () => AdminService.getUserManagement(params),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 useUserManagement hook - raw data:", data);
+      // The API returns data directly in the data property
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data;
+      } else if (Array.isArray(data)) {
+        return data;
+      } else {
+        return [];
+      }
+    },
   });
 };
 
@@ -286,7 +304,15 @@ export const useFinancialReports = (params?: {
   return useQuery({
     queryKey: queryKeys.admin.financialReports(params),
     queryFn: () => AdminService.getFinancialReports(params),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 useFinancialReports hook - raw data:", data);
+      // The API returns data directly in the data property
+      if (data?.data) {
+        return data.data;
+      } else {
+        return data;
+      }
+    },
   });
 };
 
@@ -298,7 +324,15 @@ export const usePerformanceReports = (params?: {
   return useQuery({
     queryKey: queryKeys.admin.performanceReports(params),
     queryFn: () => AdminService.getPerformanceReports(params),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 usePerformanceReports hook - raw data:", data);
+      // The API returns data directly in the data property
+      if (data?.data) {
+        return data.data;
+      } else {
+        return data;
+      }
+    },
   });
 };
 

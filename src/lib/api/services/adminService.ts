@@ -79,6 +79,18 @@ export class AdminService {
     return response.data;
   }
 
+  // Get clients (Admin)
+  static async getClients(params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<PaginationResponse<any>>> {
+    const response = await axiosInstance.get("/admin/users", {
+      params: { ...params, role: "client" },
+    });
+    return response.data;
+  }
+
   // Unified approvals
   static async approveEntity(data: {
     entity_type: "user" | "vehicle" | "driver";

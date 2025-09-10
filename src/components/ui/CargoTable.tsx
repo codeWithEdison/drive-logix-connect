@@ -54,21 +54,19 @@ import { useAuth } from "@/contexts/AuthContext";
 
 // Status configuration for different cargo types
 const statusConfig = {
-  // Driver assigned cargos
   pending: {
     label: "Pending",
     className: "bg-yellow-100 text-yellow-600",
   },
-  active: {
-    label: "Active",
-    className: "bg-green-100 text-green-600",
+  assigned: {
+    label: "Assigned",
+    className: "bg-purple-100 text-purple-600",
   },
-  completed: {
-    label: "Completed",
-    className: "bg-blue-100 text-blue-600",
+  picked_up: {
+    label: "Picked Up",
+    className: "bg-orange-100 text-orange-600",
   },
-  // Client cargos
-  transit: {
+  in_transit: {
     label: "In Transit",
     className: "bg-blue-100 text-blue-600",
   },
@@ -100,6 +98,8 @@ export interface CargoTableProps {
   showFilters?: boolean;
   showPagination?: boolean;
   itemsPerPage?: number;
+  priorityFilter?: string;
+  onPriorityFilterChange?: (priority: string) => void;
   onAcceptCargo?: (cargoId: string) => void;
   onStartDelivery?: (cargoId: string) => void;
   onCallClient?: (phone: string) => void;
@@ -110,6 +110,7 @@ export interface CargoTableProps {
   onCancelCargo?: (cargoId: string) => void;
   onDownloadReceipt?: (cargoId: string) => void;
   onViewDetails?: (cargo: CargoDetail) => void;
+  onStatusChange?: (cargoId: string, newStatus: string) => void;
   customActions?: React.ReactNode;
 }
 
@@ -118,9 +119,11 @@ export function CargoTable({
   title = "Cargos",
   showStats = true,
   showSearch = true,
-  showFilters = true,
+  showFilters = false,
   showPagination = true,
   itemsPerPage = 5,
+  priorityFilter = "all",
+  onPriorityFilterChange,
   onAcceptCargo,
   onStartDelivery,
   onCallClient,
@@ -131,6 +134,7 @@ export function CargoTable({
   onCancelCargo,
   onDownloadReceipt,
   onViewDetails,
+  onStatusChange,
   customActions,
 }: CargoTableProps) {
   const { user } = useAuth();
@@ -150,7 +154,6 @@ export function CargoTable({
 
   const filteredCargos = cargos.filter((cargo) => {
     const matchesSearch =
-      cargo.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cargo.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cargo.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cargo.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,7 +162,10 @@ export function CargoTable({
     const matchesStatus =
       statusFilter === "all" || cargo.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesPriority =
+      priorityFilter === "all" || cargo.priority === priorityFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority;
   });
 
   // Pagination
@@ -197,7 +203,85 @@ export function CargoTable({
   const getRoleBasedActions = (cargo: CargoDetail) => {
     const actions = [];
 
-    if (user?.role === "driver") {
+    if (user?.role === "admin") {
+      // Admin actions based on status flow
+      const availableTransitions = getAvailableStatusTransitions(cargo.status);
+
+      // Add status change actions
+      availableTransitions.forEach((status) => {
+        actions.push({
+          key: `status-${status}`,
+          label: `Change to ${
+            status?.replace("_", " ").toUpperCase() || status
+          }`,
+          icon: <CheckCircle className="h-3 w-3 mr-1" />,
+          onClick: () => onStatusChange?.(cargo.id, status),
+          variant: "outline" as const,
+        });
+      });
+
+      // Common admin actions
+      if (cargo.client) {
+        actions.push({
+          key: "call-client",
+          label: "Call Client",
+          icon: <Phone className="h-3 w-3 mr-1" />,
+          onClick: () => onCallClient?.(cargo.phone),
+          variant: "outline" as const,
+        });
+      }
+
+      if (cargo.driver) {
+        actions.push({
+          key: "call-driver",
+          label: "Call Driver",
+          icon: <Phone className="h-3 w-3 mr-1" />,
+          onClick: () => onCallDriver?.(cargo.phone),
+          variant: "outline" as const,
+        });
+      }
+
+      if (onTrackCargo) {
+        actions.push({
+          key: "track",
+          label: "Track",
+          icon: <Navigation className="h-3 w-3 mr-1" />,
+          onClick: () => onTrackCargo(cargo.id),
+          variant: "outline" as const,
+        });
+      }
+
+      if (onDownloadReceipt) {
+        actions.push({
+          key: "receipt",
+          label: "Download Receipt",
+          icon: <Download className="h-3 w-3 mr-1" />,
+          onClick: () => onDownloadReceipt(cargo.id),
+          variant: "outline" as const,
+        });
+      }
+
+      if (onUploadPhoto) {
+        actions.push({
+          key: "photo",
+          label: "Upload Photo",
+          icon: <Package className="h-3 w-3 mr-1" />,
+          onClick: () => onUploadPhoto(cargo.id),
+          variant: "outline" as const,
+        });
+      }
+
+      if (onReportIssue) {
+        actions.push({
+          key: "issue",
+          label: "Report Issue",
+          icon: <AlertCircle className="h-3 w-3 mr-1" />,
+          onClick: () => onReportIssue(cargo.id),
+          variant: "outline" as const,
+          className: "text-red-600",
+        });
+      }
+    } else if (user?.role === "driver") {
       // Driver actions
       if (cargo.status === "pending") {
         actions.push({
@@ -258,39 +342,20 @@ export function CargoTable({
       }
     }
 
-    // Common actions for all roles
-    if (onTrackCargo) {
-      actions.push({
-        key: "track",
-        label: "Track",
-        icon: <Navigation className="h-3 w-3 mr-1" />,
-        onClick: () => onTrackCargo(cargo.id),
-        variant: "outline" as const,
-      });
-    }
-
-    if (onUploadPhoto) {
-      actions.push({
-        key: "photo",
-        label: "Photo",
-        icon: <Package className="h-3 w-3 mr-1" />,
-        onClick: () => onUploadPhoto(cargo.id),
-        variant: "outline" as const,
-      });
-    }
-
-    if (onReportIssue) {
-      actions.push({
-        key: "issue",
-        label: "Issue",
-        icon: <AlertCircle className="h-3 w-3 mr-1" />,
-        onClick: () => onReportIssue(cargo.id),
-        variant: "outline" as const,
-        className: "text-red-600",
-      });
-    }
-
     return actions;
+  };
+
+  // Get available status transitions for admin based on current status
+  const getAvailableStatusTransitions = (currentStatus: string) => {
+    const transitions: { [key: string]: string[] } = {
+      pending: ["assigned", "cancelled"],
+      assigned: ["picked_up", "cancelled"],
+      picked_up: ["in_transit", "cancelled"],
+      in_transit: ["delivered", "cancelled"],
+      delivered: [], // No transitions from delivered
+      cancelled: [], // No transitions from cancelled
+    };
+    return transitions[currentStatus] || [];
   };
 
   const renderActions = (cargo: CargoDetail) => {
@@ -346,6 +411,7 @@ export function CargoTable({
     } else {
       return {
         id: cargo.id,
+        client: cargo.client, // Fixed: should be client, not driver
         driver: cargo.driver,
         phone: cargo.phone,
         from: cargo.from,
@@ -376,7 +442,7 @@ export function CargoTable({
               <div className="flex items-center gap-2 mb-2">
                 <Package className="h-4 w-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-900">
-                  {data.id}
+                  {data.type || "General Cargo"}
                 </span>
                 {getStatusBadge(data.status)}
               </div>
@@ -469,22 +535,15 @@ export function CargoTable({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{title}</h1>
-          <p className="text-muted-foreground">
-            {user?.role === "driver"
-              ? "Manage and track your assigned cargo deliveries"
-              : "Track and manage all your cargo shipments"}
-          </p>
-        </div>
+      {/* <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
         <div className="flex items-center gap-2">
           <Badge className="bg-blue-100 text-blue-600">
             {filteredCargos.length} Cargos
           </Badge>
           {customActions}
         </div>
-      </div>
+      </div> */}
 
       {/* Stats Cards */}
       {showStats && (
@@ -579,7 +638,7 @@ export function CargoTable({
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search by cargo ID, client, or location..."
+                      placeholder="Search by client, location, or type..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -623,6 +682,23 @@ export function CargoTable({
                       )}
                     </SelectContent>
                   </Select>
+                  {onPriorityFilterChange && (
+                    <Select
+                      value={priorityFilter}
+                      onValueChange={onPriorityFilterChange}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Priority</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               )}
             </div>
@@ -644,16 +720,13 @@ export function CargoTable({
                     <TableHead className="text-xs font-medium text-gray-600 w-16">
                       #
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-24">
-                      Cargo ID
-                    </TableHead>
                     {user?.role === "driver" ? (
                       <TableHead className="text-xs font-medium text-gray-600 w-32">
                         Client
                       </TableHead>
                     ) : (
                       <TableHead className="text-xs font-medium text-gray-600 w-36">
-                        Driver
+                        Client
                       </TableHead>
                     )}
                     <TableHead className="text-xs font-medium text-gray-600 flex-1">
@@ -662,13 +735,11 @@ export function CargoTable({
                     <TableHead className="text-xs font-medium text-gray-600 w-24">
                       Status
                     </TableHead>
-                    {user?.role === "driver" && (
-                      <TableHead className="text-xs font-medium text-gray-600 w-24">
-                        Priority
-                      </TableHead>
-                    )}
+                    <TableHead className="text-xs font-medium text-gray-600 w-24">
+                      Priority
+                    </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 w-32">
-                      {user?.role === "driver" ? "Earnings" : "Cost"}
+                      Cost
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 w-20">
                       Actions
@@ -687,18 +758,13 @@ export function CargoTable({
                         <TableCell className="text-sm text-gray-500">
                           {startIndex + index + 1}
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-gray-900">
-                          {data.id}
-                        </TableCell>
                         <TableCell>
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {user?.role === "driver"
-                                ? data.client
-                                : data.driver}
+                              {data.client || "N/A"}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {data.phone}
+                              {data.phone || "N/A"}
                             </p>
                           </div>
                         </TableCell>
@@ -716,17 +782,13 @@ export function CargoTable({
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(data.status)}</TableCell>
-                        {user?.role === "driver" && (
-                          <TableCell>
-                            {getPriorityBadge(cargo.priority || "standard")}
-                          </TableCell>
-                        )}
+                        <TableCell>
+                          {getPriorityBadge(cargo.priority || "normal")}
+                        </TableCell>
                         <TableCell>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {user?.role === "driver"
-                                ? data.earnings
-                                : formatFRW(data.cost || 0)}
+                              {formatFRW(data.cost || 0)}
                             </p>
                             <p className="text-xs text-gray-500">
                               {data.weight}

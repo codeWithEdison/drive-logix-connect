@@ -65,10 +65,11 @@ export class CargoService {
   // Get all cargos (Admin)
   static async getAllCargos(
     params?: CargoSearchParams
-  ): Promise<ApiResponse<PaginationResponse<Cargo>>> {
+  ): Promise<ApiResponse<Cargo[]>> {
     const response = await axiosInstance.get("/cargos/admin/cargos", {
       params,
     });
+    console.log("🔍 CargoService.getAllCargos - raw response:", response.data);
     return response.data;
   }
 

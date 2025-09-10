@@ -1,14 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { CargoTable } from "@/components/ui/CargoTable";
 import {
   CargoDetailModal,
   CargoDetail,
 } from "@/components/ui/CargoDetailModal";
 import { Button } from "@/components/ui/button";
-import { Plus, Truck, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  Truck,
+  RefreshCw,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import ModernModel from "@/components/modal/ModernModel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -16,7 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAllCargos } from "@/lib/api/hooks";
+import {
+  useAllCargos,
+  useUpdateCargoStatus,
+  useCancelCargo,
+  useAdminClients,
+} from "@/lib/api/hooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,21 +49,158 @@ export default function AdminCargos() {
     useState<CargoDetail | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [clientIdFilter, setClientIdFilter] = useState<string>("all-clients");
+  const [dateFromFilter, setDateFromFilter] = useState<string>("");
+  const [dateToFilter, setDateToFilter] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
 
   // API hooks
   const {
-    data: cargosData,
+    data: cargosResponse,
     isLoading,
     error,
     refetch,
   } = useAllCargos({
     status: statusFilter === "all" ? undefined : (statusFilter as any),
     priority: priorityFilter === "all" ? undefined : (priorityFilter as any),
-    limit: 100,
+    client_id: clientIdFilter === "all-clients" ? undefined : clientIdFilter,
+    date_from: dateFromFilter || undefined,
+    date_to: dateToFilter || undefined,
+    search: searchTerm || undefined,
+    page: currentPage,
+    limit: pageSize,
   });
 
+  // Get clients for dropdown using admin service
+  const {
+    data: clientsData,
+    isLoading: clientsLoading,
+    error: clientsError,
+  } = useAdminClients({ limit: 100 }); // Get clients with max allowed limit
+
+  // Extract data and pagination info
+  const cargosData = useMemo(
+    () => (cargosResponse as any)?.data || [],
+    [cargosResponse]
+  );
+  const pagination = useMemo(
+    () =>
+      (cargosResponse as any)?.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      },
+    [cargosResponse]
+  );
+
+  // Mutation hooks
+  const updateStatusMutation = useUpdateCargoStatus();
+  const cancelCargoMutation = useCancelCargo();
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    statusFilter,
+    priorityFilter,
+    clientIdFilter,
+    dateFromFilter,
+    dateToFilter,
+    searchTerm,
+    pageSize,
+  ]);
+
   // Transform API data to CargoDetail format
-  const cargos: CargoDetail[] = mapCargosToCargoDetails(cargosData?.data || []);
+  const cargos: CargoDetail[] = mapCargosToCargoDetails(cargosData || []);
+
+  // Debug logging for clients
+  console.log("🔍 AdminCargos Debug - clientsData:", clientsData);
+  console.log("🔍 AdminCargos Debug - clientsLoading:", clientsLoading);
+  console.log("🔍 AdminCargos Debug - clientsError:", clientsError);
+  console.log("🔍 AdminCargos Debug - clientsData structure:", {
+    hasData: !!clientsData,
+    dataType: typeof clientsData,
+    isArray: Array.isArray(clientsData),
+    dataLength: Array.isArray(clientsData)
+      ? (clientsData as any[]).length
+      : "not array",
+    firstItem: Array.isArray(clientsData)
+      ? (clientsData as any[])[0]
+      : "not array",
+    firstClientStructure:
+      Array.isArray(clientsData) && (clientsData as any[])[0]
+        ? {
+            id: (clientsData as any[])[0].id,
+            full_name: (clientsData as any[])[0].full_name,
+            client: (clientsData as any[])[0].client,
+            company_name: (clientsData as any[])[0].client?.company_name,
+          }
+        : null,
+  });
+
+  // Debug logging
+  console.log("🔍 AdminCargos Debug:");
+  console.log("Raw API response:", cargosResponse);
+  console.log("Cargos data:", cargosData);
+  console.log("Pagination:", pagination);
+  console.log("Cargos length:", cargosData.length);
+
+  // Calculate status counts for tabs - Note: This is only for current page
+  // For accurate counts, we'd need separate API calls for each status
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: pagination.total, // Use total from pagination metadata
+      pending: 0,
+      assigned: 0,
+      picked_up: 0,
+      in_transit: 0,
+      delivered: 0,
+      cancelled: 0,
+    };
+
+    // Count only current page data (this is a limitation)
+    // For accurate counts, we'd need to make separate API calls for each status
+    cargosData.forEach((cargo) => {
+      const status = cargo.status as keyof typeof counts;
+      if (status in counts) {
+        counts[status]++;
+      }
+    });
+
+    return counts;
+  }, [cargosData, pagination.total]);
+
+  // Status tabs configuration
+  const statusTabs = [
+    { key: "all", label: t("common.all"), count: statusCounts.all },
+    { key: "pending", label: t("status.pending"), count: statusCounts.pending },
+    {
+      key: "assigned",
+      label: t("status.assigned"),
+      count: statusCounts.assigned,
+    },
+    { key: "picked_up", label: "Picked Up", count: statusCounts.picked_up },
+    {
+      key: "in_transit",
+      label: t("status.inTransit"),
+      count: statusCounts.in_transit,
+    },
+    {
+      key: "delivered",
+      label: t("status.delivered"),
+      count: statusCounts.delivered,
+    },
+    {
+      key: "cancelled",
+      label: t("status.cancelled"),
+      count: statusCounts.cancelled,
+    },
+  ];
 
   const handleViewDetails = (cargo: CargoDetail) => {
     setSelectedCargo(cargo);
@@ -104,8 +256,11 @@ export default function AdminCargos() {
 
   const handleStatusChange = async (cargoId: string, newStatus: string) => {
     try {
-      // TODO: Implement status change API call
-      console.log("Changing status for cargo:", cargoId, "to:", newStatus);
+      await updateStatusMutation.mutateAsync({
+        id: cargoId,
+        status: newStatus as any,
+        notes: `Status changed to ${newStatus} by admin`,
+      });
       customToast.success(t("adminCargos.statusUpdated"));
       refetch();
     } catch (error) {
@@ -113,15 +268,76 @@ export default function AdminCargos() {
     }
   };
 
-  const handleCancelCargo = (cargoId: string) => {
+  const handleCancelCargo = async (cargoId: string) => {
     try {
-      // TODO: Implement cargo cancellation API call
-      console.log("Cancelling cargo:", cargoId);
+      await cancelCargoMutation.mutateAsync({
+        id: cargoId,
+        reason: "Cancelled by admin",
+      });
       customToast.success(t("adminCargos.cargoCancelled"));
       refetch();
     } catch (error) {
       customToast.error(t("errors.cancellationFailed"));
     }
+  };
+
+  // Get available status transitions for admin based on current status
+  const getAvailableStatusTransitions = (currentStatus: string) => {
+    const transitions: { [key: string]: string[] } = {
+      pending: ["assigned", "cancelled"],
+      assigned: ["picked_up", "cancelled"],
+      picked_up: ["in_transit", "cancelled"],
+      in_transit: ["delivered", "cancelled"],
+      delivered: [], // No transitions from delivered
+      cancelled: [], // No transitions from cancelled
+    };
+    return transitions[currentStatus] || [];
+  };
+
+  const handleTrackCargo = (cargoId: string) => {
+    console.log(`Tracking cargo: ${cargoId}`);
+    // Navigate to tracking page
+    window.location.href = `/admin/tracking/${cargoId}`;
+  };
+
+  const handleDownloadReceipt = (cargoId: string) => {
+    console.log(`Downloading receipt for: ${cargoId}`);
+    // Generate and download receipt
+    const cargo = cargosData.find((c) => c.id === cargoId);
+    if (cargo) {
+      const receiptData = {
+        cargoId: cargo.id,
+        client: cargo.client,
+        from: cargo.from,
+        to: cargo.to,
+        cost: cargo.cost,
+        date: new Date().toISOString(),
+        type: "receipt",
+      };
+
+      const blob = new Blob([JSON.stringify(receiptData, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `receipt-${cargoId}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleUploadPhoto = (cargoId: string) => {
+    console.log(`Uploading photo for: ${cargoId}`);
+    // Implement photo upload functionality
+  };
+
+  const handleReportIssue = (cargoId: string) => {
+    console.log(`Reporting issue for: ${cargoId}`);
+    // Navigate to issue reporting page
+    window.location.href = `/admin/issues/${cargoId}`;
   };
 
   // Loading state
@@ -137,9 +353,15 @@ export default function AdminCargos() {
           <Skeleton className="h-10 w-32" />
         </div>
 
-        {/* Filters Skeleton */}
+        {/* Tabs Skeleton */}
         <div className="flex gap-4">
-          <Skeleton className="h-10 w-32" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-24" />
+          ))}
+        </div>
+
+        {/* Priority Filter Skeleton */}
+        <div className="flex gap-4">
           <Skeleton className="h-10 w-32" />
         </div>
 
@@ -202,60 +424,6 @@ export default function AdminCargos() {
     );
   }
 
-  const handleTrackCargo = (cargoId: string) => {
-    console.log(`Tracking cargo: ${cargoId}`);
-    // Navigate to tracking page
-    window.location.href = `/admin/tracking/${cargoId}`;
-  };
-
-  const handleDownloadReceipt = (cargoId: string) => {
-    console.log(`Downloading receipt for: ${cargoId}`);
-    // Generate and download receipt
-    const cargo = cargos.find((c) => c.id === cargoId);
-    if (cargo) {
-      const receiptData = {
-        cargoId: cargo.id,
-        client: cargo.client,
-        from: cargo.from,
-        to: cargo.to,
-        cost: cargo.cost,
-        date: new Date().toISOString(),
-        type: "receipt",
-      };
-
-      const blob = new Blob([JSON.stringify(receiptData, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `receipt-${cargoId}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  const handleUploadPhoto = (cargoId: string) => {
-    console.log(`Uploading photo for: ${cargoId}`);
-    // Implement photo upload functionality
-  };
-
-  const handleReportIssue = (cargoId: string) => {
-    console.log(`Reporting issue for: ${cargoId}`);
-    // Navigate to issue reporting page
-    window.location.href = `/admin/issues/${cargoId}`;
-  };
-
-  // Custom actions for admin
-  const customActions = (
-    <Button onClick={handleCreateNewCargo}>
-      <Plus className="h-4 w-4 mr-2" />
-      {t("adminCargos.addNew")}
-    </Button>
-  );
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -284,51 +452,183 @@ export default function AdminCargos() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">{t("common.status")}:</label>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              <SelectItem value="pending">{t("status.pending")}</SelectItem>
-              <SelectItem value="assigned">{t("status.assigned")}</SelectItem>
-              <SelectItem value="in_transit">
-                {t("status.inTransit")}
-              </SelectItem>
-              <SelectItem value="delivered">{t("status.delivered")}</SelectItem>
-              <SelectItem value="cancelled">{t("status.cancelled")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">{t("common.priority")}:</label>
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              <SelectItem value="low">{t("priority.low")}</SelectItem>
-              <SelectItem value="normal">{t("priority.normal")}</SelectItem>
-              <SelectItem value="high">{t("priority.high")}</SelectItem>
-              <SelectItem value="urgent">{t("priority.urgent")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Status Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-gray-200">
+        {statusTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setStatusFilter(tab.key)}
+            className={`px-4 py-2 text-sm font-medium transition-colors duration-200 border-b-2 ${
+              statusFilter === tab.key
+                ? "text-blue-600 border-blue-600 bg-blue-50"
+                : "text-gray-600 border-transparent hover:text-gray-800 hover:border-gray-300"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              {tab.label}
+              <Badge
+                variant="secondary"
+                className={`text-xs ${
+                  statusFilter === tab.key
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {tab.count}
+              </Badge>
+            </span>
+          </button>
+        ))}
       </div>
 
+      {/* Advanced Filters */}
+      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            {/* Search */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium w-20">Search:</label>
+              <Input
+                placeholder="Search in cargo type, addresses, or contacts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+
+            {/* Row 1: Priority, Client ID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium w-20">Priority:</label>
+                <Select
+                  value={priorityFilter}
+                  onValueChange={setPriorityFilter}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
+                    <SelectItem value="low">{t("priority.low")}</SelectItem>
+                    <SelectItem value="normal">
+                      {t("priority.normal")}
+                    </SelectItem>
+                    <SelectItem value="high">{t("priority.high")}</SelectItem>
+                    <SelectItem value="urgent">
+                      {t("priority.urgent")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium w-20">Client:</label>
+                <Select
+                  value={clientIdFilter}
+                  onValueChange={setClientIdFilter}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select a client..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-clients">All Clients</SelectItem>
+                    {clientsLoading ? (
+                      <SelectItem value="loading-clients" disabled>
+                        Loading clients...
+                      </SelectItem>
+                    ) : clientsError ? (
+                      <SelectItem value="error-clients" disabled>
+                        Error loading clients
+                      </SelectItem>
+                    ) : (
+                      <>
+                        {/* Real data from admin service */}
+                        {(clientsData as any)?.map((client: any) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.client?.company_name ||
+                              client.full_name ||
+                              `Client ${client.id.slice(0, 8)}`}
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Row 2: Date Range and Page Size */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium w-20">From Date:</label>
+                <Input
+                  type="date"
+                  value={dateFromFilter}
+                  onChange={(e) => setDateFromFilter(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium w-20">To Date:</label>
+                <Input
+                  type="date"
+                  value={dateToFilter}
+                  onChange={(e) => setDateToFilter(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium w-20">Per Page:</label>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => setPageSize(parseInt(value))}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setStatusFilter("all");
+                  setPriorityFilter("all");
+                  setClientIdFilter("all-clients");
+                  setDateFromFilter("");
+                  setDateToFilter("");
+                  setSearchTerm("");
+                  setCurrentPage(1);
+                }}
+              >
+                Clear All Filters
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cargo Table */}
       <CargoTable
         cargos={cargos}
-        title={t("adminCargos.title")}
-        showStats={true}
-        showSearch={true}
-        showFilters={true}
-        showPagination={true}
-        itemsPerPage={10}
+        title=""
+        showStats={false}
+        showSearch={false} // Disable internal search since we use backend search
+        showFilters={false} // Disable internal filters since we use backend filters
+        showPagination={false} // We handle pagination manually
+        itemsPerPage={pageSize}
+        priorityFilter={priorityFilter}
+        onPriorityFilterChange={setPriorityFilter}
+        onStatusChange={handleStatusChange}
         onCallClient={handleCallClient}
         onCallDriver={handleCallDriver}
         onTrackCargo={handleTrackCargo}
@@ -337,8 +637,82 @@ export default function AdminCargos() {
         onUploadPhoto={handleUploadPhoto}
         onReportIssue={handleReportIssue}
         onViewDetails={handleViewDetails}
-        customActions={customActions}
       />
+
+      {/* Pagination Controls */}
+      {pagination.totalPages > 1 && (
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+                of {pagination.total} results
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={!pagination.hasPrev}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={!pagination.hasPrev}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from(
+                    { length: Math.min(5, pagination.totalPages) },
+                    (_, i) => {
+                      const page =
+                        Math.max(
+                          1,
+                          Math.min(
+                            pagination.totalPages - 4,
+                            pagination.page - 2
+                          )
+                        ) + i;
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      );
+                    }
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={!pagination.hasNext}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(pagination.totalPages)}
+                  disabled={!pagination.hasNext}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Cargo Detail Modal */}
       <CargoDetailModal

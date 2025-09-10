@@ -43,4 +43,16 @@ export class ClientService {
     const response = await axiosInstance.get("/clients/invoices", { params });
     return response.data;
   }
+
+  // Get all clients (Admin)
+  static async getAllClients(params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<PaginationResponse<Client>>> {
+    const response = await axiosInstance.get("/admin/users", {
+      params: { ...params, role: "client" },
+    });
+    return response.data;
+  }
 }

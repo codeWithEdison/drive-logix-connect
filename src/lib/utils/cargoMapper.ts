@@ -80,15 +80,42 @@ export const mapDeliveryAssignmentsToCargoDetails = (
 
 /**
  * Maps Cargo from API to CargoDetail for UI components
+ * Updated to handle the actual API response structure
  */
 export const mapCargoToCargoDetail = (cargo: any): CargoDetail => {
+  // Debug logging to see the actual structure
+  console.log("🔍 mapCargoToCargoDetail - cargo:", cargo);
+  console.log("🔍 mapCargoToCargoDetail - cargo.client:", cargo.client);
+  console.log(
+    "🔍 mapCargoToCargoDetail - cargo.client?.company_name:",
+    cargo.client?.company_name
+  );
+  console.log(
+    "🔍 mapCargoToCargoDetail - cargo.client?.user?.full_name:",
+    cargo.client?.user?.full_name
+  );
+
+  // Extract client name with proper fallback
+  const clientName =
+    cargo.client?.company_name ||
+    cargo.client?.user?.full_name ||
+    cargo.client?.contact_person ||
+    "N/A";
+
+  // Extract phone number with proper fallback
+  const clientPhone =
+    cargo.client?.user?.phone ||
+    cargo.pickup_phone ||
+    cargo.destination_phone ||
+    "";
+
   return {
     id: cargo.id,
     status: cargo.status as any,
     from: cargo.pickup_address || "",
     to: cargo.destination_address || "",
-    client: cargo.client_name || "",
-    phone: cargo.client_phone || "",
+    client: clientName,
+    phone: clientPhone,
     weight: `${cargo.weight_kg || 0} kg`,
     type: cargo.type || "",
     pickupTime: cargo.pickup_date || "TBD",
@@ -96,8 +123,9 @@ export const mapCargoToCargoDetail = (cargo: any): CargoDetail => {
     priority: cargo.priority as any,
     assignedDate: new Date(cargo.created_at || new Date()).toLocaleDateString(),
     distance: `${cargo.distance_km || 0} km`,
+    cost: cargo.estimated_cost ? parseFloat(cargo.estimated_cost) : undefined,
     earnings: cargo.final_cost
-      ? `RWF ${cargo.final_cost.toLocaleString()}`
+      ? `RWF ${parseFloat(cargo.final_cost).toLocaleString()}`
       : undefined,
     description: cargo.special_requirements,
     specialInstructions: cargo.delivery_instructions,
@@ -105,6 +133,20 @@ export const mapCargoToCargoDetail = (cargo: any): CargoDetail => {
     pickupContactPhone: cargo.pickup_phone,
     deliveryContact: cargo.destination_contact,
     deliveryContactPhone: cargo.destination_phone,
+    driver: cargo.delivery_assignment?.driver?.user?.full_name || "",
+    vehicleType: cargo.delivery_assignment?.vehicle?.plate_number || "",
+
+    // Enhanced fields for better data display
+    clientCompany: cargo.client?.company_name || "",
+    clientContactPerson: cargo.client?.contact_person || "",
+    clientPhone: cargo.client?.user?.phone || "",
+    driverName: cargo.delivery_assignment?.driver?.user?.full_name || "",
+    driverPhone: cargo.delivery_assignment?.driver?.user?.phone || "",
+    driverRating: cargo.delivery_assignment?.driver?.rating || "",
+    driverLicense: cargo.delivery_assignment?.driver?.license_number || "",
+    vehiclePlate: cargo.delivery_assignment?.vehicle?.plate_number || "",
+    vehicleMake: cargo.delivery_assignment?.vehicle?.make || "",
+    vehicleModel: cargo.delivery_assignment?.vehicle?.model || "",
   };
 };
 
