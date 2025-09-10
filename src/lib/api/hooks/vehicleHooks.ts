@@ -13,8 +13,10 @@ export const useVehicles = (params?: VehicleSearchParams) => {
     queryFn: () => VehicleService.getVehicles(params),
     select: (data) => {
       console.log("🔍 useVehicles hook - raw data:", data);
-      // The API returns data directly in the data property
-      if (data?.data && Array.isArray(data.data)) {
+      // The API returns vehicles in data.data.vehicles
+      if (data?.data?.vehicles && Array.isArray(data.data.vehicles)) {
+        return data.data.vehicles;
+      } else if (data?.data && Array.isArray(data.data)) {
         return data.data;
       } else if (Array.isArray(data)) {
         return data;

@@ -28,62 +28,54 @@ import {
   Car,
   FileText,
   Settings,
+  Building,
 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { UserRole, BusinessType, DriverStatus } from "@/types/shared";
 
-// User interface with role-specific data
+// User interface based on shared.ts
 interface UserDetail {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
-  phone: string;
-  role: "client" | "driver" | "admin" | "super_admin";
-  status: "active" | "inactive" | "pending" | "suspended";
-  avatar?: string;
-  region: string;
-  joinDate: string;
-  lastActive: string;
+  phone?: string;
+  role: UserRole;
+  preferred_language: string;
+  avatar_url?: string;
+  is_active: boolean;
+  is_verified: boolean;
+  last_login?: string;
+  created_at: string;
+  updated_at: string;
 
-  // Role-specific data
-  clientData?: {
-    totalOrders: number;
-    totalSpent: number;
-    preferredRoutes: string[];
-    paymentMethod: string;
-    address: string;
+  // Client-specific data
+  client?: {
+    company_name?: string;
+    business_type: BusinessType;
+    tax_id?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    postal_code?: string;
+    contact_person?: string;
+    credit_limit: number;
+    payment_terms: number;
   };
 
-  driverData?: {
-    assignedTruck: {
-      id: string;
-      model: string;
-      plateNumber: string;
-      capacity: string;
-      status: string;
-    };
-    licenseNumber: string;
-    experience: string;
-    totalDeliveries: number;
+  // Driver-specific data
+  driver?: {
+    license_number?: string;
+    license_expiry?: string;
+    license_type: string;
+    date_of_birth?: string;
+    emergency_contact?: string;
+    emergency_phone?: string;
+    blood_type?: string;
+    medical_certificate_expiry?: string;
+    status: DriverStatus;
     rating: number;
-    earnings: number;
-    currentLocation: string;
-    availability: "available" | "busy" | "offline";
-  };
-
-  adminData?: {
-    permissions: string[];
-    managedRegions: string[];
-    totalUsersManaged: number;
-    systemActions: number;
-    lastLogin: string;
-    accessLevel: "full" | "limited" | "readonly";
-  };
-
-  superAdminData?: {
-    systemAccess: string[];
-    totalAdminsManaged: number;
-    systemHealth: number;
-    lastBackup: string;
-    securityLevel: "high" | "medium" | "low";
+    total_deliveries: number;
+    total_distance_km: number;
   };
 }
 
@@ -98,6 +90,7 @@ export function UserDetailModal({
   onClose,
   user,
 }: UserDetailModalProps) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
 
   const getRoleColor = (role: string) => {
@@ -132,10 +125,34 @@ export function UserDetailModal({
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { label: "Active", className: "bg-green-100 text-green-600" },
-      inactive: { label: "Inactive", className: "bg-gray-100 text-gray-600" },
-      pending: { label: "Pending", className: "bg-yellow-100 text-yellow-600" },
-      suspended: { label: "Suspended", className: "bg-red-100 text-red-600" },
+      active: {
+        label: t("status.active"),
+        className: "bg-green-100 text-green-600",
+      },
+      inactive: {
+        label: t("status.inactive"),
+        className: "bg-gray-100 text-gray-600",
+      },
+      pending: {
+        label: t("status.pending"),
+        className: "bg-yellow-100 text-yellow-600",
+      },
+      suspended: {
+        label: t("status.suspended"),
+        className: "bg-red-100 text-red-600",
+      },
+      available: {
+        label: t("status.available"),
+        className: "bg-green-100 text-green-600",
+      },
+      on_duty: {
+        label: t("status.onDuty"),
+        className: "bg-blue-100 text-blue-600",
+      },
+      unavailable: {
+        label: t("status.unavailable"),
+        className: "bg-gray-100 text-gray-600",
+      },
     };
 
     const config = statusConfig[status as keyof typeof statusConfig];
@@ -154,57 +171,89 @@ export function UserDetailModal({
     }).format(amount);
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
   const renderClientData = () => (
     <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Order Statistics
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <p className="text-2xl font-bold text-blue-600">
-                {user.clientData?.totalOrders}
-              </p>
-              <p className="text-sm text-gray-600">Total Orders</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-2xl font-bold text-green-600">
-                {formatCurrency(user.clientData?.totalSpent || 0)}
-              </p>
-              <p className="text-sm text-gray-600">Total Spent</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Address & Preferences
+            <Building className="h-5 w-5" />
+            {t("client.business")} {t("common.details")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div>
-            <p className="text-sm text-gray-600">Address</p>
-            <p className="font-medium">{user.clientData?.address}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("client.business")} {t("common.type")}
+              </p>
+              <Badge variant="outline" className="mt-1">
+                {user.client?.business_type === "corporate"
+                  ? t("client.corporate")
+                  : user.client?.business_type === "government"
+                  ? t("client.government")
+                  : t("client.individual")}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">{t("common.status")}</p>
+              {getStatusBadge(user.is_active ? "active" : "inactive")}
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Payment Method</p>
-            <p className="font-medium">{user.clientData?.paymentMethod}</p>
+
+          {user.client?.company_name && (
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("client.business")} {t("common.name")}
+              </p>
+              <p className="font-medium">{user.client.company_name}</p>
+            </div>
+          )}
+
+          {user.client?.contact_person && (
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("client.contactPerson")}
+              </p>
+              <p className="font-medium">{user.client.contact_person}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">{t("client.creditLimit")}</p>
+              <p className="font-medium">
+                {formatCurrency(user.client?.credit_limit || 0)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("client.paymentTerms")}
+              </p>
+              <p className="font-medium">
+                {user.client?.payment_terms || 30} {t("common.days")}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Preferred Routes</p>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {user.clientData?.preferredRoutes.map((route, index) => (
-                <Badge key={index} variant="outline">
-                  {route}
-                </Badge>
-              ))}
+
+          {user.client?.address && (
+            <div>
+              <p className="text-sm text-gray-600">{t("common.address")}</p>
+              <p className="font-medium">{user.client.address}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">{t("common.city")}</p>
+              <p className="font-medium">{user.client?.city || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">{t("common.country")}</p>
+              <p className="font-medium">{user.client?.country || "N/A"}</p>
             </div>
           </div>
         </CardContent>
@@ -218,33 +267,88 @@ export function UserDetailModal({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Truck className="h-5 w-5" />
-            Assigned Vehicle
+            {t("driver.license")} {t("common.details")}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Car className="h-8 w-8 text-blue-600" />
-              <div className="flex-1">
-                <p className="font-bold">
-                  {user.driverData?.assignedTruck.model}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Plate: {user.driverData?.assignedTruck.plateNumber}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Capacity: {user.driverData?.assignedTruck.capacity}
-                </p>
-              </div>
-              <Badge
-                className={
-                  user.driverData?.assignedTruck.status === "active"
-                    ? "bg-green-100 text-green-600"
-                    : "bg-red-100 text-red-600"
-                }
-              >
-                {user.driverData?.assignedTruck.status}
-              </Badge>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("driver.license")} {t("common.number")}
+              </p>
+              <p className="font-medium">
+                {user.driver?.license_number || "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("driver.license")} {t("common.type")}
+              </p>
+              <p className="font-medium">
+                {user.driver?.license_type || "N/A"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("driver.license")} {t("common.expiry")}
+              </p>
+              <p className="font-medium">
+                {user.driver?.license_expiry
+                  ? formatDate(user.driver.license_expiry)
+                  : "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">{t("common.status")}</p>
+              {getStatusBadge(user.driver?.status || "unavailable")}
+            </div>
+          </div>
+
+          {user.driver?.date_of_birth && (
+            <div>
+              <p className="text-sm text-gray-600">{t("driver.dateOfBirth")}</p>
+              <p className="font-medium">
+                {formatDate(user.driver.date_of_birth)}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("driver.emergencyContact")}
+              </p>
+              <p className="font-medium">
+                {user.driver?.emergency_contact || "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("driver.emergencyPhone")}
+              </p>
+              <p className="font-medium">
+                {user.driver?.emergency_phone || "N/A"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">{t("driver.bloodType")}</p>
+              <p className="font-medium">{user.driver?.blood_type || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">
+                {t("driver.medicalCertExpiry")}
+              </p>
+              <p className="font-medium">
+                {user.driver?.medical_certificate_expiry
+                  ? formatDate(user.driver.medical_certificate_expiry)
+                  : "N/A"}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -254,217 +358,42 @@ export function UserDetailModal({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Performance Metrics
+            {t("driver.performance")} {t("common.metrics")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <p className="text-2xl font-bold text-blue-600">
-                {user.driverData?.totalDeliveries}
+                {user.driver?.total_deliveries || 0}
               </p>
-              <p className="text-sm text-gray-600">Total Deliveries</p>
+              <p className="text-sm text-gray-600">{t("driver.deliveries")}</p>
             </div>
             <div className="text-center p-4 bg-yellow-50 rounded-lg">
               <div className="flex items-center justify-center gap-1">
                 <Star className="h-4 w-4 text-yellow-600 fill-current" />
                 <p className="text-2xl font-bold text-yellow-600">
-                  {user.driverData?.rating}
+                  {user.driver?.rating || 0}
                 </p>
               </div>
-              <p className="text-sm text-gray-600">Rating</p>
+              <p className="text-sm text-gray-600">{t("driver.rating")}</p>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <p className="text-2xl font-bold text-green-600">
-                {formatCurrency(user.driverData?.earnings || 0)}
+                {(user.driver?.total_distance_km || 0).toLocaleString()} km
               </p>
-              <p className="text-sm text-gray-600">Total Earnings</p>
+              <p className="text-sm text-gray-600">{t("common.distance")}</p>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <p className="text-2xl font-bold text-purple-600">
-                {user.driverData?.experience}
+                {user.is_verified
+                  ? t("driver.isVerified")
+                  : t("driver.notVerified")}
               </p>
-              <p className="text-sm text-gray-600">Experience</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Navigation className="h-5 w-5" />
-            Current Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">License Number</span>
-            <span className="font-medium">
-              {user.driverData?.licenseNumber}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Current Location</span>
-            <span className="font-medium">
-              {user.driverData?.currentLocation}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Availability</span>
-            <Badge
-              className={
-                user.driverData?.availability === "available"
-                  ? "bg-green-100 text-green-600"
-                  : user.driverData?.availability === "busy"
-                  ? "bg-yellow-100 text-yellow-600"
-                  : "bg-gray-100 text-gray-600"
-              }
-            >
-              {user.driverData?.availability}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderAdminData = () => (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Administrative Access
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <p className="text-2xl font-bold text-blue-600">
-                {user.adminData?.totalUsersManaged}
+              <p className="text-sm text-gray-600">
+                {t("driver.verification")}
               </p>
-              <p className="text-sm text-gray-600">Users Managed</p>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-2xl font-bold text-green-600">
-                {user.adminData?.systemActions}
-              </p>
-              <p className="text-sm text-gray-600">System Actions</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Permissions & Access
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <p className="text-sm text-gray-600">Access Level</p>
-            <Badge
-              className={
-                user.adminData?.accessLevel === "full"
-                  ? "bg-green-100 text-green-600"
-                  : user.adminData?.accessLevel === "limited"
-                  ? "bg-yellow-100 text-yellow-600"
-                  : "bg-gray-100 text-gray-600"
-              }
-            >
-              {user.adminData?.accessLevel}
-            </Badge>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Managed Regions</p>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {user.adminData?.managedRegions.map((region, index) => (
-                <Badge key={index} variant="outline">
-                  {region}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Permissions</p>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {user.adminData?.permissions.map((permission, index) => (
-                <Badge key={index} variant="outline">
-                  {permission}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderSuperAdminData = () => (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5" />
-            System Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <p className="text-2xl font-bold text-purple-600">
-                {user.superAdminData?.totalAdminsManaged}
-              </p>
-              <p className="text-sm text-gray-600">Admins Managed</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-2xl font-bold text-green-600">
-                {user.superAdminData?.systemHealth}%
-              </p>
-              <p className="text-sm text-gray-600">System Health</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            System Access & Security
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <p className="text-sm text-gray-600">Security Level</p>
-            <Badge
-              className={
-                user.superAdminData?.securityLevel === "high"
-                  ? "bg-green-100 text-green-600"
-                  : user.superAdminData?.securityLevel === "medium"
-                  ? "bg-yellow-100 text-yellow-600"
-                  : "bg-red-100 text-red-600"
-              }
-            >
-              {user.superAdminData?.securityLevel}
-            </Badge>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">System Access</p>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {user.superAdminData?.systemAccess.map((access, index) => (
-                <Badge key={index} variant="outline">
-                  {access}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Last Backup</p>
-            <p className="font-medium">{user.superAdminData?.lastBackup}</p>
           </div>
         </CardContent>
       </Card>
@@ -477,10 +406,6 @@ export function UserDetailModal({
         return renderClientData();
       case "driver":
         return renderDriverData();
-      case "admin":
-        return renderAdminData();
-      case "super_admin":
-        return renderSuperAdminData();
       default:
         return null;
     }
@@ -489,7 +414,11 @@ export function UserDetailModal({
   const RoleIcon = getRoleIcon(user.role);
 
   return (
-    <ModernModel isOpen={isOpen} onClose={onClose} title="User Details">
+    <ModernModel
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`${t("common.user")} ${t("common.details")}`}
+    >
       <div className="space-y-6">
         {/* User Header */}
         <Card>
@@ -500,15 +429,15 @@ export function UserDetailModal({
                   style={{ backgroundColor: getRoleColor(user.role) }}
                   className="text-white font-bold text-lg"
                 >
-                  {user.name.charAt(0)}
+                  {user.full_name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    {user.name}
+                    {user.full_name}
                   </h2>
-                  {getStatusBadge(user.status)}
+                  {getStatusBadge(user.is_active ? "active" : "inactive")}
                 </div>
                 <div className="flex items-center gap-2 mb-2">
                   <RoleIcon className="h-4 w-4 text-gray-500" />
@@ -521,10 +450,12 @@ export function UserDetailModal({
                     <Mail className="h-4 w-4" />
                     {user.email}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Phone className="h-4 w-4" />
-                    {user.phone}
-                  </div>
+                  {user.phone && (
+                    <div className="flex items-center gap-1">
+                      <Phone className="h-4 w-4" />
+                      {user.phone}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -534,9 +465,9 @@ export function UserDetailModal({
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="overview">{t("common.overview")}</TabsTrigger>
+            <TabsTrigger value="details">{t("common.details")}</TabsTrigger>
+            <TabsTrigger value="activity">{t("common.activity")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -544,25 +475,53 @@ export function UserDetailModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  Basic Information
+                  {t("common.basic")} {t("common.information")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">User ID</span>
+                  <span className="text-sm text-gray-600">
+                    {t("common.user")} ID
+                  </span>
                   <span className="font-medium">{user.id}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Region</span>
-                  <span className="font-medium">{user.region}</span>
+                  <span className="text-sm text-gray-600">
+                    {t("common.language")}
+                  </span>
+                  <span className="font-medium">{user.preferred_language}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Join Date</span>
-                  <span className="font-medium">{user.joinDate}</span>
+                  <span className="text-sm text-gray-600">
+                    {t("common.registered")} {t("common.date")}
+                  </span>
+                  <span className="font-medium">
+                    {formatDate(user.created_at)}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Last Active</span>
-                  <span className="font-medium">{user.lastActive}</span>
+                  <span className="text-sm text-gray-600">
+                    {t("common.lastActive")}
+                  </span>
+                  <span className="font-medium">
+                    {user.last_login
+                      ? formatDate(user.last_login)
+                      : t("common.never")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">
+                    {t("common.verified")}
+                  </span>
+                  <Badge
+                    className={
+                      user.is_verified
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-600"
+                    }
+                  >
+                    {user.is_verified ? t("common.yes") : t("common.no")}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>
@@ -577,7 +536,7 @@ export function UserDetailModal({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5" />
-                  Recent Activity
+                  {t("common.recent")} {t("common.activity")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -585,22 +544,34 @@ export function UserDetailModal({
                   <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
                     <CheckCircle className="h-5 w-5 text-green-600" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">User logged in</p>
-                      <p className="text-xs text-gray-500">2 minutes ago</p>
+                      <p className="text-sm font-medium">
+                        {t("common.user")} {t("common.loggedIn")}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {t("common.twoMinutesAgo")}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                     <FileText className="h-5 w-5 text-blue-600" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Profile updated</p>
-                      <p className="text-xs text-gray-500">1 hour ago</p>
+                      <p className="text-sm font-medium">
+                        {t("common.profile")} {t("common.updated")}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {t("common.oneHourAgo")}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
                     <AlertCircle className="h-5 w-5 text-yellow-600" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Password changed</p>
-                      <p className="text-xs text-gray-500">1 day ago</p>
+                      <p className="text-sm font-medium">
+                        {t("common.password")} {t("common.changed")}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {t("common.oneDayAgo")}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -613,11 +584,11 @@ export function UserDetailModal({
         <div className="flex gap-3 pt-4 border-t border-gray-200">
           <Button variant="outline" className="flex-1">
             <Settings className="h-4 w-4 mr-2" />
-            Edit User
+            {t("actions.editUser")}
           </Button>
           <Button variant="outline" className="flex-1">
             <FileText className="h-4 w-4 mr-2" />
-            View Reports
+            {t("actions.viewReports")}
           </Button>
         </div>
       </div>

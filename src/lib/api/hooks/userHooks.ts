@@ -80,3 +80,14 @@ export const useUserStatistics = () => {
     select: (data) => data.data,
   });
 };
+
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userData: any) => UserService.createUser(userData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+    },
+  });
+};

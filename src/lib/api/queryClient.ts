@@ -177,6 +177,10 @@ export const queryKeys = {
     logs: (params?: Record<string, any>) => ["admin", "logs", params] as const,
     users: (params?: Record<string, any>) =>
       ["admin", "users", params] as const,
+    clients: (params?: Record<string, any>) =>
+      ["admin", "clients", params] as const,
+    drivers: (params?: Record<string, any>) =>
+      ["admin", "drivers", params] as const,
     financialReports: (params?: Record<string, any>) =>
       ["admin", "reports", "financial", params] as const,
     performanceReports: (params?: Record<string, any>) =>

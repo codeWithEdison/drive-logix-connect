@@ -81,13 +81,78 @@ export class AdminService {
 
   // Get clients (Admin)
   static async getClients(params?: {
-    status?: string;
+    business_type?: string;
+    search?: string;
     page?: number;
     limit?: number;
   }): Promise<ApiResponse<PaginationResponse<any>>> {
-    const response = await axiosInstance.get("/admin/users", {
-      params: { ...params, role: "client" },
-    });
+    const response = await axiosInstance.get("/admin/clients", { params });
+    return response.data;
+  }
+
+  // Create client (Admin)
+  static async createClient(data: {
+    full_name: string;
+    email: string;
+    password: string;
+    company_name: string;
+    business_type: "individual" | "corporate" | "government";
+    phone?: string;
+    preferred_language?: "en" | "rw" | "fr";
+    tax_id?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    postal_code?: string;
+    contact_person?: string;
+    credit_limit?: number;
+    payment_terms?: number;
+  }): Promise<
+    ApiResponse<{
+      user: any;
+      client: any;
+      message: string;
+    }>
+  > {
+    const response = await axiosInstance.post("/admin/clients", data);
+    return response.data;
+  }
+
+  // Get drivers (Admin)
+  static async getDrivers(params?: {
+    status?: string;
+    license_type?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<PaginationResponse<any>>> {
+    const response = await axiosInstance.get("/admin/drivers", { params });
+    return response.data;
+  }
+
+  // Create driver (Admin)
+  static async createDriver(data: {
+    full_name: string;
+    email: string;
+    password: string;
+    license_number: string;
+    license_type: "A" | "B" | "C" | "D" | "E";
+    phone?: string;
+    preferred_language?: "en" | "rw" | "fr";
+    license_expiry?: string;
+    date_of_birth?: string;
+    emergency_contact?: string;
+    emergency_phone?: string;
+    blood_type?: string;
+    medical_certificate_expiry?: string;
+  }): Promise<
+    ApiResponse<{
+      user: any;
+      driver: any;
+      message: string;
+    }>
+  > {
+    const response = await axiosInstance.post("/admin/drivers", data);
     return response.data;
   }
 

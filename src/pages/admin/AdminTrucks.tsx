@@ -57,33 +57,34 @@ const AdminTrucks = () => {
 
   // Transform API data to Truck format
   const trucks: Truck[] =
-    vehiclesData?.data?.map((vehicle: any) => ({
+    vehiclesData?.map((vehicle: any) => ({
       id: vehicle.id,
-      model: vehicle.model || vehicle.make + " " + vehicle.model,
-      licensePlate: vehicle.license_plate || vehicle.plate_number,
-      capacity: vehicle.capacity ? `${vehicle.capacity} tons` : "N/A",
-      status: vehicle.status || "available",
-      driver: vehicle.driver_name || "Unassigned",
-      location: vehicle.current_location || "Unknown",
+      model: vehicle.model || `${vehicle.make} ${vehicle.model}`,
+      licensePlate: vehicle.plate_number,
+      capacity: vehicle.capacity_kg ? `${vehicle.capacity_kg} kg` : "N/A",
+      status: vehicle.status || "active",
+      driver: "Unassigned", // Will be updated when driver assignment is implemented
+      location: "Unknown", // Will be updated when GPS tracking is implemented
       lastMaintenance: vehicle.last_maintenance_date || "N/A",
-      totalDeliveries: vehicle.total_deliveries || 0,
-      fuelLevel: vehicle.fuel_level || 0,
+      totalDeliveries: 0, // Will be updated when delivery tracking is implemented
+      fuelLevel: 0, // Will be updated when fuel tracking is implemented
       year: vehicle.year?.toString() || "N/A",
-      manufacturer: vehicle.make || vehicle.manufacturer || "Unknown",
-      engineType: vehicle.engine_type || "Diesel",
-      mileage: vehicle.mileage || vehicle.odometer_reading || 0,
+      manufacturer: vehicle.make || "Unknown",
+      engineType: vehicle.fuel_type || "Diesel",
+      mileage: vehicle.total_distance_km || 0,
       insuranceExpiry: vehicle.insurance_expiry || "N/A",
       registrationExpiry: vehicle.registration_expiry || "N/A",
-      is_active: vehicle.is_active !== false,
+      is_active: vehicle.status === "active",
     })) || [];
+
+  console.log("🚛 AdminTrucks - vehiclesData:", vehiclesData);
+  console.log("🚛 AdminTrucks - trucks:", trucks);
 
   // Filter trucks based on active tab
   const filteredTrucks = trucks.filter((truck) => {
     switch (activeTab) {
-      case "available":
-        return truck.status === "available";
-      case "in_use":
-        return truck.status === "in_use";
+      case "active":
+        return truck.status === "active";
       case "maintenance":
         return truck.status === "maintenance";
       case "all":
@@ -237,14 +238,9 @@ const AdminTrucks = () => {
       count: trucks.length,
     },
     {
-      value: "available",
-      label: t("adminTrucks.available"),
-      count: trucks.filter((t) => t.status === "available").length,
-    },
-    {
-      value: "in_use",
-      label: t("adminTrucks.inUse"),
-      count: trucks.filter((t) => t.status === "in_use").length,
+      value: "active",
+      label: t("adminTrucks.active"),
+      count: trucks.filter((t) => t.status === "active").length,
     },
     {
       value: "maintenance",
@@ -291,12 +287,10 @@ const AdminTrucks = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("common.all")}</SelectItem>
-              <SelectItem value="available">{t("status.available")}</SelectItem>
-              <SelectItem value="in_use">{t("status.inUse")}</SelectItem>
+              <SelectItem value="active">{t("status.active")}</SelectItem>
               <SelectItem value="maintenance">
                 {t("status.maintenance")}
               </SelectItem>
-              <SelectItem value="repair">{t("status.repair")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -313,6 +307,7 @@ const AdminTrucks = () => {
               <SelectItem value="truck">{t("adminTrucks.truck")}</SelectItem>
               <SelectItem value="van">{t("adminTrucks.van")}</SelectItem>
               <SelectItem value="pickup">{t("adminTrucks.pickup")}</SelectItem>
+              <SelectItem value="moto">{t("adminTrucks.moto")}</SelectItem>
             </SelectContent>
           </Select>
         </div>

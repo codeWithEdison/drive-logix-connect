@@ -425,197 +425,129 @@ export default function AdminCargos() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {t("adminCargos.title")}
-          </h1>
-          <p className="text-muted-foreground">{t("adminCargos.subtitle")}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-            />
-            {t("common.refresh")}
-          </Button>
-          <Button onClick={handleCreateNewCargo}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t("adminCargos.addNew")}
-          </Button>
-        </div>
+    <div className="space-y-4">
+      {/* Minimal Header with Actions */}
+      <div className="flex items-center justify-end gap-3">
+        <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+          />
+          {t("common.refresh")}
+        </Button>
+        <Button onClick={handleCreateNewCargo}>
+          <Plus className="h-4 w-4 mr-2" />
+          {t("adminCargos.addNew")}
+        </Button>
       </div>
 
-      {/* Status Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-200">
-        {statusTabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setStatusFilter(tab.key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors duration-200 border-b-2 ${
-              statusFilter === tab.key
-                ? "text-blue-600 border-blue-600 bg-blue-50"
-                : "text-gray-600 border-transparent hover:text-gray-800 hover:border-gray-300"
-            }`}
+      {/* Compact Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        {/* Status Filter */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Status:</label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              <SelectItem value="pending">{t("status.pending")}</SelectItem>
+              <SelectItem value="assigned">{t("status.assigned")}</SelectItem>
+              <SelectItem value="picked_up">Picked Up</SelectItem>
+              <SelectItem value="in_transit">
+                {t("status.inTransit")}
+              </SelectItem>
+              <SelectItem value="delivered">{t("status.delivered")}</SelectItem>
+              <SelectItem value="cancelled">{t("status.cancelled")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Priority Filter */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Priority:</label>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              <SelectItem value="low">{t("priority.low")}</SelectItem>
+              <SelectItem value="normal">{t("priority.normal")}</SelectItem>
+              <SelectItem value="high">{t("priority.high")}</SelectItem>
+              <SelectItem value="urgent">{t("priority.urgent")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Client Filter */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Client:</label>
+          <Select value={clientIdFilter} onValueChange={setClientIdFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select client..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all-clients">All Clients</SelectItem>
+              {clientsLoading ? (
+                <SelectItem value="loading-clients" disabled>
+                  Loading...
+                </SelectItem>
+              ) : clientsError ? (
+                <SelectItem value="error-clients" disabled>
+                  Error loading clients
+                </SelectItem>
+              ) : (
+                <>
+                  {(clientsData as any)?.map((client: any) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.client?.company_name ||
+                        client.full_name ||
+                        `Client ${client.id.slice(0, 8)}`}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Page Size */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Per Page:</label>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => setPageSize(parseInt(value))}
           >
-            <span className="flex items-center gap-2">
-              {tab.label}
-              <Badge
-                variant="secondary"
-                className={`text-xs ${
-                  statusFilter === tab.key
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {tab.count}
-              </Badge>
-            </span>
-          </button>
-        ))}
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Clear Filters */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setStatusFilter("all");
+            setPriorityFilter("all");
+            setClientIdFilter("all-clients");
+            setDateFromFilter("");
+            setDateToFilter("");
+            setSearchTerm("");
+            setCurrentPage(1);
+          }}
+        >
+          Clear
+        </Button>
       </div>
-
-      {/* Advanced Filters */}
-      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {/* Search */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium w-20">Search:</label>
-              <Input
-                placeholder="Search in cargo type, addresses, or contacts..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1"
-              />
-            </div>
-
-            {/* Row 1: Priority, Client ID */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium w-20">Priority:</label>
-                <Select
-                  value={priorityFilter}
-                  onValueChange={setPriorityFilter}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="low">{t("priority.low")}</SelectItem>
-                    <SelectItem value="normal">
-                      {t("priority.normal")}
-                    </SelectItem>
-                    <SelectItem value="high">{t("priority.high")}</SelectItem>
-                    <SelectItem value="urgent">
-                      {t("priority.urgent")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium w-20">Client:</label>
-                <Select
-                  value={clientIdFilter}
-                  onValueChange={setClientIdFilter}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select a client..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all-clients">All Clients</SelectItem>
-                    {clientsLoading ? (
-                      <SelectItem value="loading-clients" disabled>
-                        Loading clients...
-                      </SelectItem>
-                    ) : clientsError ? (
-                      <SelectItem value="error-clients" disabled>
-                        Error loading clients
-                      </SelectItem>
-                    ) : (
-                      <>
-                        {/* Real data from admin service */}
-                        {(clientsData as any)?.map((client: any) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.client?.company_name ||
-                              client.full_name ||
-                              `Client ${client.id.slice(0, 8)}`}
-                          </SelectItem>
-                        ))}
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Row 2: Date Range and Page Size */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium w-20">From Date:</label>
-                <Input
-                  type="date"
-                  value={dateFromFilter}
-                  onChange={(e) => setDateFromFilter(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium w-20">To Date:</label>
-                <Input
-                  type="date"
-                  value={dateToFilter}
-                  onChange={(e) => setDateToFilter(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium w-20">Per Page:</label>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={(value) => setPageSize(parseInt(value))}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Clear Filters Button */}
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setStatusFilter("all");
-                  setPriorityFilter("all");
-                  setClientIdFilter("all-clients");
-                  setDateFromFilter("");
-                  setDateToFilter("");
-                  setSearchTerm("");
-                  setCurrentPage(1);
-                }}
-              >
-                Clear All Filters
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Cargo Table */}
       <CargoTable
@@ -639,79 +571,72 @@ export default function AdminCargos() {
         onViewDetails={handleViewDetails}
       />
 
-      {/* Pagination Controls */}
+      {/* Compact Pagination */}
       {pagination.totalPages > 1 && (
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
-                of {pagination.total} results
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(1)}
-                  disabled={!pagination.hasPrev}
-                >
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  disabled={!pagination.hasPrev}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <div className="flex items-center gap-1">
-                  {Array.from(
-                    { length: Math.min(5, pagination.totalPages) },
-                    (_, i) => {
-                      const page =
-                        Math.max(
-                          1,
-                          Math.min(
-                            pagination.totalPages - 4,
-                            pagination.page - 2
-                          )
-                        ) + i;
-                      return (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {page}
-                        </Button>
-                      );
-                    }
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={!pagination.hasNext}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(pagination.totalPages)}
-                  disabled={!pagination.hasNext}
-                >
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
-              </div>
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+            {pagination.total} results
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={!pagination.hasPrev}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={!pagination.hasPrev}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from(
+                { length: Math.min(5, pagination.totalPages) },
+                (_, i) => {
+                  const page =
+                    Math.max(
+                      1,
+                      Math.min(pagination.totalPages - 4, pagination.page - 2)
+                    ) + i;
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  );
+                }
+              )}
             </div>
-          </CardContent>
-        </Card>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={!pagination.hasNext}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(pagination.totalPages)}
+              disabled={!pagination.hasNext}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Cargo Detail Modal */}

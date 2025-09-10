@@ -46,6 +46,12 @@ export class UserService {
     return response.data;
   }
 
+  // Create new user (Admin only)
+  static async createUser(userData: any): Promise<ApiResponse<User>> {
+    const response = await axiosInstance.post("/users", userData);
+    return response.data;
+  }
+
   // Approve or reject user (Admin only)
   static async approveUser(
     id: string,

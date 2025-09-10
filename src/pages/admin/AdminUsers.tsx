@@ -7,6 +7,8 @@ import { DriverTable, Driver } from "@/components/ui/DriverTable";
 import { ClientTable, Client } from "@/components/ui/ClientTable";
 import { DriverDetailModal } from "@/components/ui/DriverDetailModal";
 import { ClientDetailModal } from "@/components/ui/ClientDetailModal";
+import { UserDetailModal } from "@/components/ui/UserDetailModal";
+import { UserForm } from "@/components/forms/UserForm";
 import ModernModel from "@/components/modal/ModernModel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,10 +21,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUserManagement, useUpdateUserStatus } from "@/lib/api/hooks";
+import {
+  useCreateAdminClient,
+  useCreateAdminDriver,
+} from "@/lib/api/hooks/adminHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
+import { UserRole, BusinessType, LicenseType, Language } from "@/types/shared";
 
 const AdminUsers = () => {
   const { t } = useLanguage();
@@ -30,14 +37,17 @@ const AdminUsers = () => {
   const [activeTab, setActiveTab] = useState("drivers");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isDriverDetailModalOpen, setIsDriverDetailModalOpen] = useState(false);
   const [isClientDetailModalOpen, setIsClientDetailModalOpen] = useState(false);
+  const [isUserDetailModalOpen, setIsUserDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Driver | Client | null>(null);
   const [editingType, setEditingType] = useState<"driver" | "client">("driver");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // API hooks
   const {
@@ -52,16 +62,18 @@ const AdminUsers = () => {
   });
 
   const updateUserStatusMutation = useUpdateUserStatus();
+  const createClientMutation = useCreateAdminClient();
+  const createDriverMutation = useCreateAdminDriver();
 
   // Transform API data
-  console.log("🔍 AdminUsers Debug - usersData:", usersData);
-  console.log("🔍 AdminUsers Debug - usersData structure:", {
-    hasData: !!usersData,
-    dataType: typeof usersData,
-    isArray: Array.isArray(usersData),
-    dataLength: Array.isArray(usersData) ? usersData.length : "not array",
-    firstItem: Array.isArray(usersData) ? usersData[0] : "not array",
-  });
+  // console.log("🔍 AdminUsers Debug - usersData:", usersData);
+  // console.log("🔍 AdminUsers Debug - usersData structure:", {
+  //   hasData: !!usersData,
+  //   dataType: typeof usersData,
+  //   isArray: Array.isArray(usersData),
+  //   dataLength: Array.isArray(usersData) ? usersData.length : "not array",
+  //   firstItem: Array.isArray(usersData) ? usersData[0] : "not array",
+  // });
 
   const drivers: Driver[] =
     usersData
@@ -212,6 +224,35 @@ const AdminUsers = () => {
     window.open(`tel:${phone}`, "_self");
   };
 
+  const handleViewUserDetails = (user: any) => {
+    setSelectedUser(user);
+    setIsUserDetailModalOpen(true);
+  };
+
+  const handleCreateUser = async (userData: any) => {
+    try {
+      if (userData.role === "client") {
+        await createClientMutation.mutateAsync(userData);
+        customToast.success(t("adminUsers.userCreated"));
+      } else if (userData.role === "driver") {
+        await createDriverMutation.mutateAsync(userData);
+        customToast.success(t("adminUsers.userCreated"));
+      } else {
+        throw new Error("Invalid user role");
+      }
+      setIsCreateModalOpen(false);
+      refetch();
+    } catch (error) {
+      customToast.error(t("errors.createFailed"));
+    }
+  };
+
+  const handleEditUser = (user: any) => {
+    setEditingItem(user);
+    setEditingType(user.role);
+    setIsEditModalOpen(true);
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -296,12 +337,12 @@ const AdminUsers = () => {
   const tabs = [
     {
       value: "drivers",
-      label: t("adminUsers.drivers"),
+      label: t("common.drivers"),
       count: drivers.length,
     },
     {
       value: "clients",
-      label: t("adminUsers.clients"),
+      label: t("common.clients"),
       count: clients.length,
     },
   ];
@@ -334,8 +375,8 @@ const AdminUsers = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4">
+      {/* Filters and Search */}
+      <div className="flex flex-wrap gap-4 items-center">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">{t("common.role")}:</label>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -364,6 +405,14 @@ const AdminUsers = () => {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder={t("common.search")}
+            className="w-64"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Tabs */}
@@ -373,6 +422,10 @@ const AdminUsers = () => {
       {activeTab === "drivers" && (
         <DriverTable
           drivers={drivers}
+          title=""
+          showSearch={false}
+          showFilters={false}
+          showPagination={false}
           onViewDetails={handleViewDriverDetails}
           onDeleteDriver={handleDeleteDriver}
           onActivateDriver={handleApproveDriver}
@@ -383,6 +436,10 @@ const AdminUsers = () => {
       {activeTab === "clients" && (
         <ClientTable
           clients={clients}
+          title=""
+          showSearch={false}
+          showFilters={false}
+          showPagination={false}
           onViewDetails={handleViewClientDetails}
           onDeleteClient={handleDeleteClient}
           onActivateClient={handleApproveClient}
@@ -413,36 +470,31 @@ const AdminUsers = () => {
         />
       )}
 
+      {selectedUser && (
+        <UserDetailModal
+          user={selectedUser}
+          isOpen={isUserDetailModalOpen}
+          onClose={() => {
+            setIsUserDetailModalOpen(false);
+            setSelectedUser(null);
+          }}
+        />
+      )}
+
       {/* Create User Modal */}
       <ModernModel
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title={t("adminUsers.createNewUser")}
       >
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="userType">{t("adminUsers.userType")}</Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder={t("adminUsers.selectUserType")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="driver">{t("common.driver")}</SelectItem>
-                <SelectItem value="client">{t("common.client")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setIsCreateModalOpen(false)}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button className="flex-1">{t("adminUsers.createUser")}</Button>
-          </div>
-        </div>
+        <UserForm
+          onSubmit={handleCreateUser}
+          onCancel={() => setIsCreateModalOpen(false)}
+          isLoading={
+            createClientMutation.isPending || createDriverMutation.isPending
+          }
+          mode="create"
+        />
       </ModernModel>
 
       {/* Edit User Modal */}
@@ -451,43 +503,15 @@ const AdminUsers = () => {
         onClose={() => setIsEditModalOpen(false)}
         title={t("adminUsers.editUser")}
       >
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="fullName">{t("common.fullName")}</Label>
-            <Input
-              id="fullName"
-              defaultValue={editingItem?.full_name || ""}
-              placeholder={t("common.enterFullName")}
-            />
-          </div>
-          <div>
-            <Label htmlFor="email">{t("common.email")}</Label>
-            <Input
-              id="email"
-              type="email"
-              defaultValue={editingItem?.email || ""}
-              placeholder={t("common.enterEmail")}
-            />
-          </div>
-          <div>
-            <Label htmlFor="phone">{t("common.phone")}</Label>
-            <Input
-              id="phone"
-              defaultValue={editingItem?.phone || ""}
-              placeholder={t("common.enterPhone")}
-            />
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setIsEditModalOpen(false)}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button className="flex-1">{t("common.save")}</Button>
-          </div>
-        </div>
+        <UserForm
+          initialData={editingItem as any}
+          onSubmit={handleCreateUser}
+          onCancel={() => setIsEditModalOpen(false)}
+          isLoading={
+            createClientMutation.isPending || createDriverMutation.isPending
+          }
+          mode="edit"
+        />
       </ModernModel>
     </div>
   );
