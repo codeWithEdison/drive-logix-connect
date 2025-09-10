@@ -26,11 +26,20 @@ import {
   Settings,
   Filter,
   Plus,
+  Calendar,
+  ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function AdminDashboard() {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const [selectedPeriod, setSelectedPeriod] = React.useState("monthly");
 
   // API hooks
   const {
@@ -106,11 +115,33 @@ export function AdminDashboard() {
     }
   };
 
-
   const handleFilter = () => {
     customToast.info(t("adminDashboard.filterOpened"));
   };
 
+  const handlePeriodChange = (period: string) => {
+    setSelectedPeriod(period);
+    customToast.success(
+      t("adminDashboard.filterApplied", { period: t(`common.${period}`) })
+    );
+    // Here you would typically refetch data with the new period filter
+    // refetchDashboard({ period });
+  };
+
+  const getPeriodLabel = (period: string) => {
+    switch (period) {
+      case "daily":
+        return t("common.daily");
+      case "weekly":
+        return t("common.weekly");
+      case "monthly":
+        return t("common.monthly");
+      case "yearly":
+        return t("common.yearly");
+      default:
+        return t("common.monthly");
+    }
+  };
 
   const handleRefresh = () => {
     refetchDashboard();
@@ -241,10 +272,33 @@ export function AdminDashboard() {
             />
             {t("common.refresh")}
           </Button>
-          <Button variant="outline" onClick={handleFilter}>
-            <Filter className="h-4 w-4 mr-2" />
-            {t("common.filter")}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Calendar className="h-4 w-4 mr-2" />
+                {getPeriodLabel(selectedPeriod)}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handlePeriodChange("daily")}>
+                <Calendar className="h-4 w-4 mr-2" />
+                {t("common.daily")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePeriodChange("weekly")}>
+                <Calendar className="h-4 w-4 mr-2" />
+                {t("common.weekly")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePeriodChange("monthly")}>
+                <Calendar className="h-4 w-4 mr-2" />
+                {t("common.monthly")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handlePeriodChange("yearly")}>
+                <Calendar className="h-4 w-4 mr-2" />
+                {t("common.yearly")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" onClick={handleExportReport}>
             <Download className="h-4 w-4 mr-2" />
             {t("adminDashboard.exportReport")}
