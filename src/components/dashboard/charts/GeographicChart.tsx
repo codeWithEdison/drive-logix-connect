@@ -112,11 +112,11 @@ export function GeographicChart({
   }
 
   const chartData =
-    data?.route_efficiency?.map((route: any) => ({
-      route: route.route,
-      revenue: Math.floor(Math.random() * 20000) + 10000, // Mock revenue
-      deliveries: Math.floor(Math.random() * 50) + 20, // Mock deliveries
-      distance: route.distance_km,
+    data?.top_pickup_locations?.map((location: any) => ({
+      route: location.location,
+      revenue: location.revenue,
+      deliveries: location.count,
+      distance: 0, // Not available in pickup data
     })) || [];
 
   return (
@@ -133,7 +133,7 @@ export function GeographicChart({
         <MapPin className="h-5 w-5 text-purple-500" />
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        <div className="h-80 w-full">
+        <div className="h-96 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
@@ -166,29 +166,6 @@ export function GeographicChart({
               />
             </BarChart>
           </ResponsiveContainer>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-          <div className="text-center p-3 bg-purple-50 rounded-lg">
-            <p className="text-purple-600 font-semibold">
-              RWF{" "}
-              {chartData
-                .reduce((sum, route) => sum + route.revenue, 0)
-                .toLocaleString()}
-            </p>
-            <p className="text-purple-600">{t("dashboard.totalRevenue")}</p>
-          </div>
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <p className="text-blue-600 font-semibold">
-              {chartData.reduce((sum, route) => sum + route.deliveries, 0)}
-            </p>
-            <p className="text-blue-600">{t("dashboard.totalDeliveries")}</p>
-          </div>
-          <div className="text-center p-3 bg-green-50 rounded-lg">
-            <p className="text-green-600 font-semibold">
-              {chartData.reduce((sum, route) => sum + route.distance, 0)}km
-            </p>
-            <p className="text-green-600">{t("dashboard.totalDistance")}</p>
-          </div>
         </div>
       </CardContent>
     </Card>

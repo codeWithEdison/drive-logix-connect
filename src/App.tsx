@@ -287,15 +287,15 @@ function App() {
         }}
       >
         <ApiProvider>
-          <LanguageProvider>
-            <TooltipProvider>
+          <TooltipProvider>
+            <LanguageProvider>
               <AuthProvider>
                 <AppContent />
                 <Toaster />
                 <Sonner />
               </AuthProvider>
-            </TooltipProvider>
-          </LanguageProvider>
+            </LanguageProvider>
+          </TooltipProvider>
         </ApiProvider>
       </Router>
     </ErrorBoundary>

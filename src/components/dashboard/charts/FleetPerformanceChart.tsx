@@ -31,6 +31,14 @@ interface FleetPerformanceData {
     next_maintenance_date: string;
     maintenance_type: string;
   }>;
+  vehicle_deliveries?: Array<{
+    vehicle_id: string;
+    plate_number: string;
+    total_deliveries: number;
+    completed_deliveries: number;
+    success_rate: number;
+    total_revenue: number;
+  }>;
 }
 
 interface FleetPerformanceChartProps {
@@ -52,22 +60,35 @@ export function FleetPerformanceChart({
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
+      const chartData = payload[0].payload;
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-900">{label}</p>
           <p className="text-blue-600 font-medium">
-            {t("dashboard.deliveries")}: {data.deliveries}
+            {t("dashboard.totalDeliveries")}: {chartData.deliveries}
           </p>
           <p className="text-green-600 text-sm">
-            {t("dashboard.utilization")}: {data.utilization}%
-          </p>
-          <p className="text-orange-600 text-sm">
-            {t("dashboard.fuelLevel")}: {data.fuelLevel}%
+            {t("dashboard.completedDeliveries")}:{" "}
+            {chartData.completedDeliveries}
           </p>
           <p className="text-purple-600 text-sm">
-            {t("dashboard.rating")}: {data.rating}/5
+            {t("dashboard.successRate")}: {chartData.successRate}%
           </p>
+          <p className="text-orange-600 text-sm">
+            {t("dashboard.utilization")}: {chartData.utilization}%
+          </p>
+          <p className="text-cyan-600 text-sm">
+            {t("dashboard.fuelEfficiency")}: {chartData.fuelLevel} km/L
+          </p>
+          <p className="text-gray-600 text-sm">
+            {t("dashboard.totalRevenue")}: RWF{" "}
+            {chartData.totalRevenue?.toLocaleString()}
+          </p>
+          {chartData.totalDistance > 0 && (
+            <p className="text-gray-600 text-sm">
+              {t("dashboard.totalDistance")}: {chartData.totalDistance} km
+            </p>
+          )}
         </div>
       );
     }
@@ -116,13 +137,26 @@ export function FleetPerformanceChart({
   }
 
   const chartData =
-    data?.vehicle_utilization?.map((vehicle: any) => ({
-      truck: vehicle.plate_number,
-      deliveries: Math.floor(Math.random() * 50) + 20, // Mock deliveries count
-      utilization: vehicle.utilization_percentage,
-      fuelLevel: Math.floor(Math.random() * 40) + 60, // Mock fuel level
-      rating: (Math.random() * 1.5 + 3.5).toFixed(1), // Mock rating
-    })) || [];
+    data?.vehicle_deliveries?.map((vehicle: any) => {
+      const utilizationData = data?.vehicle_utilization?.find(
+        (v: any) => v.vehicle_id === vehicle.vehicle_id
+      );
+      const fuelData = data?.fuel_efficiency?.find(
+        (f: any) => f.vehicle_id === vehicle.vehicle_id
+      );
+
+      return {
+        truck: vehicle.plate_number,
+        deliveries: vehicle.total_deliveries,
+        utilization: utilizationData?.utilization_percentage || 0,
+        fuelLevel: fuelData?.fuel_efficiency_km_per_liter || 0,
+        rating: (vehicle.success_rate / 20).toFixed(1), // Convert success rate to 5-star rating
+        completedDeliveries: vehicle.completed_deliveries,
+        successRate: vehicle.success_rate,
+        totalRevenue: vehicle.total_revenue,
+        totalDistance: utilizationData?.total_distance_km || 0,
+      };
+    }) || [];
 
   return (
     <Card
@@ -168,41 +202,40 @@ export function FleetPerformanceChart({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+        {/* <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
           <div className="text-center p-3 bg-orange-50 rounded-lg">
             <p className="text-orange-600 font-semibold">
-              {chartData.reduce((sum, vehicle) => sum + vehicle.deliveries, 0)}
+              {data?.vehicle_deliveries?.reduce(
+                (sum, vehicle) => sum + vehicle.total_deliveries,
+                0
+              ) || 0}
             </p>
             <p className="text-orange-600">{t("dashboard.totalDeliveries")}</p>
           </div>
           <div className="text-center p-3 bg-green-50 rounded-lg">
             <p className="text-green-600 font-semibold">
-              {chartData.length > 0
+              {data?.vehicle_deliveries?.length > 0
                 ? Math.round(
-                    chartData.reduce(
-                      (sum, vehicle) => sum + vehicle.utilization,
+                    data.vehicle_deliveries.reduce(
+                      (sum: number, vehicle: any) => sum + vehicle.success_rate,
                       0
-                    ) / chartData.length
+                    ) / data.vehicle_deliveries.length
                   )
                 : 0}
               %
             </p>
-            <p className="text-green-600">{t("dashboard.avgUtilization")}</p>
+            <p className="text-green-600">{t("dashboard.avgSuccessRate")}</p>
           </div>
           <div className="text-center p-3 bg-blue-50 rounded-lg">
             <p className="text-blue-600 font-semibold">
-              {chartData.length > 0
-                ? (
-                    chartData.reduce(
-                      (sum, vehicle) => sum + parseFloat(vehicle.rating),
-                      0
-                    ) / chartData.length
-                  ).toFixed(1)
-                : 0}
+              RWF{" "}
+              {data?.vehicle_deliveries
+                ?.reduce((sum, vehicle) => sum + vehicle.total_revenue, 0)
+                ?.toLocaleString() || 0}
             </p>
-            <p className="text-blue-600">{t("dashboard.avgRating")}</p>
+            <p className="text-blue-600">{t("dashboard.totalRevenue")}</p>
           </div>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

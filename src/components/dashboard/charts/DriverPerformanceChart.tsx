@@ -166,34 +166,7 @@ export function DriverPerformanceChart({
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
-          <div className="text-center p-3 bg-pink-50 rounded-lg">
-            <p className="text-pink-600 font-semibold">
-              {chartData.reduce((sum, driver) => sum + driver.deliveries, 0)}
-            </p>
-            <p className="text-pink-600">{t("dashboard.totalDeliveries")}</p>
-          </div>
-          <div className="text-center p-3 bg-yellow-50 rounded-lg">
-            <p className="text-yellow-600 font-semibold">
-              {chartData.length > 0
-                ? (
-                    chartData.reduce((sum, driver) => sum + driver.rating, 0) /
-                    chartData.length
-                  ).toFixed(1)
-                : 0}
-            </p>
-            <p className="text-yellow-600">{t("dashboard.avgRating")}</p>
-          </div>
-          <div className="text-center p-3 bg-green-50 rounded-lg">
-            <p className="text-green-600 font-semibold">
-              RWF{" "}
-              {chartData
-                .reduce((sum, driver) => sum + driver.earnings, 0)
-                .toLocaleString()}
-            </p>
-            <p className="text-green-600">{t("dashboard.totalEarnings")}</p>
-          </div>
-        </div>
+      
       </CardContent>
     </Card>
   );

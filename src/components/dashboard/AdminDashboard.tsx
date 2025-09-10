@@ -106,17 +106,11 @@ export function AdminDashboard() {
     }
   };
 
-  const handleSettings = () => {
-    window.location.href = "/admin/settings";
-  };
 
   const handleFilter = () => {
     customToast.info(t("adminDashboard.filterOpened"));
   };
 
-  const handleAddNew = () => {
-    window.location.href = "/admin/cargos/new";
-  };
 
   const handleRefresh = () => {
     refetchDashboard();

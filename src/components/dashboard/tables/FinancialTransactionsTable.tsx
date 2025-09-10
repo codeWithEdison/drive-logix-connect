@@ -19,11 +19,22 @@ interface FinancialTransaction {
   id: string;
   type: string;
   amount: number;
-  currency: string;
-  status: string;
-  client_name: string;
-  created_at: string;
   description: string;
+  severity?: string;
+  invoice_number?: string;
+  client_name: string;
+  client_email?: string;
+  subtotal?: number;
+  tax_amount?: number;
+  discount_amount?: number;
+  total_amount?: number;
+  currency?: string;
+  status: string;
+  paid?: boolean;
+  due_date?: string;
+  paid_at?: string;
+  payment_method?: string;
+  created_at: string;
 }
 
 interface FinancialTransactionsTableProps {
@@ -59,14 +70,14 @@ export function FinancialTransactionsTable({
     }
   };
 
-  const getDeliveryStatusColor = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return "bg-green-100 text-green-800";
-      case "in_transit":
-        return "bg-blue-100 text-blue-800";
-      case "pending":
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "bg-red-100 text-red-800";
+      case "medium":
         return "bg-yellow-100 text-yellow-800";
+      case "low":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -177,23 +188,32 @@ export function FinancialTransactionsTable({
         </Button>
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        <div className="rounded-lg border">
+        <div className="rounded-lg border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900 text-xs">
-                  {t("tables.id")}
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  #
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.invoiceNumber")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.client")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.amount")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.status")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.paymentMethod")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.dueDate")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.actions")}
                 </TableHead>
               </TableRow>
@@ -202,50 +222,73 @@ export function FinancialTransactionsTable({
               {transactions.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={8}
                     className="text-center py-8 text-gray-500"
                   >
                     {t("tables.noTransactions")}
                   </TableCell>
                 </TableRow>
               ) : (
-                transactions.map((transaction: any) => (
+                transactions.map((transaction: any, index: number) => (
                   <TableRow
                     key={transaction.id}
                     className="hover:bg-gray-50 transition-colors"
                   >
-                    <TableCell className="font-medium text-gray-900 text-xs">
-                      {transaction.id}
+                    <TableCell className="font-medium text-gray-900 text-xs whitespace-nowrap">
+                      {index + 1}
                     </TableCell>
-                    <TableCell className="text-gray-700 text-xs">
-                      {transaction.client_name || transaction.client}
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      <Badge variant="outline" className="text-xs">
+                        {transaction.invoice_number}
+                      </Badge>
                     </TableCell>
-                    <TableCell className="font-semibold text-green-600 text-xs">
-                      RWF {transaction.amount?.toLocaleString() || "0"}
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {transaction.client_name}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          {transaction.client_email}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-semibold text-green-600 text-xs whitespace-nowrap">
+                      RWF{" "}
+                      {transaction.total_amount?.toLocaleString() ||
+                        transaction.amount?.toLocaleString() ||
+                        "0"}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         <Badge
                           className={`${getPaymentStatusColor(
-                            transaction.payment_status ||
-                              transaction.paymentStatus
+                            transaction.paid ? "paid" : "pending"
                           )} text-xs px-2 py-1`}
                         >
-                          {transaction.payment_status ||
-                            transaction.paymentStatus}
+                          {transaction.paid ? "Paid" : "Pending"}
                         </Badge>
                         <Badge
-                          className={`${getDeliveryStatusColor(
-                            transaction.delivery_status ||
-                              transaction.deliveryStatus
+                          className={`${getPriorityColor(
+                            transaction.severity
                           )} text-xs px-2 py-1`}
                         >
-                          {(
-                            transaction.delivery_status ||
-                            transaction.deliveryStatus
-                          )?.replace("_", " ")}
+                          {transaction.severity}
                         </Badge>
                       </div>
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      {transaction.payment_method ? (
+                        <Badge variant="outline" className="text-xs">
+                          {transaction.payment_method.replace("_", " ")}
+                        </Badge>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      {transaction.due_date
+                        ? new Date(transaction.due_date).toLocaleDateString()
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

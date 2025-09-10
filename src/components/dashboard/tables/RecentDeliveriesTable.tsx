@@ -18,11 +18,17 @@ import { customToast } from "@/lib/utils/toast";
 interface RecentDelivery {
   cargo_id: string;
   client_name: string;
-  driver_name: string;
-  status: string;
+  client_email?: string;
   pickup_location: string;
   delivery_location: string;
+  status: string;
+  priority?: string;
+  estimated_cost?: number;
+  final_cost?: number;
+  driver_name: string;
+  vehicle_plate?: string;
   created_at: string;
+  pickup_date?: string;
   estimated_delivery: string;
 }
 
@@ -157,23 +163,35 @@ export function RecentDeliveriesTable({
         </Button>
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        <div className="rounded-lg border">
+        <div className="rounded-lg border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900 text-xs">
-                  {t("tables.id")}
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  #
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.client")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.route")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.driver")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.vehicle")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.status")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
-                  {t("tables.revenue")}
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.estimatedCost")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.pickupDate")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.actions")}
                 </TableHead>
               </TableRow>
@@ -182,24 +200,49 @@ export function RecentDeliveriesTable({
               {deliveries.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={9}
                     className="text-center py-8 text-gray-500"
                   >
                     {t("tables.noDeliveries")}
                   </TableCell>
                 </TableRow>
               ) : (
-                deliveries.map((delivery: any) => (
+                deliveries.map((delivery: any, index: number) => (
                   <TableRow
-                    key={delivery.id}
+                    key={delivery.cargo_id || delivery.id}
                     className="hover:bg-gray-50 transition-colors"
                   >
-                    <TableCell className="font-medium text-gray-900 text-xs">
-                      {delivery.id}
+                    <TableCell className="font-medium text-gray-900 text-xs whitespace-nowrap">
+                      {index + 1}
                     </TableCell>
-                    <TableCell className="text-gray-700 text-xs">
-                      {delivery.route ||
-                        `${delivery.pickup_location} → ${delivery.delivery_location}`}
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {delivery.client_name}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          {delivery.client_email}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-xs">
+                          {delivery.pickup_location}
+                        </span>
+                        <span className="text-xs text-gray-500">→</span>
+                        <span className="text-xs">
+                          {delivery.delivery_location}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      {delivery.driver_name}
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      <Badge variant="outline" className="text-xs">
+                        {delivery.vehicle_plate}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
@@ -224,18 +267,22 @@ export function RecentDeliveriesTable({
                           )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-semibold text-green-600 text-xs">
-                      RWF{" "}
-                      {delivery.revenue?.toLocaleString() ||
-                        delivery.amount?.toLocaleString() ||
-                        "0"}
+                    <TableCell className="font-semibold text-green-600 text-xs whitespace-nowrap">
+                      RWF {delivery.estimated_cost?.toLocaleString() || "0"}
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      {delivery.pickup_date
+                        ? new Date(delivery.pickup_date).toLocaleDateString()
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleTrack(delivery.id)}
+                          onClick={() =>
+                            handleTrack(delivery.cargo_id || delivery.id)
+                          }
                           className="h-6 w-6 p-0"
                         >
                           <Truck className="h-3 w-3" />
@@ -243,7 +290,9 @@ export function RecentDeliveriesTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleViewDetails(delivery.id)}
+                          onClick={() =>
+                            handleViewDetails(delivery.cargo_id || delivery.id)
+                          }
                           className="h-6 w-6 p-0"
                         >
                           <Eye className="h-3 w-3" />

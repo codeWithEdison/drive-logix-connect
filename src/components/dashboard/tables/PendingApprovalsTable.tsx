@@ -174,20 +174,29 @@ export function PendingApprovalsTable({
         </Button>
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        <div className="rounded-lg border">
+        <div className="rounded-lg border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  #
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.type")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.name")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.email")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.documents")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.submitted")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.actions")}
                 </TableHead>
               </TableRow>
@@ -196,18 +205,21 @@ export function PendingApprovalsTable({
               {approvals.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={7}
                     className="text-center py-8 text-gray-500"
                   >
                     {t("tables.noPendingApprovals")}
                   </TableCell>
                 </TableRow>
               ) : (
-                approvals.map((approval: any) => (
+                approvals.map((approval: any, index: number) => (
                   <TableRow
                     key={approval.id}
                     className="hover:bg-gray-50 transition-colors"
                   >
+                    <TableCell className="font-medium text-gray-900 text-xs whitespace-nowrap">
+                      {index + 1}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getTypeIcon(approval.entity_type || approval.type)}
@@ -220,11 +232,23 @@ export function PendingApprovalsTable({
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium text-gray-900 text-xs">
+                    <TableCell className="font-medium text-gray-900 text-xs whitespace-nowrap">
                       {approval.name || approval.entity_name}
                     </TableCell>
-                    <TableCell className="text-gray-600 text-xs">
-                      {approval.submitted_at || approval.submitted}
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      {approval.email || approval.entity_email || "-"}
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs whitespace-nowrap">
+                      <Badge variant="outline" className="text-xs">
+                        {approval.documents_count ||
+                          approval.documents?.length ||
+                          0}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-gray-600 text-xs whitespace-nowrap">
+                      {approval.submitted_at
+                        ? new Date(approval.submitted_at).toLocaleDateString()
+                        : approval.submitted || "-"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">

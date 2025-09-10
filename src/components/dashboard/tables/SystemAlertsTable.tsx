@@ -174,23 +174,29 @@ export function SystemAlertsTable({
         </Button>
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        <div className="rounded-lg border">
+        <div className="rounded-lg border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  #
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.type")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.message")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
-                  {t("tables.priority")}
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.severity")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
-                  {t("tables.time")}
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.status")}
                 </TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
+                  {t("tables.createdAt")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs whitespace-nowrap">
                   {t("tables.actions")}
                 </TableHead>
               </TableRow>
@@ -199,18 +205,21 @@ export function SystemAlertsTable({
               {alerts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={7}
                     className="text-center py-8 text-gray-500"
                   >
                     {t("tables.noAlerts")}
                   </TableCell>
                 </TableRow>
               ) : (
-                alerts.map((alert: any) => (
+                alerts.map((alert: any, index: number) => (
                   <TableRow
                     key={alert.id}
                     className="hover:bg-gray-50 transition-colors"
                   >
+                    <TableCell className="font-medium text-gray-900 text-xs whitespace-nowrap">
+                      {index + 1}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getAlertIcon(alert.alert_type || alert.type)}
@@ -231,8 +240,19 @@ export function SystemAlertsTable({
                         {alert.priority || alert.severity}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-600 text-xs">
-                      {alert.created_at || alert.time}
+                    <TableCell>
+                      <Badge
+                        className={`${getStatusColor(
+                          alert.is_resolved ? "resolved" : "active"
+                        )} text-xs px-2 py-1`}
+                      >
+                        {alert.is_resolved ? "Resolved" : "Active"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-gray-600 text-xs whitespace-nowrap">
+                      {alert.created_at
+                        ? new Date(alert.created_at).toLocaleDateString()
+                        : alert.time || "-"}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -244,7 +264,7 @@ export function SystemAlertsTable({
                         >
                           <Eye className="h-3 w-3" />
                         </Button>
-                        {alert.status === "active" && (
+                        {!alert.is_resolved && (
                           <>
                             <Button
                               variant="ghost"
