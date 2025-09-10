@@ -1,67 +1,74 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Download, Eye, Mail, DollarSign } from 'lucide-react';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Download, Eye, Mail, DollarSign, AlertCircle } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { customToast } from "@/lib/utils/toast";
 
-// Mock data for financial transactions - Rwanda-based (only 3 rows)
-const financialTransactionsData = [
-  {
-    id: '#3565432',
-    client: 'John Smith',
-    amount: 'RWF 280,000',
-    date: '2024-01-15',
-    paymentStatus: 'paid',
-    deliveryStatus: 'delivered'
-  },
-  {
-    id: '#4832920',
-    client: 'Sarah Johnson',
-    amount: 'RWF 320,000',
-    date: '2024-01-15',
-    paymentStatus: 'paid',
-    deliveryStatus: 'in_transit'
-  },
-  {
-    id: '#1442654',
-    client: 'Emma Davis',
-    amount: 'RWF 250,000',
-    date: '2024-01-14',
-    paymentStatus: 'paid',
-    deliveryStatus: 'delivered'
-  }
-];
+interface FinancialTransaction {
+  id: string;
+  type: string;
+  amount: number;
+  currency: string;
+  status: string;
+  client_name: string;
+  created_at: string;
+  description: string;
+}
 
 interface FinancialTransactionsTableProps {
   className?: string;
   onViewAll?: () => void;
+  data?: FinancialTransaction[];
+  isLoading?: boolean;
+  error?: any;
+  limit?: number;
 }
 
-export function FinancialTransactionsTable({ className, onViewAll }: FinancialTransactionsTableProps) {
+export function FinancialTransactionsTable({
+  className,
+  onViewAll,
+  data = [],
+  isLoading = false,
+  error = null,
+  limit,
+}: FinancialTransactionsTableProps) {
+  const { t } = useLanguage();
+
+  const transactions = limit ? (data || []).slice(0, limit) : data || [];
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case 'paid':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
+      case "paid":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getDeliveryStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'in_transit':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+      case "delivered":
+        return "bg-green-100 text-green-800";
+      case "in_transit":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -74,22 +81,27 @@ export function FinancialTransactionsTable({ className, onViewAll }: FinancialTr
   const handleDownloadReceipt = (id: string) => {
     console.log(`Downloading receipt for: ${id}`);
     // Generate and download receipt
+    const transaction = transactions.find((t) => t.id === id);
     const receiptData = {
       id: id,
-      amount: financialTransactionsData.find(t => t.id === id)?.amount,
+      amount: transaction?.amount,
       date: new Date().toISOString(),
-      type: 'receipt'
+      type: "receipt",
     };
 
-    const blob = new Blob([JSON.stringify(receiptData, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(receiptData, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `receipt-${id}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    customToast.success(t("tables.receiptDownloaded"));
   };
 
   const handleEmailReceipt = (id: string) => {
@@ -98,15 +110,70 @@ export function FinancialTransactionsTable({ className, onViewAll }: FinancialTr
     window.location.href = `/admin/email-receipt/${id}`;
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <Card
+        className={`bg-white/80 backdrop-blur-sm border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}
+      >
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 pt-6 px-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              {t("tables.financialTransactions")}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card
+        className={`bg-white/80 backdrop-blur-sm border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}
+      >
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 pt-6 px-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              {t("tables.financialTransactions")}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+              <p className="text-red-600">{t("tables.loadError")}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className={`bg-white/80 backdrop-blur-sm border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}>
+    <Card
+      className={`bg-white/80 backdrop-blur-sm border-green-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 pt-6 px-6">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <CardTitle className="text-lg font-semibold text-gray-900">Financial Transactions</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            {t("tables.financialTransactions")}
+          </CardTitle>
         </div>
         <Button variant="outline" size="sm" onClick={onViewAll}>
-          View All
+          {t("common.viewAll")}
         </Button>
       </CardHeader>
       <CardContent className="px-6 pb-6">
@@ -114,59 +181,103 @@ export function FinancialTransactionsTable({ className, onViewAll }: FinancialTr
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900 text-xs">ID</TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">Client</TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">Amount</TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">Status</TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">Actions</TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.id")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.client")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.amount")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.status")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.actions")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {financialTransactionsData.map((transaction) => (
-                <TableRow key={transaction.id} className="hover:bg-gray-50 transition-colors">
-                  <TableCell className="font-medium text-gray-900 text-xs">{transaction.id}</TableCell>
-                  <TableCell className="text-gray-700 text-xs">{transaction.client}</TableCell>
-                  <TableCell className="font-semibold text-green-600 text-xs">{transaction.amount}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <Badge className={`${getPaymentStatusColor(transaction.paymentStatus)} text-xs px-2 py-1`}>
-                        {transaction.paymentStatus}
-                      </Badge>
-                      <Badge className={`${getDeliveryStatusColor(transaction.deliveryStatus)} text-xs px-2 py-1`}>
-                        {transaction.deliveryStatus.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewInvoice(transaction.id)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Eye className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownloadReceipt(transaction.id)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Download className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEmailReceipt(transaction.id)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Mail className="h-3 w-3" />
-                      </Button>
-                    </div>
+              {transactions.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    {t("tables.noTransactions")}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                transactions.map((transaction: any) => (
+                  <TableRow
+                    key={transaction.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <TableCell className="font-medium text-gray-900 text-xs">
+                      {transaction.id}
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs">
+                      {transaction.client_name || transaction.client}
+                    </TableCell>
+                    <TableCell className="font-semibold text-green-600 text-xs">
+                      RWF {transaction.amount?.toLocaleString() || "0"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <Badge
+                          className={`${getPaymentStatusColor(
+                            transaction.payment_status ||
+                              transaction.paymentStatus
+                          )} text-xs px-2 py-1`}
+                        >
+                          {transaction.payment_status ||
+                            transaction.paymentStatus}
+                        </Badge>
+                        <Badge
+                          className={`${getDeliveryStatusColor(
+                            transaction.delivery_status ||
+                              transaction.deliveryStatus
+                          )} text-xs px-2 py-1`}
+                        >
+                          {(
+                            transaction.delivery_status ||
+                            transaction.deliveryStatus
+                          )?.replace("_", " ")}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewInvoice(transaction.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownloadReceipt(transaction.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEmailReceipt(transaction.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Mail className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

@@ -8,6 +8,7 @@ import {
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -278,24 +279,26 @@ function AppContent() {
 
 function App() {
   return (
-    <Router
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
-      <ApiProvider>
-        <LanguageProvider>
-          <TooltipProvider>
-            <AuthProvider>
-              <AppContent />
-              <Toaster />
-              <Sonner />
-            </AuthProvider>
-          </TooltipProvider>
-        </LanguageProvider>
-      </ApiProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
+        <ApiProvider>
+          <LanguageProvider>
+            <TooltipProvider>
+              <AuthProvider>
+                <AppContent />
+                <Toaster />
+                <Sonner />
+              </AuthProvider>
+            </TooltipProvider>
+          </LanguageProvider>
+        </ApiProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

@@ -6,13 +6,13 @@ export class AdminService {
   static async getDashboardStats(): Promise<
     ApiResponse<{
       total_users: number;
+      total_clients: number;
       total_drivers: number;
-      total_vehicles: number;
       total_cargos: number;
-      active_deliveries: number;
-      completed_deliveries: number;
+      total_deliveries: number;
       total_revenue: number;
-      pending_payments: number;
+      active_deliveries: number;
+      pending_approvals: number;
     }>
   > {
     const response = await axiosInstance.get("/admin/dashboard");

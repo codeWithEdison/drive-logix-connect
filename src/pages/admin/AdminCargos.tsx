@@ -1,103 +1,54 @@
-import React, { useState } from 'react';
-import { CargoTable } from '@/components/ui/CargoTable';
-import { CargoDetailModal, CargoDetail } from '@/components/ui/CargoDetailModal';
-import { Button } from '@/components/ui/button';
-import { Plus, Truck } from 'lucide-react';
-import ModernModel from '@/components/modal/ModernModel';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Mock data for admin cargos - Rwanda-based
-const adminCargos: CargoDetail[] = [
-  {
-    id: 'CRG-001',
-    client: 'John Doe',
-    driver: 'Jean Baptiste',
-    phone: '+250 123 456 789',
-    from: 'Kigali',
-    to: 'Butare',
-    type: 'Electronics',
-    weight: '45kg',
-    status: 'transit',
-    cost: 280000,
-    distance: '135 km',
-    createdDate: '2024-01-15',
-    estimatedTime: '2 hours',
-    priority: 'standard'
-  },
-  {
-    id: 'CRG-002',
-    client: 'Sarah Johnson',
-    driver: 'Unassigned',
-    phone: '+250 234 567 890',
-    from: 'Kigali',
-    to: 'Musanze',
-    type: 'Furniture',
-    weight: '120kg',
-    status: 'pending',
-    cost: 320000,
-    distance: '85 km',
-    createdDate: '2024-01-16',
-    estimatedTime: '1.5 hours',
-    priority: 'urgent'
-  },
-  {
-    id: 'CRG-003',
-    client: 'Marie Claire',
-    driver: 'Alice Uwimana',
-    phone: '+250 345 678 901',
-    from: 'Kigali',
-    to: 'Rubavu',
-    type: 'Documents',
-    weight: '2kg',
-    status: 'delivered',
-    cost: 180000,
-    distance: '120 km',
-    createdDate: '2024-01-14',
-    estimatedTime: '2.5 hours',
-    priority: 'standard'
-  },
-  {
-    id: 'CRG-004',
-    client: 'Emmanuel Ndayisaba',
-    driver: 'Unassigned',
-    phone: '+250 456 789 012',
-    from: 'Butare',
-    to: 'Kigali',
-    type: 'Agricultural',
-    weight: '200kg',
-    status: 'pending',
-    cost: 450000,
-    distance: '135 km',
-    createdDate: '2024-01-17',
-    estimatedTime: '2 hours',
-    priority: 'urgent'
-  },
-  {
-    id: 'CRG-005',
-    client: 'Grace Uwase',
-    driver: 'Pierre Nkurunziza',
-    phone: '+250 567 890 123',
-    from: 'Musanze',
-    to: 'Kigali',
-    type: 'Textiles',
-    weight: '80kg',
-    status: 'transit',
-    cost: 250000,
-    distance: '85 km',
-    createdDate: '2024-01-15',
-    estimatedTime: '1.5 hours',
-    priority: 'standard'
-  }
-];
+import React, { useState } from "react";
+import { CargoTable } from "@/components/ui/CargoTable";
+import {
+  CargoDetailModal,
+  CargoDetail,
+} from "@/components/ui/CargoDetailModal";
+import { Button } from "@/components/ui/button";
+import { Plus, Truck, RefreshCw, AlertCircle } from "lucide-react";
+import ModernModel from "@/components/modal/ModernModel";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAllCargos } from "@/lib/api/hooks";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { customToast } from "@/lib/utils/toast";
+import { mapCargosToCargoDetails } from "@/lib/utils/cargoMapper";
 
 export default function AdminCargos() {
-  const [cargos, setCargos] = useState<CargoDetail[]>(adminCargos);
+  const { t } = useLanguage();
+  const { user } = useAuth();
   const [selectedCargo, setSelectedCargo] = useState<CargoDetail | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isTruckAssignmentModalOpen, setIsTruckAssignmentModalOpen] = useState(false);
-  const [cargoForAssignment, setCargoForAssignment] = useState<CargoDetail | null>(null);
+  const [isTruckAssignmentModalOpen, setIsTruckAssignmentModalOpen] =
+    useState(false);
+  const [cargoForAssignment, setCargoForAssignment] =
+    useState<CargoDetail | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+
+  // API hooks
+  const {
+    data: cargosData,
+    isLoading,
+    error,
+    refetch,
+  } = useAllCargos({
+    status: statusFilter === "all" ? undefined : (statusFilter as any),
+    priority: priorityFilter === "all" ? undefined : (priorityFilter as any),
+    limit: 100,
+  });
+
+  // Transform API data to CargoDetail format
+  const cargos: CargoDetail[] = mapCargosToCargoDetails(cargosData?.data || []);
 
   const handleViewDetails = (cargo: CargoDetail) => {
     setSelectedCargo(cargo);
@@ -110,19 +61,146 @@ export default function AdminCargos() {
   };
 
   const handleCreateNewCargo = () => {
-    // Navigate to create new cargo page
-    window.location.href = '/admin/cargos/new';
+    customToast.info(t("adminCargos.addNewCargo"));
+    window.location.href = "/admin/cargos/new";
   };
 
   const handleCallClient = (phone: string) => {
-    console.log(`Calling client: ${phone}`);
-    // Implement call functionality
+    window.open(`tel:${phone}`, "_self");
   };
 
   const handleCallDriver = (phone: string) => {
-    console.log(`Calling driver: ${phone}`);
-    // Implement call functionality
+    window.open(`tel:${phone}`, "_self");
   };
+
+  const handleRefresh = () => {
+    refetch();
+    customToast.success(t("common.refreshed"));
+  };
+
+  const handleTruckAssignment = async (
+    cargoId: string,
+    truckId: string,
+    driverId: string
+  ) => {
+    try {
+      // TODO: Implement truck assignment API call
+      console.log(
+        "Assigning truck:",
+        truckId,
+        "and driver:",
+        driverId,
+        "to cargo:",
+        cargoId
+      );
+      customToast.success(t("adminCargos.truckAssigned"));
+      setIsTruckAssignmentModalOpen(false);
+      setCargoForAssignment(null);
+      refetch();
+    } catch (error) {
+      customToast.error(t("errors.assignmentFailed"));
+    }
+  };
+
+  const handleStatusChange = async (cargoId: string, newStatus: string) => {
+    try {
+      // TODO: Implement status change API call
+      console.log("Changing status for cargo:", cargoId, "to:", newStatus);
+      customToast.success(t("adminCargos.statusUpdated"));
+      refetch();
+    } catch (error) {
+      customToast.error(t("errors.updateFailed"));
+    }
+  };
+
+  const handleCancelCargo = (cargoId: string) => {
+    try {
+      // TODO: Implement cargo cancellation API call
+      console.log("Cancelling cargo:", cargoId);
+      customToast.success(t("adminCargos.cargoCancelled"));
+      refetch();
+    } catch (error) {
+      customToast.error(t("errors.cancellationFailed"));
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="flex gap-4">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("adminCargos.title")}
+            </h1>
+            <p className="text-muted-foreground">{t("adminCargos.subtitle")}</p>
+          </div>
+        </div>
+
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <div>
+                <h3 className="font-semibold text-red-800">
+                  {t("common.error")}
+                </h3>
+                <p className="text-red-600 text-sm mt-1">
+                  {error.message || t("adminCargos.loadError")}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="mt-2"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {t("common.retry")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleTrackCargo = (cargoId: string) => {
     console.log(`Tracking cargo: ${cargoId}`);
@@ -130,30 +208,26 @@ export default function AdminCargos() {
     window.location.href = `/admin/tracking/${cargoId}`;
   };
 
-  const handleCancelCargo = (cargoId: string) => {
-    console.log(`Cancelling cargo: ${cargoId}`);
-    // Update cargo status to cancelled
-    setCargos(prev => prev.map(cargo =>
-      cargo.id === cargoId ? { ...cargo, status: 'cancelled' as const } : cargo
-    ));
-  };
-
   const handleDownloadReceipt = (cargoId: string) => {
     console.log(`Downloading receipt for: ${cargoId}`);
     // Generate and download receipt
-    const cargo = cargos.find(c => c.id === cargoId);
+    const cargo = cargos.find((c) => c.id === cargoId);
     if (cargo) {
       const receiptData = {
-        id: cargo.id,
+        cargoId: cargo.id,
         client: cargo.client,
+        from: cargo.from,
+        to: cargo.to,
         cost: cargo.cost,
         date: new Date().toISOString(),
-        type: 'receipt'
+        type: "receipt",
       };
 
-      const blob = new Blob([JSON.stringify(receiptData, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(receiptData, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `receipt-${cargoId}.json`;
       document.body.appendChild(a);
@@ -174,29 +248,82 @@ export default function AdminCargos() {
     window.location.href = `/admin/issues/${cargoId}`;
   };
 
-  const handleTruckAssignment = (cargoId: string, truckId: string, driverId: string) => {
-    console.log(`Assigning truck ${truckId} and driver ${driverId} to cargo ${cargoId}`);
-    // Update cargo with assigned driver
-    setCargos(prev => prev.map(cargo =>
-      cargo.id === cargoId ? { ...cargo, driver: 'Assigned Driver', status: 'transit' as const } : cargo
-    ));
-    setIsTruckAssignmentModalOpen(false);
-    setCargoForAssignment(null);
-  };
-
   // Custom actions for admin
   const customActions = (
     <Button onClick={handleCreateNewCargo}>
       <Plus className="h-4 w-4 mr-2" />
-      Create New Cargo
+      {t("adminCargos.addNew")}
     </Button>
   );
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            {t("adminCargos.title")}
+          </h1>
+          <p className="text-muted-foreground">{t("adminCargos.subtitle")}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            {t("common.refresh")}
+          </Button>
+          <Button onClick={handleCreateNewCargo}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("adminCargos.addNew")}
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">{t("common.status")}:</label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              <SelectItem value="pending">{t("status.pending")}</SelectItem>
+              <SelectItem value="assigned">{t("status.assigned")}</SelectItem>
+              <SelectItem value="in_transit">
+                {t("status.inTransit")}
+              </SelectItem>
+              <SelectItem value="delivered">{t("status.delivered")}</SelectItem>
+              <SelectItem value="cancelled">{t("status.cancelled")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">{t("common.priority")}:</label>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("common.all")}</SelectItem>
+              <SelectItem value="low">{t("priority.low")}</SelectItem>
+              <SelectItem value="normal">{t("priority.normal")}</SelectItem>
+              <SelectItem value="high">{t("priority.high")}</SelectItem>
+              <SelectItem value="urgent">{t("priority.urgent")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <CargoTable
         cargos={cargos}
-        title="Cargo Management"
+        title={t("adminCargos.title")}
         showStats={true}
         showSearch={true}
         showFilters={true}
@@ -243,15 +370,25 @@ export default function AdminCargos() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">Cargo Details</h3>
-                  <Badge className={cargoForAssignment.priority === 'urgent' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}>
+                  <Badge
+                    className={
+                      cargoForAssignment.priority === "urgent"
+                        ? "bg-red-100 text-red-600"
+                        : "bg-gray-100 text-gray-600"
+                    }
+                  >
                     {cargoForAssignment.priority?.toUpperCase()}
                   </Badge>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Cargo ID</p>
-                    <p className="text-lg font-semibold">{cargoForAssignment.id}</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Cargo ID
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {cargoForAssignment.id}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Client</p>
@@ -259,22 +396,30 @@ export default function AdminCargos() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Route</p>
-                    <p className="text-lg">{cargoForAssignment.from} → {cargoForAssignment.to}</p>
+                    <p className="text-lg">
+                      {cargoForAssignment.from} → {cargoForAssignment.to}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Weight & Type</p>
-                    <p className="text-lg">{cargoForAssignment.weight} • {cargoForAssignment.type}</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Weight & Type
+                    </p>
+                    <p className="text-lg">
+                      {cargoForAssignment.weight} • {cargoForAssignment.type}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Distance</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Distance
+                    </p>
                     <p className="text-lg">{cargoForAssignment.distance}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Cost</p>
                     <p className="text-lg font-semibold text-green-600">
-                      {new Intl.NumberFormat('rw-RW', {
-                        style: 'currency',
-                        currency: 'RWF',
+                      {new Intl.NumberFormat("rw-RW", {
+                        style: "currency",
+                        currency: "RWF",
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
                       }).format(cargoForAssignment.cost || 0)}
@@ -287,32 +432,50 @@ export default function AdminCargos() {
             {/* Assignment Form */}
             <Card>
               <CardContent className="p-4">
-                <h4 className="font-semibold text-gray-900 mb-4">Assignment Details</h4>
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  Assignment Details
+                </h4>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Select Truck</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Select Truck
+                    </label>
                     <Select>
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Choose a truck..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="truck-1">Ford F-650 (ABC-123)</SelectItem>
-                        <SelectItem value="truck-2">Chevrolet Silverado (XYZ-789)</SelectItem>
-                        <SelectItem value="truck-3">Dodge Ram (DEF-456)</SelectItem>
+                        <SelectItem value="truck-1">
+                          Ford F-650 (ABC-123)
+                        </SelectItem>
+                        <SelectItem value="truck-2">
+                          Chevrolet Silverado (XYZ-789)
+                        </SelectItem>
+                        <SelectItem value="truck-3">
+                          Dodge Ram (DEF-456)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Select Driver</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Select Driver
+                    </label>
                     <Select>
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Choose a driver..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="driver-1">Albert Flores (4.8★)</SelectItem>
-                        <SelectItem value="driver-2">Mike Johnson (4.6★)</SelectItem>
-                        <SelectItem value="driver-3">Sarah Wilson (4.9★)</SelectItem>
+                        <SelectItem value="driver-1">
+                          Albert Flores (4.8★)
+                        </SelectItem>
+                        <SelectItem value="driver-2">
+                          Mike Johnson (4.6★)
+                        </SelectItem>
+                        <SelectItem value="driver-3">
+                          Sarah Wilson (4.9★)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -334,7 +497,13 @@ export default function AdminCargos() {
               </Button>
               <Button
                 className="flex-1"
-                onClick={() => handleTruckAssignment(cargoForAssignment.id, 'truck-1', 'driver-1')}
+                onClick={() =>
+                  handleTruckAssignment(
+                    cargoForAssignment.id,
+                    "truck-1",
+                    "driver-1"
+                  )
+                }
               >
                 <Truck className="h-4 w-4 mr-2" />
                 Assign Truck & Driver

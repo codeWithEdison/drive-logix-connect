@@ -3,7 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -28,170 +35,294 @@ import {
   Eye,
   ArrowUp,
   ArrowDown,
-  ChevronDown
+  ChevronDown,
+  RefreshCw,
 } from "lucide-react";
 import { TrackingComponent } from "./TrackingComponent";
-import { StatsCard, StatItem } from "@/components/ui/StatsCard";
-
-// Mock data for driver
-const mockDriverData = {
-  name: "Albert Flores",
-  truckId: "TRK-001",
-  rating: 4.8,
-  completedDeliveries: 156,
-  status: "available" as const,
-  assignedCargos: 5,
-  activeDeliveries: 2,
-  truckStatus: "Active & Ready",
-  assignedCargosList: [
-    {
-      id: "#3565432",
-      status: "active" as const,
-      from: "4140 Parker Rd, Allentown, NM",
-      to: "3517 W. Gray St. Utica, PA",
-      client: "John Smith",
-      phone: "+1 (555) 123-4567",
-      weight: "25 kg",
-      type: "Electronics",
-      pickupTime: "10:00 AM",
-      estimatedDelivery: "2:30 PM",
-      priority: "urgent"
-    },
-    {
-      id: "#4832920",
-      status: "pending" as const,
-      from: "1050 Elden St. Colma, DE",
-      to: "6502 Preston Rd. Inglewood, ME",
-      client: "Sarah Johnson",
-      phone: "+1 (555) 987-6543",
-      weight: "15 kg",
-      type: "Documents",
-      pickupTime: "3:00 PM",
-      estimatedDelivery: "5:30 PM",
-      priority: "standard"
-    },
-    {
-      id: "#1442654",
-      status: "pending" as const,
-      from: "2972 Westheimer Rd. Santa Ana, IL",
-      to: "6391 Elgin St. Celina, DE",
-      client: "Kathryn Murphy",
-      phone: "+1 (555) 456-7890",
-      weight: "40 kg",
-      type: "Furniture",
-      pickupTime: "1:00 PM",
-      estimatedDelivery: "4:00 PM",
-      priority: "standard"
-    }
-  ]
-};
-
-// Stats data for driver dashboard
-const driverStatsData: StatItem[] = [
-  {
-    title: "Assigned Cargo",
-    value: "5",
-    change: "+2",
-    changeType: "increase",
-    icon: Package,
-    color: "orange"
-  },
-  {
-    title: "Active Deliveries",
-    value: "2",
-    change: "In Progress",
-    changeType: "active",
-    icon: Clock,
-    color: "green"
-  },
-  {
-    title: "Completed",
-    value: "156",
-    change: "Total",
-    changeType: "success",
-    icon: CheckCircle,
-    color: "blue"
-  },
-  {
-    title: "Rating",
-    value: "4.8",
-    change: "★★★★☆",
-    changeType: "rating",
-    icon: Star,
-    color: "pink"
-  }
-];
+import { StatsCard } from "@/components/ui/StatsCard";
+import { useDriverDashboard, useUpdateDriverStatus } from "@/lib/api/hooks";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { customToast } from "@/lib/utils/toast";
+import { DriverStatus } from "@/types/shared";
+import { mapDashboardCargosToCargoDetails } from "@/lib/utils/cargoMapper";
 
 export function DriverDashboard() {
-  const [driverStatus, setDriverStatus] = useState<'available' | 'on_duty' | 'unavailable'>('available');
-  const [activeDelivery, setActiveDelivery] = useState(mockDriverData.assignedCargosList[0]);
-  const [showLiveTracking, setShowLiveTracking] = useState(false);
+  const { t } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [driverStatus, setDriverStatus] = useState<
+    "available" | "on_duty" | "unavailable"
+  >("available");
+  const [selectedDelivery, setSelectedDelivery] = useState<any>(null);
+  const [showLiveTracking, setShowLiveTracking] = useState(false);
+
+  // API hooks - Using only DashboardService.getDriverDashboard() for all data
+  const {
+    data: dashboardData,
+    isLoading: dashboardLoading,
+    error: dashboardError,
+    refetch: refetchDashboard,
+  } = useDriverDashboard();
+
+  const updateStatusMutation = useUpdateDriverStatus();
+
   const statusConfig = {
-    available: { label: "Available", color: "bg-green-100 text-green-600" },
-    on_duty: { label: "On Duty", color: "bg-blue-100 text-blue-600" },
-    unavailable: { label: "Unavailable", color: "bg-gray-100 text-gray-600" }
+    available: {
+      label: t("status.available"),
+      color: "bg-green-100 text-green-600",
+    },
+    on_duty: { label: t("status.onDuty"), color: "bg-blue-100 text-blue-600" },
+    unavailable: {
+      label: t("status.unavailable"),
+      color: "bg-gray-100 text-gray-600",
+    },
   };
 
+  // Get data from dashboard service - all data comes from single API call
+  const activeDelivery = dashboardData?.data?.active_delivery;
+  const assignedCargos = mapDashboardCargosToCargoDetails(
+    dashboardData?.data?.assigned_cargos || []
+  );
+  const recentDeliveries = dashboardData?.data?.recent_deliveries || [];
+
+  // Stats data for driver dashboard
+  const driverStatsData = [
+    {
+      title: t("navigation.assignedCargos"),
+      value: dashboardData?.data?.stats?.assigned_cargos?.toString() || "0",
+      description: t("common.fromLastWeek"),
+      icon: Package,
+      iconColor: "text-orange-600",
+    },
+    {
+      title: t("navigation.activeDeliveries"),
+      value: dashboardData?.data?.stats?.active_deliveries?.toString() || "0",
+      description: t("status.active"),
+      icon: Clock,
+      iconColor: "text-green-600",
+    },
+    {
+      title: t("status.completed"),
+      value:
+        dashboardData?.data?.stats?.completed_deliveries?.toString() || "0",
+      description: t("common.total"),
+      icon: CheckCircle,
+      iconColor: "text-blue-600",
+    },
+    {
+      title: t("common.rating"),
+      value: dashboardData?.data?.stats?.rating?.toFixed(1) || "0.0",
+      description: "★★★★☆",
+      icon: Star,
+      iconColor: "text-pink-600",
+    },
+  ];
+
   const handleViewAllCargos = () => {
-    navigate('/driver/cargos');
+    navigate("/driver/cargos");
   };
 
   const handleViewAllDeliveries = () => {
-    navigate('/driver/deliveries');
+    navigate("/driver/deliveries");
   };
 
   const handleViewAllCompleted = () => {
-    navigate('/driver/completed');
+    navigate("/driver/history");
   };
 
   const handleViewAllRatings = () => {
-    navigate('/driver/ratings');
-  };
-
-  const handleViewAllTrucks = () => {
-    navigate('/driver/trucks');
+    navigate("/driver/ratings");
   };
 
   const handleStartDelivery = () => {
     setShowLiveTracking(true);
   };
 
-  const handleStatusChange = (newStatus: 'available' | 'on_duty' | 'unavailable') => {
-    setDriverStatus(newStatus);
+  const handleStatusChange = async (
+    newStatus: "available" | "on_duty" | "unavailable"
+  ) => {
+    try {
+      await updateStatusMutation.mutateAsync(newStatus as DriverStatus);
+      setDriverStatus(newStatus);
+      customToast.success(t("driver.statusUpdated"));
+      refetchDashboard();
+    } catch (error) {
+      customToast.error(t("errors.serverError"));
+    }
   };
+
+  const handleRefresh = () => {
+    refetchDashboard();
+  };
+
+  // Loading state
+  if (dashboardLoading) {
+    return (
+      <div className="space-y-8">
+        {/* Header Skeleton */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-40" />
+        </div>
+
+        {/* Stats Card Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card
+              key={i}
+              className="bg-white shadow-lg rounded-2xl overflow-hidden"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-32 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (dashboardError) {
+    return (
+      <div className="space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("navigation.dashboard")}
+            </h1>
+            <p className="text-muted-foreground">{t("dashboard.subtitle")}</p>
+          </div>
+        </div>
+
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <div>
+                <h3 className="font-semibold text-red-800">
+                  {t("common.error")}
+                </h3>
+                <p className="text-red-600 text-sm mt-1">
+                  {dashboardError?.message || t("dashboard.loadError")}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="mt-2"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {t("common.retry")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Driver Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {mockDriverData.name}</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            {t("navigation.dashboard")}
+          </h1>
+          <p className="text-muted-foreground">
+            {t("dashboard.welcome")}, {user?.full_name || t("common.driver")}
+          </p>
         </div>
         <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={dashboardLoading}
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${
+                dashboardLoading ? "animate-spin" : ""
+              }`}
+            />
+            {t("common.refresh")}
+          </Button>
           <Badge className={statusConfig[driverStatus].color}>
             {statusConfig[driverStatus].label}
           </Badge>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Status:</span>
-            <Select onValueChange={handleStatusChange} defaultValue={driverStatus}>
+            <span className="text-sm font-medium">{t("common.status")}:</span>
+            <Select
+              onValueChange={handleStatusChange}
+              defaultValue={driverStatus}
+            >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Status" />
+                <SelectValue placeholder={t("common.select")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="available">Available</SelectItem>
-                <SelectItem value="on_duty">On Duty</SelectItem>
-                <SelectItem value="unavailable">Unavailable</SelectItem>
+                <SelectItem value="available">
+                  {t("status.available")}
+                </SelectItem>
+                <SelectItem value="on_duty">{t("status.onDuty")}</SelectItem>
+                <SelectItem value="unavailable">
+                  {t("status.unavailable")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards - Reusable component */}
-      <StatsCard stats={driverStatsData} />
+      {/* Stats Cards - Individual components */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {driverStatsData.map((stat, index) => (
+          <StatsCard
+            key={index}
+            title={stat.title}
+            value={stat.value}
+            description={stat.description}
+            icon={stat.icon}
+            iconColor={stat.iconColor}
+          />
+        ))}
+      </div>
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -201,25 +332,29 @@ export function DriverDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-gray-900">
                 <Navigation className="h-5 w-5 text-blue-600" />
-                Active Delivery
+                {t("navigation.activeDeliveries")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {activeDelivery.status === 'active' ? (
+              {activeDelivery ? (
                 <>
                   {showLiveTracking ? (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold">{activeDelivery.id}</h3>
-                          <p className="text-sm text-muted-foreground">Client: {activeDelivery.client}</p>
+                          <h3 className="text-lg font-semibold">
+                            {activeDelivery?.cargo_id}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t("common.client")}: {activeDelivery?.client_name}
+                          </p>
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setShowLiveTracking(false)}
                         >
-                          Hide Tracking
+                          {t("common.hide")} {t("tracking.tracking")}
                         </Button>
                       </div>
                       <TrackingComponent height="h-80" />
@@ -228,14 +363,23 @@ export function DriverDashboard() {
                     <>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold">{activeDelivery.id}</h3>
-                          <p className="text-sm text-muted-foreground">Client: {activeDelivery.client}</p>
+                          <h3 className="text-lg font-semibold">
+                            {activeDelivery?.cargo_id}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t("common.client")}: {activeDelivery?.client_name}
+                          </p>
                         </div>
-                        <Badge className={activeDelivery.priority === 'urgent' ?
-                          "bg-orange-100 text-orange-600" :
-                          "bg-blue-100 text-blue-600"
-                        }>
-                          {activeDelivery.priority}
+                        <Badge
+                          className={
+                            activeDelivery?.priority === "urgent"
+                              ? "bg-orange-100 text-orange-600"
+                              : "bg-blue-100 text-blue-600"
+                          }
+                        >
+                          {t(
+                            `priority.${activeDelivery?.priority || "normal"}`
+                          )}
                         </Badge>
                       </div>
 
@@ -244,9 +388,15 @@ export function DriverDashboard() {
                         <div className="flex items-start gap-3">
                           <div className="w-3 h-3 bg-green-500 rounded-full mt-1"></div>
                           <div>
-                            <p className="text-xs text-muted-foreground font-medium">PICKUP</p>
-                            <p className="text-sm font-semibold">{activeDelivery.from}</p>
-                            <p className="text-xs text-green-600">{activeDelivery.pickupTime}</p>
+                            <p className="text-xs text-muted-foreground font-medium">
+                              {t("tracking.from")}
+                            </p>
+                            <p className="text-sm font-semibold">
+                              {activeDelivery?.pickup_address}
+                            </p>
+                            <p className="text-xs text-green-600">
+                              {activeDelivery?.pickup_time}
+                            </p>
                           </div>
                         </div>
 
@@ -257,9 +407,15 @@ export function DriverDashboard() {
                         <div className="flex items-start gap-3">
                           <div className="w-3 h-3 bg-red-500 rounded-full mt-1"></div>
                           <div>
-                            <p className="text-xs text-muted-foreground font-medium">DELIVERY</p>
-                            <p className="text-sm font-semibold">{activeDelivery.to}</p>
-                            <p className="text-xs text-red-600">{activeDelivery.estimatedDelivery}</p>
+                            <p className="text-xs text-muted-foreground font-medium">
+                              {t("tracking.to")}
+                            </p>
+                            <p className="text-sm font-semibold">
+                              {activeDelivery?.delivery_address}
+                            </p>
+                            <p className="text-xs text-red-600">
+                              {activeDelivery?.estimated_delivery_time}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -267,12 +423,20 @@ export function DriverDashboard() {
                       {/* Cargo Details */}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs text-muted-foreground">Type</p>
-                          <p className="font-semibold">{activeDelivery.type}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t("common.type")}
+                          </p>
+                          <p className="font-semibold">
+                            {activeDelivery?.cargo_type}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Weight</p>
-                          <p className="font-semibold">{activeDelivery.weight}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t("common.weight")}
+                          </p>
+                          <p className="font-semibold">
+                            {activeDelivery?.weight} kg
+                          </p>
                         </div>
                       </div>
 
@@ -283,19 +447,22 @@ export function DriverDashboard() {
                           onClick={handleStartDelivery}
                         >
                           <MapPin className="h-4 w-4 mr-2" />
-                          Start Delivery
+                          {t("delivery.startDelivery")}
                         </Button>
                         <Button variant="outline">
                           <Phone className="h-4 w-4 mr-2" />
-                          Call Client
+                          {t("common.call")} {t("common.client")}
                         </Button>
                         <Button variant="outline">
                           <Camera className="h-4 w-4 mr-2" />
-                          Upload Photo
+                          {t("common.upload")} {t("delivery.uploadProof")}
                         </Button>
-                        <Button variant="outline" className="text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white">
+                        <Button
+                          variant="outline"
+                          className="text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white"
+                        >
                           <AlertCircle className="h-4 w-4 mr-2" />
-                          Report Issue
+                          {t("common.report")} {t("common.issue")}
                         </Button>
                       </div>
                     </>
@@ -304,8 +471,13 @@ export function DriverDashboard() {
               ) : (
                 <div className="text-center py-8">
                   <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg font-semibold text-muted-foreground">No Active Delivery</p>
-                  <p className="text-sm text-muted-foreground">Accept a cargo request to start</p>
+                  <p className="text-lg font-semibold text-muted-foreground">
+                    {t("navigation.activeDeliveries")}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("common.accept")} {t("cargo.cargoDetails")}{" "}
+                    {t("common.to")} {t("common.start")}
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -319,57 +491,81 @@ export function DriverDashboard() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-gray-900">
                   <Route className="h-5 w-5 text-blue-600" />
-                  Assigned Cargos
+                  {t("navigation.assignedCargos")}
                 </CardTitle>
-                <Button variant="outline" size="sm" onClick={handleViewAllCargos}>
-                  View All
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleViewAllCargos}
+                >
+                  {t("common.viewAll")}
                 </Button>
               </div>
             </CardHeader>
             <CardContent className="h-96 overflow-y-auto">
               <div className="space-y-4 pr-2">
-                {mockDriverData.assignedCargosList.map((cargo) => (
-                  <div key={cargo.id} className="p-4 bg-gray-50 rounded-lg space-y-3">
+                {assignedCargos.map((cargo) => (
+                  <div
+                    key={cargo.id}
+                    className="p-4 bg-gray-50 rounded-lg space-y-3"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-sm">{cargo.id}</span>
-                      <Badge className={cargo.status === 'active' ?
-                        "bg-green-100 text-green-600" :
-                        "bg-yellow-100 text-yellow-600"
-                      }>
-                        {cargo.status}
+                      <Badge
+                        className={
+                          cargo.status === "active"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-yellow-100 text-yellow-600"
+                        }
+                      >
+                        {t(`status.${cargo.status}`)}
                       </Badge>
                     </div>
 
                     <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-muted-foreground">Client</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("common.client")}
+                        </p>
                         <p className="text-sm font-medium">{cargo.client}</p>
                       </div>
 
                       <div>
-                        <p className="text-xs text-muted-foreground">Destination</p>
-                        <p className="text-sm font-medium text-blue-600">{cargo.to}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t("common.location")}
+                        </p>
+                        <p className="text-sm font-medium text-blue-600">
+                          {cargo.to}
+                        </p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <p className="text-muted-foreground">Type</p>
+                        <p className="text-muted-foreground">
+                          {t("common.type")}
+                        </p>
                         <p className="font-medium">{cargo.type}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Weight</p>
-                        <p className="font-medium">{cargo.weight}</p>
+                        <p className="text-muted-foreground">
+                          {t("common.weight")}
+                        </p>
+                        <p className="font-medium">{cargo.weight} kg</p>
                       </div>
                     </div>
 
                     <Button
                       size="sm"
-                      variant={cargo.status === 'active' ? 'default' : 'outline'}
+                      variant={
+                        cargo.status === "active" ? "default" : "outline"
+                      }
                       className="w-full"
-                      onClick={() => setActiveDelivery(cargo)}
+                      onClick={() => setSelectedDelivery(cargo)}
                     >
-                      {cargo.status === 'active' ? 'Continue' : 'Accept'}
+                      {cargo.status === "active"
+                        ? t("common.continue")
+                        : t("common.accept")}
                     </Button>
                   </div>
                 ))}
@@ -385,9 +581,15 @@ export function DriverDashboard() {
         <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-gray-900">Recent Deliveries</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleViewAllDeliveries}>
-                View All
+              <CardTitle className="text-gray-900">
+                {t("dashboard.recentActivity")}
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleViewAllDeliveries}
+              >
+                {t("common.viewAll")}
               </Button>
             </div>
           </CardHeader>
@@ -395,26 +597,43 @@ export function DriverDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs font-medium text-gray-600">Cargo ID</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600">Client</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600">Status</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600">Date</TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">
+                    {t("dashboard.cargoId")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">
+                    {t("common.client")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">
+                    {t("common.status")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">
+                    {t("common.date")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockDriverData.assignedCargosList.slice(0, 3).map((cargo) => (
-                  <TableRow key={cargo.id}>
-                    <TableCell className="text-sm font-medium text-gray-900">{cargo.id}</TableCell>
-                    <TableCell className="text-sm text-gray-600">{cargo.client}</TableCell>
+                {recentDeliveries.slice(0, 3).map((delivery) => (
+                  <TableRow key={delivery.cargo_id}>
+                    <TableCell className="text-sm font-medium text-gray-900">
+                      {delivery.cargo_id}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {delivery.client_name}
+                    </TableCell>
                     <TableCell>
-                      <Badge className={cargo.status === 'active' ?
-                        "bg-green-100 text-green-600" :
-                        "bg-yellow-100 text-yellow-600"
-                      }>
-                        {cargo.status}
+                      <Badge
+                        className={
+                          delivery.status === "delivered"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-yellow-100 text-yellow-600"
+                        }
+                      >
+                        {t(`status.${delivery.status}`)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-600">Today</TableCell>
+                    <TableCell className="text-sm text-gray-600">
+                      {delivery.delivery_date}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -426,35 +645,55 @@ export function DriverDashboard() {
         <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-gray-900">Performance</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleViewAllRatings}>
-                View All
+              <CardTitle className="text-gray-900">
+                {t("driver.driverDetails")}
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleViewAllRatings}
+              >
+                {t("common.viewAll")}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Rating</span>
+              <span className="text-sm text-gray-600">
+                {t("common.rating")}
+              </span>
               <div className="flex items-center gap-2">
-                <span className="font-semibold">{mockDriverData.rating}</span>
+                <span className="font-semibold">
+                  {dashboardData?.data?.stats?.rating?.toFixed(1) || "0.0"}
+                </span>
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${i < Math.floor(mockDriverData.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                      className={`w-4 h-4 ${
+                        i < Math.floor(dashboardData?.data?.stats?.rating || 0)
+                          ? "text-yellow-400 fill-current"
+                          : "text-gray-300"
+                      }`}
                     />
                   ))}
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Completed Deliveries</span>
-              <span className="font-semibold">{mockDriverData.completedDeliveries}</span>
+              <span className="text-sm text-gray-600">
+                {t("status.completed")} {t("navigation.deliveries")}
+              </span>
+              <span className="font-semibold">
+                {dashboardData?.data?.stats?.completed_deliveries || 0}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Truck Status</span>
+              <span className="text-sm text-gray-600">
+                {t("driver.driverStatus")}
+              </span>
               <Badge className="bg-green-100 text-green-600">
-                {mockDriverData.truckStatus}
+                {statusConfig[driverStatus].label}
               </Badge>
             </div>
           </CardContent>

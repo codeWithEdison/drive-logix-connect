@@ -1,224 +1,226 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Cell } from 'recharts';
-import { Users, Star, TrendingUp, MapPin } from 'lucide-react';
-
-// Rwanda-based admin performance data
-const adminData = [
-    {
-        name: 'Jean Pierre Ndayisaba',
-        tasks: 45,
-        efficiency: 92,
-        rating: 4.8,
-        region: 'Kigali',
-        deliveries: 156,
-        revenue: 8500000
-    },
-    {
-        name: 'Sarah Mukamana',
-        tasks: 38,
-        efficiency: 88,
-        rating: 4.6,
-        region: 'Butare',
-        deliveries: 142,
-        revenue: 7200000
-    },
-    {
-        name: 'Emmanuel Gasana',
-        tasks: 52,
-        efficiency: 95,
-        rating: 4.9,
-        region: 'Musanze',
-        deliveries: 189,
-        revenue: 9800000
-    },
-    {
-        name: 'Alice Uwimana',
-        tasks: 28,
-        efficiency: 85,
-        rating: 4.4,
-        region: 'Rubavu',
-        deliveries: 98,
-        revenue: 5200000
-    },
-    {
-        name: 'David Niyonsaba',
-        tasks: 33,
-        efficiency: 90,
-        rating: 4.7,
-        region: 'Karongi',
-        deliveries: 125,
-        revenue: 6800000
-    }
-];
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Cell,
+} from "recharts";
+import { Users, Star, TrendingUp, MapPin } from "lucide-react";
+import { useAdminPerformanceChart } from "@/lib/api/hooks";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle } from "lucide-react";
 
 const metrics = [
-    { label: 'Tasks', value: 'tasks', color: '#3B82F6' },
-    { label: 'Efficiency', value: 'efficiency', color: '#10B981' },
-    { label: 'Rating', value: 'rating', color: '#F59E0B' },
-    { label: 'Deliveries', value: 'deliveries', color: '#8B5CF6' }
+  { label: "Tasks", value: "tasks", icon: Users },
+  { label: "Efficiency", value: "efficiency", icon: TrendingUp },
+  { label: "Rating", value: "rating", icon: Star },
+  { label: "Deliveries", value: "deliveries", icon: MapPin },
 ];
 
 export function AdminPerformanceChart() {
-    const [selectedMetric, setSelectedMetric] = useState('efficiency');
+  const { t } = useLanguage();
+  const [selectedMetric, setSelectedMetric] = useState("tasks");
 
-    const getTooltipFormatter = (value: number, name: string) => {
-        if (name === 'efficiency') {
-            return [`${value}%`, 'Efficiency'];
-        } else if (name === 'rating') {
-            return [value.toFixed(1), 'Rating'];
-        } else if (name === 'deliveries') {
-            return [value.toLocaleString(), 'Deliveries'];
-        } else if (name === 'revenue') {
-            return [`RWF ${(value / 1000000).toFixed(1)}M`, 'Revenue'];
-        }
-        return [value, name];
-    };
+  // API hook
+  const { data: adminData, isLoading, error } = useAdminPerformanceChart();
 
-    const getYAxisFormatter = (value: number) => {
-        if (selectedMetric === 'efficiency') {
-            return `${value}%`;
-        } else if (selectedMetric === 'rating') {
-            return value.toFixed(1);
-        } else if (selectedMetric === 'deliveries') {
-            return value.toLocaleString();
-        }
-        return value.toString();
-    };
+  const getTooltipFormatter = (value: number, name: string) => {
+    const metric = metrics.find((m) => m.value === selectedMetric);
+    const label = metric ? t(`dashboard.${metric.value}`) : name;
 
-    const currentMetric = metrics.find(m => m.value === selectedMetric);
-    const sortedData = [...adminData].sort((a, b) => {
-        const aValue = a[selectedMetric as keyof typeof a] as number;
-        const bValue = b[selectedMetric as keyof typeof a] as number;
-        return bValue - aValue;
-    });
+    if (selectedMetric === "efficiency") {
+      return [`${value}%`, label];
+    } else if (selectedMetric === "rating") {
+      return [`${value}/5`, label];
+    } else if (selectedMetric === "revenue") {
+      return [`RWF ${value.toLocaleString()}`, label];
+    }
+    return [value.toString(), label];
+  };
 
+  const getYAxisFormatter = (value: number) => {
+    if (selectedMetric === "efficiency") {
+      return `${value}%`;
+    } else if (selectedMetric === "rating") {
+      return `${value}/5`;
+    } else if (selectedMetric === "revenue") {
+      return `RWF ${(value / 1000000).toFixed(0)}M`;
+    }
+    return value.toString();
+  };
+
+  const getBarColor = (value: number) => {
+    switch (selectedMetric) {
+      case "tasks":
+        return value >= 40 ? "#10B981" : value >= 30 ? "#F59E0B" : "#EF4444";
+      case "efficiency":
+        return value >= 90 ? "#10B981" : value >= 80 ? "#F59E0B" : "#EF4444";
+      case "rating":
+        return value >= 4.5 ? "#10B981" : value >= 4.0 ? "#F59E0B" : "#EF4444";
+      case "deliveries":
+        return value >= 150 ? "#10B981" : value >= 100 ? "#F59E0B" : "#EF4444";
+      default:
+        return "#3B82F6";
+    }
+  };
+
+  const sortedData = [...(adminData?.data?.admin_activities || [])].sort(
+    (a, b) => {
+      const aValue = a.activities_count;
+      const bValue = b.activities_count;
+      return bValue - aValue;
+    }
+  );
+
+  // Loading state
+  if (isLoading) {
     return (
-        <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-            <CardHeader className="pb-4">
-                <div className="space-y-4">
-                    <CardTitle className="flex items-center gap-2 text-gray-800">
-                        <Users className="h-5 w-5 text-purple-600" />
-                        Admin Performance
-                    </CardTitle>
-                    <div className="flex flex-wrap gap-2">
-                        {metrics.map((metric) => (
-                            <Button
-                                key={metric.value}
-                                variant={selectedMetric === metric.value ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => setSelectedMetric(metric.value)}
-                                className="text-xs px-3 py-2 h-8"
-                                style={{
-                                    backgroundColor: selectedMetric === metric.value ? metric.color : undefined,
-                                    borderColor: metric.color
-                                }}
-                            >
-                                {metric.label}
-                            </Button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Top Performer */}
-                <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-100">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                                <Star className="h-6 w-6 text-purple-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Top Performer</p>
-                                <p className="font-bold text-gray-900">{sortedData[0]?.name}</p>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <MapPin className="h-3 w-3" />
-                                    {sortedData[0]?.region}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-2xl font-bold text-purple-600">
-                                {selectedMetric === 'efficiency' && `${sortedData[0]?.[selectedMetric]}%`}
-                                {selectedMetric === 'rating' && sortedData[0]?.[selectedMetric].toFixed(1)}
-                                {selectedMetric === 'deliveries' && sortedData[0]?.[selectedMetric].toLocaleString()}
-                                {selectedMetric === 'tasks' && sortedData[0]?.[selectedMetric]}
-                            </p>
-                            <p className="text-xs text-gray-500 capitalize">{currentMetric?.label}</p>
-                        </div>
-                    </div>
-                </div>
-            </CardHeader>
-
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={sortedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis
-                            dataKey="name"
-                            stroke="#888888"
-                            fontSize={11}
-                            tickLine={false}
-                            axisLine={false}
-                            angle={-45}
-                            textAnchor="end"
-                            height={80}
-                        />
-                        <YAxis
-                            stroke="#888888"
-                            fontSize={12}
-                            tickLine={false}
-                            axisLine={false}
-                            tickFormatter={getYAxisFormatter}
-                        />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                            }}
-                            formatter={getTooltipFormatter}
-                            labelFormatter={(label) => `${label} (${adminData.find(a => a.name === label)?.region})`}
-                        />
-                        <Bar
-                            dataKey={selectedMetric}
-                            fill={currentMetric?.color}
-                            radius={[4, 4, 0, 0]}
-                        >
-                            {sortedData.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={currentMetric?.color}
-                                    opacity={0.8}
-                                />
-                            ))}
-                        </Bar>
-                    </BarChart>
-                </ResponsiveContainer>
-
-                {/* Performance Summary */}
-                <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
-                    <div className="text-center">
-                        <p className="text-xs text-gray-500">Avg Efficiency</p>
-                        <p className="text-lg font-bold text-green-600">
-                            {(adminData.reduce((sum, admin) => sum + admin.efficiency, 0) / adminData.length).toFixed(1)}%
-                        </p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-xs text-gray-500">Avg Rating</p>
-                        <p className="text-lg font-bold text-yellow-600">
-                            {(adminData.reduce((sum, admin) => sum + admin.rating, 0) / adminData.length).toFixed(1)}
-                        </p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-xs text-gray-500">Total Revenue</p>
-                        <p className="text-lg font-bold text-blue-600">
-                            RWF {(adminData.reduce((sum, admin) => sum + admin.revenue, 0) / 1000000).toFixed(1)}M
-                        </p>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+      <Card className="bg-white/80 backdrop-blur-sm border-teal-200 shadow-lg rounded-2xl overflow-hidden">
+        <CardHeader className="pb-4 pt-6 px-6">
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <Skeleton className="h-80 w-full" />
+        </CardContent>
+      </Card>
     );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card className="bg-white/80 backdrop-blur-sm border-red-200 shadow-lg rounded-2xl overflow-hidden">
+        <CardHeader className="pb-4 pt-6 px-6">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <CardTitle className="text-lg font-semibold text-red-800">
+              {t("common.error")}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <div className="h-80 flex items-center justify-center">
+            <p className="text-red-600 text-sm">
+              {error.message || t("common.loadError")}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="bg-white/80 backdrop-blur-sm border-teal-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 pt-6 px-6">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            {t("dashboard.adminPerformance")}
+          </CardTitle>
+        </div>
+        <div className="flex items-center gap-2">
+          {metrics.map((metric) => {
+            const IconComponent = metric.icon;
+            return (
+              <Button
+                key={metric.value}
+                variant={
+                  selectedMetric === metric.value ? "default" : "outline"
+                }
+                size="sm"
+                onClick={() => setSelectedMetric(metric.value)}
+                className="text-xs flex items-center gap-1"
+              >
+                <IconComponent className="h-3 w-3" />
+                {t(`dashboard.${metric.value}`)}
+              </Button>
+            );
+          })}
+        </div>
+      </CardHeader>
+      <CardContent className="px-6 pb-6">
+        <div className="h-80 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={sortedData}
+              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+              <XAxis
+                dataKey="admin_name"
+                stroke="#6B7280"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis
+                stroke="#6B7280"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={getYAxisFormatter}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                }}
+                formatter={getTooltipFormatter}
+                labelStyle={{ color: "#374151", fontWeight: "600" }}
+              />
+              <Bar
+                dataKey="activities_count"
+                radius={[4, 4, 0, 0]}
+                name={t("dashboard.activities")}
+              >
+                {sortedData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={getBarColor(entry.activities_count)}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
+          <div className="text-center p-3 bg-teal-50 rounded-lg">
+            <p className="text-teal-600 font-semibold">
+              {adminData?.data?.admin_activities?.length || 0}
+            </p>
+            <p className="text-teal-600">{t("dashboard.totalAdmins")}</p>
+          </div>
+          <div className="text-center p-3 bg-blue-50 rounded-lg">
+            <p className="text-blue-600 font-semibold">
+              {adminData?.data?.admin_activities?.reduce(
+                (sum, admin) => sum + admin.activities_count,
+                0
+              ) || 0}
+            </p>
+            <p className="text-blue-600">{t("dashboard.totalActivities")}</p>
+          </div>
+          <div className="text-center p-3 bg-green-50 rounded-lg">
+            <p className="text-green-600 font-semibold">
+              {adminData?.data?.performance_metrics?.length || 0}
+            </p>
+            <p className="text-green-600">
+              {t("dashboard.performanceMetrics")}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

@@ -1,644 +1,723 @@
-import React, { useState } from 'react';
-import { CustomTabs } from '@/components/ui/CustomTabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import React, { useState } from "react";
+import { CustomTabs } from "@/components/ui/CustomTabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
-    Download,
-    FileText,
-    Printer,
-    Mail,
-    Filter,
-    BarChart3,
-    DollarSign,
-    Users,
-    TrendingUp,
-    Package,
-    MapPin,
-    Calendar
-} from 'lucide-react';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Download,
+  Printer,
+  Mail,
+  BarChart3,
+  DollarSign,
+  Users,
+  TrendingUp,
+  Package,
+  Calendar,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
+import {
+  useFinancialReports,
+  usePerformanceReports,
+  useFinancialAnalytics,
+  useCargoAnalytics,
+  useDriverAnalytics,
+  useExportAnalyticsData,
+} from "@/lib/api/hooks";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { customToast } from "@/lib/utils/toast";
 
-// Mock data for reports - Rwanda-based
-const mockDeliveryReport = [
-    {
-        id: 'DEL-001',
-        cargoId: '#3565432',
-        client: 'Jean Baptiste',
-        driver: 'Albert Flores',
-        from: 'Kigali',
-        to: 'Butare',
-        distance: 135,
-        weight: 45,
-        status: 'delivered',
-        income: 280000, // FRW
-        deliveredAt: '2024-01-15 14:30'
-    },
-    {
-        id: 'DEL-002',
-        cargoId: '#4832920',
-        client: 'Marie Claire',
-        driver: 'Mike Johnson',
-        from: 'Kigali',
-        to: 'Musanze',
-        distance: 85,
-        weight: 120,
-        status: 'delivered',
-        income: 320000, // FRW
-        deliveredAt: '2024-01-16 09:15'
-    },
-    {
-        id: 'DEL-003',
-        cargoId: '#5678901',
-        client: 'Pierre Ndayisaba',
-        driver: 'Alice Uwimana',
-        from: 'Kigali',
-        to: 'Rubavu',
-        distance: 95,
-        weight: 80,
-        status: 'delivered',
-        income: 250000, // FRW
-        deliveredAt: '2024-01-17 11:45'
-    },
-    {
-        id: 'DEL-004',
-        cargoId: '#6789012',
-        client: 'Sarah Mukamana',
-        driver: 'David Gasana',
-        from: 'Kigali',
-        to: 'Karongi',
-        distance: 150,
-        weight: 200,
-        status: 'delivered',
-        income: 450000, // FRW
-        deliveredAt: '2024-01-18 16:20'
-    },
-    {
-        id: 'DEL-005',
-        cargoId: '#7890123',
-        client: 'Emmanuel Niyonsaba',
-        driver: 'Grace Uwase',
-        from: 'Kigali',
-        to: 'Gicumbi',
-        distance: 70,
-        weight: 60,
-        status: 'delivered',
-        income: 180000, // FRW
-        deliveredAt: '2024-01-19 13:10'
+const AdminReports = () => {
+  const { t } = useLanguage();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("financial");
+  const [dateRange, setDateRange] = useState("30");
+  const [reportType, setReportType] = useState("summary");
+  const [exportFormat, setExportFormat] = useState("pdf");
+
+  // API hooks
+  const {
+    data: financialReportsData,
+    isLoading: financialLoading,
+    error: financialError,
+    refetch: refetchFinancial,
+  } = useFinancialReports({
+    start_date: new Date(Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    end_date: new Date().toISOString().split("T")[0],
+    group_by: reportType,
+  });
+
+  const {
+    data: performanceReportsData,
+    isLoading: performanceLoading,
+    error: performanceError,
+    refetch: refetchPerformance,
+  } = usePerformanceReports({
+    start_date: new Date(Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    end_date: new Date().toISOString().split("T")[0],
+  });
+
+  const {
+    data: financialAnalyticsData,
+    isLoading: financialAnalyticsLoading,
+    error: financialAnalyticsError,
+  } = useFinancialAnalytics({
+    start_date: new Date(Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    end_date: new Date().toISOString().split("T")[0],
+    group_by: "day",
+  });
+
+  const {
+    data: cargoAnalyticsData,
+    isLoading: cargoAnalyticsLoading,
+    error: cargoAnalyticsError,
+  } = useCargoAnalytics({
+    start_date: new Date(Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    end_date: new Date().toISOString().split("T")[0],
+    group_by: "day",
+  });
+
+  const {
+    data: driverAnalyticsData,
+    isLoading: driverAnalyticsLoading,
+    error: driverAnalyticsError,
+  } = useDriverAnalytics({
+    start_date: new Date(Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    end_date: new Date().toISOString().split("T")[0],
+    group_by: "day",
+  });
+
+  const exportAnalyticsMutation = useExportAnalyticsData();
+
+  // Event handlers
+  const handleRefresh = () => {
+    refetchFinancial();
+    refetchPerformance();
+    customToast.success(t("common.refreshed"));
+  };
+
+  const handleExportReport = async (type: string) => {
+    try {
+      const params = {
+        start_date: new Date(
+          Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000
+        )
+          .toISOString()
+          .split("T")[0],
+        end_date: new Date().toISOString().split("T")[0],
+        group_by: reportType,
+        report_type: type,
+      };
+
+      await exportAnalyticsMutation.mutateAsync({
+        params,
+        format: exportFormat as "pdf" | "excel" | "csv",
+      });
+
+      customToast.success(t("adminReports.reportExported"));
+    } catch (error) {
+      customToast.error(t("errors.exportFailed"));
     }
-];
+  };
 
-const mockIncomeReport = [
-    {
-        month: 'January 2024',
-        totalIncome: 1480000, // FRW
-        deliveryCount: 234,
-        avgIncomePerDelivery: 6325, // FRW
-        topRoute: 'Kigali → Butare',
-        topRouteIncome: 420000, // FRW
-        topDriver: 'Albert Flores',
-        topDriverIncome: 180000 // FRW
-    },
-    {
-        month: 'December 2023',
-        totalIncome: 1350000, // FRW
-        deliveryCount: 218,
-        avgIncomePerDelivery: 6193, // FRW
-        topRoute: 'Kigali → Musanze',
-        topRouteIncome: 380000, // FRW
-        topDriver: 'Mike Johnson',
-        topDriverIncome: 165000 // FRW
-    },
-    {
-        month: 'November 2023',
-        totalIncome: 1420000, // FRW
-        deliveryCount: 245,
-        avgIncomePerDelivery: 5796, // FRW
-        topRoute: 'Kigali → Rubavu',
-        topRouteIncome: 410000, // FRW
-        topDriver: 'Alice Uwimana',
-        topDriverIncome: 175000 // FRW
-    }
-];
+  const handlePrintReport = () => {
+    window.print();
+    customToast.info(t("adminReports.printingReport"));
+  };
 
-const mockDriverReport = [
-    {
-        id: '1',
-        name: 'Albert Flores',
-        totalDeliveries: 45,
-        avgRating: 4.8,
-        lastDelivery: '2024-01-16',
-        status: 'active',
-        completedDeliveries: 42,
-        cancelledDeliveries: 3,
-        avgDeliveryTime: '2.5 hours'
-    },
-    {
-        id: '2',
-        name: 'Mike Johnson',
-        totalDeliveries: 38,
-        avgRating: 4.6,
-        lastDelivery: '2024-01-15',
-        status: 'active',
-        completedDeliveries: 35,
-        cancelledDeliveries: 3,
-        avgDeliveryTime: '2.8 hours'
-    },
-    {
-        id: '3',
-        name: 'Alice Uwimana',
-        totalDeliveries: 52,
-        avgRating: 4.9,
-        lastDelivery: '2024-01-17',
-        status: 'active',
-        completedDeliveries: 50,
-        cancelledDeliveries: 2,
-        avgDeliveryTime: '2.2 hours'
-    },
-    {
-        id: '4',
-        name: 'David Gasana',
-        totalDeliveries: 28,
-        avgRating: 4.4,
-        lastDelivery: '2024-01-18',
-        status: 'active',
-        completedDeliveries: 26,
-        cancelledDeliveries: 2,
-        avgDeliveryTime: '3.1 hours'
-    },
-    {
-        id: '5',
-        name: 'Grace Uwase',
-        totalDeliveries: 33,
-        avgRating: 4.7,
-        lastDelivery: '2024-01-19',
-        status: 'active',
-        completedDeliveries: 31,
-        cancelledDeliveries: 2,
-        avgDeliveryTime: '2.6 hours'
-    }
-];
+  const handleEmailReport = () => {
+    customToast.info(t("adminReports.emailReport"));
+  };
 
-export default function AdminReports() {
-    const [activeTab, setActiveTab] = useState('deliveries');
-    const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  // Loading state
+  const isLoading =
+    financialLoading ||
+    performanceLoading ||
+    financialAnalyticsLoading ||
+    cargoAnalyticsLoading ||
+    driverAnalyticsLoading;
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('rw-RW', {
-            style: 'currency',
-            currency: 'RWF',
-            minimumFractionDigits: 0
-        }).format(amount);
-    };
-
-    const generateExcelData = (type: string) => {
-        let headers: string[] = [];
-        let data: any[] = [];
-
-        switch (type) {
-            case 'deliveries':
-                headers = ['#', 'Delivery ID', 'Client', 'Driver', 'Route', 'Distance (km)', 'Weight (kg)', 'Status', 'Income (RWF)', 'Date'];
-                data = mockDeliveryReport.map((delivery, index) => [
-                    index + 1,
-                    delivery.id,
-                    delivery.client,
-                    delivery.driver,
-                    `${delivery.from} → ${delivery.to}`,
-                    delivery.distance,
-                    delivery.weight,
-                    delivery.status,
-                    formatCurrency(delivery.income),
-                    delivery.deliveredAt.split(' ')[0]
-                ]);
-                break;
-            case 'income':
-                headers = ['#', 'Month', 'Total Income (RWF)', 'Deliveries', 'Avg Income (RWF)', 'Top Route', 'Top Driver'];
-                data = mockIncomeReport.map((report, index) => [
-                    index + 1,
-                    report.month,
-                    formatCurrency(report.totalIncome),
-                    report.deliveryCount,
-                    formatCurrency(report.avgIncomePerDelivery),
-                    report.topRoute,
-                    report.topDriver
-                ]);
-                break;
-            case 'drivers':
-                headers = ['#', 'Driver ID', 'Name', 'Total Deliveries', 'Completed', 'Cancelled', 'Rating', 'Avg Time', 'Last Delivery', 'Status'];
-                data = mockDriverReport.map((driver, index) => [
-                    index + 1,
-                    driver.id,
-                    driver.name,
-                    driver.totalDeliveries,
-                    driver.completedDeliveries,
-                    driver.cancelledDeliveries,
-                    `${driver.avgRating}/5`,
-                    driver.avgDeliveryTime,
-                    driver.lastDelivery,
-                    driver.status
-                ]);
-                break;
-        }
-
-        return { headers, data };
-    };
-
-    const generateCSVContent = (type: string) => {
-        const { headers, data } = generateExcelData(type);
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row => row.map(cell => `"${cell}"`).join(','))
-        ].join('\n');
-        return csvContent;
-    };
-
-    const generatePDFContent = (type: string) => {
-        const { headers, data } = generateExcelData(type);
-        let content = `Lovely Cargo Platform - ${type.charAt(0).toUpperCase() + type.slice(1)} Report\n`;
-        content += `Generated on: ${new Date().toLocaleDateString('rw-RW')}\n\n`;
-
-        // Add headers
-        content += headers.join(' | ') + '\n';
-        content += '-'.repeat(headers.join(' | ').length) + '\n';
-
-        // Add data
-        data.forEach(row => {
-            content += row.join(' | ') + '\n';
-        });
-
-        return content;
-    };
-
-    const downloadFile = (content: string, filename: string, mimeType: string) => {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
-
-    const handleExportReport = (type: string, format: 'excel' | 'pdf') => {
-        console.log(`Exporting ${type} report as ${format}`);
-
-        const timestamp = new Date().toISOString().split('T')[0];
-        const dateRangeText = dateRange.from && dateRange.to ? `_${dateRange.from}_to_${dateRange.to}` : '';
-
-        if (format === 'excel') {
-            const csvContent = generateCSVContent(type);
-            const filename = `${type}_report${dateRangeText}_${timestamp}.csv`;
-            downloadFile(csvContent, filename, 'text/csv');
-        } else if (format === 'pdf') {
-            const pdfContent = generatePDFContent(type);
-            const filename = `${type}_report${dateRangeText}_${timestamp}.txt`;
-            downloadFile(pdfContent, filename, 'text/plain');
-        }
-    };
-
-    const handleExportAll = async () => {
-        console.log('Exporting all reports as ZIP');
-
-        try {
-            // Generate all three reports
-            const reports = [
-                { type: 'deliveries', content: generateCSVContent('deliveries'), filename: 'deliveries_report.csv' },
-                { type: 'income', content: generateCSVContent('income'), filename: 'income_report.csv' },
-                { type: 'drivers', content: generateCSVContent('drivers'), filename: 'drivers_report.csv' }
-            ];
-
-            // Create ZIP file using JSZip
-            const JSZip = (await import('jszip')).default;
-            const zip = new JSZip();
-
-            // Add each report to the ZIP
-            reports.forEach(report => {
-                zip.file(report.filename, report.content);
-            });
-
-            // Generate and download ZIP
-            const timestamp = new Date().toISOString().split('T')[0];
-            const dateRangeText = dateRange.from && dateRange.to ? `_${dateRange.from}_to_${dateRange.to}` : '';
-            const zipFilename = `lovely_cargo_reports${dateRangeText}_${timestamp}.zip`;
-
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-            const url = URL.createObjectURL(zipBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = zipFilename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            console.log('All reports exported successfully as ZIP');
-        } catch (error) {
-            console.error('Error creating ZIP file:', error);
-            alert('Error creating ZIP file. Please try again.');
-        }
-    };
-
-    const handlePrintReport = (type: string) => {
-        console.log(`Printing ${type} report`);
-        window.print();
-    };
-
-    const handleEmailReport = (type: string) => {
-        console.log(`Emailing ${type} report`);
-        // Mock email functionality
-        alert(`Email report for ${type} would be sent to admin@lovelycargo.rw`);
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'delivered': return 'bg-green-100 text-green-600';
-            case 'in_transit': return 'bg-blue-100 text-blue-600';
-            case 'pending': return 'bg-yellow-100 text-yellow-600';
-            case 'cancelled': return 'bg-red-100 text-red-600';
-            default: return 'bg-gray-100 text-gray-600';
-        }
-    };
-
-    const tabs = [
-        {
-            value: 'deliveries',
-            label: 'Delivery Reports',
-            count: mockDeliveryReport.length
-        },
-        {
-            value: 'income',
-            label: 'Income Reports',
-            count: mockIncomeReport.length
-        },
-        {
-            value: 'drivers',
-            label: 'Driver Reports',
-            count: mockDriverReport.length
-        }
-    ];
-
+  if (isLoading) {
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground font-heading">Reports & Analytics</h1>
-                    <p className="text-muted-foreground">Generate and export comprehensive reports</p>
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="outline">
-                        <Filter className="w-4 h-4 mr-2" />
-                        Filters
-                    </Button>
-                    <Button onClick={handleExportAll}>
-                        <Download className="w-4 h-4 mr-2" />
-                        Export All
-                    </Button>
-                </div>
-            </div>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
 
-            {/* Filters - Only Date Range */}
-            <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="space-y-2">
-                            <Label>Date Range</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    type="date"
-                                    value={dateRange.from}
-                                    onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                                />
-                                <Input
-                                    type="date"
-                                    value={dateRange.to}
-                                    onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
+        {/* Filters Skeleton */}
+        <div className="flex gap-4">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+
+        {/* Tabs Skeleton */}
+        <Skeleton className="h-12 w-full" />
+
+        {/* Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  const hasError =
+    financialError ||
+    performanceError ||
+    financialAnalyticsError ||
+    cargoAnalyticsError ||
+    driverAnalyticsError;
+
+  if (hasError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("adminReports.title")}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("adminReports.subtitle")}
+            </p>
+          </div>
+        </div>
+
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <div>
+                <h3 className="font-semibold text-red-800">
+                  {t("common.error")}
+                </h3>
+                <p className="text-red-600 text-sm mt-1">
+                  {(
+                    financialError ||
+                    performanceError ||
+                    financialAnalyticsError ||
+                    cargoAnalyticsError ||
+                    driverAnalyticsError
+                  )?.message || t("adminReports.loadError")}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="mt-2"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {t("common.retry")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const tabs = [
+    {
+      value: "financial",
+      label: t("adminReports.financial"),
+      count: financialReportsData?.data?.total_revenue ? 1 : 0,
+    },
+    {
+      value: "performance",
+      label: t("adminReports.performance"),
+      count: performanceReportsData?.data?.total_deliveries ? 1 : 0,
+    },
+    {
+      value: "analytics",
+      label: t("adminReports.analytics"),
+      count: 1,
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            {t("adminReports.title")}
+          </h1>
+          <p className="text-muted-foreground">{t("adminReports.subtitle")}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            {t("common.refresh")}
+          </Button>
+          <Button onClick={() => handleExportReport("summary")}>
+            <Download className="h-4 w-4 mr-2" />
+            {t("adminReports.export")}
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="dateRange">{t("adminReports.dateRange")}:</Label>
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">{t("adminReports.last7Days")}</SelectItem>
+              <SelectItem value="30">{t("adminReports.last30Days")}</SelectItem>
+              <SelectItem value="90">{t("adminReports.last90Days")}</SelectItem>
+              <SelectItem value="365">{t("adminReports.lastYear")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="reportType">{t("adminReports.reportType")}:</Label>
+          <Select value={reportType} onValueChange={setReportType}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="summary">
+                {t("adminReports.summary")}
+              </SelectItem>
+              <SelectItem value="detailed">
+                {t("adminReports.detailed")}
+              </SelectItem>
+              <SelectItem value="monthly">
+                {t("adminReports.monthly")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="exportFormat">
+            {t("adminReports.exportFormat")}:
+          </Label>
+          <Select value={exportFormat} onValueChange={setExportFormat}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pdf">PDF</SelectItem>
+              <SelectItem value="excel">Excel</SelectItem>
+              <SelectItem value="csv">CSV</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <CustomTabs tabs={tabs} value={activeTab} onValueChange={setActiveTab} />
+
+      {/* Tab Content */}
+      {activeTab === "financial" && (
+        <div className="space-y-6">
+          {/* Financial Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.totalRevenue")}
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  RWF{" "}
+                  {financialAnalyticsData?.total_revenue?.toLocaleString() ||
+                    "0"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.lastPeriod")}
+                </p>
+              </CardContent>
             </Card>
 
-            {/* Custom Tabs */}
-            <CustomTabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                tabs={tabs}
-            />
-
-            {/* Tab Content */}
-            {activeTab === 'deliveries' && (
-                <div className="mt-6">
-                    <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <BarChart3 className="h-5 w-5" />
-                                    Delivery Performance Report
-                                </CardTitle>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" onClick={() => handleExportReport('deliveries', 'excel')}>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Excel
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handleExportReport('deliveries', 'pdf')}>
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        PDF
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handlePrintReport('deliveries')}>
-                                        <Printer className="w-4 h-4 mr-2" />
-                                        Print
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-xs font-medium text-gray-600">#</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Delivery ID</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Client</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Driver</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Route</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Distance</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Weight</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Status</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Income</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Date</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {mockDeliveryReport.map((delivery, index) => (
-                                            <TableRow key={delivery.id}>
-                                                <TableCell className="text-xs text-gray-500">{index + 1}</TableCell>
-                                                <TableCell className="font-medium text-sm">{delivery.id}</TableCell>
-                                                <TableCell className="text-sm">{delivery.client}</TableCell>
-                                                <TableCell className="text-sm">{delivery.driver}</TableCell>
-                                                <TableCell className="text-sm">{delivery.from} → {delivery.to}</TableCell>
-                                                <TableCell className="text-sm">{delivery.distance} km</TableCell>
-                                                <TableCell className="text-sm">{delivery.weight} kg</TableCell>
-                                                <TableCell>
-                                                    <Badge className={getStatusColor(delivery.status)}>
-                                                        {delivery.status}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="font-medium text-sm text-green-600">
-                                                    {formatCurrency(delivery.income)}
-                                                </TableCell>
-                                                <TableCell className="text-sm">{delivery.deliveredAt.split(' ')[0]}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </CardContent>
-                    </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.totalOrders")}
+                </CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {financialAnalyticsData?.total_revenue ? "N/A" : "0"}
                 </div>
-            )}
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.completedDeliveries")}
+                </p>
+              </CardContent>
+            </Card>
 
-            {activeTab === 'income' && (
-                <div className="mt-6">
-                    <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <DollarSign className="h-5 w-5" />
-                                    Income Performance Report
-                                </CardTitle>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" onClick={() => handleExportReport('income', 'excel')}>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Excel
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handleExportReport('income', 'pdf')}>
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        PDF
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handleEmailReport('income')}>
-                                        <Mail className="w-4 h-4 mr-2" />
-                                        Email
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-xs font-medium text-gray-600">#</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Month</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Total Income</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Deliveries</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Avg Income</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Top Route</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Top Driver</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {mockIncomeReport.map((report, index) => (
-                                            <TableRow key={report.month}>
-                                                <TableCell className="text-xs text-gray-500">{index + 1}</TableCell>
-                                                <TableCell className="font-medium text-sm">{report.month}</TableCell>
-                                                <TableCell className="font-medium text-sm text-green-600">
-                                                    {formatCurrency(report.totalIncome)}
-                                                </TableCell>
-                                                <TableCell className="text-sm">{report.deliveryCount}</TableCell>
-                                                <TableCell className="text-sm">
-                                                    {formatCurrency(report.avgIncomePerDelivery)}
-                                                </TableCell>
-                                                <TableCell className="text-sm">{report.topRoute}</TableCell>
-                                                <TableCell className="text-sm">{report.topDriver}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </CardContent>
-                    </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.averageOrderValue")}
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  RWF {financialAnalyticsData?.total_revenue ? "N/A" : "0"}
                 </div>
-            )}
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.perDelivery")}
+                </p>
+              </CardContent>
+            </Card>
 
-            {activeTab === 'drivers' && (
-                <div className="mt-6">
-                    <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2">
-                                    <Users className="h-5 w-5" />
-                                    Driver Performance Report
-                                </CardTitle>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" onClick={() => handleExportReport('drivers', 'excel')}>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Excel
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handleExportReport('drivers', 'pdf')}>
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        PDF
-                                    </Button>
-                                    <Button variant="outline" onClick={() => handlePrintReport('drivers')}>
-                                        <Printer className="w-4 h-4 mr-2" />
-                                        Print
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-xs font-medium text-gray-600">#</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Driver ID</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Name</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Total</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Completed</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Cancelled</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Rating</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Avg Time</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Last Delivery</TableHead>
-                                            <TableHead className="text-xs font-medium text-gray-600">Status</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {mockDriverReport.map((driver, index) => (
-                                            <TableRow key={driver.id}>
-                                                <TableCell className="text-xs text-gray-500">{index + 1}</TableCell>
-                                                <TableCell className="font-medium text-sm">{driver.id}</TableCell>
-                                                <TableCell className="text-sm">{driver.name}</TableCell>
-                                                <TableCell className="text-sm">{driver.totalDeliveries}</TableCell>
-                                                <TableCell className="text-sm text-green-600">{driver.completedDeliveries}</TableCell>
-                                                <TableCell className="text-sm text-red-600">{driver.cancelledDeliveries}</TableCell>
-                                                <TableCell className="text-sm">
-                                                    <div className="flex items-center gap-1">
-                                                        <span>{driver.avgRating}</span>
-                                                        <span className="text-yellow-500">★</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-sm">{driver.avgDeliveryTime}</TableCell>
-                                                <TableCell className="text-sm">{driver.lastDelivery}</TableCell>
-                                                <TableCell>
-                                                    <Badge className={getStatusColor(driver.status)}>
-                                                        {driver.status}
-                                                    </Badge>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </CardContent>
-                    </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.profitMargin")}
+                </CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {financialAnalyticsData?.profit_margin?.toFixed(1) || "0"}%
                 </div>
-            )}
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.netProfit")}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Financial Reports Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("adminReports.financialDetails")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("adminReports.date")}</TableHead>
+                    <TableHead>{t("adminReports.revenue")}</TableHead>
+                    <TableHead>{t("adminReports.orders")}</TableHead>
+                    <TableHead>{t("adminReports.profit")}</TableHead>
+                    <TableHead>{t("adminReports.status")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {financialReportsData?.data?.daily_revenue
+                    ?.slice(0, 10)
+                    .map((item: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.date}</TableCell>
+                        <TableCell>
+                          RWF {item.revenue?.toLocaleString()}
+                        </TableCell>
+                        <TableCell>{item.orders}</TableCell>
+                        <TableCell>
+                          RWF {item.profit?.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {t("status.completed")}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    )) || (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
+                        {t("adminReports.noData")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
-    );
-}
+      )}
+
+      {activeTab === "performance" && (
+        <div className="space-y-6">
+          {/* Performance Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.totalDeliveries")}
+                </CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {performanceReportsData?.data?.total_deliveries || "0"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.completed")}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.averageDeliveryTime")}
+                </CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {performanceReportsData?.data?.average_delivery_time || "0"}h
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.fromPickupToDelivery")}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.onTimeDelivery")}
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {performanceReportsData?.data?.on_time_delivery_rate?.toFixed(
+                    1
+                  ) || "0"}
+                  %
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.onTimeRate")}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.activeDrivers")}
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {performanceReportsData?.data?.active_drivers || "0"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.currentlyActive")}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Performance Reports Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("adminReports.performanceDetails")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("adminReports.driver")}</TableHead>
+                    <TableHead>{t("adminReports.deliveries")}</TableHead>
+                    <TableHead>{t("adminReports.avgTime")}</TableHead>
+                    <TableHead>{t("adminReports.rating")}</TableHead>
+                    <TableHead>{t("adminReports.status")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {performanceReportsData?.data?.driver_performance
+                    ?.slice(0, 10)
+                    .map((driver: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell>{driver.driver_name}</TableCell>
+                        <TableCell>{driver.total_deliveries}</TableCell>
+                        <TableCell>{driver.average_delivery_time}h</TableCell>
+                        <TableCell>{driver.rating?.toFixed(1)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {t(`status.${driver.status}`)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    )) || (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
+                        {t("adminReports.noData")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {activeTab === "analytics" && (
+        <div className="space-y-6">
+          {/* Analytics Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("adminReports.cargoAnalytics")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>{t("adminReports.totalCargos")}</span>
+                    <span className="font-semibold">
+                      {cargoAnalyticsData?.total_cargos || "0"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("adminReports.deliveredCargos")}</span>
+                    <span className="font-semibold">
+                      {cargoAnalyticsData?.delivered_cargos || "0"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("adminReports.pendingCargos")}</span>
+                    <span className="font-semibold">
+                      {cargoAnalyticsData?.pending_cargos || "0"}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("adminReports.driverAnalytics")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>{t("adminReports.totalDrivers")}</span>
+                    <span className="font-semibold">
+                      {driverAnalyticsData?.total_drivers || "0"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("adminReports.activeDrivers")}</span>
+                    <span className="font-semibold">
+                      {driverAnalyticsData?.active_drivers || "0"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>{t("adminReports.avgRating")}</span>
+                    <span className="font-semibold">
+                      {driverAnalyticsData?.average_rating?.toFixed(1) || "0"}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("adminReports.actions")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleExportReport("analytics")}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {t("adminReports.exportAnalytics")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handlePrintReport}
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    {t("adminReports.print")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleEmailReport}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    {t("adminReports.email")}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminReports;

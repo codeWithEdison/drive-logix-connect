@@ -1,73 +1,74 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Phone, Truck } from 'lucide-react';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Eye, Phone, Truck, AlertCircle } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { customToast } from "@/lib/utils/toast";
 
-// Mock data for recent deliveries - Rwanda-based (only 3 rows)
-const recentDeliveriesData = [
-  {
-    id: '#3565432',
-    client: 'John Smith',
-    driver: 'Albert Flores',
-    route: 'Kigali → Butare',
-    status: 'delivered',
-    revenue: 'RWF 280,000',
-    eta: '2 hours ago',
-    priority: 'urgent'
-  },
-  {
-    id: '#4832920',
-    client: 'Sarah Johnson',
-    driver: 'Mike Wilson',
-    route: 'Kigali → Musanze',
-    status: 'in_transit',
-    revenue: 'RWF 320,000',
-    eta: '4 hours',
-    priority: 'standard'
-  },
-  {
-    id: '#1442654',
-    client: 'Emma Davis',
-    driver: 'Guy Hawkins',
-    route: 'Butare → Kigali',
-    status: 'delivered',
-    revenue: 'RWF 250,000',
-    eta: '1 day ago',
-    priority: 'express'
-  }
-];
+interface RecentDelivery {
+  cargo_id: string;
+  client_name: string;
+  driver_name: string;
+  status: string;
+  pickup_location: string;
+  delivery_location: string;
+  created_at: string;
+  estimated_delivery: string;
+}
 
 interface RecentDeliveriesTableProps {
   className?: string;
   onViewAll?: () => void;
+  data?: RecentDelivery[];
+  isLoading?: boolean;
+  error?: any;
+  limit?: number;
 }
 
-export function RecentDeliveriesTable({ className, onViewAll }: RecentDeliveriesTableProps) {
+export function RecentDeliveriesTable({
+  className,
+  onViewAll,
+  data = [],
+  isLoading = false,
+  error = null,
+  limit,
+}: RecentDeliveriesTableProps) {
+  const { t } = useLanguage();
+
+  const deliveries = limit ? (data || []).slice(0, limit) : data || [];
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'in_transit':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
+      case "delivered":
+        return "bg-green-100 text-green-800";
+      case "in_transit":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent':
-        return 'bg-red-100 text-red-800';
-      case 'express':
-        return 'bg-purple-100 text-purple-800';
+      case "urgent":
+        return "bg-red-100 text-red-800";
+      case "express":
+        return "bg-purple-100 text-purple-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -89,15 +90,70 @@ export function RecentDeliveriesTable({ className, onViewAll }: RecentDeliveries
     window.location.href = `/admin/drivers/${driver}`;
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <Card
+        className={`bg-white/80 backdrop-blur-sm border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}
+      >
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 pt-6 px-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              {t("tables.recentDeliveries")}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card
+        className={`bg-white/80 backdrop-blur-sm border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}
+      >
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 pt-6 px-6">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              {t("tables.recentDeliveries")}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="px-6 pb-6">
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+              <p className="text-red-600">{t("tables.loadError")}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className={`bg-white/80 backdrop-blur-sm border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}>
+    <Card
+      className={`bg-white/80 backdrop-blur-sm border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ${className}`}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 pt-6 px-6">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-          <CardTitle className="text-lg font-semibold text-gray-900">Recent Deliveries</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">
+            {t("tables.recentDeliveries")}
+          </CardTitle>
         </div>
         <Button variant="outline" size="sm" onClick={onViewAll}>
-          View All
+          {t("common.viewAll")}
         </Button>
       </CardHeader>
       <CardContent className="px-6 pb-6">
@@ -105,61 +161,110 @@ export function RecentDeliveriesTable({ className, onViewAll }: RecentDeliveries
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-gray-900 text-xs">ID</TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">Route</TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">Status</TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">Revenue</TableHead>
-                <TableHead className="font-semibold text-gray-900 text-xs">Actions</TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.id")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.route")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.status")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.revenue")}
+                </TableHead>
+                <TableHead className="font-semibold text-gray-900 text-xs">
+                  {t("tables.actions")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentDeliveriesData.map((delivery) => (
-                <TableRow key={delivery.id} className="hover:bg-gray-50 transition-colors">
-                  <TableCell className="font-medium text-gray-900 text-xs">{delivery.id}</TableCell>
-                  <TableCell className="text-gray-700 text-xs">{delivery.route}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <Badge className={`${getStatusColor(delivery.status)} text-xs px-2 py-1`}>
-                        {delivery.status.replace('_', ' ')}
-                      </Badge>
-                      {delivery.priority !== 'standard' && (
-                        <Badge className={`${getPriorityColor(delivery.priority)} text-xs px-2 py-1`}>
-                          {delivery.priority}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-semibold text-green-600 text-xs">{delivery.revenue}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTrack(delivery.id)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Truck className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewDetails(delivery.id)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Eye className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleContactDriver(delivery.driver)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Phone className="h-3 w-3" />
-                      </Button>
-                    </div>
+              {deliveries.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    {t("tables.noDeliveries")}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                deliveries.map((delivery: any) => (
+                  <TableRow
+                    key={delivery.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <TableCell className="font-medium text-gray-900 text-xs">
+                      {delivery.id}
+                    </TableCell>
+                    <TableCell className="text-gray-700 text-xs">
+                      {delivery.route ||
+                        `${delivery.pickup_location} → ${delivery.delivery_location}`}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <Badge
+                          className={`${getStatusColor(
+                            delivery.status || delivery.delivery_status
+                          )} text-xs px-2 py-1`}
+                        >
+                          {(
+                            delivery.status || delivery.delivery_status
+                          )?.replace("_", " ")}
+                        </Badge>
+                        {delivery.priority &&
+                          delivery.priority !== "standard" && (
+                            <Badge
+                              className={`${getPriorityColor(
+                                delivery.priority
+                              )} text-xs px-2 py-1`}
+                            >
+                              {delivery.priority}
+                            </Badge>
+                          )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-semibold text-green-600 text-xs">
+                      RWF{" "}
+                      {delivery.revenue?.toLocaleString() ||
+                        delivery.amount?.toLocaleString() ||
+                        "0"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTrack(delivery.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Truck className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewDetails(delivery.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            handleContactDriver(
+                              delivery.driver_name || delivery.driver
+                            )
+                          }
+                          className="h-6 w-6 p-0"
+                        >
+                          <Phone className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

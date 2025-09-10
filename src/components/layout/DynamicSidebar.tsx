@@ -49,15 +49,15 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: Package,
     },
     {
-      title: t("navigation.activeDeliveries"),
+      title: t("navigation.myDeliveries"), 
       url: "/driver/deliveries",
       icon: Truck,
     },
-    {
-      title: t("navigation.deliveryHistory"),
-      url: "/driver/history",
-      icon: History,
-    },
+    // {
+    //   title: t("navigation.deliveryHistory"),
+    //   url: "/driver/history",
+    //   icon: History,
+    // },
   ],
   admin: [
     { title: t("navigation.dashboard"), url: "/admin", icon: Home },

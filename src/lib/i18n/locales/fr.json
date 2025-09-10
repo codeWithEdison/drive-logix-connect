@@ -74,6 +74,7 @@
     "update": "Mettre à jour",
     "create": "Créer",
     "add": "Ajouter",
+    "addNew": "Ajouter nouveau",
     "remove": "Supprimer",
     "select": "Sélectionner",
     "choose": "Choisir",
@@ -579,6 +580,26 @@
       "i18n": "Internationalisation"
     }
   },
+  "superAdminDashboard": {
+    "title": "Tableau de bord Super Admin",
+    "subtitle": "Surveiller et gérer toutes les opérations système au Rwanda",
+    "totalRevenue": "Revenus totaux",
+    "activeAdmins": "Admins actifs",
+    "systemUsers": "Utilisateurs système",
+    "systemHealth": "Santé du système",
+    "revenueTrends": "Tendances des revenus",
+    "usageTrends": "Tendances d'utilisation",
+    "adminPerformance": "Performance des admins",
+    "usersDistribution": "Distribution des utilisateurs",
+    "pendingApprovals": "Approbations en attente",
+    "systemAlerts": "Alertes système",
+    "recentLogs": "Journaux récents",
+    "viewAllLogs": "Voir tous les journaux",
+    "filter": "Filtrer",
+    "exportReport": "Exporter le rapport",
+    "addNew": "Ajouter nouveau",
+    "settings": "Paramètres"
+  },
   "clientDashboard": {
     "title": "Tableau de bord client",
     "subtitle": "Bienvenue sur votre tableau de bord de gestion de cargaison",
@@ -615,7 +636,6 @@
         "types": {
           "electronics": "Électronique",
           "furniture": "Meubles",
-          "documents": "Documents",
           "food": "Nourriture",
           "clothing": "Vêtements",
           "other": "Autre"
@@ -873,5 +893,45 @@
       "bank_transfer": "Virement bancaire",
       "online": "En ligne"
     }
+  },
+  "adminDashboard": {
+    "title": "Tableau de bord administrateur",
+    "subtitle": "Surveiller et gérer toutes les opérations logistiques",
+    "day": "Jour",
+    "month": "Mois",
+    "totalRevenue": "Revenus totaux",
+    "activeDeliveries": "Livraisons actives",
+    "availableDrivers": "Chauffeurs disponibles",
+    "totalUsers": "Utilisateurs totaux",
+    "successRate": "Taux de réussite",
+    "pendingApprovals": "Approbations en attente",
+    "exportReport": "Exporter le rapport",
+    "filterOpened": "Panneau de filtrage ouvert",
+    "reportExported": "Rapport exporté avec succès",
+    "loadError": "Échec du chargement des données du tableau de bord",
+    "recentActivities": "Activités récentes",
+    "deliveries": "Livraisons",
+    "approvals": "Approbations",
+    "alerts": "Alertes",
+    "financial": "Financier",
+    "deliveryActivity": "Cargo #{cargoId} livré à {location}",
+    "driverApproval": "Nouveau chauffeur : {name}",
+    "fuelAlert": "Niveau de carburant faible pour le camion {truckId}",
+    "paymentReceived": "Paiement : RWF {amount} reçu",
+    "noRecentActivities": "Aucune activité récente",
+    "general": "Général",
+    "delivery": "Livraison",
+    "approval": "Approbation",
+    "alert": "Alerte",
+    "payment": "Paiement",
+    "cargo": "Cargo",
+    "system": "Système",
+    "user": "Utilisateur",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "delete": "Supprimer",
+    "cancel": "Annuler"
   }
 }

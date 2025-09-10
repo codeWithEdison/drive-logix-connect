@@ -8,7 +8,6 @@ import {
   CreateUserRequest,
 } from "@/types/shared";
 import { customToast } from "@/lib/utils/toast";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface AuthContextType {
   user: User | null;
@@ -27,7 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const navigate = useNavigate();
-  const { t } = useLanguage();
 
   useEffect(() => {
     // Check for stored user on mount
@@ -62,7 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Check if user's email is verified
         if (!user.is_verified) {
-          customToast.error(t("auth.emailNotVerified"));
+          customToast.error(
+            "Email not verified. Please check your email and verify your account."
+          );
           setIsLoading(false);
           return false;
         }

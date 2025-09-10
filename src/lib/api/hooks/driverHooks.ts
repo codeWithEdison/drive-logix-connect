@@ -70,7 +70,7 @@ export const useDriverAssignments = (params?: {
   return useQuery({
     queryKey: queryKeys.drivers.assignments(params),
     queryFn: () => DriverService.getAssignments(params),
-    select: (data) => data.data,
+    select: (data) => (data.data as any).assignments || [], // Handle actual API response structure
   });
 };
 

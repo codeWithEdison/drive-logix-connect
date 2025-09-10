@@ -1,17 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { CustomTabs } from '@/components/ui/CustomTabs';
-import { DeliveryCard } from '@/components/ui/DeliveryCard';
-import { DeliveryDetailModal } from '@/components/ui/DeliveryDetailModal';
-import { DeliveryTable, Delivery } from '@/components/ui/DeliveryTable';
-import { ContactDropdown } from '@/components/ui/ContactDropdown';
-import { PhotoUploadModal } from '@/components/ui/PhotoUploadModal';
-import { SignatureCapture } from '@/components/ui/SignatureCapture';
-import ModernModel from '@/components/modal/ModernModel';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import gpsTrackingService, { LocationData } from '@/services/GpsTrackingService';
+import React, { useState, useEffect } from "react";
+import { CustomTabs } from "@/components/ui/CustomTabs";
+import { DeliveryCard } from "@/components/ui/DeliveryCard";
+import { DeliveryDetailModal } from "@/components/ui/DeliveryDetailModal";
+import { DeliveryTable, Delivery } from "@/components/ui/DeliveryTable";
+import { ContactDropdown } from "@/components/ui/ContactDropdown";
+import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
+import { SignatureCapture } from "@/components/ui/SignatureCapture";
+import ModernModel from "@/components/modal/ModernModel";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { useDriverCargos } from "@/lib/api/hooks";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { customToast } from "@/lib/utils/toast";
+import { mapCargosToCargoDetails } from "@/lib/utils/cargoMapper";
+import gpsTrackingService, {
+  LocationData,
+} from "@/services/GpsTrackingService";
 import {
   MapPin,
   Navigation,
@@ -22,109 +30,84 @@ import {
   CheckCircle,
   Phone,
   Truck,
-  Clock
-} from 'lucide-react';
-
-// Enhanced mock data with more realistic Rwanda-based deliveries
-const activeDeliveries: Delivery[] = [
-  {
-    id: 'DEL-001',
-    cargo: 'Electronics Package',
-    from: 'Kigali, Gasabo District, Kimihurura',
-    to: 'Butare, Huye District, University of Rwanda',
-    client: 'Jean Pierre Uwimana',
-    phone: '+250 781 234567',
-    status: 'in_transit',
-    priority: 'urgent',
-    estimatedTime: '2:30 PM',
-    distance: '45km remaining',
-    pickupContact: 'Marie Uwimana',
-    pickupContactPhone: '+250 789 111 222',
-    deliveryContact: 'Pierre Ndayisaba',
-    deliveryContactPhone: '+250 788 333 444'
-  },
-  {
-    id: 'DEL-002',
-    cargo: 'Furniture Set',
-    from: 'Kigali, Nyarugenge District, Nyamirambo',
-    to: 'Musanze, Musanze District, Volcanoes National Park',
-    client: 'Sarah Mukamana',
-    phone: '+250 781 234568',
-    status: 'active',
-    priority: 'normal',
-    estimatedTime: '4:00 PM',
-    distance: '78km remaining',
-    pickupContact: 'John Mukamana',
-    pickupContactPhone: '+250 787 555 666',
-    deliveryContact: 'Grace Ingabire',
-    deliveryContactPhone: '+250 786 777 888'
-  },
-  {
-    id: 'DEL-003',
-    cargo: 'Medical Supplies',
-    from: 'Kigali, Kicukiro District, Gikondo',
-    to: 'Kibuye, Karongi District, Lake Kivu',
-    client: 'Dr. Kathryn Niyonsaba',
-    phone: '+250 781 234569',
-    status: 'active',
-    priority: 'urgent',
-    estimatedTime: '3:15 PM',
-    distance: '120km remaining',
-    pickupContact: 'David Niyonsaba',
-    pickupContactPhone: '+250 785 999 000',
-    deliveryContact: 'Alice Uwineza',
-    deliveryContactPhone: '+250 784 111 222'
-  }
-];
-
-const completedDeliveries: Delivery[] = [
-  {
-    id: 'DEL-004',
-    cargo: 'Food Supplies',
-    from: 'Kigali, Gasabo District, Remera',
-    to: 'Gitarama, Muhanga District, City Center',
-    client: 'Michael Ndayisaba',
-    phone: '+250 781 234570',
-    status: 'delivered',
-    priority: 'normal',
-    completedAt: '2024-01-15 11:30 AM',
-    rating: 4.8,
-    distance: '32km',
-    pickupContact: 'Rose Ndayisaba',
-    pickupContactPhone: '+250 783 333 444',
-    deliveryContact: 'Paul Habimana',
-    deliveryContactPhone: '+250 782 555 666'
-  },
-  {
-    id: 'DEL-005',
-    cargo: 'Documents',
-    from: 'Kigali, Nyarugenge District, City Center',
-    to: 'Ruhengeri, Musanze District, Business District',
-    client: 'Lisa Uwineza',
-    phone: '+250 781 234571',
-    status: 'delivered',
-    priority: 'normal',
-    completedAt: '2024-01-15 09:45 AM',
-    rating: 5.0,
-    distance: '85km',
-    pickupContact: 'James Uwineza',
-    pickupContactPhone: '+250 781 777 888',
-    deliveryContact: 'Sarah Mukamana',
-    deliveryContactPhone: '+250 780 999 000'
-  }
-];
+  Clock,
+  RefreshCw,
+} from "lucide-react";
 
 export default function DriverDeliveries() {
-  const [activeTab, setActiveTab] = useState('active');
-  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
+  const { t } = useLanguage();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("active");
+  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(
+    null
+  );
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
-  const [photoUploadType, setPhotoUploadType] = useState<'loading' | 'delivery' | 'receipt' | 'signature'>('loading');
+  const [photoUploadType, setPhotoUploadType] = useState<
+    "loading" | "delivery" | "receipt" | "signature"
+  >("loading");
   const [isGpsTracking, setIsGpsTracking] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<LocationData | null>(
+    null
+  );
   const [showContactDropdown, setShowContactDropdown] = useState(false);
   const { toast } = useToast();
+
+  // API hooks - Using CargoService.getDriverCargos for driver deliveries
+  const {
+    data: activeCargosData,
+    isLoading: isLoadingActive,
+    error: activeError,
+    refetch: refetchActive,
+  } = useDriverCargos({ status: "assigned" as any, limit: 50 });
+
+  const {
+    data: completedCargosData,
+    isLoading: isLoadingCompleted,
+    error: completedError,
+    refetch: refetchCompleted,
+  } = useDriverCargos({ status: "delivered" as any, limit: 50 });
+
+  // Transform API data to Delivery format
+  const activeDeliveries: Delivery[] = mapCargosToCargoDetails(
+    activeCargosData?.data || []
+  ).map((cargo) => ({
+    id: cargo.id,
+    cargo: cargo.type,
+    from: cargo.from,
+    to: cargo.to,
+    client: cargo.client || "",
+    phone: cargo.phone || "",
+    status: cargo.status as any,
+    priority: cargo.priority as any,
+    estimatedTime: cargo.estimatedDelivery || "TBD",
+    distance: cargo.distance,
+    pickupContact: cargo.pickupContact || "",
+    pickupContactPhone: cargo.pickupContactPhone || "",
+    deliveryContact: cargo.deliveryContact || "",
+    deliveryContactPhone: cargo.deliveryContactPhone || "",
+  }));
+
+  const completedDeliveries: Delivery[] = mapCargosToCargoDetails(
+    completedCargosData?.data || []
+  ).map((cargo) => ({
+    id: cargo.id,
+    cargo: cargo.type,
+    from: cargo.from,
+    to: cargo.to,
+    client: cargo.client || "",
+    phone: cargo.phone || "",
+    status: "delivered" as const,
+    priority: cargo.priority as any,
+    completedAt: cargo.assignedDate,
+    rating: 4.5, // Default rating since not available in CargoDetail
+    distance: cargo.distance,
+    pickupContact: cargo.pickupContact || "",
+    pickupContactPhone: cargo.pickupContactPhone || "",
+    deliveryContact: cargo.deliveryContact || "",
+    deliveryContactPhone: cargo.deliveryContactPhone || "",
+  }));
 
   // GPS Tracking setup
   useEffect(() => {
@@ -136,7 +119,7 @@ export default function DriverDeliveries() {
           setCurrentLocation(location);
         }
       } catch (error) {
-        console.error('GPS initialization failed:', error);
+        console.error("GPS initialization failed:", error);
       }
     };
 
@@ -149,7 +132,7 @@ export default function DriverDeliveries() {
   };
 
   const handleCallClient = (phone: string) => {
-    window.open(`tel:${phone}`, '_self');
+    window.open(`tel:${phone}`, "_self");
   };
 
   const handleNavigate = async (delivery: Delivery) => {
@@ -161,40 +144,34 @@ export default function DriverDeliveries() {
           // Share location with admin system
           gpsTrackingService.shareLocationWithAdmin(
             location,
-            'driver-123', // Replace with actual driver ID
+            user?.id || "driver-123",
             delivery.id
           );
         },
         onError: (error) => {
-          console.error('GPS tracking error:', error);
-          toast({
-            title: "GPS Error",
-            description: "Unable to track location. Please check GPS permissions.",
-            variant: "destructive"
-          });
-        }
+          console.error("GPS tracking error:", error);
+          customToast.error(t("errors.gpsError"));
+        },
       });
 
       setIsGpsTracking(true);
-      toast({
-        title: "Navigation Started",
-        description: "GPS tracking is now active. Your location is being shared with the admin.",
-      });
+      customToast.success(t("driver.navigationStarted"));
 
       // Open navigation in maps app
       const destination = encodeURIComponent(delivery.to);
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank');
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${destination}`,
+        "_blank"
+      );
     } catch (error) {
-      console.error('Navigation failed:', error);
-      toast({
-        title: "Navigation Failed",
-        description: "Unable to start navigation. Please try again.",
-        variant: "destructive"
-      });
+      console.error("Navigation failed:", error);
+      customToast.error(t("errors.navigationFailed"));
     }
   };
 
-  const handlePhotoUpload = (type: 'loading' | 'delivery' | 'receipt' | 'signature') => {
+  const handlePhotoUpload = (
+    type: "loading" | "delivery" | "receipt" | "signature"
+  ) => {
     setPhotoUploadType(type);
     setIsPhotoModalOpen(true);
   };
@@ -211,7 +188,7 @@ export default function DriverDeliveries() {
   }) => {
     try {
       // Simulate upload
-      console.log('Uploading photos:', data);
+      console.log("Uploading photos:", data);
 
       // Here you would typically upload to your backend
       // const formData = new FormData();
@@ -220,114 +197,202 @@ export default function DriverDeliveries() {
       // formData.append('type', data.type);
       // formData.append('cargoId', data.cargoId);
 
-      toast({
-        title: "Photos Uploaded",
-        description: `${data.photos.length} photos uploaded successfully for ${data.type}.`,
-      });
-
+      customToast.success(
+        t("driver.photosUploaded", {
+          count: data.photos.length,
+          type: data.type,
+        })
+      );
       setIsPhotoModalOpen(false);
     } catch (error) {
-      console.error('Photo upload failed:', error);
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload photos. Please try again.",
-        variant: "destructive"
-      });
+      console.error("Photo upload failed:", error);
+      customToast.error(t("errors.uploadFailed"));
     }
   };
 
-  const handleSignatureSave = async (signature: string, customerName: string, notes: string) => {
+  const handleSignatureSave = async (
+    signature: string,
+    customerName: string,
+    notes: string
+  ) => {
     try {
       // Simulate signature save
-      console.log('Saving signature:', { signature, customerName, notes });
+      console.log("Saving signature:", { signature, customerName, notes });
 
-      toast({
-        title: "Signature Captured",
-        description: `Signature captured for ${customerName}.`,
-      });
-
+      customToast.success(t("driver.signatureCaptured", { customerName }));
       setIsSignatureModalOpen(false);
     } catch (error) {
-      console.error('Signature save failed:', error);
-      toast({
-        title: "Signature Failed",
-        description: "Failed to save signature. Please try again.",
-        variant: "destructive"
-      });
+      console.error("Signature save failed:", error);
+      customToast.error(t("errors.signatureFailed"));
     }
   };
 
   const handleMarkDelivered = async (delivery: Delivery) => {
     try {
       // Simulate delivery completion
-      console.log('Marking delivery as completed:', delivery.id);
+      console.log("Marking delivery as completed:", delivery.id);
 
-      toast({
-        title: "Delivery Completed",
-        description: `Delivery ${delivery.id} has been marked as completed.`,
-      });
+      customToast.success(
+        t("driver.deliveryCompleted", { deliveryId: delivery.id })
+      );
+      // Refresh the data after completion
+      refetchActive();
+      refetchCompleted();
     } catch (error) {
-      console.error('Delivery completion failed:', error);
-      toast({
-        title: "Completion Failed",
-        description: "Failed to mark delivery as completed. Please try again.",
-        variant: "destructive"
-      });
+      console.error("Delivery completion failed:", error);
+      customToast.error(t("errors.completionFailed"));
     }
   };
 
   const handleReportIssue = (delivery: Delivery) => {
-    toast({
-      title: "Report Issue",
-      description: `Issue reported for delivery ${delivery.id}. Support team will contact you shortly.`,
-    });
+    customToast.info(t("driver.issueReported", { deliveryId: delivery.id }));
+  };
+
+  const handleRefresh = () => {
+    if (activeTab === "active") {
+      refetchActive();
+    } else {
+      refetchCompleted();
+    }
   };
 
   const tabs = [
     {
-      value: 'active',
-      label: 'Active Deliveries',
-      count: activeDeliveries.length
+      value: "active",
+      label: t("navigation.activeDeliveries"),
+      count: activeDeliveries.length,
     },
     {
-      value: 'completed',
-      label: 'Completed',
-      count: completedDeliveries.length
-    }
+      value: "completed",
+      label: t("status.completed"),
+      count: completedDeliveries.length,
+    },
   ];
 
-  const currentDeliveries = activeTab === 'active' ? activeDeliveries : completedDeliveries;
+  const currentDeliveries =
+    activeTab === "active" ? activeDeliveries : completedDeliveries;
+  const isLoading =
+    activeTab === "active" ? isLoadingActive : isLoadingCompleted;
+  const error = activeTab === "active" ? activeError : completedError;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-8 w-24" />
+        </div>
+
+        {/* Tabs Skeleton */}
+        <div className="flex space-x-1">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-32" />
+          ))}
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-6">
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("navigation.myDeliveries")}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("driver.manageDeliveries")}
+            </p>
+          </div>
+        </div>
+
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <div>
+                <h3 className="font-semibold text-red-800">
+                  {t("common.error")}
+                </h3>
+                <p className="text-red-600 text-sm mt-1">
+                  {error.message || t("dashboard.loadError")}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="mt-2"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {t("common.retry")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">My Deliveries</h1>
-          <p className="text-muted-foreground">Manage your active and completed deliveries</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            {t("navigation.myDeliveries")}
+          </h1>
+          <p className="text-muted-foreground">
+            {t("driver.manageDeliveries")}
+          </p>
         </div>
         <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            {t("common.refresh")}
+          </Button>
           {isGpsTracking && (
             <Badge className="bg-green-100 text-green-800 animate-pulse">
               <Navigation className="h-3 w-3 mr-1" />
-              GPS Active
+              {t("driver.gpsActive")}
             </Badge>
           )}
         </div>
       </div>
 
       {/* Custom Tabs */}
-      <CustomTabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        tabs={tabs}
-      />
+      <CustomTabs value={activeTab} onValueChange={setActiveTab} tabs={tabs} />
 
       {/* Delivery Table for Large Screens */}
       <div className="hidden lg:block">
         <DeliveryTable
           deliveries={currentDeliveries}
-          title={activeTab === 'active' ? 'Active Deliveries' : 'Completed Deliveries'}
+          title={
+            activeTab === "active"
+              ? t("navigation.activeDeliveries")
+              : t("status.completed") + " " + t("navigation.deliveries")
+          }
           showStats={false}
           showSearch={true}
           showFilters={true}
@@ -336,9 +401,9 @@ export default function DriverDeliveries() {
           onViewDetails={handleViewDetails}
           onNavigate={handleNavigate}
           onCallClient={handleCallClient}
-          onUploadLoadingPhotos={(delivery) => handlePhotoUpload('loading')}
-          onUploadDeliveryPhotos={(delivery) => handlePhotoUpload('delivery')}
-          onUploadReceiptPhotos={(delivery) => handlePhotoUpload('receipt')}
+          onUploadLoadingPhotos={(delivery) => handlePhotoUpload("loading")}
+          onUploadDeliveryPhotos={(delivery) => handlePhotoUpload("delivery")}
+          onUploadReceiptPhotos={(delivery) => handlePhotoUpload("receipt")}
           onCaptureSignature={handleSignatureCapture}
           onReportIssue={handleReportIssue}
           onMarkDelivered={handleMarkDelivered}
@@ -356,12 +421,12 @@ export default function DriverDeliveries() {
               onNavigate={() => handleNavigate(delivery)}
               onCallClient={() => handleCallClient(delivery.phone)}
               onMarkDelivered={() => handleMarkDelivered(delivery)}
-              onUploadLoadingPhotos={() => handlePhotoUpload('loading')}
-              onUploadDeliveryPhotos={() => handlePhotoUpload('delivery')}
-              onUploadReceiptPhotos={() => handlePhotoUpload('receipt')}
+              onUploadLoadingPhotos={() => handlePhotoUpload("loading")}
+              onUploadDeliveryPhotos={() => handlePhotoUpload("delivery")}
+              onUploadReceiptPhotos={() => handlePhotoUpload("receipt")}
               onCaptureSignature={handleSignatureCapture}
               onReportIssue={() => handleReportIssue(delivery)}
-              showActions={activeTab === 'active'}
+              showActions={activeTab === "active"}
             />
           ))}
         </div>
@@ -373,13 +438,17 @@ export default function DriverDeliveries() {
           <CardContent>
             <Truck className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No {activeTab === 'active' ? 'Active' : 'Completed'} Deliveries
+              {t("driver.noDeliveries", {
+                type:
+                  activeTab === "active"
+                    ? t("status.active")
+                    : t("status.completed"),
+              })}
             </h3>
             <p className="text-gray-600">
-              {activeTab === 'active'
-                ? 'You don\'t have any active deliveries at the moment.'
-                : 'No completed deliveries to show.'
-              }
+              {activeTab === "active"
+                ? t("driver.noActiveDeliveries")
+                : t("driver.noCompletedDeliveries")}
             </p>
           </CardContent>
         </Card>
@@ -393,17 +462,21 @@ export default function DriverDeliveries() {
           setSelectedDelivery(null);
         }}
         delivery={selectedDelivery}
-        onCallClient={() => selectedDelivery && handleCallClient(selectedDelivery.phone)}
+        onCallClient={() =>
+          selectedDelivery && handleCallClient(selectedDelivery.phone)
+        }
         onNavigate={() => selectedDelivery && handleNavigate(selectedDelivery)}
-        onUploadPhoto={() => handlePhotoUpload('delivery')}
-        onReportIssue={() => selectedDelivery && handleReportIssue(selectedDelivery)}
+        onUploadPhoto={() => handlePhotoUpload("delivery")}
+        onReportIssue={() =>
+          selectedDelivery && handleReportIssue(selectedDelivery)
+        }
       />
 
       {/* Photo Upload Modal */}
       <PhotoUploadModal
         isOpen={isPhotoModalOpen}
         onClose={() => setIsPhotoModalOpen(false)}
-        cargoId={selectedDelivery?.id || ''}
+        cargoId={selectedDelivery?.id || ""}
         uploadType={photoUploadType}
         onUpload={handlePhotoUploadSubmit}
       />
@@ -412,11 +485,11 @@ export default function DriverDeliveries() {
       <ModernModel
         isOpen={isSignatureModalOpen}
         onClose={() => setIsSignatureModalOpen(false)}
-        title="Capture Customer Signature"
+        title={t("driver.captureSignature")}
       >
         <SignatureCapture
-          cargoId={selectedDelivery?.id || ''}
-          customerName={selectedDelivery?.client || ''}
+          cargoId={selectedDelivery?.id || ""}
+          customerName={selectedDelivery?.client || ""}
           onSave={handleSignatureSave}
           onCancel={() => setIsSignatureModalOpen(false)}
         />
@@ -427,19 +500,19 @@ export default function DriverDeliveries() {
         <ContactDropdown
           contacts={[
             {
-              id: '1',
-              name: selectedDelivery.pickupContact || '',
-              phone: selectedDelivery.pickupContactPhone || '',
-              type: 'pickup',
-              company: 'Pickup Location'
+              id: "1",
+              name: selectedDelivery.pickupContact || "",
+              phone: selectedDelivery.pickupContactPhone || "",
+              type: "pickup",
+              company: "Pickup Location",
             },
             {
-              id: '2',
-              name: selectedDelivery.deliveryContact || '',
-              phone: selectedDelivery.deliveryContactPhone || '',
-              type: 'delivery',
-              company: 'Delivery Location'
-            }
+              id: "2",
+              name: selectedDelivery.deliveryContact || "",
+              phone: selectedDelivery.deliveryContactPhone || "",
+              type: "delivery",
+              company: "Delivery Location",
+            },
           ]}
           onCall={(contact) => handleCallClient(contact.phone)}
         />
