@@ -586,7 +586,8 @@
     "truckAssigned": "Truck and driver assigned successfully",
     "statusUpdated": "Cargo status updated successfully",
     "cargoCancelled": "Cargo cancelled successfully",
-    "loadError": "Failed to load cargos data"
+    "loadError": "Failed to load cargos data",
+    "searchPlaceholder": "Search by client, location, or cargo type..."
   },
   "adminUsers": {
     "title": "User Management",

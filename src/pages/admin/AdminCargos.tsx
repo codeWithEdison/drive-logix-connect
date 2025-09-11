@@ -150,56 +150,20 @@ export default function AdminCargos() {
   console.log("Pagination:", pagination);
   console.log("Cargos length:", cargosData.length);
 
-  // Calculate status counts for tabs - Note: This is only for current page
-  // For accurate counts, we'd need separate API calls for each status
-  const statusCounts = useMemo(() => {
-    const counts = {
-      all: pagination.total, // Use total from pagination metadata
-      pending: 0,
-      assigned: 0,
-      picked_up: 0,
-      in_transit: 0,
-      delivered: 0,
-      cancelled: 0,
-    };
-
-    // Count only current page data (this is a limitation)
-    // For accurate counts, we'd need to make separate API calls for each status
-    cargosData.forEach((cargo) => {
-      const status = cargo.status as keyof typeof counts;
-      if (status in counts) {
-        counts[status]++;
-      }
-    });
-
-    return counts;
-  }, [cargosData, pagination.total]);
+  // Get current count based on selected status filter
+  const currentCount = useMemo(() => {
+    return pagination.total; // This will be the total for the current filter
+  }, [pagination.total]);
 
   // Status tabs configuration
   const statusTabs = [
-    { key: "all", label: t("common.all"), count: statusCounts.all },
-    { key: "pending", label: t("status.pending"), count: statusCounts.pending },
-    {
-      key: "assigned",
-      label: t("status.assigned"),
-      count: statusCounts.assigned,
-    },
-    { key: "picked_up", label: "Picked Up", count: statusCounts.picked_up },
-    {
-      key: "in_transit",
-      label: t("status.inTransit"),
-      count: statusCounts.in_transit,
-    },
-    {
-      key: "delivered",
-      label: t("status.delivered"),
-      count: statusCounts.delivered,
-    },
-    {
-      key: "cancelled",
-      label: t("status.cancelled"),
-      count: statusCounts.cancelled,
-    },
+    { key: "all", label: t("common.all") },
+    { key: "pending", label: t("status.pending") },
+    { key: "assigned", label: t("status.assigned") },
+    { key: "picked_up", label: "Picked Up" },
+    { key: "in_transit", label: t("status.inTransit") },
+    { key: "delivered", label: t("status.delivered") },
+    { key: "cancelled", label: t("status.cancelled") },
   ];
 
   const handleViewDetails = (cargo: CargoDetail) => {
@@ -426,7 +390,7 @@ export default function AdminCargos() {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
+      {/* Main Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
@@ -455,78 +419,39 @@ export default function AdminCargos() {
       </div>
 
       {/* Status Tabs */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 border-b border-gray-200">
         {statusTabs.map((tab) => (
-          <Button
+          <button
             key={tab.key}
-            variant={statusFilter === tab.key ? "default" : "outline"}
-            size="sm"
             onClick={() => setStatusFilter(tab.key)}
-            className="flex items-center gap-2"
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              statusFilter === tab.key
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
           >
             {tab.label}
-            <Badge
-              variant={statusFilter === tab.key ? "secondary" : "outline"}
-              className="ml-1"
-            >
-              {tab.count}
-            </Badge>
-          </Button>
+            {statusFilter === tab.key && (
+              <span className="ml-2 px-2 py-1 text-xs bg-gray-100 rounded-full">
+                {currentCount}
+              </span>
+            )}
+          </button>
         ))}
       </div>
 
-      {/* Search and Advanced Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            {/* Search Section */}
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder={t("common.search")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setSearchTerm("")}
-                disabled={!searchTerm}
-              >
-                Clear
-              </Button>
-            </div>
+      {/* Search and Filters Section */}
+      <div className="flex flex-wrap gap-4 items-center">
+        {/* Search Input */}
+        <div className="flex-1 min-w-64">
+          <Input
+            placeholder={t("adminCargos.searchPlaceholder")}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+          />
+        </div>
 
-            {/* Date Range Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">
-                  From Date
-                </label>
-                <Input
-                  type="date"
-                  value={dateFromFilter}
-                  onChange={(e) => setDateFromFilter(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">
-                  To Date
-                </label>
-                <Input
-                  type="date"
-                  value={dateToFilter}
-                  onChange={(e) => setDateToFilter(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Additional Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
         {/* Priority Filter */}
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">Priority:</label>
@@ -595,7 +520,7 @@ export default function AdminCargos() {
           </Select>
         </div>
 
-        {/* Clear All Filters */}
+        {/* Clear Filters */}
         <Button
           variant="outline"
           size="sm"
@@ -609,7 +534,7 @@ export default function AdminCargos() {
             setCurrentPage(1);
           }}
         >
-          Clear All Filters
+          Clear
         </Button>
       </div>
 
