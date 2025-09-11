@@ -30,6 +30,7 @@ import {
   Receipt,
   Activity,
   Database,
+  User,
 } from "lucide-react";
 
 const getNavigationConfig = (t: (key: string) => string) => ({
@@ -49,7 +50,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: Package,
     },
     {
-      title: t("navigation.myDeliveries"), 
+      title: t("navigation.myDeliveries"),
       url: "/driver/deliveries",
       icon: Truck,
     },

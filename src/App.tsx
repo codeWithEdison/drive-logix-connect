@@ -44,6 +44,7 @@ import SuperAdminSettings from "@/pages/superadmin/SuperAdminSettings";
 import SuperAdminLogs from "@/pages/superadmin/SuperAdminLogs";
 import NotFound from "@/pages/NotFound";
 import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
+import { ProfilePage } from "@/pages/Profile";
 
 function AppContent() {
   const { isAuthenticated, user, getDefaultRoute, isInitialized } = useAuth();
@@ -148,6 +149,16 @@ function AppContent() {
           element={
             <ProtectedRoute allowedRoles={["client"]}>
               <PaymentSuccess />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Profile Route - Available to all authenticated users */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />

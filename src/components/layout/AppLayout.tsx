@@ -3,20 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DynamicSidebar } from "./DynamicSidebar";
 import { MobileBottomNav } from "./MobileBottomNav";
+import { ProfileDropdown } from "./ProfileDropdown";
 import { Button } from "@/components/ui/button";
-import { Bell, Menu } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FaLanguage } from "react-icons/fa6";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { DriverNotifications } from "@/components/ui/DriverNotifications";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface AppLayoutProps {
@@ -24,9 +16,8 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
-  const { currentLanguage } = useLanguage();
   const { toast } = useToast();
 
   const handleNotificationAction = (action: string, data?: any) => {
@@ -52,26 +43,11 @@ export function AppLayout({ children }: AppLayoutProps) {
     return <>{children}</>;
   }
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case "client":
-        return "hsl(var(--primary))";
-      case "driver":
-        return "hsl(var(--success))";
-      case "admin":
-        return "hsl(var(--info))";
-      case "super_admin":
-        return "hsl(var(--accent))";
-      default:
-        return "hsl(var(--primary))";
-    }
-  };
-
   if (isMobile) {
     return (
       <div className="flex flex-col min-h-screen w-full bg-[#F9FAFE]">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 relative group">
+        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group">
           <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <img
@@ -98,21 +74,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 />
               )}
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0"
-                onClick={logout}
-              >
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback
-                    style={{ backgroundColor: getRoleColor(user.role) }}
-                    className="text-white font-bold text-xs"
-                  >
-                    {user.full_name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
+              <ProfileDropdown />
             </div>
           </div>
           <div className="pointer-events-none absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
@@ -136,7 +98,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         <div className="flex-1 flex flex-col">
           {/* Desktop Header */}
-          <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 relative group">
+          <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group">
             <div className="flex h-16 items-center gap-4 px-6">
               <SidebarTrigger className="h-9 w-9 text-gray-600 hover:text-blue-600" />
 
@@ -163,24 +125,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   </Button>
                 )}
 
-                <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback
-                      style={{ backgroundColor: getRoleColor(user.role) }}
-                      className="text-white font-bold"
-                    >
-                      {user.full_name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="hidden xl:block">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user.full_name}
-                    </p>
-                    <p className="text-xs text-gray-500 capitalize">
-                      {user.role?.replace("_", " ") || "Unknown"}
-                    </p>
-                  </div>
-                </div>
+                <ProfileDropdown />
               </div>
             </div>
             <div className="pointer-events-none absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
