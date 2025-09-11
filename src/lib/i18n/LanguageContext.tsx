@@ -31,7 +31,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     if (ready) {
       setIsLoading(false);
     }
-  }, [ready]);
+  }, [ready, currentLanguage]);
 
   const handleSetLanguage = (language: Language) => {
     setCurrentLanguage(language);

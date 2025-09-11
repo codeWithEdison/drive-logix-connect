@@ -104,7 +104,7 @@ const recentCargos = [
 
 export function ClientDashboard() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, isLoading: isLanguageLoading } = useLanguage();
   const { user } = useAuth();
   const {
     data: dashboardData,
@@ -134,7 +134,7 @@ export function ClientDashboard() {
   };
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || isLanguageLoading) {
     return (
       <div className="space-y-8">
         {/* Header Skeleton */}
@@ -273,7 +273,7 @@ export function ClientDashboard() {
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            disabled={isLoading}
+            disabled={isLoading || isLanguageLoading}
           >
             <RefreshCw
               className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
