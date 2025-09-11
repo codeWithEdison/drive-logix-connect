@@ -425,44 +425,108 @@ export default function AdminCargos() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Minimal Header with Actions */}
-      <div className="flex items-center justify-end gap-3">
-        <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-          />
-          {t("common.refresh")}
-        </Button>
-        <Button onClick={handleCreateNewCargo}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t("adminCargos.addNew")}
-        </Button>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            {t("adminCargos.title")}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {t("adminCargos.subtitle")}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            {t("common.refresh")}
+          </Button>
+          <Button onClick={handleCreateNewCargo}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t("adminCargos.addNew")}
+          </Button>
+        </div>
       </div>
 
-      {/* Compact Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">Status:</label>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              <SelectItem value="pending">{t("status.pending")}</SelectItem>
-              <SelectItem value="assigned">{t("status.assigned")}</SelectItem>
-              <SelectItem value="picked_up">Picked Up</SelectItem>
-              <SelectItem value="in_transit">
-                {t("status.inTransit")}
-              </SelectItem>
-              <SelectItem value="delivered">{t("status.delivered")}</SelectItem>
-              <SelectItem value="cancelled">{t("status.cancelled")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Status Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {statusTabs.map((tab) => (
+          <Button
+            key={tab.key}
+            variant={statusFilter === tab.key ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter(tab.key)}
+            className="flex items-center gap-2"
+          >
+            {tab.label}
+            <Badge
+              variant={statusFilter === tab.key ? "secondary" : "outline"}
+              className="ml-1"
+            >
+              {tab.count}
+            </Badge>
+          </Button>
+        ))}
+      </div>
 
+      {/* Search and Advanced Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="space-y-4">
+            {/* Search Section */}
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder={t("common.search")}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setSearchTerm("")}
+                disabled={!searchTerm}
+              >
+                Clear
+              </Button>
+            </div>
+
+            {/* Date Range Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  From Date
+                </label>
+                <Input
+                  type="date"
+                  value={dateFromFilter}
+                  onChange={(e) => setDateFromFilter(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  To Date
+                </label>
+                <Input
+                  type="date"
+                  value={dateToFilter}
+                  onChange={(e) => setDateToFilter(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Additional Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
         {/* Priority Filter */}
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">Priority:</label>
@@ -531,7 +595,7 @@ export default function AdminCargos() {
           </Select>
         </div>
 
-        {/* Clear Filters */}
+        {/* Clear All Filters */}
         <Button
           variant="outline"
           size="sm"
@@ -545,7 +609,7 @@ export default function AdminCargos() {
             setCurrentPage(1);
           }}
         >
-          Clear
+          Clear All Filters
         </Button>
       </div>
 
