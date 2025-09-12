@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { TrackingMap } from "@/components/dashboard/TrackingMap";
+import { LiveTrackingMap } from "@/components/dashboard/LiveTrackingMap";
 import {
   MapPin,
   Search,
@@ -426,8 +426,10 @@ const TrackingPage = () => {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent>
-              <TrackingMap />
+            <CardContent className="p-0">
+              <div className="h-[600px]">
+                <LiveTrackingMap />
+              </div>
             </CardContent>
           </Card>
 

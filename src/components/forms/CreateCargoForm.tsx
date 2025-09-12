@@ -39,6 +39,10 @@ import {
   Save,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  googleMapsService,
+  GooglePlace,
+} from "@/lib/services/googleMapsService";
 
 // Mock vehicle data for form display - in real app, this would come from API
 const mockVehicleData = [
@@ -145,12 +149,15 @@ export function CreateCargoForm() {
   const [cargoId, setCargoId] = useState("");
   const [pickupSearchQuery, setPickupSearchQuery] = useState("");
   const [destinationSearchQuery, setDestinationSearchQuery] = useState("");
-  const [pickupSearchResults, setPickupSearchResults] = useState<any[]>([]);
+  const [pickupSearchResults, setPickupSearchResults] = useState<GooglePlace[]>(
+    []
+  );
   const [destinationSearchResults, setDestinationSearchResults] = useState<
-    any[]
+    GooglePlace[]
   >([]);
   const [isSearchingPickup, setIsSearchingPickup] = useState(false);
   const [isSearchingDestination, setIsSearchingDestination] = useState(false);
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
 
   // API hooks
   const createCargoMutation = useCreateCargo();
@@ -266,6 +273,11 @@ export function CreateCargoForm() {
   const searchLocation = async (query: string, isPickup: boolean) => {
     if (!query.trim()) return;
 
+    console.log(
+      `🔍 Searching ${isPickup ? "pickup" : "delivery"} location:`,
+      query
+    );
+
     const isSearching = isPickup
       ? setIsSearchingPickup
       : setIsSearchingDestination;
@@ -276,60 +288,48 @@ export function CreateCargoForm() {
     isSearching(true);
 
     try {
-      // Mock Google Places API response - in real app, use actual Google Places API
-      const mockResults = [
-        {
-          place_id: "1",
-          description: `${query} - Kigali, Rwanda`,
-          structured_formatting: {
-            main_text: query,
-            secondary_text: "Kigali, Rwanda",
-          },
-        },
-        {
-          place_id: "2",
-          description: `${query} - Remera, Kigali, Rwanda`,
-          structured_formatting: {
-            main_text: query,
-            secondary_text: "Remera, Kigali, Rwanda",
-          },
-        },
-        {
-          place_id: "3",
-          description: `${query} - Nyarugenge, Kigali, Rwanda`,
-          structured_formatting: {
-            main_text: query,
-            secondary_text: "Nyarugenge, Kigali, Rwanda",
-          },
-        },
-      ];
-
-      setResults(mockResults);
+      const results = await googleMapsService.searchPlaces(query, "RW");
+      console.log(
+        `📥 Search results for ${isPickup ? "pickup" : "delivery"}:`,
+        results
+      );
+      setResults(results);
     } catch (error) {
       console.error("Error searching location:", error);
-      toast.error("Failed to search location");
+      toast.error(
+        "Failed to search location. Please check your Google Maps API key."
+      );
+      setResults([]);
     } finally {
       isSearching(false);
     }
   };
 
-  const selectLocation = (result: any, isPickup: boolean) => {
+  const selectLocation = async (result: GooglePlace, isPickup: boolean) => {
     const address = result.description;
-    const lat = isPickup ? -1.9441 : -1.9501; // Mock coordinates
-    const lng = isPickup ? 30.0619 : 30.0596;
+
+    // Get place details to get coordinates
+    const placeDetails = await googleMapsService.getPlaceDetails(
+      result.place_id
+    );
+
+    if (!placeDetails) {
+      toast.error("Failed to get location details");
+      return;
+    }
 
     const updatedFormData = {
       ...formData,
       ...(isPickup
         ? {
             pickupAddress: address,
-            pickupLat: lat.toString(),
-            pickupLng: lng.toString(),
+            pickupLat: placeDetails.lat.toString(),
+            pickupLng: placeDetails.lng.toString(),
           }
         : {
             destinationAddress: address,
-            destinationLat: lat.toString(),
-            destinationLng: lng.toString(),
+            destinationLat: placeDetails.lat.toString(),
+            destinationLng: placeDetails.lng.toString(),
           }),
       distance: 0, // Reset distance to show loading state
     };
@@ -346,24 +346,59 @@ export function CreateCargoForm() {
 
     // Calculate distance if both locations are set
     if (updatedFormData.pickupLat && updatedFormData.destinationLat) {
-      setTimeout(() => {
-        // Mock distance calculation - in real app, use Google Maps Distance Matrix API
-        const distance = Math.random() * 50 + 10; // 10-60 km
-        setFormData((prev) => ({ ...prev, distance: Math.round(distance) }));
-      }, 500); // Small delay to show loading state
+      await calculateDistanceBetweenLocations(
+        parseFloat(updatedFormData.pickupLat),
+        parseFloat(updatedFormData.pickupLng),
+        parseFloat(updatedFormData.destinationLat),
+        parseFloat(updatedFormData.destinationLng)
+      );
     }
   };
 
-  const calculateDistance = () => {
+  const calculateDistanceBetweenLocations = async (
+    pickupLat: number,
+    pickupLng: number,
+    destinationLat: number,
+    destinationLng: number
+  ) => {
+    setIsCalculatingDistance(true);
+
+    try {
+      const result = await googleMapsService.calculateDistance(
+        { lat: pickupLat, lng: pickupLng },
+        { lat: destinationLat, lng: destinationLng }
+      );
+
+      if (result) {
+        const distanceKm = googleMapsService.metersToKilometers(
+          result.distance
+        );
+        setFormData((prev) => ({ ...prev, distance: distanceKm }));
+        toast.success(`Distance calculated: ${distanceKm} km`);
+      } else {
+        toast.error("Failed to calculate distance");
+      }
+    } catch (error) {
+      console.error("Error calculating distance:", error);
+      toast.error("Failed to calculate distance. Please try again.");
+    } finally {
+      setIsCalculatingDistance(false);
+    }
+  };
+
+  const calculateDistance = async () => {
     if (
       formData.pickupLat &&
       formData.pickupLng &&
       formData.destinationLat &&
       formData.destinationLng
     ) {
-      // Mock distance calculation - in real app, use Google Maps Distance Matrix API
-      const distance = Math.random() * 50 + 10; // 10-60 km
-      setFormData({ ...formData, distance: Math.round(distance) });
+      await calculateDistanceBetweenLocations(
+        parseFloat(formData.pickupLat),
+        parseFloat(formData.pickupLng),
+        parseFloat(formData.destinationLat),
+        parseFloat(formData.destinationLng)
+      );
     }
   };
 
@@ -663,15 +698,16 @@ export function CreateCargoForm() {
                     // Calculate distance if both addresses are set
                     if (
                       newFormData.pickupAddress &&
-                      newFormData.destinationAddress
+                      newFormData.destinationAddress &&
+                      newFormData.pickupLat &&
+                      newFormData.destinationLat
                     ) {
-                      setTimeout(() => {
-                        const distance = Math.random() * 50 + 10; // 10-60 km
-                        setFormData((prev) => ({
-                          ...prev,
-                          distance: Math.round(distance),
-                        }));
-                      }, 500); // Small delay to show loading state
+                      calculateDistanceBetweenLocations(
+                        parseFloat(newFormData.pickupLat),
+                        parseFloat(newFormData.pickupLng),
+                        parseFloat(newFormData.destinationLat),
+                        parseFloat(newFormData.destinationLng)
+                      );
                     }
                   }}
                   rows={2}
@@ -834,15 +870,16 @@ export function CreateCargoForm() {
                     // Calculate distance if both addresses are set
                     if (
                       newFormData.pickupAddress &&
-                      newFormData.destinationAddress
+                      newFormData.destinationAddress &&
+                      newFormData.pickupLat &&
+                      newFormData.destinationLat
                     ) {
-                      setTimeout(() => {
-                        const distance = Math.random() * 50 + 10; // 10-60 km
-                        setFormData((prev) => ({
-                          ...prev,
-                          distance: Math.round(distance),
-                        }));
-                      }, 500); // Small delay to show loading state
+                      calculateDistanceBetweenLocations(
+                        parseFloat(newFormData.pickupLat),
+                        parseFloat(newFormData.pickupLng),
+                        parseFloat(newFormData.destinationLat),
+                        parseFloat(newFormData.destinationLng)
+                      );
                     }
                   }}
                   rows={2}
@@ -974,13 +1011,33 @@ export function CreateCargoForm() {
                     <span className="font-medium">
                       {formData.distance > 0
                         ? `Estimated Distance: ${formData.distance} km`
-                        : "Calculating distance..."}
+                        : isCalculatingDistance
+                        ? "Calculating distance..."
+                        : "Distance will be calculated automatically"}
                     </span>
                   </div>
-                  {formData.distance === 0 && (
+                  {(formData.distance === 0 || isCalculatingDistance) && (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
                   )}
                 </div>
+                {formData.distance > 0 && (
+                  <div className="mt-2 text-sm text-blue-700">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={calculateDistance}
+                      disabled={isCalculatingDistance}
+                      className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                    >
+                      <RefreshCw
+                        className={`h-3 w-3 mr-1 ${
+                          isCalculatingDistance ? "animate-spin" : ""
+                        }`}
+                      />
+                      Recalculate Distance
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 

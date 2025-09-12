@@ -683,6 +683,7 @@
         "subtitle": "Fournir des informations de base sur votre cargaison",
         "cargoType": "Type de cargaison",
         "selectCargoType": "Sélectionner le type de cargaison",
+        "dimensions": "Dimensions",
         "types": {
           "electronics": "Électronique",
           "furniture": "Meubles",

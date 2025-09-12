@@ -681,6 +681,7 @@
         "subtitle": "Tanga amakuru y'ibanze y'ikintu cyawe",
         "cargoType": "Ubwoko bw'ikintu",
         "selectCargoType": "Hitamo ubwoko bw'ikintu",
+        "dimensions": "Uburebure",
         "types": {
           "electronics": "Ibyuma",
           "furniture": "Ibyuma",

@@ -13,6 +13,7 @@ export { RouteService } from "./routeService";
 export { SearchService } from "./searchService";
 export { AnalyticsService } from "./analyticsService";
 export { GPSService } from "./gpsService";
+export { TrackingService } from "./trackingService";
 export { NotificationService } from "./notificationService";
 export { AdminService } from "./adminService";
 export { FileService } from "./utilityService";

@@ -1095,6 +1095,8 @@
         "subtitle": "Provide basic information about your cargo",
         "cargoType": "Cargo Type",
         "selectCargoType": "Select cargo type",
+        "dimensions": "Dimensions",
+
         "types": {
           "electronics": "Electronics",
           "furniture": "Furniture",

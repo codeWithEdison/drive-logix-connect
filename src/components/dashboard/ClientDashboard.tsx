@@ -24,7 +24,7 @@ import {
   AiOutlineArrowUp,
   AiOutlineArrowDown,
 } from "react-icons/ai";
-import { TrackingComponent } from "./TrackingComponent";
+import { LiveTrackingMap } from "./LiveTrackingMap";
 import {
   TotalCargosCard,
   ActiveDeliveriesCard,
@@ -315,8 +315,8 @@ export function ClientDashboard() {
               {t("dashboard.liveTracking")}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <TrackingComponent />
+          <CardContent className="p-0">
+            <LiveTrackingMap />
           </CardContent>
         </Card>
       </div>

@@ -164,6 +164,25 @@ export const queryKeys = {
     live: (id: string) => ["gps", "vehicle", "live", id] as const,
   },
 
+  // Live Tracking
+  tracking: {
+    cargoDetail: (id: string) => ["tracking", "cargo", "detail", id] as const,
+    vehicleLive: (id: string) => ["tracking", "vehicle", "live", id] as const,
+    vehicleHistory: (id: string, params?: Record<string, any>) =>
+      ["tracking", "vehicle", "history", id, params] as const,
+    inTransitCargo: (params?: Record<string, any>) =>
+      ["tracking", "cargo", "in-transit", params] as const,
+    routeProgress: (id: string) =>
+      ["tracking", "cargo", "progress", id] as const,
+    deliveryUpdates: (id: string, lastUpdate?: string) =>
+      ["tracking", "cargo", "updates", id, lastUpdate] as const,
+    nearbyVehicles: (lat: number, lng: number, radius: number) =>
+      ["tracking", "vehicles", "nearby", lat, lng, radius] as const,
+    summary: () => ["tracking", "summary"] as const,
+    analytics: (params?: Record<string, any>) =>
+      ["tracking", "analytics", params] as const,
+  },
+
   // Notifications
   notifications: {
     all: (params?: Record<string, any>) =>
