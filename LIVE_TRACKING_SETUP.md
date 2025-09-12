@@ -17,7 +17,7 @@ VITE_WS_URL=ws://localhost:3000
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 # Application Configuration
-VITE_APP_NAME=Lovely Cargo Platform
+VITE_APP_NAME=Loveway Logistics
 VITE_APP_VERSION=1.0.0
 VITE_ENABLE_DEVTOOLS=true
 VITE_ENABLE_ANALYTICS=false

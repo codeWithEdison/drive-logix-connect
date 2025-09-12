@@ -43,6 +43,8 @@ class GoogleMapsService {
   private distanceMatrixService: google.maps.DistanceMatrixService | null =
     null;
   private isInitializing: boolean = false;
+  private initializationPromise: Promise<void> | null = null;
+  private isInitialized: boolean = false;
 
   constructor() {
     this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -57,8 +59,22 @@ class GoogleMapsService {
     }
   }
 
-  // Initialize Google Maps services
+  // Initialize Google Maps services with singleton pattern
   private async initializeServices(): Promise<void> {
+    // Return existing promise if already initializing
+    if (this.initializationPromise) {
+      console.log(
+        "⏳ Google Maps already initializing, waiting for existing promise..."
+      );
+      return this.initializationPromise;
+    }
+
+    // Return immediately if already initialized
+    if (this.isInitialized) {
+      console.log("✅ Google Maps already initialized");
+      return;
+    }
+
     // Prevent multiple simultaneous initializations
     if (this.isInitializing) {
       console.log("⏳ Google Maps already initializing, waiting...");
@@ -69,36 +85,47 @@ class GoogleMapsService {
       return;
     }
 
-    if (!window.google || !window.google.maps || !window.google.maps.places) {
-      this.isInitializing = true;
-      try {
+    // Create initialization promise
+    this.initializationPromise = this.performInitialization();
+    return this.initializationPromise;
+  }
+
+  private async performInitialization(): Promise<void> {
+    this.isInitializing = true;
+
+    try {
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
         await this.loadGoogleMapsScript();
-      } finally {
-        this.isInitializing = false;
       }
-    }
 
-    // Final check - if Places library is still not available, throw error
-    if (!window.google.maps.places) {
-      console.error(
-        "❌ Google Maps Places library not loaded after initialization"
-      );
-      throw new Error("Google Maps Places library not available");
-    }
+      // Final check - if Places library is still not available, throw error
+      if (!window.google.maps.places) {
+        console.error(
+          "❌ Google Maps Places library not loaded after initialization"
+        );
+        throw new Error("Google Maps Places library not available");
+      }
 
-    console.log("✅ Google Maps Places library confirmed available");
+      console.log("✅ Google Maps Places library confirmed available");
 
-    if (!this.placesService) {
-      const mapDiv = document.createElement("div");
-      this.placesService = new google.maps.places.PlacesService(mapDiv);
-    }
+      if (!this.placesService) {
+        const mapDiv = document.createElement("div");
+        this.placesService = new google.maps.places.PlacesService(mapDiv);
+      }
 
-    if (!this.autocompleteService) {
-      this.autocompleteService = new google.maps.places.AutocompleteService();
-    }
+      if (!this.autocompleteService) {
+        this.autocompleteService = new google.maps.places.AutocompleteService();
+      }
 
-    if (!this.distanceMatrixService) {
-      this.distanceMatrixService = new google.maps.DistanceMatrixService();
+      if (!this.distanceMatrixService) {
+        this.distanceMatrixService = new google.maps.DistanceMatrixService();
+      }
+
+      this.isInitialized = true;
+      console.log("✅ Google Maps services fully initialized");
+    } finally {
+      this.isInitializing = false;
+      this.initializationPromise = null;
     }
   }
 

@@ -11,10 +11,10 @@ import {
 } from "../../../types/shared";
 
 export class CargoService {
-  // Create cargo request
+  // Create cargo request - backend returns cargo data directly with nested invoice
   static async createCargo(
     data: CreateCargoRequest
-  ): Promise<ApiResponse<Cargo>> {
+  ): Promise<ApiResponse<any>> {
     const response = await axiosInstance.post("/cargos", data);
     return response.data;
   }

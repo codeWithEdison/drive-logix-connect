@@ -38,7 +38,7 @@ const AdminSettings = () => {
 
   // Settings state
   const [generalSettings, setGeneralSettings] = useState({
-    companyName: "Lovely Cargo Platform",
+    companyName: "Loveway Logistics",
     companyEmail: "admin@lovelycargo.rw",
     companyPhone: "+250 123 456 789",
     companyAddress: "KG 123 Street, Kigali, Rwanda",

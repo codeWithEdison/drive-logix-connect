@@ -38,7 +38,7 @@ const getConfig = (): AppConfig => {
       timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || "30000"),
     },
     app: {
-      name: import.meta.env.VITE_APP_NAME || "Lovely Cargo Platform",
+      name: import.meta.env.VITE_APP_NAME || "Loveway Logistics",
       version: import.meta.env.VITE_APP_VERSION || "1.0.0",
       environment: import.meta.env.MODE || "development",
     },

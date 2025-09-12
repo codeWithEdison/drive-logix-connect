@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide explains how to set up Google Maps integration for the Lovely Cargo Platform, enabling location search and automatic distance calculation.
+This guide explains how to set up Google Maps integration for the Loveway Logistics, enabling location search and automatic distance calculation.
 
 ## Prerequisites
 

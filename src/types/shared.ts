@@ -394,6 +394,7 @@ export interface CargoCategory {
 
 export interface Cargo {
   id: UUID;
+  cargo_number?: string; // LC prefix reference number
   client_id: UUID;
   category_id?: UUID;
   type?: string;
@@ -452,6 +453,7 @@ export interface CreateCargoRequest {
   priority?: CargoPriority;
   pickup_date?: string;
   delivery_date?: string;
+  estimated_cost?: number; // Add estimated cost field
 }
 
 // ===========================================

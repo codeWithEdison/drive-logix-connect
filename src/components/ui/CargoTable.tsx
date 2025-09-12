@@ -395,7 +395,7 @@ export function CargoTable({
   const getDisplayData = (cargo: CargoDetail) => {
     if (user?.role === "driver") {
       return {
-        id: cargo.id,
+        id: cargo.cargo_number || cargo.id, // Use cargo_number if available, fallback to id
         client: cargo.client,
         phone: cargo.phone,
         from: cargo.from,
@@ -410,7 +410,7 @@ export function CargoTable({
       };
     } else {
       return {
-        id: cargo.id,
+        id: cargo.cargo_number || cargo.id, // Use cargo_number if available, fallback to id
         client: cargo.client, // Fixed: should be client, not driver
         driver: cargo.driver,
         phone: cargo.phone,

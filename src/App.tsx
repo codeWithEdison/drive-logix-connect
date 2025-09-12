@@ -28,6 +28,7 @@ import TrackingPage from "@/pages/TrackingPage";
 import History from "@/pages/History";
 import PaymentPage from "@/pages/PaymentPage";
 import PaymentSuccess from "@/pages/PaymentSuccess";
+import PaymentCallback from "@/pages/PaymentCallback";
 import Invoices from "@/pages/Invoices";
 import DriverDashboard from "@/pages/DriverDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
@@ -152,6 +153,7 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        <Route path="/payment/callback" element={<PaymentCallback />} />
 
         {/* Profile Route - Available to all authenticated users */}
         <Route

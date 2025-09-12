@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PaymentComponent } from "./PaymentComponent";
+import FlutterwavePayment from "../payments/FlutterwavePayment";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -44,74 +45,6 @@ import {
   googleMapsService,
   GooglePlace,
 } from "@/lib/services/googleMapsService";
-
-// Mock vehicle data for form display - in real app, this would come from API
-const mockVehicleData = [
-  {
-    id: "moto-001",
-    type: "moto",
-    name: "Motorcycle Delivery",
-    capacity: 50,
-    base_rate: 1500,
-    estimated_time: "2-4 hours",
-    description: "Fast delivery for small packages",
-  },
-  {
-    id: "truck-001",
-    type: "truck",
-    name: "Small Truck",
-    capacity: 500,
-    base_rate: 2000,
-    estimated_time: "4-6 hours",
-    description: "Medium capacity for larger shipments",
-  },
-  {
-    id: "truck-002",
-    type: "truck",
-    name: "Large Truck",
-    capacity: 2000,
-    base_rate: 2500,
-    estimated_time: "6-8 hours",
-    description: "High capacity for heavy cargo",
-  },
-];
-
-// Mock vehicle data based on availability and capacity
-const availableVehicles = [
-  {
-    id: "moto-001",
-    type: "moto",
-    name: "Motorcycle Delivery",
-    capacity: 50, // kg
-    baseRate: 1500, // RWF per km
-    availability: true,
-    estimatedTime: "2-4 hours",
-    icon: Bike,
-    description: "Fast delivery for small packages",
-  },
-  {
-    id: "truck-001",
-    type: "truck",
-    name: "Small Truck",
-    capacity: 500, // kg
-    baseRate: 2000, // RWF per km
-    availability: true,
-    estimatedTime: "4-6 hours",
-    icon: Truck,
-    description: "Medium capacity for larger shipments",
-  },
-  {
-    id: "truck-002",
-    type: "truck",
-    name: "Large Truck",
-    capacity: 2000, // kg
-    baseRate: 2500, // RWF per km
-    availability: true,
-    estimatedTime: "6-8 hours",
-    icon: Truck,
-    description: "High capacity for heavy cargo",
-  },
-];
 
 export function CreateCargoForm() {
   const { t } = useLanguage();
@@ -156,7 +89,15 @@ export function CreateCargoForm() {
     total_distance_km: number;
     currency: string;
   } | null>(null);
-  const [cargoId, setCargoId] = useState("");
+  const [cargoData, setCargoData] = useState<{
+    id: string;
+    cargo_number: string;
+  } | null>(null);
+  const [invoiceData, setInvoiceData] = useState<{
+    id: string;
+    invoice_number: string;
+    total_amount: number;
+  } | null>(null);
   const [pickupSearchQuery, setPickupSearchQuery] = useState("");
   const [destinationSearchQuery, setDestinationSearchQuery] = useState("");
   const [pickupSearchResults, setPickupSearchResults] = useState<GooglePlace[]>(
@@ -168,6 +109,15 @@ export function CreateCargoForm() {
   const [isSearchingPickup, setIsSearchingPickup] = useState(false);
   const [isSearchingDestination, setIsSearchingDestination] = useState(false);
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
+
+  // Performance optimization refs and state
+  const searchCache = useRef<Map<string, GooglePlace[]>>(new Map());
+  const searchTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const abortControllers = useRef<Map<string, AbortController>>(new Map());
+  const lastSearchQueries = useRef<{ pickup: string; destination: string }>({
+    pickup: "",
+    destination: "",
+  });
 
   // API hooks
   const createCargoMutation = useCreateCargo();
@@ -181,6 +131,155 @@ export function CreateCargoForm() {
       duration_hours: 8, // Default 8 hours
     });
   const estimateCostMutation = useEstimateCargoCost();
+
+  // Cleanup effect for timeouts and abort controllers
+  useEffect(() => {
+    const timeouts = searchTimeouts.current;
+    const controllers = abortControllers.current;
+
+    return () => {
+      // Clear all timeouts
+      timeouts.forEach((timeout) => clearTimeout(timeout));
+      timeouts.clear();
+
+      // Abort all pending requests
+      controllers.forEach((controller) => controller.abort());
+      controllers.clear();
+    };
+  }, []);
+
+  // Actual search function with cancellation support
+  const performSearch = useCallback(
+    async (query: string, isPickup: boolean) => {
+      if (!query.trim() || query.length < 2) {
+        const setResults = isPickup
+          ? setPickupSearchResults
+          : setDestinationSearchResults;
+        setResults([]);
+        return;
+      }
+
+      // Skip if this is the same query as last search
+      const lastQuery = isPickup
+        ? lastSearchQueries.current.pickup
+        : lastSearchQueries.current.destination;
+      if (lastQuery === query) {
+        return;
+      }
+
+      // Update last search query
+      if (isPickup) {
+        lastSearchQueries.current.pickup = query;
+      } else {
+        lastSearchQueries.current.destination = query;
+      }
+
+      console.log(
+        `🔍 Searching ${isPickup ? "pickup" : "delivery"} location:`,
+        query
+      );
+
+      const isSearching = isPickup
+        ? setIsSearchingPickup
+        : setIsSearchingDestination;
+      const setResults = isPickup
+        ? setPickupSearchResults
+        : setDestinationSearchResults;
+
+      // Create abort controller for this search
+      const abortController = new AbortController();
+      abortControllers.current.set(
+        isPickup ? "pickup" : "destination",
+        abortController
+      );
+
+      isSearching(true);
+
+      try {
+        const results = await googleMapsService.searchPlaces(query, "RW");
+
+        // Check if request was aborted
+        if (abortController.signal.aborted) {
+          console.log(`🚫 Search aborted for: ${query}`);
+          return;
+        }
+
+        console.log(
+          `📥 Search results for ${isPickup ? "pickup" : "delivery"}:`,
+          results
+        );
+
+        // Cache results
+        searchCache.current.set(query.toLowerCase(), results);
+
+        // Limit cache size to prevent memory issues
+        if (searchCache.current.size > 50) {
+          const firstKey = searchCache.current.keys().next().value;
+          searchCache.current.delete(firstKey);
+        }
+
+        setResults(results);
+      } catch (error) {
+        if (abortController.signal.aborted) {
+          console.log(`🚫 Search cancelled for: ${query}`);
+          return;
+        }
+
+        console.error("Error searching location:", error);
+        toast.error(
+          "Failed to search location. Please check your Google Maps API key."
+        );
+        setResults([]);
+      } finally {
+        isSearching(false);
+        // Clean up abort controller
+        abortControllers.current.delete(isPickup ? "pickup" : "destination");
+      }
+    },
+    []
+  );
+
+  // Debounced search function with caching and cancellation
+  const debouncedSearch = useCallback(
+    (query: string, isPickup: boolean, delay: number = 300) => {
+      const searchKey = `${isPickup ? "pickup" : "destination"}-${query}`;
+
+      // Clear previous timeout for this search type
+      const existingTimeout = searchTimeouts.current.get(
+        isPickup ? "pickup" : "destination"
+      );
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      // Abort previous request for this search type
+      const existingController = abortControllers.current.get(
+        isPickup ? "pickup" : "destination"
+      );
+      if (existingController) {
+        existingController.abort();
+      }
+
+      // Check cache first
+      const cachedResults = searchCache.current.get(query.toLowerCase());
+      if (cachedResults && cachedResults.length > 0) {
+        console.log(`📦 Using cached results for: ${query}`);
+        const setResults = isPickup
+          ? setPickupSearchResults
+          : setDestinationSearchResults;
+        setResults(cachedResults);
+        return;
+      }
+
+      // Set up new timeout
+      const timeout = setTimeout(async () => {
+        await performSearch(query, isPickup);
+      }, delay);
+
+      searchTimeouts.current.set(isPickup ? "pickup" : "destination", timeout);
+    },
+    [performSearch]
+  );
 
   // Form validation function
   const validateStep = (currentStep: number): boolean => {
@@ -210,7 +309,7 @@ export function CreateCargoForm() {
   // Filter vehicles based on cargo weight and availability
   const getAvailableVehicles = () => {
     if (!availableVehiclesData) {
-      return mockVehicleData; // Fallback to mock data
+      return []; // Return empty array if no API data
     }
 
     const cargoWeight = parseFloat(formData.weight || "0");
@@ -239,26 +338,18 @@ export function CreateCargoForm() {
       } catch (error) {
         console.error("Error estimating cost:", error);
         // Fallback to manual calculation
-        // Fallback to manual calculation using mock data
-        const selectedVehicle = mockVehicleData.find(
-          (v) => v.id === formData.selectedVehicle
-        );
-        if (selectedVehicle) {
-          const weightRate = 500; // RWF per kg
-          const urgencyMultiplier = formData.urgency === "urgent" ? 1.5 : 1;
-          const distance = formData.distance || 25; // km
-          const cost =
-            (selectedVehicle.base_rate * distance +
-              weightRate * parseFloat(formData.weight || "0")) *
-            urgencyMultiplier;
-          setEstimatedCost(cost);
-        }
+        const weightRate = 500; // RWF per kg
+        const urgencyMultiplier = formData.urgency === "urgent" ? 1.5 : 1;
+        const distance = formData.distance || 25; // km
+        const baseRate = 2000; // RWF per km
+        const cost =
+          (baseRate * distance +
+            weightRate * parseFloat(formData.weight || "0")) *
+          urgencyMultiplier;
+        setEstimatedCost(cost);
       }
     }
-    if (step === 4) {
-      // Generate cargo ID and proceed to payment
-      setCargoId(`#${Math.random().toString(36).substr(2, 8).toUpperCase()}`);
-    }
+    // Remove manual cargo ID generation - backend will handle this
     setStep(step + 1);
   };
 
@@ -299,11 +390,37 @@ export function CreateCargoForm() {
           formData.urgency === "standard"
             ? CargoPriority.NORMAL
             : CargoPriority.HIGH,
+        estimated_cost: estimatedCost, // Include estimated cost
       };
 
-      await createCargoMutation.mutateAsync(cargoRequest);
-      toast.success(t("createCargo.success"));
-      handleNext();
+      const result = await createCargoMutation.mutateAsync(cargoRequest);
+
+      // Handle new response format with both cargo and invoice data
+      if (result.success && result.data) {
+        // Backend returns cargo data directly in data, with invoice nested inside
+        const cargo = result.data;
+        const invoice = result.data.invoice;
+
+        // Store cargo and invoice data for payment
+        setCargoData({
+          id: cargo.id,
+          cargo_number: cargo.cargo_number,
+        });
+
+        setInvoiceData({
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          total_amount: parseFloat(invoice.total_amount), // Convert string to number
+        });
+
+        // Update estimated cost with invoice amount
+        setEstimatedCost(parseFloat(invoice.total_amount));
+
+        toast.success(t("createCargo.success"));
+        handleNext();
+      } else {
+        throw new Error(result.message || "Failed to create cargo");
+      }
     } catch (error) {
       console.error("Error creating cargo:", error);
       toast.error(t("createCargo.error"));
@@ -311,45 +428,17 @@ export function CreateCargoForm() {
   };
 
   const availableVehiclesList = getAvailableVehicles();
-  const selectedVehicle = mockVehicleData.find(
+  const selectedVehicle = availableVehiclesData?.find(
     (v) => v.id === formData.selectedVehicle
   );
 
-  // Google Maps search functions
-  const searchLocation = async (query: string, isPickup: boolean) => {
-    if (!query.trim()) return;
-
-    console.log(
-      `🔍 Searching ${isPickup ? "pickup" : "delivery"} location:`,
-      query
-    );
-
-    const isSearching = isPickup
-      ? setIsSearchingPickup
-      : setIsSearchingDestination;
-    const setResults = isPickup
-      ? setPickupSearchResults
-      : setDestinationSearchResults;
-
-    isSearching(true);
-
-    try {
-      const results = await googleMapsService.searchPlaces(query, "RW");
-      console.log(
-        `📥 Search results for ${isPickup ? "pickup" : "delivery"}:`,
-        results
-      );
-      setResults(results);
-    } catch (error) {
-      console.error("Error searching location:", error);
-      toast.error(
-        "Failed to search location. Please check your Google Maps API key."
-      );
-      setResults([]);
-    } finally {
-      isSearching(false);
-    }
-  };
+  // Optimized search function that uses debouncing and caching
+  const searchLocation = useCallback(
+    (query: string, isPickup: boolean) => {
+      debouncedSearch(query, isPickup, 300);
+    },
+    [debouncedSearch]
+  );
 
   const selectLocation = async (result: GooglePlace, isPickup: boolean) => {
     const address = result.description;
@@ -401,36 +490,74 @@ export function CreateCargoForm() {
     }
   };
 
-  const calculateDistanceBetweenLocations = async (
-    pickupLat: number,
-    pickupLng: number,
-    destinationLat: number,
-    destinationLng: number
-  ) => {
-    setIsCalculatingDistance(true);
+  // Optimized distance calculation with caching and debouncing
+  const distanceCache = useRef<Map<string, number>>(new Map());
+  const distanceTimeout = useRef<NodeJS.Timeout | null>(null);
 
-    try {
-      const result = await googleMapsService.calculateDistance(
-        { lat: pickupLat, lng: pickupLng },
-        { lat: destinationLat, lng: destinationLng }
-      );
+  const calculateDistanceBetweenLocations = useCallback(
+    async (
+      pickupLat: number,
+      pickupLng: number,
+      destinationLat: number,
+      destinationLng: number
+    ) => {
+      // Create cache key for this distance calculation
+      const cacheKey = `${pickupLat.toFixed(4)},${pickupLng.toFixed(
+        4
+      )}-${destinationLat.toFixed(4)},${destinationLng.toFixed(4)}`;
 
-      if (result) {
-        const distanceKm = googleMapsService.metersToKilometers(
-          result.distance
-        );
-        setFormData((prev) => ({ ...prev, distance: distanceKm }));
-        toast.success(`Distance calculated: ${distanceKm} km`);
-      } else {
-        toast.error("Failed to calculate distance");
+      // Check cache first
+      const cachedDistance = distanceCache.current.get(cacheKey);
+      if (cachedDistance) {
+        console.log(`📦 Using cached distance: ${cachedDistance} km`);
+        setFormData((prev) => ({ ...prev, distance: cachedDistance }));
+        return;
       }
-    } catch (error) {
-      console.error("Error calculating distance:", error);
-      toast.error("Failed to calculate distance. Please try again.");
-    } finally {
-      setIsCalculatingDistance(false);
-    }
-  };
+
+      // Clear previous timeout
+      if (distanceTimeout.current) {
+        clearTimeout(distanceTimeout.current);
+      }
+
+      // Debounce distance calculation
+      distanceTimeout.current = setTimeout(async () => {
+        setIsCalculatingDistance(true);
+
+        try {
+          const result = await googleMapsService.calculateDistance(
+            { lat: pickupLat, lng: pickupLng },
+            { lat: destinationLat, lng: destinationLng }
+          );
+
+          if (result) {
+            const distanceKm = googleMapsService.metersToKilometers(
+              result.distance
+            );
+
+            // Cache the result
+            distanceCache.current.set(cacheKey, distanceKm);
+
+            // Limit cache size
+            if (distanceCache.current.size > 20) {
+              const firstKey = distanceCache.current.keys().next().value;
+              distanceCache.current.delete(firstKey);
+            }
+
+            setFormData((prev) => ({ ...prev, distance: distanceKm }));
+            toast.success(`Distance calculated: ${distanceKm} km`);
+          } else {
+            toast.error("Failed to calculate distance");
+          }
+        } catch (error) {
+          console.error("Error calculating distance:", error);
+          toast.error("Failed to calculate distance. Please try again.");
+        } finally {
+          setIsCalculatingDistance(false);
+        }
+      }, 500); // 500ms debounce for distance calculation
+    },
+    []
+  );
 
   const calculateDistance = async () => {
     if (
@@ -713,22 +840,40 @@ export function CreateCargoForm() {
                         placeholder="Search pickup location..."
                         value={pickupSearchQuery}
                         onChange={(e) => {
-                          setPickupSearchQuery(e.target.value);
-                          if (e.target.value.length > 2) {
-                            searchLocation(e.target.value, true);
+                          const value = e.target.value;
+                          setPickupSearchQuery(value);
+                          if (value.length > 2) {
+                            searchLocation(value, true);
                           } else {
                             setPickupSearchResults([]);
                           }
                         }}
                         className="pl-10"
                       />
+                      {isSearchingPickup && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                      )}
                     </div>
                     <Button
                       variant="outline"
                       onClick={() => searchLocation(pickupSearchQuery, true)}
-                      disabled={isSearchingPickup}
+                      disabled={
+                        isSearchingPickup || pickupSearchQuery.length < 3
+                      }
                     >
-                      {isSearchingPickup ? "Searching..." : "Search"}
+                      {isSearchingPickup ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-4 w-4 mr-2" />
+                          Search
+                        </>
+                      )}
                     </Button>
                   </div>
 
@@ -883,24 +1028,43 @@ export function CreateCargoForm() {
                         placeholder="Search delivery location..."
                         value={destinationSearchQuery}
                         onChange={(e) => {
-                          setDestinationSearchQuery(e.target.value);
-                          if (e.target.value.length > 2) {
-                            searchLocation(e.target.value, false);
+                          const value = e.target.value;
+                          setDestinationSearchQuery(value);
+                          if (value.length > 2) {
+                            searchLocation(value, false);
                           } else {
                             setDestinationSearchResults([]);
                           }
                         }}
                         className="pl-10"
                       />
+                      {isSearchingDestination && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                      )}
                     </div>
                     <Button
                       variant="outline"
                       onClick={() =>
                         searchLocation(destinationSearchQuery, false)
                       }
-                      disabled={isSearchingDestination}
+                      disabled={
+                        isSearchingDestination ||
+                        destinationSearchQuery.length < 3
+                      }
                     >
-                      {isSearchingDestination ? "Searching..." : "Search"}
+                      {isSearchingDestination ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-4 w-4 mr-2" />
+                          Search
+                        </>
+                      )}
                     </Button>
                   </div>
 
@@ -1332,9 +1496,7 @@ export function CreateCargoForm() {
                     return <Icon className="h-5 w-5 text-blue-600" />;
                   })()}
                   <h3 className="font-semibold text-blue-900">
-                    {t("createCargo.steps.confirmation.selectedVehicle", {
-                      name: selectedVehicle.name,
-                    })}
+                    {selectedVehicle.make} {selectedVehicle.model}
                   </h3>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1343,15 +1505,13 @@ export function CreateCargoForm() {
                       {t("createCargo.steps.confirmation.capacity")}:
                     </span>
                     <span className="ml-2 font-medium">
-                      {selectedVehicle.capacity} kg
+                      {selectedVehicle.capacity_kg} kg
                     </span>
                   </div>
                   <div>
-                    <span className="text-blue-700">
-                      {t("createCargo.steps.confirmation.estimatedTime")}:
-                    </span>
+                    <span className="text-blue-700">Plate Number:</span>
                     <span className="ml-2 font-medium">
-                      {selectedVehicle.estimated_time}
+                      {selectedVehicle.plate_number}
                     </span>
                   </div>
                 </div>
@@ -1458,7 +1618,9 @@ export function CreateCargoForm() {
                   <p className="text-muted-foreground">
                     {t("createCargo.steps.confirmation.vehicle")}
                   </p>
-                  <p className="font-medium">{selectedVehicle?.name}</p>
+                  <p className="font-medium">
+                    {selectedVehicle?.make} {selectedVehicle?.model}
+                  </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">
@@ -1554,11 +1716,16 @@ export function CreateCargoForm() {
       )}
 
       {/* Step 5: Payment */}
-      {step === 5 && (
-        <PaymentComponent
-          amount={estimatedCost}
-          cargoId={cargoId}
-          onPaymentComplete={handlePaymentComplete}
+      {step === 5 && invoiceData && (
+        <FlutterwavePayment
+          amount={invoiceData.total_amount}
+          email={user?.email || ""}
+          phone={user?.phone || ""}
+          name={user?.full_name || user?.email || ""}
+          invoiceId={invoiceData.id}
+          invoiceNumber={invoiceData.invoice_number}
+          cargoNumber={cargoData?.cargo_number || ""}
+          onSuccess={handlePaymentComplete}
           onCancel={handlePaymentCancel}
         />
       )}
@@ -1584,22 +1751,37 @@ export function CreateCargoForm() {
               <div className="bg-muted rounded-lg p-4 space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {t("createCargo.steps.success.cargoId")}
+                    Cargo Number:
                   </span>
-                  <span className="font-medium">{cargoId}</span>
+                  <span className="font-medium">
+                    {cargoData?.cargo_number || "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Invoice Number:
+                  </span>
+                  <span className="font-medium">
+                    {invoiceData?.invoice_number || "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">
                     {t("createCargo.steps.success.vehicle")}
                   </span>
-                  <span className="font-medium">{selectedVehicle?.name}</span>
+                  <span className="font-medium">
+                    {selectedVehicle?.make} {selectedVehicle?.model}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">
                     {t("createCargo.steps.success.totalAmount")}
                   </span>
                   <span className="font-bold">
-                    RWF {estimatedCost.toLocaleString()}
+                    RWF{" "}
+                    {(
+                      invoiceData?.total_amount || estimatedCost
+                    ).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">

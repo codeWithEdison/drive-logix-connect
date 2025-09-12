@@ -1,6 +1,6 @@
 # 📊 Dashboard Services & Hooks Integration Guide
 
-This guide provides comprehensive documentation for integrating dashboard services and hooks into your Lovely Cargo Platform frontend.
+This guide provides comprehensive documentation for integrating dashboard services and hooks into your Loveway Logistics frontend.
 
 ## 🚀 Quick Start
 

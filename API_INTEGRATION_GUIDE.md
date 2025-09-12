@@ -1,6 +1,6 @@
 # Frontend API Integration Setup Guide
 
-This guide explains how to integrate the Lovely Cargo Platform frontend with the backend API using Axios and React Query.
+This guide explains how to integrate the Loveway Logistics frontend with the backend API using Axios and React Query.
 
 ## 🚀 Quick Start
 
@@ -21,7 +21,7 @@ Create a `.env` file in your project root:
 VITE_API_BASE_URL=http://localhost:3000
 VITE_API_VERSION=v1
 VITE_API_TIMEOUT=30000
-VITE_APP_NAME=Lovely Cargo Platform
+VITE_APP_NAME=Loveway Logistics
 VITE_APP_VERSION=1.0.0
 VITE_ENABLE_DEVTOOLS=true
 VITE_ENABLE_ANALYTICS=false
@@ -153,7 +153,7 @@ import { LanguageSwitcher } from "./lib/api";
 function Header() {
   return (
     <header>
-      <h1>Lovely Cargo Platform</h1>
+      <h1>Loveway Logistics</h1>
       <LanguageSwitcher />
     </header>
   );

@@ -21,6 +21,7 @@ import {
 
 export interface CargoDetail {
   id: string;
+  cargo_number?: string; // LC prefix reference number
   status:
     | "active"
     | "pending"
@@ -146,12 +147,18 @@ export function CargoDetailModal({
   const isClientCargo = cargo.driver && !cargo.client;
 
   return (
-    <ModernModel isOpen={isOpen} onClose={onClose} title={`Cargo ${cargo.id}`}>
+    <ModernModel
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Cargo ${cargo.cargo_number || cargo.id}`}
+    >
       <div className="space-y-6">
         {/* Header Info */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">{cargo.id}</h3>
+            <h3 className="text-xl font-bold text-gray-900">
+              {cargo.cargo_number || cargo.id}
+            </h3>
             <p className="text-sm text-gray-600">
               {isDriverCargo
                 ? `Assigned on ${cargo.assignedDate}`
@@ -495,9 +502,9 @@ export function CargoDetailModal({
               </div>
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-gray-500">Cargo ID</p>
+                  <p className="text-xs text-gray-500">Cargo Number</p>
                   <p className="text-sm font-semibold text-gray-900">
-                    {cargo.id}
+                    {cargo.cargo_number || cargo.id}
                   </p>
                 </div>
                 <div>
