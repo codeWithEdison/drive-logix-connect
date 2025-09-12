@@ -1147,7 +1147,8 @@
         "noVehicles": "No vehicles available",
         "noVehiclesDescription": "No vehicles match your cargo requirements",
         "loadError": "Failed to load vehicles",
-        "nextButton": "Next"
+        "nextButton": "Next",
+        "getCostEstimate": "Get Cost Estimate"
       },
       "confirmation": {
         "title": "Cost Estimate & Confirmation",

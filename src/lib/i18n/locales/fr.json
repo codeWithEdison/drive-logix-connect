@@ -733,7 +733,8 @@
         "noVehicles": "Aucun véhicule disponible",
         "noVehiclesDescription": "Aucun véhicule ne correspond à vos exigences de cargaison",
         "loadError": "Échec du chargement des véhicules",
-        "nextButton": "Suivant"
+        "nextButton": "Suivant",
+        "getCostEstimate": "Obtenir une estimation des coûts"
       },
       "confirmation": {
         "title": "Estimation des coûts et confirmation",

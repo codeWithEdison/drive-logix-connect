@@ -67,6 +67,12 @@ export const queryKeys = {
     maintenance: (id: string) => ["vehicles", "maintenance", id] as const,
     available: (params?: Record<string, any>) =>
       ["vehicles", "available", params] as const,
+    availableTrucks: (params?: Record<string, any>) =>
+      ["vehicles", "available-trucks", params] as const,
+    availableForDate: (params?: Record<string, any>) =>
+      ["vehicles", "available-for-date", params] as const,
+    assignments: (id: string, params?: Record<string, any>) =>
+      ["vehicles", "assignments", id, params] as const,
   },
 
   // Cargos

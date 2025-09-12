@@ -732,7 +732,8 @@
         "noVehicles": "Nta modoka iboneka",
         "noVehiclesDescription": "Nta modoka ihagije ibyo ukeneye",
         "loadError": "Ntabwo byakozwe neza gufungura imodoka",
-        "nextButton": "Ibikurikira"
+        "nextButton": "Ibikurikira",
+        "getCostEstimate": "Gupima amafaranga"
       },
       "confirmation": {
         "title": "Gupima amafaranga n'emeza",

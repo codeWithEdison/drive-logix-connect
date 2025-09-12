@@ -129,8 +129,11 @@ export const useCargoTracking = (id: string) => {
 
 export const useEstimateCargoCost = () => {
   return useMutation({
-    mutationFn: (data: Partial<CreateCargoRequest>) =>
-      CargoService.estimateCost(data),
+    mutationFn: (data: {
+      weight_kg: number;
+      distance_km: number;
+      category_id: string;
+    }) => CargoService.estimateCost(data),
   });
 };
 

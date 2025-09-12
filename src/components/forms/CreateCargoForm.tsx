@@ -17,8 +17,9 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useCreateCargo,
-  useAvailableVehicles,
+  useAvailableVehiclesForDate,
   useEstimateCargoCost,
+  useCargoCategories,
 } from "@/lib/api/hooks";
 import { CreateCargoRequest, CargoPriority } from "@/types/shared";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -118,6 +119,7 @@ export function CreateCargoForm() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     cargoType: "",
+    cargoCategoryId: "", // Add category ID
     otherCargoType: "",
     weight: "",
     length: "",
@@ -146,6 +148,14 @@ export function CreateCargoForm() {
   });
 
   const [estimatedCost, setEstimatedCost] = useState(0);
+  const [costBreakdown, setCostBreakdown] = useState<{
+    base_cost: number;
+    weight_cost: number;
+    distance_cost: number;
+    category_multiplier: number;
+    total_distance_km: number;
+    currency: string;
+  } | null>(null);
   const [cargoId, setCargoId] = useState("");
   const [pickupSearchQuery, setPickupSearchQuery] = useState("");
   const [destinationSearchQuery, setDestinationSearchQuery] = useState("");
@@ -161,35 +171,71 @@ export function CreateCargoForm() {
 
   // API hooks
   const createCargoMutation = useCreateCargo();
-  const {
-    data: availableVehiclesData,
-    isLoading: vehiclesLoading,
-    error: vehiclesError,
-  } = useAvailableVehicles({
-    capacity_min: parseFloat(formData.weight || "0"),
-  });
+  const { data: cargoCategories } = useCargoCategories({ is_active: true });
+  // Get available vehicles for the selected pickup date
+  const { data: availableVehiclesData, isLoading: vehiclesLoading } =
+    useAvailableVehiclesForDate({
+      date: formData.pickupDate,
+      type: undefined, // Remove selectedVehicleType as it doesn't exist
+      capacity_min: parseFloat(formData.weight) || undefined,
+      duration_hours: 8, // Default 8 hours
+    });
   const estimateCostMutation = useEstimateCargoCost();
 
-  // Filter vehicles based on cargo weight - using mock data for now
+  // Form validation function
+  const validateStep = (currentStep: number): boolean => {
+    switch (currentStep) {
+      case 1: // Cargo Details
+        return !!(
+          formData.cargoType &&
+          formData.cargoCategoryId &&
+          formData.weight &&
+          formData.description
+        );
+      case 2: // Locations
+        return !!(
+          formData.pickupAddress &&
+          formData.destinationAddress &&
+          formData.pickupDate
+        );
+      case 3: // Vehicle Selection
+        return !!formData.selectedVehicle;
+      case 4: // Confirmation
+        return true; // No validation needed for confirmation
+      default:
+        return false;
+    }
+  };
+
+  // Filter vehicles based on cargo weight and availability
   const getAvailableVehicles = () => {
+    if (!availableVehiclesData) {
+      return mockVehicleData; // Fallback to mock data
+    }
+
     const cargoWeight = parseFloat(formData.weight || "0");
-    return mockVehicleData.filter((vehicle) => vehicle.capacity >= cargoWeight);
+    return availableVehiclesData.filter(
+      (vehicle) => vehicle.capacity_kg >= cargoWeight
+    );
   };
 
   const handleNext = async () => {
+    // Validate current step before proceeding
+    if (!validateStep(step)) {
+      toast.error(t("createCargo.validation.requiredFields"));
+      return;
+    }
+
     if (step === 2) {
       // Use API cost calculation
       try {
         const costEstimate = await estimateCostMutation.mutateAsync({
           weight_kg: parseFloat(formData.weight),
-          pickup_address: formData.pickupAddress,
-          destination_address: formData.destinationAddress,
-          priority:
-            formData.urgency === "standard"
-              ? CargoPriority.NORMAL
-              : CargoPriority.HIGH,
+          distance_km: formData.distance || 25, // Use calculated distance or default
+          category_id: formData.cargoCategoryId,
         });
         setEstimatedCost(costEstimate.data?.estimated_cost || 0);
+        setCostBreakdown(costEstimate.data?.breakdown || null);
       } catch (error) {
         console.error("Error estimating cost:", error);
         // Fallback to manual calculation
@@ -487,6 +533,27 @@ export function CreateCargoForm() {
                 </Select>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="cargoCategoryId">Cargo Category</Label>
+                <Select
+                  value={formData.cargoCategoryId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, cargoCategoryId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select cargo category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cargoCategories?.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {formData.cargoType === "other" && (
                 <div className="space-y-2">
                   <Label htmlFor="otherCargoType">
@@ -608,7 +675,8 @@ export function CreateCargoForm() {
 
             <Button
               onClick={handleNext}
-              className="w-full bg-gradient-primary hover:bg-primary-hover"
+              disabled={!validateStep(1)}
+              className="w-full bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
             >
               {t("createCargo.steps.cargoDetails.nextButton")}
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -973,14 +1041,29 @@ export function CreateCargoForm() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="pickupDate">Preferred Pickup Date</Label>
-                <Input
-                  id="pickupDate"
-                  type="date"
-                  value={formData.pickupDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, pickupDate: e.target.value })
-                  }
-                />
+                <div className="relative">
+                  <Input
+                    id="pickupDate"
+                    type="date"
+                    value={formData.pickupDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, pickupDate: e.target.value })
+                    }
+                  />
+                  {vehiclesLoading && formData.pickupDate && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+                {formData.pickupDate &&
+                  !vehiclesLoading &&
+                  availableVehiclesData && (
+                    <p className="text-sm text-green-600">
+                      ✓ {availableVehiclesData.length} vehicles available for
+                      this date
+                    </p>
+                  )}
               </div>
 
               <div className="space-y-2">
@@ -1051,7 +1134,8 @@ export function CreateCargoForm() {
               </Button>
               <Button
                 onClick={handleNext}
-                className="flex-1 bg-gradient-primary hover:bg-primary-hover"
+                disabled={!validateStep(2)}
+                className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
               >
                 Select Vehicle
                 <Truck className="ml-2 h-4 w-4" />
@@ -1074,12 +1158,11 @@ export function CreateCargoForm() {
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-900 mb-2">
-                  {t("createCargo.steps.vehicleSelection.availableVehicles")}
+                  Vehicles Suitable for Your Cargo
                 </h3>
                 <p className="text-sm text-blue-700">
-                  {t("createCargo.steps.vehicleSelection.description", {
-                    weight: formData.weight,
-                  })}
+                  Showing {availableVehiclesList.length} vehicles with capacity
+                  ≥ {formData.weight}kg available on {formData.pickupDate}
                 </p>
               </div>
 
@@ -1099,13 +1182,15 @@ export function CreateCargoForm() {
                     </div>
                   ))}
                 </div>
-              ) : vehiclesError ? (
+              ) : !availableVehiclesData ? (
                 <div className="text-center py-8">
                   <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
                   <h3 className="text-lg font-semibold text-red-600">
                     {t("createCargo.steps.vehicleSelection.loadError")}
                   </h3>
-                  <p className="text-red-500 mb-4">{vehiclesError.message}</p>
+                  <p className="text-red-500 mb-4">
+                    No vehicles available for the selected date
+                  </p>
                   <Button
                     variant="outline"
                     onClick={() => window.location.reload()}
@@ -1135,7 +1220,23 @@ export function CreateCargoForm() {
                   className="space-y-4"
                 >
                   {availableVehiclesList.map((vehicle) => {
-                    const Icon = vehicle.type === "moto" ? Bike : Truck;
+                    // Get vehicle icon based on type
+                    const getVehicleIcon = (type: string) => {
+                      switch (type) {
+                        case "moto":
+                          return Bike;
+                        case "truck":
+                          return Truck;
+                        case "van":
+                          return Car;
+                        case "pickup":
+                          return Truck;
+                        default:
+                          return Truck;
+                      }
+                    };
+
+                    const Icon = getVehicleIcon(vehicle.type);
                     return (
                       <div
                         key={vehicle.id}
@@ -1156,29 +1257,25 @@ export function CreateCargoForm() {
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-2">
                               <h3 className="font-semibold text-foreground">
-                                {vehicle.name}
+                                {vehicle.make} {vehicle.model}
                               </h3>
-                              <div className="text-sm text-muted-foreground">
-                                {t(
-                                  "createCargo.steps.vehicleSelection.capacity",
-                                  { capacity: vehicle.capacity }
-                                )}
+                              <div className="text-sm font-medium text-primary">
+                                {vehicle.capacity_kg}kg
                               </div>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              {vehicle.description}
-                            </p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>
-                                {t(
-                                  "createCargo.steps.vehicleSelection.estimatedTime",
-                                  { time: vehicle.estimated_time }
-                                )}
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <span className="font-medium">
+                                  {vehicle.plate_number}
+                                </span>
                               </span>
-                              <span>
-                                {t("createCargo.steps.vehicleSelection.rate", {
-                                  rate: vehicle.base_rate,
-                                })}
+                              <span className="flex items-center gap-1">
+                                <span>{vehicle.year}</span>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="capitalize">
+                                  {vehicle.type}
+                                </span>
                               </span>
                             </div>
                           </div>
@@ -1205,7 +1302,7 @@ export function CreateCargoForm() {
               </Button>
               <Button
                 onClick={handleNext}
-                disabled={!formData.selectedVehicle || vehiclesLoading}
+                disabled={!validateStep(3) || vehiclesLoading}
                 className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
               >
                 {t("createCargo.steps.vehicleSelection.getCostEstimate")}
@@ -1281,58 +1378,56 @@ export function CreateCargoForm() {
                 </div>
               ) : (
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      {t("createCargo.steps.confirmation.baseFee", {
-                        distance: formData.distance || 25,
-                      })}
-                    </span>
-                    <span>
-                      RWF{" "}
-                      {selectedVehicle
-                        ? (
-                            selectedVehicle.base_rate *
-                            (formData.distance || 25)
-                          ).toLocaleString()
-                        : "0"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      {t("createCargo.steps.confirmation.weightCharge", {
-                        weight: formData.weight,
-                      })}
-                    </span>
-                    <span>
-                      RWF{" "}
-                      {(
-                        parseFloat(formData.weight || "0") * 500
-                      ).toLocaleString()}
-                    </span>
-                  </div>
-                  {formData.urgency === "urgent" && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {t("createCargo.steps.confirmation.urgentSurcharge")}
-                      </span>
-                      <span>
-                        RWF{" "}
-                        {selectedVehicle
-                          ? (
-                              selectedVehicle.base_rate *
-                              (formData.distance || 25) *
-                              0.5
-                            ).toLocaleString()
-                          : "0"}
-                      </span>
+                  {costBreakdown ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Base Cost</span>
+                        <span>
+                          RWF {costBreakdown.base_cost.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Weight Cost ({formData.weight}kg)
+                        </span>
+                        <span>
+                          RWF {costBreakdown.weight_cost.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">
+                          Distance Cost ({costBreakdown.total_distance_km}km)
+                        </span>
+                        <span>
+                          RWF {costBreakdown.distance_cost.toLocaleString()}
+                        </span>
+                      </div>
+                      {costBreakdown.category_multiplier > 1 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Category Multiplier (
+                            {costBreakdown.category_multiplier}x)
+                          </span>
+                          <span>Applied</span>
+                        </div>
+                      )}
+                      <div className="border-t border-border pt-2 flex justify-between font-semibold text-lg">
+                        <span>
+                          {t("createCargo.steps.confirmation.totalCost")}
+                        </span>
+                        <span className="text-primary">
+                          RWF {estimatedCost.toLocaleString()}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-muted-foreground">
+                        Cost breakdown will be calculated after vehicle
+                        selection
+                      </p>
                     </div>
                   )}
-                  <div className="border-t border-border pt-2 flex justify-between font-semibold text-lg">
-                    <span>{t("createCargo.steps.confirmation.totalCost")}</span>
-                    <span className="text-primary">
-                      RWF {estimatedCost.toLocaleString()}
-                    </span>
-                  </div>
                 </div>
               )}
             </div>

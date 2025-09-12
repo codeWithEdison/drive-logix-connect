@@ -82,4 +82,65 @@ export class VehicleService {
     const response = await axiosInstance.get("/vehicles/available", { params });
     return response.data;
   }
+
+  // Get available trucks with advanced filtering
+  static async getAvailableTrucks(params?: {
+    capacity_min?: number;
+    capacity_max?: number;
+    volume_min?: number;
+    volume_max?: number;
+    sort_by?: "capacity_kg" | "capacity_volume" | "created_at";
+    sort_order?: "asc" | "desc";
+  }): Promise<ApiResponse<Vehicle[]>> {
+    const response = await axiosInstance.get("/vehicles/trucks/available", {
+      params,
+    });
+    return response.data;
+  }
+
+  // Get available vehicles for a specific date
+  static async getAvailableVehiclesForDate(params: {
+    date: string; // YYYY-MM-DD format
+    type?: string;
+    capacity_min?: number;
+    duration_hours?: number;
+  }): Promise<ApiResponse<Vehicle[]>> {
+    const response = await axiosInstance.get("/vehicles/available-for-date", {
+      params,
+    });
+    return response.data;
+  }
+
+  // Get vehicle assignments
+  static async getVehicleAssignments(
+    vehicleId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+    }
+  ): Promise<
+    ApiResponse<{
+      assignments: Array<{
+        id: string;
+        cargo_id: string;
+        driver_id: string;
+        vehicle_id: string;
+        assigned_at: string;
+        cargo: any;
+        driver: any;
+      }>;
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>
+  > {
+    const response = await axiosInstance.get(
+      `/vehicles/${vehicleId}/assignments`,
+      { params }
+    );
+    return response.data;
+  }
 }

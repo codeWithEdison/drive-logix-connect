@@ -93,9 +93,28 @@ export class CargoService {
   }
 
   // Estimate cargo cost
-  static async estimateCost(
-    data: Partial<CreateCargoRequest>
-  ): Promise<ApiResponse<{ estimated_cost: number }>> {
+  static async estimateCost(data: {
+    weight_kg: number;
+    distance_km: number;
+    category_id: string;
+  }): Promise<
+    ApiResponse<{
+      estimated_cost: number;
+      breakdown: {
+        base_cost: number;
+        weight_cost: number;
+        distance_cost: number;
+        category_multiplier: number;
+        total_distance_km: number;
+        currency: string;
+      };
+      pricing_policy: {
+        base_rate_per_km: number;
+        rate_per_kg: number;
+        minimum_fare: number;
+      };
+    }>
+  > {
     const response = await axiosInstance.post("/cargos/estimate-cost", data);
     return response.data;
   }
