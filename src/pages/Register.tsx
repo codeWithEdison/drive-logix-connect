@@ -117,9 +117,18 @@ export default function Register() {
                 <p className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
                   <strong>💡 {t("auth.checkSpamFolder")}</strong>
                 </p>
-                <div className="pt-4">
+                <div className="pt-4 space-y-2">
+                  <Link
+                    to={`/verify-email?email=${encodeURIComponent(userEmail)}`}
+                  >
+                    <Button className="w-full">
+                      {t("auth.goToVerification")}
+                    </Button>
+                  </Link>
                   <Link to="/login">
-                    <Button className="w-full">{t("auth.backToLogin")}</Button>
+                    <Button variant="outline" className="w-full">
+                      {t("auth.backToLogin")}
+                    </Button>
                   </Link>
                 </div>
               </div>

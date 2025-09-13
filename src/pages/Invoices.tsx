@@ -49,6 +49,10 @@ import {
   InvoiceDetailModal,
   InvoiceDetail,
 } from "@/components/ui/InvoiceDetailModal";
+import {
+  InvoicePaymentModal,
+  InvoicePaymentData,
+} from "@/components/ui/InvoicePaymentModal";
 
 // Mock invoice data based on database schema
 const mockInvoices = [
@@ -153,6 +157,11 @@ export default function Invoices() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Payment modal state
+  const [selectedPaymentInvoice, setSelectedPaymentInvoice] =
+    useState<InvoicePaymentData | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
   // API hooks
   const { data: invoicesData, isLoading, error, refetch } = useClientInvoices();
 
@@ -181,10 +190,31 @@ export default function Invoices() {
   };
 
   const handlePayNow = (invoiceId: string) => {
-    // Mock payment functionality
-    console.log(`Paying invoice ${invoiceId}`);
-    toast.info(t("invoices.payInfo"));
-    // In real app, this would open payment modal
+    // Find the invoice to pay
+    const invoiceToPay = actualInvoices.find(
+      (inv: any) => inv.id === invoiceId
+    );
+    if (invoiceToPay) {
+      setSelectedPaymentInvoice(invoiceToPay);
+      setIsPaymentModalOpen(true);
+    } else {
+      toast.error(t("invoices.invoiceNotFound"));
+    }
+  };
+
+  const handlePaymentSuccess = (paymentData: any) => {
+    // Refresh the invoices list to get updated status
+    refetch();
+    toast.success(t("invoices.paymentProcessedSuccessfully"));
+  };
+
+  const formatCurrency = (amount: number, currency: string = "RWF") => {
+    return new Intl.NumberFormat("rw-RW", {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
   };
 
   const handleDownloadAll = () => {
@@ -402,7 +432,7 @@ export default function Invoices() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              RWF {totalPaid.toLocaleString()}
+              {formatCurrency(totalPaid)}
             </div>
             <p className="text-xs text-success">
               {t("invoices.successfullyPaid")}
@@ -419,7 +449,7 @@ export default function Invoices() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              RWF {totalOutstanding.toLocaleString()}
+              {formatCurrency(totalOutstanding)}
             </div>
             <p className="text-xs text-destructive">
               {t("invoices.pendingPayment")}
@@ -539,12 +569,12 @@ export default function Invoices() {
                       </TableCell>
                       <TableCell>
                         <div className="font-semibold">
-                          RWF {invoice.total_amount?.toLocaleString() || "0"}
+                          {formatCurrency(invoice.total_amount || 0)}
                         </div>
                         {invoice.discount_amount &&
                           invoice.discount_amount > 0 && (
                             <div className="text-xs text-green-600">
-                              -RWF {invoice.discount_amount.toLocaleString()}{" "}
+                              -{formatCurrency(invoice.discount_amount)}{" "}
                               {t("invoices.discount")}
                             </div>
                           )}
@@ -645,6 +675,18 @@ export default function Invoices() {
           console.log("Paying invoice:", invoiceId);
           toast.info(t("invoices.payInfo"));
         }}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+
+      {/* Invoice Payment Modal */}
+      <InvoicePaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setSelectedPaymentInvoice(null);
+        }}
+        invoice={selectedPaymentInvoice}
+        onPaymentSuccess={handlePaymentSuccess}
       />
     </div>
   );

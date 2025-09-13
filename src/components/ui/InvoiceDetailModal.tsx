@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ModernModel from "@/components/modal/ModernModel";
+import {
+  InvoicePaymentModal,
+  InvoicePaymentData,
+} from "@/components/ui/InvoicePaymentModal";
 import {
   Download,
   Eye,
@@ -19,6 +23,8 @@ import {
   Package,
   Truck,
 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { toast } from "sonner";
 
 export interface InvoiceDetail {
   id: string;
@@ -52,6 +58,7 @@ interface InvoiceDetailModalProps {
   invoice: InvoiceDetail | null;
   onDownload?: (invoiceId: string) => void;
   onPay?: (invoiceId: string) => void;
+  onPaymentSuccess?: (paymentData: any) => void;
 }
 
 export function InvoiceDetailModal({
@@ -60,7 +67,11 @@ export function InvoiceDetailModal({
   invoice,
   onDownload,
   onPay,
+  onPaymentSuccess,
 }: InvoiceDetailModalProps) {
+  const { t } = useLanguage();
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
   if (!invoice) return null;
 
   const getStatusBadge = (status: string) => {
@@ -120,6 +131,22 @@ export function InvoiceDetailModal({
       month: "long",
       day: "numeric",
     });
+  };
+
+  const handlePayNow = () => {
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = (paymentData: any) => {
+    setIsPaymentModalOpen(false);
+    if (onPaymentSuccess) {
+      onPaymentSuccess(paymentData);
+    }
+    toast.success(t("invoices.paymentProcessedSuccessfully"));
+  };
+
+  const canPay = () => {
+    return invoice.status === "sent" && !invoice.paid;
   };
 
   return (
@@ -310,10 +337,10 @@ export function InvoiceDetailModal({
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
-          {invoice.status === "sent" && !invoice.paid && (
+          {canPay() && (
             <Button
               className="flex-1 bg-green-600 hover:bg-green-700"
-              onClick={() => onPay?.(invoice.id)}
+              onClick={handlePayNow}
             >
               <DollarSign className="h-4 w-4 mr-2" />
               Pay Now
@@ -321,6 +348,19 @@ export function InvoiceDetailModal({
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <InvoicePaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        invoice={
+          {
+            ...invoice,
+            total_amount: parseFloat(invoice.total_amount),
+          } as InvoicePaymentData
+        }
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </ModernModel>
   );
 }

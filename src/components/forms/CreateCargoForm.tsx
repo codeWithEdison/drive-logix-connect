@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PaymentComponent } from "./PaymentComponent";
-import FlutterwavePayment from "../payments/FlutterwavePayment";
+import { PaymentFlow } from "@/components/payments/PaymentFlow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -1717,14 +1717,21 @@ export function CreateCargoForm() {
 
       {/* Step 5: Payment */}
       {step === 5 && invoiceData && (
-        <FlutterwavePayment
-          amount={invoiceData.total_amount}
-          email={user?.email || ""}
-          phone={user?.phone || ""}
-          name={user?.full_name || user?.email || ""}
-          invoiceId={invoiceData.id}
-          invoiceNumber={invoiceData.invoice_number}
-          cargoNumber={cargoData?.cargo_number || ""}
+        <PaymentFlow
+          invoice={{
+            id: invoiceData.id,
+            invoice_number: invoiceData.invoice_number,
+            cargo_id: cargoData?.cargo_number || "",
+            total_amount: invoiceData.total_amount,
+            currency: "RWF",
+            status: "sent",
+            cargo: {
+              id: cargoData?.id || "",
+              type: formData.cargoType,
+              pickup_address: formData.pickupAddress,
+              destination_address: formData.destinationAddress,
+            },
+          }}
           onSuccess={handlePaymentComplete}
           onCancel={handlePaymentCancel}
         />

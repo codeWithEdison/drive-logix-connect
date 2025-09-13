@@ -214,6 +214,7 @@
     "passwordResetEmailSent": "Nous avons envoyé un lien de réinitialisation de mot de passe à {{email}}",
     "passwordResetInstructions": "Cliquez sur le lien dans l'email pour réinitialiser votre mot de passe. Le lien expirera dans 1 heure.",
     "backToLogin": "Retour à la connexion",
+    "goToVerification": "Aller à la Vérification Email",
     "didntReceiveEmail": "Vous n'avez pas reçu l'email ?",
     "sendAnotherEmail": "Envoyer un autre email",
     "resendIn": "Renvoyer dans",
@@ -232,6 +233,9 @@
     "verificationEmailSentAgain": "Email de vérification envoyé à nouveau ! Veuillez vérifier votre boîte de réception.",
     "resendVerificationFailed": "Échec de l'envoi de l'email de vérification. Veuillez réessayer.",
     "verifying": "Vérification en cours...",
+    "verifyingEmail": "Vérification de votre adresse email...",
+    "verificationLinkInvalid": "Lien de vérification invalide. Veuillez essayer de vous inscrire à nouveau.",
+    "emailRequiredForResend": "L'adresse email est requise pour renvoyer la vérification.",
     "emailNotVerified": "Veuillez vérifier votre email avant de vous connecter. Vérifiez votre boîte de réception pour le lien de vérification.",
     "registrationSuccessful": "Inscription Réussie !",
     "enterEmailToReset": "Entrez votre email pour réinitialiser votre mot de passe",
@@ -240,7 +244,9 @@
     "sendResetLink": "Envoyer le lien de réinitialisation",
     "rememberPassword": "Vous vous souvenez de votre mot de passe?",
     "preferredLanguage": "Langue Préférée",
-    "optional": "Optionnel"
+    "optional": "Optionnel",
+    "verificationEmailSent": "Email de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
+    "verificationInstructions": "Veuillez vérifier votre boîte de réception pour le lien de vérification. Le lien expirera dans 1 heure."
   },
   "navigation": {
     "dashboard": "Tableau de bord",

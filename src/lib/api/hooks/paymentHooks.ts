@@ -129,12 +129,13 @@ export const useRefundStatus = (refundId: string) => {
 };
 
 // Flutterwave-specific payment hooks for new backend integration
-interface InitializeFlutterwavePaymentRequest {
+export interface InitializeFlutterwavePaymentRequest {
   invoice_id: string;
   amount: number;
   customer_email: string;
   customer_name: string;
   customer_phone?: string;
+  redirect_url?: string;
 }
 
 interface InitializeFlutterwavePaymentResponse {

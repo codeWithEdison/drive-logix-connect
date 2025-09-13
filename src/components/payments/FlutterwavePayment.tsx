@@ -59,7 +59,7 @@ export const FlutterwavePayment: React.FC<FlutterwavePaymentProps> = ({
       // Generate transaction reference manually
       const generatedTxRef = `CARGO_${invoiceId}_${Date.now()}`;
       setTxRef(generatedTxRef);
-      
+
       // Store transaction reference for verification
       localStorage.setItem("tx_ref", generatedTxRef);
       localStorage.setItem("invoice_id", invoiceId);
@@ -128,12 +128,16 @@ export const FlutterwavePayment: React.FC<FlutterwavePaymentProps> = ({
                   onSuccess(response);
                 } else {
                   setPaymentStatus("failed");
-                  toast.error("Payment processing failed. Please contact support.");
+                  toast.error(
+                    "Payment processing failed. Please contact support."
+                  );
                 }
               } catch (error) {
                 console.error("Payment processing error:", error);
                 setPaymentStatus("failed");
-                toast.error("Payment processing failed. Please contact support.");
+                toast.error(
+                  "Payment processing failed. Please contact support."
+                );
               }
             } else {
               setPaymentStatus("failed");

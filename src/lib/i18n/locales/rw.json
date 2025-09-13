@@ -214,6 +214,7 @@
     "passwordResetEmailSent": "Twohereje imeli yo gusubira ijambo ry'ibanga ku {{email}}",
     "passwordResetInstructions": "Kanda ku murongo wo mu imeli kugira ngo usubire ijambo ry'ibanga. Uwo murongo uzagaruka mu isaha imwe.",
     "backToLogin": "Subira Kwinjira",
+    "goToVerification": "Jya Ku Kwemeza Imeli",
     "didntReceiveEmail": "Ntugomba imeli?",
     "sendAnotherEmail": "Ohereza imeli yindi",
     "resendIn": "Ohereza nanone mu",
@@ -232,6 +233,9 @@
     "verificationEmailSentAgain": "Imeli yo kwemeza yoherejwe nanone! Nyamuneka reba mu inbox yawe.",
     "resendVerificationFailed": "Ntibyashobotse kohereza imeli yo kwemeza. Nyamuneka gerageza nanone.",
     "verifying": "Urakira kwemeza...",
+    "verifyingEmail": "Urakira kwemeza aderesi yawe ya imeli...",
+    "verificationLinkInvalid": "Ihuza ry'ikwemeza ntirikora. Nyamuneka gerageza kwiyandikisha nanone.",
+    "emailRequiredForResend": "Aderesi ya imeli irikenewe kugira ngo usubire ikwemeza.",
     "emailNotVerified": "Nyamuneka wemeze imeli yawe mbere yo kwinjira. Reba mu inbox yawe kugira ngo ubone imeli yo kwemeza.",
     "registrationSuccessful": "Kwiyandikisha Kwashobotse !",
     "enterEmailToReset": "Andika imeli yawe kugira ngo usubire ijambo ry'ibanga",
@@ -240,7 +244,9 @@
     "sendResetLink": "Ohereza Imeli yo Gusubira",
     "rememberPassword": "Wibuka ijambo ry'ibanga?",
     "preferredLanguage": "Ururimi Rwifuza",
-    "optional": "Rihari"
+    "optional": "Rihari",
+    "verificationEmailSent": "Imeli yo kwemeza yoherejwe! Nyamuneka reba mu inbox yawe.",
+    "verificationInstructions": "Nyamuneka reba mu inbox yawe kugira ngo ubone imeli yo kwemeza. Uwo murongo uzagaruka mu isaha imwe."
   },
   "navigation": {
     "dashboard": "Ikibaho",
@@ -668,7 +674,6 @@
     "noRecentActivity": "Nta byakozwe byabaye",
     "loadError": "Ntabwo byakozwe neza gufungura amakuru y'ikinyabwoba",
     "refreshData": "Subira amakuru"
-  
   },
   "createCargo": {
     "title": "Kurema ikintu",
