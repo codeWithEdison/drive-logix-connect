@@ -24,6 +24,7 @@ export interface PaymentFlowData {
   status: string;
   cargo?: {
     id: string;
+    cargo_number?: string; // Add cargo_number field
     type: string;
     pickup_address: string;
     destination_address: string;
@@ -84,7 +85,12 @@ export function PaymentFlow({
     }).format(amount);
   };
 
-  const getCargoNumber = (cargoId: string) => {
+  const getCargoNumber = (cargoId: string, cargoNumber?: string) => {
+    // Prioritize cargo_number from API response
+    if (cargoNumber) {
+      return cargoNumber;
+    }
+    // Fallback to cargo_id with formatting
     return cargoId.startsWith("#") ? cargoId : `#${cargoId}`;
   };
 
@@ -118,8 +124,8 @@ export function PaymentFlow({
               <p className="text-sm text-muted-foreground">
                 {t("invoices.cargoNumber")}
               </p>
-              <p className="font-semibold">
-                {getCargoNumber(invoice.cargo_id)}
+              <p className="font-semibold font-mono">
+                {getCargoNumber(invoice.cargo_id, invoice.cargo?.cargo_number)}
               </p>
             </div>
           </div>
@@ -162,7 +168,7 @@ export function PaymentFlow({
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span>{t("invoices.paymentMethods.mobileMoney")}</span>
+              <span>{t("invoices.paymentMethods.mobile_money")}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-purple-500 rounded-full"></div>

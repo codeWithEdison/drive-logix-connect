@@ -247,9 +247,13 @@ export default function Invoices() {
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
       case "amount-high":
-        return b.total_amount - a.total_amount;
+        return (
+          parseFloat(b.total_amount || 0) - parseFloat(a.total_amount || 0)
+        );
       case "amount-low":
-        return a.total_amount - b.total_amount;
+        return (
+          parseFloat(a.total_amount || 0) - parseFloat(b.total_amount || 0)
+        );
       default:
         return 0;
     }
@@ -257,10 +261,16 @@ export default function Invoices() {
 
   const totalPaid = actualInvoices
     .filter((inv: any) => inv.status === "paid")
-    .reduce((sum: number, inv: any) => sum + inv.total_amount, 0);
+    .reduce(
+      (sum: number, inv: any) => sum + parseFloat(inv.total_amount || 0),
+      0
+    );
   const totalOutstanding = actualInvoices
     .filter((inv: any) => inv.status === "sent" || inv.status === "overdue")
-    .reduce((sum: number, inv: any) => sum + inv.total_amount, 0);
+    .reduce(
+      (sum: number, inv: any) => sum + parseFloat(inv.total_amount || 0),
+      0
+    );
 
   // Loading state
   if (isLoading) {
@@ -406,68 +416,62 @@ export default function Invoices() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="card-elevated">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("invoices.totalInvoices")}
-            </CardTitle>
-            <Receipt className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {actualInvoices.length}
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("invoices.totalInvoices")}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {actualInvoices.length}
+                </p>
+              </div>
+              <Receipt className="h-8 w-8 text-blue-500" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t("invoices.allTime")}
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("invoices.totalPaid")}
-            </CardTitle>
-            <CheckCircle className="h-4 w-4 text-success" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {formatCurrency(totalPaid)}
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("invoices.totalPaid")}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(totalPaid)}
+                </p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
-            <p className="text-xs text-success">
-              {t("invoices.successfullyPaid")}
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="card-elevated">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {t("invoices.outstanding")}
-            </CardTitle>
-            <AlertCircle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {formatCurrency(totalOutstanding)}
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("invoices.outstanding")}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(totalOutstanding)}
+                </p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-red-500" />
             </div>
-            <p className="text-xs text-destructive">
-              {t("invoices.pendingPayment")}
-            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters and Search */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle>{t("invoices.filterSearch")}</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+        <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder={t("invoices.searchPlaceholder")}
                   className="pl-10"
@@ -515,51 +519,83 @@ export default function Invoices() {
       </Card>
 
       {/* Invoice Table */}
-      <Card className="card-elevated">
-        <CardHeader>
-          <CardTitle>{t("invoices.allInvoices")}</CardTitle>
+      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-gray-900">
+            {t("invoices.allInvoices")}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("invoices.invoiceNumber")}</TableHead>
-                  <TableHead>{t("invoices.cargo")}</TableHead>
-                  <TableHead>{t("invoices.amount")}</TableHead>
-                  <TableHead>{t("invoices.statusLabel")}</TableHead>
-                  <TableHead>{t("invoices.dueDate")}</TableHead>
-                  <TableHead>{t("invoices.created")}</TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-xs font-medium text-gray-600 w-16">
+                    #
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600 w-32">
+                    {t("invoices.invoiceNumber")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600 w-36">
+                    {t("invoices.cargoNumber")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600 flex-1">
+                    {t("invoices.cargo")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600 w-24">
+                    {t("invoices.amount")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600 w-24">
+                    {t("invoices.statusLabel")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600 w-32">
+                    {t("invoices.dueDate")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600 w-20">
                     {t("invoices.actions")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedInvoices.map((invoice: any) => {
+                {sortedInvoices.map((invoice: any, index: number) => {
                   const status =
                     statusConfig[invoice.status as keyof typeof statusConfig];
                   return (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">
-                        {invoice.invoice_number || invoice.id}
+                    <TableRow
+                      key={invoice.id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                    >
+                      <TableCell className="text-sm text-gray-500">
+                        {index + 1}
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium text-sm">
+                        <div className="font-medium text-sm text-gray-900">
+                          {invoice.invoice_number || invoice.id}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-mono text-sm text-gray-600">
+                          {invoice.cargo?.cargo_number ||
+                            invoice.cargo_id ||
+                            t("invoices.noCargoNumber")}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs">
+                          <div className="font-medium text-sm text-gray-900 mb-1">
                             {invoice.cargo?.type || t("invoices.unknownType")}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              <span className="truncate max-w-40">
+                          <div className="text-xs text-gray-500">
+                            <div className="flex items-start gap-1">
+                              <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
+                              <span className="truncate">
                                 {invoice.cargo?.pickup_address ||
                                   t("invoices.unknownLocation")}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              <span className="truncate max-w-40">
+                            <div className="flex items-start gap-1 mt-1">
+                              <MapPin className="h-3 w-3 text-blue-500 mt-0.5 flex-shrink-0" />
+                              <span className="truncate">
                                 {invoice.cargo?.destination_address ||
                                   t("invoices.unknownLocation")}
                               </span>
@@ -568,52 +604,50 @@ export default function Invoices() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold">
-                          {formatCurrency(invoice.total_amount || 0)}
+                        <div>
+                          <div className="text-sm font-bold text-gray-900">
+                            {formatCurrency(
+                              parseFloat(invoice.total_amount || 0)
+                            )}
+                          </div>
+                          {invoice.discount_amount &&
+                            parseFloat(invoice.discount_amount) > 0 && (
+                              <div className="text-xs text-green-600">
+                                -
+                                {formatCurrency(
+                                  parseFloat(invoice.discount_amount)
+                                )}{" "}
+                                {t("invoices.discount")}
+                              </div>
+                            )}
                         </div>
-                        {invoice.discount_amount &&
-                          invoice.discount_amount > 0 && (
-                            <div className="text-xs text-green-600">
-                              -{formatCurrency(invoice.discount_amount)}{" "}
-                              {t("invoices.discount")}
-                            </div>
-                          )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className={status.className}>
                           {t(`invoices.status.${invoice.status}`)}
                         </Badge>
-                        {invoice.status === "paid" &&
-                          invoice.payment_method && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {t(
-                                `invoices.paymentMethod.${invoice.payment_method}`
-                              )}
-                            </div>
-                          )}
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">
+                        <div className="text-sm text-gray-900">
                           {invoice.due_date
                             ? new Date(invoice.due_date).toLocaleDateString()
                             : t("invoices.noDueDate")}
                         </div>
                         {invoice.status === "paid" && invoice.paid_at && (
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-gray-500">
                             {t("invoices.paid")}:{" "}
                             {new Date(invoice.paid_at).toLocaleDateString()}
                           </div>
                         )}
                       </TableCell>
                       <TableCell>
-                        {invoice.created_at
-                          ? new Date(invoice.created_at).toLocaleDateString()
-                          : t("invoices.unknownDate")}
-                      </TableCell>
-                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -650,11 +684,11 @@ export default function Invoices() {
 
           {sortedInvoices.length === 0 && (
             <div className="text-center py-12">
-              <Receipt className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-muted-foreground">
+              <Receipt className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-600">
                 {t("invoices.noInvoicesFound")}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 {t("invoices.noInvoicesDescription")}
               </p>
             </div>

@@ -1354,13 +1354,16 @@
     "paymentTitle": "Payment",
     "paymentSummary": "Payment Summary",
     "cargoNumber": "Cargo Number",
+    "noCargoNumber": "No Cargo Number",
     "cargoType": "Cargo Type",
     "totalAmount": "Total Amount",
     "acceptedPaymentMethods": "Accepted Payment Methods",
     "paymentMethods": {
       "card": "Credit/Debit Card",
-      "mobileMoney": "Mobile Money",
-      "ussd": "USSD"
+      "mobile_money": "Mobile Money",
+      "ussd": "USSD",
+      "bankTransfer": "Bank Transfer",
+      "cash": "Cash"
     },
     "securePayment": "Secure Payment",
     "securePaymentDescription": "Your payment is processed securely through Flutterwave. We do not store your payment information.",

@@ -46,6 +46,7 @@ export interface InvoiceDetail {
   updated_at: string;
   cargo: {
     id: string;
+    cargo_number?: string; // Add cargo_number field
     type: string;
     pickup_address: string;
     destination_address: string;
@@ -153,7 +154,9 @@ export function InvoiceDetailModal({
     <ModernModel
       isOpen={isOpen}
       onClose={onClose}
-      title={`Invoice ${invoice.invoice_number}`}
+      title={`Invoice ${invoice.invoice_number} - ${
+        invoice.cargo?.cargo_number || invoice.cargo_id || "N/A"
+      }`}
     >
       <div className="space-y-6">
         {/* Company Header */}
@@ -183,6 +186,10 @@ export function InvoiceDetailModal({
               Invoice #: {invoice.invoice_number}
             </p>
             <p className="text-sm text-gray-600">
+              Cargo #:{" "}
+              {invoice.cargo?.cargo_number || invoice.cargo_id || "N/A"}
+            </p>
+            <p className="text-sm text-gray-600">
               Date: {formatDate(invoice.created_at)}
             </p>
           </div>
@@ -203,12 +210,16 @@ export function InvoiceDetailModal({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-600">Cargo ID</p>
-                <p className="font-semibold">{invoice.cargo_id}</p>
+                <p className="text-sm text-gray-600">Cargo Number</p>
+                <p className="font-semibold font-mono">
+                  {invoice.cargo?.cargo_number || invoice.cargo_id || "N/A"}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Type</p>
-                <p className="font-semibold">{invoice.cargo.type}</p>
+                <p className="font-semibold capitalize">
+                  {invoice.cargo?.type || "N/A"}
+                </p>
               </div>
             </div>
             <div className="mt-4 space-y-2">
@@ -219,7 +230,7 @@ export function InvoiceDetailModal({
                     PICKUP LOCATION
                   </p>
                   <p className="text-sm font-semibold">
-                    {invoice.cargo.pickup_address}
+                    {invoice.cargo?.pickup_address || "N/A"}
                   </p>
                 </div>
               </div>
@@ -230,7 +241,7 @@ export function InvoiceDetailModal({
                     DELIVERY LOCATION
                   </p>
                   <p className="text-sm font-semibold">
-                    {invoice.cargo.destination_address}
+                    {invoice.cargo?.destination_address || "N/A"}
                   </p>
                 </div>
               </div>
