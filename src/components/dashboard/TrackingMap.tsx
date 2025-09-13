@@ -490,9 +490,9 @@ export function TrackingMap() {
   };
 
   return (
-    <div className="h-full flex">
+    <div className="h-full flex overflow-hidden">
       {/* Left Panel - Cargo List (30% width) */}
-      <div className="w-[30%] bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-[30%] bg-white border-r border-gray-200 flex flex-col min-w-0">
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -597,15 +597,32 @@ export function TrackingMap() {
                   {/* Addresses */}
                   <div className="space-y-2 mb-3">
                     <div className="text-xs text-gray-600">
-                      <p className="font-medium">{cargo.pickup_address}</p>
+                      <p className="font-medium truncate">
+                        {cargo.pickup_address}
+                      </p>
                     </div>
                     <div className="text-xs text-gray-600">
-                      <p className="font-medium">{cargo.destination_address}</p>
+                      <p className="font-medium truncate">
+                        {cargo.destination_address}
+                      </p>
                     </div>
                   </div>
 
+                  {/* ETA Information */}
+                  {cargo.tracking?.estimated_delivery_time && (
+                    <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded mb-3">
+                      <Clock className="h-3 w-3" />
+                      <span className="font-medium">
+                        ETA:{" "}
+                        {new Date(
+                          cargo.tracking.estimated_delivery_time
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Dynamic Contact Info */}
-                  <div className="flex items-center justify-between">
+                  <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
                         <span className="text-xs font-medium text-gray-600">
@@ -615,8 +632,8 @@ export function TrackingMap() {
                               "D"}
                         </span>
                       </div>
-                      <div>
-                        <p className="text-xs font-medium">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">
                           {isDriver
                             ? cargo.client?.full_name || "Client"
                             : cargo.tracking?.driver?.full_name || "Driver"}
@@ -624,13 +641,72 @@ export function TrackingMap() {
                         <p className="text-xs text-gray-500">
                           {isDriver ? "Client" : "Driver"}
                         </p>
-                        <p className="text-xs text-gray-500">+250799240909</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {isDriver
+                            ? cargo.client?.phone || "+250799240909"
+                            : cargo.tracking?.driver?.phone || "+250799240909"}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
-                        <Phone className="h-3 w-3" />
-                      </Button>
+
+                    {/* Call Buttons */}
+                    <div className="flex gap-2">
+                      {isClient && cargo.tracking?.driver?.phone && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(
+                              `tel:${cargo.tracking.driver.phone}`,
+                              "_self"
+                            );
+                          }}
+                          className="flex items-center gap-1 text-xs bg-green-600 hover:bg-green-700 flex-1"
+                        >
+                          <Phone className="h-3 w-3" />
+                          Call Driver
+                        </Button>
+                      )}
+
+                      {isDriver && (
+                        <>
+                          {cargo.pickup_phone && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(
+                                  `tel:${cargo.pickup_phone}`,
+                                  "_self"
+                                );
+                              }}
+                              className="flex items-center gap-1 text-xs flex-1"
+                            >
+                              <Phone className="h-3 w-3" />
+                              Pickup
+                            </Button>
+                          )}
+                          {cargo.destination_phone && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(
+                                  `tel:${cargo.destination_phone}`,
+                                  "_self"
+                                );
+                              }}
+                              className="flex items-center gap-1 text-xs flex-1"
+                            >
+                              <Phone className="h-3 w-3" />
+                              Delivery
+                            </Button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -641,7 +717,7 @@ export function TrackingMap() {
       </div>
 
       {/* Right Panel - Map and Details (70% width) */}
-      <div className="w-[70%] bg-gray-100 flex flex-col ">
+      <div className="w-[70%] bg-gray-100 flex flex-col min-w-0 overflow-hidden">
         {selectedCargo ? (
           <>
             {/* Header with Cargo Details */}
@@ -661,7 +737,7 @@ export function TrackingMap() {
             </div>
 
             {/* Map Container */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative min-h-0">
               <div ref={mapRef} className="w-full h-full" />
 
               {/* Map Controls */}
@@ -711,7 +787,7 @@ export function TrackingMap() {
             </div>
 
             {/* Tracking Timeline */}
-            <div className="p-4 bg-white border-t border-gray-200">
+            <div className="p-4 bg-white border-t border-gray-200 max-h-48 overflow-y-auto">
               <h4 className="font-semibold mb-3">Tracking Timeline</h4>
               <div className="space-y-4">
                 {selectedCargo.tracking?.location_history?.map(

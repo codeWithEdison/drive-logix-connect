@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -17,17 +18,53 @@ import {
   CheckCircle,
   Package,
   Route,
+  Search,
+  MessageCircle,
+  Copy,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useInTransitCargo,
   useLiveCargoTracking,
+  useLiveCargoTrackingByNumber,
   useLiveRouteProgress,
   useOptimisticTrackingUpdate,
 } from "@/lib/api/hooks/trackingHooks";
 import { MapService } from "@/lib/api/services/mapService";
 import { trackingWebSocket } from "@/lib/api/services/websocketService";
-import { CargoStatus, CargoPriority, UserRole } from "@/types/shared";
+import {
+  CargoStatus,
+  CargoPriority,
+  UserRole,
+  Cargo,
+  CargoTracking,
+} from "@/types/shared";
+
+// Extend Cargo type to include client data
+interface CargoWithClient extends Cargo {
+  client?: {
+    id: string;
+    full_name: string;
+    phone?: string;
+    email?: string;
+    company_name?: string;
+    business_type?: string;
+    tax_id?: string;
+    address?: string;
+    city?: string;
+    country?: string;
+    postal_code?: string;
+    contact_person?: string;
+    credit_limit?: string;
+    payment_terms?: number;
+    user?: {
+      id: string;
+      full_name: string;
+      email: string;
+      phone: string;
+    };
+  };
+}
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { LiveTrackingErrorBoundary } from "./LiveTrackingErrorBoundary";
@@ -36,47 +73,10 @@ import {
   ConnectionStatus,
 } from "./LiveTrackingMapFallback";
 
-interface CargoWithTracking {
-  id: string;
-  type: string;
-  description?: string;
-  pickup_location: string;
-  delivery_location: string;
-  status: CargoStatus;
-  priority: CargoPriority;
-  created_at: string;
-  estimated_pickup_time?: string;
-  estimated_delivery_time?: string;
-  weight_kg: number;
-  volume_m3: number;
-  tracking?: {
-    current_status: CargoStatus;
-    location_history: Array<{
-      id: string;
-      latitude: number;
-      longitude: number;
-      recorded_at: string;
-    }>;
-    driver?: {
-      full_name: string;
-      phone?: string;
-      rating: number;
-    };
-    vehicle?: {
-      license_plate: string;
-      make?: string;
-      model?: string;
-    };
-    current_location?: string;
-    progress_percentage?: number;
-  };
-  client?: {
-    id: string;
-    full_name: string;
-    phone?: string;
-    email?: string;
-  };
-}
+// Use the actual Cargo type with tracking data
+type CargoWithTracking = CargoWithClient & {
+  tracking?: CargoTracking;
+};
 
 export const LiveTrackingMap: React.FC = () => {
   const { user } = useAuth();
@@ -90,11 +90,22 @@ export const LiveTrackingMap: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
   const [connectionRetryCount, setConnectionRetryCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<
+    "order" | "driver" | "vehicle" | "customer" | "documents"
+  >("driver");
 
   const isDriver = user?.role === UserRole.DRIVER;
   const isClient = user?.role === UserRole.CLIENT;
 
-  // Fetch in-transit cargo with live updates
+  console.log("🔍 LiveTrackingMap user info:", {
+    userRole: user?.role,
+    isDriver,
+    isClient,
+    userId: user?.id,
+  });
+
+  // Fetch in-transit cargo with live updates (using role-specific endpoints)
   const {
     data: cargoData,
     isLoading: cargoLoading,
@@ -105,26 +116,30 @@ export const LiveTrackingMap: React.FC = () => {
       page: 1,
       limit: 50,
       ...(isDriver && { driver_id: user?.id }),
+      userRole: user?.role as "client" | "driver" | "admin",
     },
     { refetchInterval: 60000 } // Refresh every minute
   );
 
-  // Fetch detailed tracking for selected cargo
+  // Fetch detailed tracking for selected cargo (using dashboard endpoint for enhanced data)
   const {
     data: trackingData,
     isLoading: trackingLoading,
     refetch: refetchTracking,
-  } = useLiveCargoTracking(selectedCargo?.id || "", {
-    refetchInterval: 30000, // 30 seconds for live tracking
-    enabled: !!selectedCargo?.id,
-  });
+  } = useLiveCargoTrackingByNumber(
+    selectedCargo?.cargo_number || selectedCargo?.id || "",
+    {
+      refetchInterval: 30000, // 30 seconds for live tracking
+      enabled: !!(selectedCargo?.cargo_number || selectedCargo?.id),
+      useDashboard: true, // Use dashboard endpoint for enhanced data
+    }
+  );
 
   // Fetch route progress
   const { data: progressData, refetch: refetchProgress } = useLiveRouteProgress(
-    selectedCargo?.id || "",
+    selectedCargo?.cargo_number || selectedCargo?.id || "",
     {
       refetchInterval: 30000,
-      enabled: !!selectedCargo?.id,
     }
   );
 
@@ -232,10 +247,12 @@ export const LiveTrackingMap: React.FC = () => {
 
   // Subscribe to live updates for selected cargo
   useEffect(() => {
-    if (!selectedCargo?.id || !isConnected) return;
+    if ((!selectedCargo?.cargo_number && !selectedCargo?.id) || !isConnected)
+      return;
 
     const unsubscribeLocation = trackingWebSocket.onLocationUpdate((data) => {
-      if (data.cargo_id === selectedCargo.id) {
+      const cargoIdentifier = selectedCargo.cargo_number || selectedCargo.id;
+      if (data.cargo_id === cargoIdentifier) {
         setLastUpdate(new Date().toISOString());
         refetchTracking();
         refetchProgress();
@@ -243,21 +260,29 @@ export const LiveTrackingMap: React.FC = () => {
     });
 
     const unsubscribeStatus = trackingWebSocket.onStatusUpdate((data) => {
-      if (data.cargo_id === selectedCargo.id) {
+      const cargoIdentifier = selectedCargo.cargo_number || selectedCargo.id;
+      if (data.cargo_id === cargoIdentifier) {
         setLastUpdate(new Date().toISOString());
         refetchTracking();
       }
     });
 
     // Subscribe to cargo tracking
-    trackingWebSocket.subscribeToCargoTracking(selectedCargo.id);
+    const cargoIdentifier = selectedCargo.cargo_number || selectedCargo.id;
+    trackingWebSocket.subscribeToCargoTracking(cargoIdentifier);
 
     return () => {
       unsubscribeLocation();
       unsubscribeStatus();
-      trackingWebSocket.unsubscribeFromCargoTracking(selectedCargo.id);
+      trackingWebSocket.unsubscribeFromCargoTracking(cargoIdentifier);
     };
-  }, [selectedCargo?.id, isConnected, refetchTracking, refetchProgress]);
+  }, [
+    selectedCargo?.cargo_number,
+    selectedCargo?.id,
+    isConnected,
+    refetchTracking,
+    refetchProgress,
+  ]);
 
   // Initialize map when component mounts
   useEffect(() => {
@@ -327,16 +352,32 @@ export const LiveTrackingMap: React.FC = () => {
   // Update map when tracking data changes
   useEffect(() => {
     if (selectedCargo && trackingData) {
-      const cargoWithTracking: CargoWithTracking = {
-        ...selectedCargo,
-        tracking: trackingData,
-      };
-      updateMapForSelectedCargo(cargoWithTracking);
+      // trackingData is the full cargo with tracking data
+      updateMapForSelectedCargo(trackingData as CargoWithTracking);
     }
   }, [selectedCargo, trackingData, updateMapForSelectedCargo]);
 
   const handleCargoSelect = (cargo: CargoWithTracking) => {
     setSelectedCargo(cargo);
+  };
+
+  // Enhanced cargo selection that can handle both ID and cargo number
+  const handleCargoSelectByIdOrNumber = (identifier: string) => {
+    // First try to find in current cargo list
+    const existingCargo = filteredCargoList.find(
+      (cargo) => cargo.id === identifier || cargo.cargo_number === identifier
+    );
+
+    if (existingCargo) {
+      setSelectedCargo(existingCargo);
+      return;
+    }
+
+    // If not found in current list, we could implement a search function here
+    // For now, we'll just log that the cargo wasn't found
+    console.warn(
+      `Cargo with identifier ${identifier} not found in current list`
+    );
   };
 
   const getStatusColor = (status: CargoStatus) => {
@@ -356,23 +397,59 @@ export const LiveTrackingMap: React.FC = () => {
     switch (priority) {
       case CargoPriority.HIGH:
         return "bg-red-100 text-red-800";
-      case CargoPriority.MEDIUM:
+      case CargoPriority.NORMAL:
         return "bg-orange-100 text-orange-800";
       case CargoPriority.LOW:
         return "bg-green-100 text-green-800";
+      case CargoPriority.URGENT:
+        return "bg-red-100 text-red-800";
       default:
         return "bg-blue-100 text-blue-800";
     }
   };
 
-  const filteredCargoList = cargoData?.data || [];
+  // Filter cargo list based on search term
+  const filteredCargoList = (cargoData || []).filter(
+    (cargo: CargoWithTracking) => {
+      if (!searchTerm) return true;
+
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        cargo.id.toLowerCase().includes(searchLower) ||
+        cargo.cargo_number?.toLowerCase().includes(searchLower) ||
+        cargo.type?.toLowerCase().includes(searchLower) ||
+        cargo.pickup_address?.toLowerCase().includes(searchLower) ||
+        cargo.destination_address?.toLowerCase().includes(searchLower) ||
+        cargo.client?.full_name?.toLowerCase().includes(searchLower)
+      );
+    }
+  );
+
+  // Auto-select first cargo when list loads and no cargo is selected
+  useEffect(() => {
+    if (filteredCargoList.length > 0 && !selectedCargo && !cargoLoading) {
+      console.log("🚀 Auto-selecting first cargo:", filteredCargoList[0]);
+      setSelectedCargo(filteredCargoList[0]);
+    }
+  }, [filteredCargoList, selectedCargo, cargoLoading]);
+
+  console.log("🔍 LiveTrackingMap cargoData:", {
+    cargoData,
+    cargoDataLength: cargoData?.length,
+    filteredCargoListLength: filteredCargoList.length,
+    isLoading: cargoLoading,
+    error: cargoError,
+    userRole: user?.role,
+    isDriver,
+    isClient,
+  });
 
   return (
     <LiveTrackingErrorBoundary>
-      <div className="h-full flex gap-4">
+      <div className="h-full flex gap-4 overflow-hidden">
         {/* Left Panel - Cargo List */}
-        <div className="w-[30%] flex flex-col">
-          <Card className="flex-1">
+        <div className="w-[30%] flex flex-col min-w-0">
+          <Card className="flex-1 flex flex-col min-h-0">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-semibold">
@@ -397,13 +474,28 @@ export const LiveTrackingMap: React.FC = () => {
                   </Button>
                 </div>
               </div>
-              <p className="text-sm text-gray-600">
-                {filteredCargoList.length} in-transit deliveries
+
+              {/* Search Input */}
+              <div className="mt-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by cargo ID, number, type, or location..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-600 mt-2">
+                {filteredCargoList.length} of {(cargoData || []).length}{" "}
+                in-transit deliveries
               </p>
             </CardHeader>
 
-            <CardContent className="p-0">
-              <ScrollArea className="h-[calc(100vh-200px)]">
+            <CardContent className="p-0 flex-1 min-h-0">
+              <ScrollArea className="h-full">
                 {cargoLoading ? (
                   <div className="flex items-center justify-center p-8">
                     <RefreshCw className="h-6 w-6 animate-spin" />
@@ -417,12 +509,31 @@ export const LiveTrackingMap: React.FC = () => {
                   />
                 ) : filteredCargoList.length === 0 ? (
                   <div className="flex items-center justify-center p-8 text-gray-500">
-                    <Package className="h-6 w-6 mr-2" />
-                    No in-transit cargo
+                    <div className="text-center">
+                      <Package className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-lg font-medium mb-2">
+                        {searchTerm
+                          ? "No matching cargo found"
+                          : "No in-transit cargo"}
+                      </p>
+                      <p className="text-sm">
+                        {searchTerm
+                          ? "Try adjusting your search terms"
+                          : "Cargo will appear here when shipments are in transit"}
+                      </p>
+                      {!searchTerm && (
+                        <div className="mt-4 text-xs text-gray-400">
+                          <p>Debug info:</p>
+                          <p>User role: {user?.role}</p>
+                          <p>Total cargo: {(cargoData || []).length}</p>
+                          <p>Filtered cargo: {filteredCargoList.length}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-2 p-2">
-                    {filteredCargoList.map((cargo) => (
+                    {filteredCargoList.map((cargo: CargoWithTracking) => (
                       <Card
                         key={cargo.id}
                         className={cn(
@@ -433,63 +544,199 @@ export const LiveTrackingMap: React.FC = () => {
                         onClick={() => handleCargoSelect(cargo)}
                       >
                         <CardContent className="p-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <h4 className="font-medium text-sm">
-                                {cargo.type}
-                              </h4>
-                              <Badge className={getStatusColor(cargo.status)}>
-                                {cargo.status.replace("_", " ")}
-                              </Badge>
+                          {/* Header with cargo ID and status */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-gray-600" />
+                              <h3 className="font-bold text-sm">
+                                #{cargo.cargo_number || cargo.id}
+                              </h3>
                             </div>
+                            <Badge
+                              className={cn(
+                                "text-white",
+                                cargo.status === "in_transit"
+                                  ? "bg-purple-600"
+                                  : cargo.status === "delivered"
+                                  ? "bg-green-600"
+                                  : "bg-orange-600"
+                              )}
+                            >
+                              {cargo.status === "in_transit"
+                                ? "Transit"
+                                : cargo.status === "delivered"
+                                ? "Delivered"
+                                : cargo.status.replace("_", " ")}
+                            </Badge>
+                          </div>
 
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <MapPin className="h-3 w-3" />
-                              <span className="truncate">
-                                {cargo.delivery_location}
-                              </span>
+                          {/* Progress indicator with route visualization */}
+                          <div className="flex items-center mb-3">
+                            <div className="flex-1 flex items-center">
+                              {/* Pickup point */}
+                              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+
+                              {/* Progress line container */}
+                              <div className="flex-1 relative">
+                                {/* Background line */}
+                                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-300 transform -translate-y-1/2"></div>
+
+                                {/* Calculate progress percentage */}
+                                {(() => {
+                                  const progress =
+                                    cargo.tracking?.progress_percentage ||
+                                    (cargo.tracking?.location_history?.length
+                                      ? Math.min(
+                                          (cargo.tracking.location_history
+                                            .length /
+                                            3) *
+                                            100,
+                                          100
+                                        )
+                                      : 0);
+                                  const progressPercent = Math.max(
+                                    progress,
+                                    10
+                                  ); // Minimum 10% to show some progress
+
+                                  return (
+                                    <>
+                                      {/* Completed progress - solid green line */}
+                                      <div
+                                        className="absolute top-1/2 left-0 h-0.5 bg-green-500 transform -translate-y-1/2"
+                                        style={{ width: `${progressPercent}%` }}
+                                      ></div>
+
+                                      {/* Remaining progress - dashed gray line */}
+                                      <div
+                                        className="absolute top-1/2 h-0.5 bg-gray-400 transform -translate-y-1/2"
+                                        style={{
+                                          left: `${progressPercent}%`,
+                                          width: `${100 - progressPercent}%`,
+                                          backgroundImage:
+                                            "repeating-linear-gradient(to right, #9CA3AF 0, #9CA3AF 4px, transparent 4px, transparent 8px)",
+                                        }}
+                                      ></div>
+
+                                      {/* Truck icon positioned at progress point */}
+                                      <div
+                                        className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2"
+                                        style={{ left: `${progressPercent}%` }}
+                                      >
+                                        <Truck className="h-4 w-4 text-gray-700 bg-white rounded-full p-0.5" />
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+
+                              {/* Destination point */}
+                              <div className="w-2 h-2 bg-gray-600 rounded-full ml-2"></div>
                             </div>
+                          </div>
 
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 text-xs text-gray-600">
-                                <Clock className="h-3 w-3" />
-                                <span>
-                                  {formatDistanceToNow(
-                                    new Date(cargo.created_at),
-                                    { addSuffix: true }
-                                  )}
+                          {/* Addresses */}
+                          <div className="space-y-2 mb-3">
+                            <div className="text-xs text-gray-600">
+                              <p className="font-medium truncate">
+                                {cargo.pickup_address}
+                              </p>
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              <p className="font-medium truncate">
+                                {cargo.destination_address}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Contact Information */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                                <span className="text-xs font-medium text-gray-600">
+                                  {isDriver
+                                    ? (
+                                        cargo as CargoWithTracking
+                                      ).client?.full_name?.charAt(0) || "C"
+                                    : cargo.tracking?.driver?.full_name?.charAt(
+                                        0
+                                      ) || "D"}
                                 </span>
                               </div>
-                              <Badge
-                                variant="outline"
-                                className={getPriorityColor(cargo.priority)}
-                              >
-                                {cargo.priority}
-                              </Badge>
-                            </div>
-
-                            {/* Progress indicator */}
-                            {cargo.tracking?.progress_percentage && (
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span>Progress</span>
-                                  <span>
-                                    {Math.round(
-                                      cargo.tracking.progress_percentage
-                                    )}
-                                    %
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                  <div
-                                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                    style={{
-                                      width: `${cargo.tracking.progress_percentage}%`,
-                                    }}
-                                  />
-                                </div>
+                              <div>
+                                <p className="text-xs font-medium">
+                                  {isDriver
+                                    ? (cargo as CargoWithTracking).client
+                                        ?.full_name || "Client"
+                                    : cargo.tracking?.driver?.full_name ||
+                                      "Driver"}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {isDriver ? "Customer" : "Driver"}
+                                </p>
                               </div>
-                            )}
+                            </div>
+                            <div className="flex gap-1">
+                              {isClient && cargo.tracking?.driver?.phone && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(
+                                      `tel:${cargo.tracking.driver.phone}`,
+                                      "_self"
+                                    );
+                                  }}
+                                >
+                                  <Phone className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {isDriver && (
+                                <>
+                                  {cargo.pickup_phone && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(
+                                          `tel:${cargo.pickup_phone}`,
+                                          "_self"
+                                        );
+                                      }}
+                                    >
+                                      <Phone className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                  {cargo.destination_phone && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(
+                                          `tel:${cargo.destination_phone}`,
+                                          "_self"
+                                        );
+                                      }}
+                                    >
+                                      <Phone className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0"
+                              >
+                                <Mail className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -502,11 +749,14 @@ export const LiveTrackingMap: React.FC = () => {
         </div>
 
         {/* Right Panel - Map and Details */}
-        <div className="w-[70%] flex flex-col">
-          <Card className="flex-1">
-            <CardContent className="p-0 h-full">
+        <div className="w-[70%] flex flex-col min-w-0 overflow-hidden">
+          <Card className="flex-1 flex flex-col min-h-0">
+            <CardContent className="p-0 h-full flex flex-col min-h-0">
               {/* Map Container */}
-              <div className="h-[60%] relative">
+              <div
+                className="flex-1 relative min-h-0"
+                style={{ minHeight: "400px" }}
+              >
                 {mapError ? (
                   <LiveTrackingMapFallback
                     type="map"
@@ -516,7 +766,11 @@ export const LiveTrackingMap: React.FC = () => {
                   />
                 ) : (
                   <>
-                    <div ref={mapRef} className="w-full h-full rounded-t-lg" />
+                    <div
+                      ref={mapRef}
+                      className="w-full h-full rounded-t-lg"
+                      style={{ minHeight: "400px" }}
+                    />
 
                     {/* Map overlay info */}
                     <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
@@ -538,99 +792,230 @@ export const LiveTrackingMap: React.FC = () => {
               </div>
 
               {/* Cargo Details */}
-              <div className="h-[40%] p-6 border-t">
+              <div className="flex-shrink-0 border-t bg-white">
                 {selectedCargo ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">
-                        {selectedCargo.type}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(selectedCargo.status)}>
-                          {selectedCargo.status.replace("_", " ")}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={getPriorityColor(selectedCargo.priority)}
+                  <div className="p-6">
+                    {/* Header with Tabs */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                        <Button
+                          variant={activeTab === "order" ? "default" : "ghost"}
+                          size="sm"
+                          className={`text-xs ${
+                            activeTab === "order"
+                              ? "bg-green-600 hover:bg-green-700 text-white"
+                              : ""
+                          }`}
+                          onClick={() => setActiveTab("order")}
                         >
-                          {selectedCargo.priority}
-                        </Badge>
+                          Order details
+                        </Button>
+                        <Button
+                          variant={activeTab === "driver" ? "default" : "ghost"}
+                          size="sm"
+                          className={`text-xs ${
+                            activeTab === "driver"
+                              ? "bg-green-600 hover:bg-green-700 text-white"
+                              : ""
+                          }`}
+                          onClick={() => setActiveTab("driver")}
+                        >
+                          Driver information
+                        </Button>
+                        <Button
+                          variant={
+                            activeTab === "vehicle" ? "default" : "ghost"
+                          }
+                          size="sm"
+                          className={`text-xs ${
+                            activeTab === "vehicle"
+                              ? "bg-green-600 hover:bg-green-700 text-white"
+                              : ""
+                          }`}
+                          onClick={() => setActiveTab("vehicle")}
+                        >
+                          Vehicle
+                        </Button>
+                        <Button
+                          variant={
+                            activeTab === "customer" ? "default" : "ghost"
+                          }
+                          size="sm"
+                          className={`text-xs ${
+                            activeTab === "customer"
+                              ? "bg-green-600 hover:bg-green-700 text-white"
+                              : ""
+                          }`}
+                          onClick={() => setActiveTab("customer")}
+                        >
+                          Customer information
+                        </Button>
+                        <Button
+                          variant={
+                            activeTab === "documents" ? "default" : "ghost"
+                          }
+                          size="sm"
+                          className={`text-xs ${
+                            activeTab === "documents"
+                              ? "bg-green-600 hover:bg-green-700 text-white"
+                              : ""
+                          }`}
+                          onClick={() => setActiveTab("documents")}
+                        >
+                          Documents
+                        </Button>
                       </div>
                     </div>
 
-                    <Separator />
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Location Info */}
-                      <div className="space-y-3">
-                        <div>
-                          <h4 className="font-medium text-sm text-gray-700 mb-1">
-                            Pickup Location
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {selectedCargo.pickup_location}
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-sm text-gray-700 mb-1">
-                            Delivery Location
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            {selectedCargo.delivery_location}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Contact Info */}
-                      <div className="space-y-3">
-                        {isDriver && selectedCargo.client && (
-                          <>
+                    {/* Dynamic Content Card */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                      {activeTab === "order" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Package className="h-5 w-5 text-blue-600" />
+                            <h3 className="font-semibold">
+                              {selectedCargo.type || "Cargo"}
+                            </h3>
+                            <Badge
+                              className={getStatusColor(selectedCargo.status)}
+                            >
+                              {selectedCargo.status.replace("_", " ")}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
                             <div>
-                              <h4 className="font-medium text-sm text-gray-700 mb-1">
-                                Client Contact
-                              </h4>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-sm">
-                                  <User className="h-3 w-3" />
-                                  <span>{selectedCargo.client.full_name}</span>
-                                </div>
-                                {selectedCargo.client.phone && (
-                                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <Phone className="h-3 w-3" />
-                                    <span>{selectedCargo.client.phone}</span>
-                                  </div>
-                                )}
-                              </div>
+                              <span className="text-gray-500">Weight:</span>
+                              <span className="ml-2 font-medium">
+                                {selectedCargo.weight_kg} kg
+                              </span>
                             </div>
-                          </>
-                        )}
-
-                        {isClient && selectedCargo.tracking?.driver && (
-                          <>
                             <div>
-                              <h4 className="font-medium text-sm text-gray-700 mb-1">
-                                Driver Info
-                              </h4>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-sm">
-                                  <User className="h-3 w-3" />
+                              <span className="text-gray-500">Cost:</span>
+                              <span className="ml-2 font-medium">
+                                ${selectedCargo.estimated_cost || "N/A"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Distance:</span>
+                              <span className="ml-2 font-medium">
+                                {selectedCargo.distance_km
+                                  ? `${selectedCargo.distance_km} km`
+                                  : "N/A"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Created:</span>
+                              <span className="ml-2 font-medium">
+                                {new Date(
+                                  selectedCargo.created_at
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeTab === "driver" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                              {selectedCargo.tracking?.driver?.full_name?.charAt(
+                                0
+                              ) || "D"}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold">
+                                {selectedCargo.tracking?.driver?.full_name ||
+                                  "Driver"}
+                              </h3>
+                              {selectedCargo.tracking?.driver?.phone && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Phone className="h-3 w-3" />
                                   <span>
-                                    {selectedCargo.tracking.driver.full_name}
+                                    {selectedCargo.tracking.driver.phone}
                                   </span>
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white h-6 px-2"
+                                    onClick={() =>
+                                      window.open(
+                                        `tel:${selectedCargo.tracking.driver.phone}`,
+                                        "_self"
+                                      )
+                                    }
+                                  >
+                                    Call
+                                  </Button>
                                 </div>
-                                {selectedCargo.tracking.driver.phone && (
-                                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <Phone className="h-3 w-3" />
-                                    <span>
-                                      {selectedCargo.tracking.driver.phone}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
+                              )}
                             </div>
-                          </>
-                        )}
-                      </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeTab === "vehicle" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Truck className="h-5 w-5 text-gray-600" />
+                            <h3 className="font-semibold">
+                              {selectedCargo.tracking?.vehicle?.license_plate ||
+                                "Vehicle"}
+                            </h3>
+                          </div>
+                          {selectedCargo.tracking?.vehicle?.make && (
+                            <div className="text-sm text-gray-600">
+                              {selectedCargo.tracking.vehicle.make}{" "}
+                              {selectedCargo.tracking.vehicle.model}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {activeTab === "customer" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                              {selectedCargo.client?.full_name?.charAt(0) ||
+                                "C"}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold">
+                                {selectedCargo.client?.full_name || "Customer"}
+                              </h3>
+                              {selectedCargo.client?.phone && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Phone className="h-3 w-3" />
+                                  <span>{selectedCargo.client.phone}</span>
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white h-6 px-2"
+                                    onClick={() =>
+                                      window.open(
+                                        `tel:${selectedCargo.client.phone}`,
+                                        "_self"
+                                      )
+                                    }
+                                  >
+                                    Call
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeTab === "documents" && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Package className="h-5 w-5 text-orange-600" />
+                            <h3 className="font-semibold">Documents</h3>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            No documents available
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Progress and ETA */}

@@ -183,6 +183,8 @@ export const queryKeys = {
   // Live Tracking
   tracking: {
     cargoDetail: (id: string) => ["tracking", "cargo", "detail", id] as const,
+    cargoDetailByNumber: (cargoNumber: string) =>
+      ["tracking", "cargo", "detail", "number", cargoNumber] as const,
     vehicleLive: (id: string) => ["tracking", "vehicle", "live", id] as const,
     vehicleHistory: (id: string, params?: Record<string, any>) =>
       ["tracking", "vehicle", "history", id, params] as const,

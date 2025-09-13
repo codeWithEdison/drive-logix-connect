@@ -3,19 +3,52 @@ import { TrackingService } from "../services";
 import { queryKeys } from "../queryClient";
 import { CargoStatus } from "../../../types/shared";
 
-// Live tracking hooks with auto-refresh
+// Live tracking hooks with auto-refresh (by cargo ID)
 export const useLiveCargoTracking = (
   cargoId: string,
   options?: {
     refetchInterval?: number;
     enabled?: boolean;
+    useDashboard?: boolean; // Use dashboard endpoint for enhanced data
   }
 ) => {
   return useQuery({
     queryKey: queryKeys.tracking.cargoDetail(cargoId),
-    queryFn: () => TrackingService.getCargoTracking(cargoId),
+    queryFn: () =>
+      options?.useDashboard
+        ? TrackingService.getDashboardTracking(cargoId, {
+            include_history: true,
+            limit: 50,
+          })
+        : TrackingService.getCargoTracking(cargoId),
     select: (data) => data.data,
     enabled: !!cargoId && options?.enabled !== false,
+    refetchInterval: options?.refetchInterval || 30000, // 30 seconds default
+    refetchIntervalInBackground: true,
+    staleTime: 15000, // 15 seconds
+  });
+};
+
+// Live tracking hooks with auto-refresh (by cargo number)
+export const useLiveCargoTrackingByNumber = (
+  cargoNumber: string,
+  options?: {
+    refetchInterval?: number;
+    enabled?: boolean;
+    useDashboard?: boolean; // Use dashboard endpoint for enhanced data
+  }
+) => {
+  return useQuery({
+    queryKey: queryKeys.tracking.cargoDetailByNumber(cargoNumber),
+    queryFn: () =>
+      options?.useDashboard
+        ? TrackingService.getDashboardTrackingByNumber(cargoNumber, {
+            include_history: true,
+            limit: 50,
+          })
+        : TrackingService.getCargoTrackingByNumber(cargoNumber),
+    select: (data) => data.data,
+    enabled: !!cargoNumber && options?.enabled !== false,
     refetchInterval: options?.refetchInterval || 30000, // 30 seconds default
     refetchIntervalInBackground: true,
     staleTime: 15000, // 15 seconds
@@ -47,15 +80,31 @@ export const useInTransitCargo = (
     page?: number;
     limit?: number;
     driver_id?: string;
+    userRole?: "client" | "driver" | "admin";
   },
   options?: {
     refetchInterval?: number;
   }
 ) => {
   return useQuery({
-    queryKey: queryKeys.tracking.inTransitCargo(params),
+    queryKey: queryKeys.tracking.inTransitCargo({
+      ...params,
+      userRole: params?.userRole,
+    }),
     queryFn: () => TrackingService.getInTransitCargo(params),
-    select: (data) => data.data,
+    select: (data) => {
+      console.log("🔍 useInTransitCargo select function:", {
+        rawData: data,
+        extractedData: data.data,
+        dataType: typeof data.data,
+        isArray: Array.isArray(data.data),
+        paginationData: data.data?.data,
+        isPaginationArray: Array.isArray(data.data?.data),
+      });
+      // The API response structure is: { success: true, data: [...], meta: {...} }
+      // So we just need data.data (the array)
+      return data.data || [];
+    }, // Extract the cargo array from the API response
     refetchInterval: options?.refetchInterval || 60000, // 1 minute for list
     refetchIntervalInBackground: true,
     staleTime: 30000, // 30 seconds
