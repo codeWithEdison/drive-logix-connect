@@ -1,5 +1,22 @@
 import axiosInstance from "../axios";
-import { ApiResponse, PaginationResponse } from "../../../types/shared";
+import { 
+  ApiResponse, 
+  PaginationResponse,
+  DashboardResponse,
+  DashboardOverview,
+  DashboardStats,
+  QuickStats,
+  RecentActivity,
+  DashboardAlert,
+  RevenueChartData,
+  DeliveryPerformanceChart,
+  GeographicAnalytics,
+  DriverPerformanceDashboard,
+  VehicleAnalyticsDashboard,
+  ClientAnalyticsDashboard,
+  SystemHealthDashboard,
+  DashboardFilters
+} from "../../../types/shared";
 
 // ===========================================
 // DASHBOARD SERVICE
@@ -318,118 +335,7 @@ export class DashboardService {
   }
 
   // Super Admin Dashboard
-  static async getSuperAdminDashboard(): Promise<
-    ApiResponse<{
-      stats: {
-        total_revenue: number;
-        active_admins: number;
-        total_users: number;
-        system_health_percentage: number;
-        total_drivers: number;
-        total_clients: number;
-        total_vehicles: number;
-        system_uptime: number;
-      };
-      charts: {
-        revenue_trends: {
-          daily_revenue: Array<{
-            date: string;
-            revenue: number;
-            deliveries: number;
-          }>;
-          monthly_revenue: Array<{
-            month: string;
-            revenue: number;
-            growth_percentage: number;
-          }>;
-          revenue_by_payment_method: Record<string, number>;
-        };
-        usage_trends: {
-          user_registrations: Array<{
-            date: string;
-            new_users: number;
-            active_users: number;
-          }>;
-          system_usage: Array<{
-            date: string;
-            api_calls: number;
-            active_sessions: number;
-          }>;
-        };
-        admin_performance: {
-          admin_activities: Array<{
-            admin_id: string;
-            admin_name: string;
-            activities_count: number;
-            last_activity: string;
-          }>;
-          performance_metrics: Array<{
-            date: string;
-            approvals_processed: number;
-            issues_resolved: number;
-          }>;
-        };
-        users_distribution: {
-          users_by_role: Record<string, number>;
-          users_by_status: Record<string, number>;
-          users_by_business_type: Record<string, number>;
-          registration_trends: Array<{
-            date: string;
-            total_users: number;
-            new_registrations: number;
-          }>;
-        };
-      };
-      tables: {
-        pending_approvals: Array<{
-          id: string;
-          type: string;
-          name: string;
-          email: string;
-          status: string;
-          submitted_at: string;
-          admin_notes?: string;
-        }>;
-        system_alerts: Array<{
-          id: string;
-          type: string;
-          message: string;
-          severity: string;
-          created_at: string;
-          is_resolved: boolean;
-          resolved_by?: string;
-          resolved_at?: string;
-        }>;
-      };
-      system_health: {
-        api_performance: {
-          average_response_time_ms: number;
-          error_rate_percentage: number;
-          uptime_percentage: number;
-        };
-        database_metrics: {
-          connection_count: number;
-          query_performance_ms: number;
-          storage_usage_percentage: number;
-        };
-        server_resources: {
-          cpu_usage_percentage: number;
-          memory_usage_percentage: number;
-          disk_usage_percentage: number;
-        };
-      };
-      recent_logs: Array<{
-        id: string;
-        type: string;
-        user: string;
-        action: string;
-        ip_address: string;
-        timestamp: string;
-        success: boolean;
-        details?: Record<string, any>;
-      }>;
-    }>
-  > {
+  static async getSuperAdminDashboard(): Promise<ApiResponse<DashboardResponse>> {
     const response = await axiosInstance.get("/dashboard/super-admin");
     return response.data;
   }
@@ -444,21 +350,7 @@ export class DashboardService {
     role?: string;
     start_date?: string;
     end_date?: string;
-  }): Promise<
-    ApiResponse<{
-      daily_revenue: Array<{
-        date: string;
-        revenue: number;
-        deliveries: number;
-      }>;
-      monthly_revenue: Array<{
-        month: string;
-        revenue: number;
-        growth_percentage: number;
-      }>;
-      revenue_by_payment_method: Record<string, number>;
-    }>
-  > {
+  }): Promise<ApiResponse<RevenueChartData>> {
     const response = await axiosInstance.get("/dashboard/charts/revenue", {
       params,
     });
@@ -470,17 +362,7 @@ export class DashboardService {
     period?: string;
     start_date?: string;
     end_date?: string;
-  }): Promise<
-    ApiResponse<{
-      status_distribution: Record<string, number>;
-      priority_distribution: Record<string, number>;
-      delivery_times: Array<{
-        date: string;
-        average_time_hours: number;
-        on_time_percentage: number;
-      }>;
-    }>
-  > {
+  }): Promise<ApiResponse<DeliveryPerformanceChart>> {
     const response = await axiosInstance.get(
       "/dashboard/charts/delivery-status",
       { params }
@@ -524,26 +406,7 @@ export class DashboardService {
   static async getGeographicChart(params?: {
     region?: string;
     period?: string;
-  }): Promise<
-    ApiResponse<{
-      top_pickup_locations: Array<{
-        location: string;
-        count: number;
-        revenue: number;
-      }>;
-      top_delivery_locations: Array<{
-        location: string;
-        count: number;
-        revenue: number;
-      }>;
-      route_efficiency: Array<{
-        route: string;
-        average_time: number;
-        distance_km: number;
-        efficiency_score: number;
-      }>;
-    }>
-  > {
+  }): Promise<ApiResponse<GeographicAnalytics>> {
     const response = await axiosInstance.get("/dashboard/charts/geographic", {
       params,
     });
@@ -554,22 +417,7 @@ export class DashboardService {
   static async getDriverPerformanceChart(params?: {
     driver_id?: string;
     period?: string;
-  }): Promise<
-    ApiResponse<{
-      top_performers: Array<{
-        driver_id: string;
-        driver_name: string;
-        deliveries_completed: number;
-        average_rating: number;
-        on_time_percentage: number;
-      }>;
-      performance_trends: Array<{
-        date: string;
-        average_rating: number;
-        deliveries_completed: number;
-      }>;
-    }>
-  > {
+  }): Promise<ApiResponse<DriverPerformanceDashboard>> {
     const response = await axiosInstance.get(
       "/dashboard/charts/driver-performance",
       { params }
@@ -764,25 +612,7 @@ export class DashboardService {
   // ===========================================
 
   // System Health
-  static async getSystemHealth(): Promise<
-    ApiResponse<{
-      api_performance: {
-        average_response_time_ms: number;
-        error_rate_percentage: number;
-        uptime_percentage: number;
-      };
-      database_metrics: {
-        connection_count: number;
-        query_performance_ms: number;
-        storage_usage_percentage: number;
-      };
-      server_resources: {
-        cpu_usage_percentage: number;
-        memory_usage_percentage: number;
-        disk_usage_percentage: number;
-      };
-    }>
-  > {
+  static async getSystemHealth(): Promise<ApiResponse<SystemHealthDashboard>> {
     const response = await axiosInstance.get("/dashboard/system-health");
     return response.data;
   }
@@ -811,18 +641,7 @@ export class DashboardService {
   // ===========================================
 
   // Apply Dashboard Filters
-  static async applyDashboardFilters(filters: {
-    date_range?: {
-      start_date: string;
-      end_date: string;
-    };
-    period?: string;
-    user_role?: string;
-    driver_status?: string;
-    vehicle_type?: string;
-    cargo_status?: string;
-    payment_method?: string;
-  }): Promise<ApiResponse<any>> {
+  static async applyDashboardFilters(filters: DashboardFilters): Promise<ApiResponse<any>> {
     const response = await axiosInstance.post("/dashboard/filters", filters);
     return response.data;
   }
