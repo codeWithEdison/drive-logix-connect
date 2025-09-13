@@ -83,7 +83,7 @@ export const useFileStatistics = () => {
 };
 
 // GPS hooks
-export const useUpdateLocation = () => {
+export const useUpdateGPSLocation = () => {
   return useMutation({
     mutationFn: (data: UpdateGPSLocationRequest) =>
       GPSService.updateLocation(data),

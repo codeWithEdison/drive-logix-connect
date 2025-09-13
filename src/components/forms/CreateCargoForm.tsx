@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { PaymentComponent } from "./PaymentComponent";
 import { PaymentFlow } from "@/components/payments/PaymentFlow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -21,8 +22,15 @@ import {
   useAvailableVehiclesForDate,
   useEstimateCargoCost,
   useCargoCategories,
+  useMyLocations,
+  useCreateLocation,
 } from "@/lib/api/hooks";
-import { CreateCargoRequest, CargoPriority } from "@/types/shared";
+import {
+  CreateCargoRequest,
+  CargoPriority,
+  Location,
+  LocationType,
+} from "@/types/shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import {
@@ -78,6 +86,14 @@ export function CreateCargoForm() {
     distance: 0,
     savePickupData: false,
     saveDestinationData: false,
+    // Location selection toggles
+    useExistingPickupLocation: false,
+    useExistingDestinationLocation: false,
+    selectedPickupLocationId: "",
+    selectedDestinationLocationId: "",
+    // New location creation data
+    newPickupLocationName: "",
+    newDestinationLocationName: "",
   });
 
   const [estimatedCost, setEstimatedCost] = useState(0);
@@ -109,6 +125,10 @@ export function CreateCargoForm() {
   const [isSearchingPickup, setIsSearchingPickup] = useState(false);
   const [isSearchingDestination, setIsSearchingDestination] = useState(false);
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
+  // Location search states
+  const [pickupLocationSearch, setPickupLocationSearch] = useState("");
+  const [destinationLocationSearch, setDestinationLocationSearch] =
+    useState("");
 
   // Performance optimization refs and state
   const searchCache = useRef<Map<string, GooglePlace[]>>(new Map());
@@ -122,6 +142,8 @@ export function CreateCargoForm() {
   // API hooks
   const createCargoMutation = useCreateCargo();
   const { data: cargoCategories } = useCargoCategories({ is_active: true });
+  const { data: myLocations } = useMyLocations();
+  const createLocationMutation = useCreateLocation();
   // Get available vehicles for the selected pickup date
   const { data: availableVehiclesData, isLoading: vehiclesLoading } =
     useAvailableVehiclesForDate({
@@ -286,23 +308,195 @@ export function CreateCargoForm() {
     switch (currentStep) {
       case 1: // Cargo Details
         return !!(
-          formData.cargoType &&
-          formData.cargoCategoryId &&
-          formData.weight &&
-          formData.description
+          (
+            formData.cargoType &&
+            formData.cargoCategoryId &&
+            formData.weight &&
+            parseFloat(formData.weight) > 0 &&
+            (!formData.description || formData.description.length <= 1000)
+          ) // Optional but max 1000 chars
         );
-      case 2: // Locations
-        return !!(
-          formData.pickupAddress &&
-          formData.destinationAddress &&
-          formData.pickupDate
+      case 2: {
+        // Locations
+        const hasPickupLocation = formData.useExistingPickupLocation
+          ? !!formData.selectedPickupLocationId
+          : !!(formData.pickupAddress && formData.pickupAddress.length >= 5);
+        const hasDestinationLocation = formData.useExistingDestinationLocation
+          ? !!formData.selectedDestinationLocationId
+          : !!(
+              formData.destinationAddress &&
+              formData.destinationAddress.length >= 5
+            );
+        return (
+          hasPickupLocation && hasDestinationLocation && !!formData.pickupDate
         );
+      }
       case 3: // Vehicle Selection
         return !!formData.selectedVehicle;
       case 4: // Confirmation
         return true; // No validation needed for confirmation
       default:
         return false;
+    }
+  };
+
+  // Validation functions for individual fields
+  const validatePhoneNumber = (phone: string): boolean => {
+    if (!phone) return true; // Optional field
+    const phoneRegex = /^[+]?[0-9\s\-()]{7,20}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validateLocationName = (name: string): boolean => {
+    return name.length >= 2 && name.length <= 100;
+  };
+
+  const validateAddress = (address: string): boolean => {
+    return address.length >= 5 && address.length <= 500;
+  };
+
+  // Filter locations based on search query
+  const filterLocations = (
+    locations: Location[],
+    searchQuery: string,
+    locationType: LocationType
+  ) => {
+    if (!searchQuery.trim()) {
+      return locations.filter(
+        (loc) =>
+          loc.type === locationType ||
+          (locationType === LocationType.PICKUP_POINT &&
+            loc.type === LocationType.WAREHOUSE) ||
+          (locationType === LocationType.DELIVERY_POINT &&
+            loc.type === LocationType.WAREHOUSE)
+      );
+    }
+
+    const query = searchQuery.toLowerCase();
+    return locations.filter((loc) => {
+      const matchesType =
+        loc.type === locationType ||
+        (locationType === LocationType.PICKUP_POINT &&
+          loc.type === LocationType.WAREHOUSE) ||
+        (locationType === LocationType.DELIVERY_POINT &&
+          loc.type === LocationType.WAREHOUSE);
+
+      const matchesSearch =
+        loc.name.toLowerCase().includes(query) ||
+        loc.address.toLowerCase().includes(query) ||
+        (loc.city && loc.city.toLowerCase().includes(query)) ||
+        (loc.contact_person &&
+          loc.contact_person.toLowerCase().includes(query));
+
+      return matchesType && matchesSearch;
+    });
+  };
+
+  // Handle existing location selection
+  const handleExistingLocationSelect = (
+    locationId: string,
+    isPickup: boolean
+  ) => {
+    const location = myLocations?.find((loc) => loc.id === locationId);
+    if (!location) return;
+
+    const updateData = {
+      ...formData,
+      ...(isPickup
+        ? {
+            selectedPickupLocationId: locationId,
+            pickupAddress: location.address,
+            pickupContactName: location.contact_person || "",
+            pickupContactPhone: location.contact_phone || "",
+            pickupLat: location.latitude?.toString() || "",
+            pickupLng: location.longitude?.toString() || "",
+            newPickupLocationName: location.name,
+          }
+        : {
+            selectedDestinationLocationId: locationId,
+            destinationAddress: location.address,
+            destinationContactName: location.contact_person || "",
+            destinationContactPhone: location.contact_phone || "",
+            destinationLat: location.latitude?.toString() || "",
+            destinationLng: location.longitude?.toString() || "",
+            newDestinationLocationName: location.name,
+          }),
+    };
+
+    setFormData(updateData);
+
+    // Calculate distance if both locations are set
+    if (updateData.pickupLat && updateData.destinationLat) {
+      calculateDistanceBetweenLocations(
+        parseFloat(updateData.pickupLat),
+        parseFloat(updateData.pickupLng),
+        parseFloat(updateData.destinationLat),
+        parseFloat(updateData.destinationLng)
+      );
+    }
+  };
+
+  // Create new location
+  const createNewLocation = async (
+    isPickup: boolean
+  ): Promise<string | null> => {
+    try {
+      const locationName = isPickup
+        ? formData.newPickupLocationName
+        : formData.newDestinationLocationName;
+      const address = isPickup
+        ? formData.pickupAddress
+        : formData.destinationAddress;
+      const lat = isPickup
+        ? parseFloat(formData.pickupLat)
+        : parseFloat(formData.destinationLat);
+      const lng = isPickup
+        ? parseFloat(formData.pickupLng)
+        : parseFloat(formData.destinationLng);
+
+      // Validate required fields
+      if (!address || address.length < 5) {
+        toast.error(`${isPickup ? "Pickup" : "Delivery"} address is required`);
+        return null;
+      }
+
+      if (!lat || !lng) {
+        toast.error(
+          `${isPickup ? "Pickup" : "Delivery"} coordinates are required`
+        );
+        return null;
+      }
+
+      const locationData = {
+        name: locationName || `${isPickup ? "Pickup" : "Delivery"} Location`, // Default name if not provided
+        type: isPickup
+          ? LocationType.PICKUP_POINT
+          : LocationType.DELIVERY_POINT,
+        address: address,
+        city: "", // Could be extracted from address if needed
+        country: "Rwanda", // Default country
+        latitude: lat,
+        longitude: lng,
+        contact_person: isPickup
+          ? formData.pickupContactName
+          : formData.destinationContactName,
+        contact_phone: isPickup
+          ? formData.pickupContactPhone
+          : formData.destinationContactPhone,
+        is_active: true,
+      };
+
+      console.log(
+        `Creating ${isPickup ? "pickup" : "delivery"} location:`,
+        locationData
+      );
+      const result = await createLocationMutation.mutateAsync(locationData);
+      console.log(`Location created successfully:`, result.data);
+      return result.data?.id || null;
+    } catch (error) {
+      console.error("Error creating location:", error);
+      toast.error("Failed to create location. Please try again.");
+      return null;
     }
   };
 
@@ -365,32 +559,69 @@ export function CreateCargoForm() {
 
   const handleSubmit = async () => {
     try {
+      // Create locations if needed
+      let pickupLocationId = formData.selectedPickupLocationId;
+      let destinationLocationId = formData.selectedDestinationLocationId;
+
+      // Create pickup location if using new location (not existing)
+      if (!formData.useExistingPickupLocation) {
+        pickupLocationId = await createNewLocation(true);
+        if (!pickupLocationId) {
+          toast.error("Failed to create pickup location");
+          return;
+        }
+      }
+
+      // Create destination location if using new location (not existing)
+      if (!formData.useExistingDestinationLocation) {
+        destinationLocationId = await createNewLocation(false);
+        if (!destinationLocationId) {
+          toast.error("Failed to create destination location");
+          return;
+        }
+      }
+
       const cargoRequest: CreateCargoRequest = {
+        category_id: formData.cargoCategoryId || undefined,
         type:
           formData.cargoType === "other"
             ? formData.otherCargoType
             : formData.cargoType,
         weight_kg: parseFloat(formData.weight),
+        volume:
+          (parseFloat(formData.length || "0") *
+            parseFloat(formData.width || "0") *
+            parseFloat(formData.height || "0")) /
+          1000000, // Convert cm³ to m³
         dimensions: {
           length: parseFloat(formData.length || "0"),
           width: parseFloat(formData.width || "0"),
           height: parseFloat(formData.height || "0"),
         },
+        pickup_location_id: pickupLocationId || undefined,
         pickup_address: formData.pickupAddress,
         pickup_contact: formData.pickupContactName,
         pickup_phone: formData.pickupContactPhone,
         pickup_instructions: formData.pickupOpeningHours,
+        destination_location_id: destinationLocationId || undefined,
         destination_address: formData.destinationAddress,
         destination_contact: formData.destinationContactName,
         destination_phone: formData.destinationContactPhone,
         delivery_instructions: formData.destinationOpeningHours,
         special_requirements: formData.specialInstructions,
-        pickup_date: formData.pickupDate,
+        description: formData.description || undefined,
+        insurance_required: false, // Default values
+        insurance_amount: 0,
+        fragile: false,
+        temperature_controlled: false,
         priority:
           formData.urgency === "standard"
             ? CargoPriority.NORMAL
-            : CargoPriority.HIGH,
-        estimated_cost: estimatedCost, // Include estimated cost
+            : formData.urgency === "express"
+            ? CargoPriority.HIGH
+            : CargoPriority.URGENT,
+        pickup_date: formData.pickupDate,
+        estimated_cost: estimatedCost,
       };
 
       const result = await createCargoMutation.mutateAsync(cargoRequest);
@@ -719,23 +950,6 @@ export function CreateCargoForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">
-                {t("createCargo.steps.cargoDetails.description")}
-              </Label>
-              <Textarea
-                id="description"
-                placeholder={t(
-                  "createCargo.steps.cargoDetails.descriptionPlaceholder"
-                )}
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label>{t("createCargo.steps.cargoDetails.dimensions")}</Label>
               <div className="grid grid-cols-3 gap-3">
                 <div>
@@ -800,6 +1014,23 @@ export function CreateCargoForm() {
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Describe your cargo (optional)"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                rows={3}
+                maxLength={1000}
+              />
+              <p className="text-xs text-muted-foreground">
+                {formData.description.length}/1000 characters
+              </p>
+            </div>
+
             <Button
               onClick={handleNext}
               disabled={!validateStep(1)}
@@ -824,381 +1055,683 @@ export function CreateCargoForm() {
           <CardContent className="space-y-8">
             {/* Pickup Location Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-green-600" />
-                Pickup Location
-              </h3>
-
-              {/* Address Search */}
-              <div className="space-y-2">
-                <Label>Pickup Address</Label>
-                <div className="relative">
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Search pickup location..."
-                        value={pickupSearchQuery}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setPickupSearchQuery(value);
-                          if (value.length > 2) {
-                            searchLocation(value, true);
-                          } else {
-                            setPickupSearchResults([]);
-                          }
-                        }}
-                        className="pl-10"
-                      />
-                      {isSearchingPickup && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => searchLocation(pickupSearchQuery, true)}
-                      disabled={
-                        isSearchingPickup || pickupSearchQuery.length < 3
-                      }
-                    >
-                      {isSearchingPickup ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Searching...
-                        </>
-                      ) : (
-                        <>
-                          <Search className="h-4 w-4 mr-2" />
-                          Search
-                        </>
-                      )}
-                    </Button>
-                  </div>
-
-                  {/* Search Results */}
-                  {pickupSearchResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                      {pickupSearchResults.map((result) => (
-                        <div
-                          key={result.place_id}
-                          className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                          onClick={() => selectLocation(result, true)}
-                        >
-                          <div className="font-medium">
-                            {result.structured_formatting.main_text}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {result.structured_formatting.secondary_text}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <Textarea
-                  placeholder="Enter complete pickup address..."
-                  value={formData.pickupAddress}
-                  onChange={(e) => {
-                    const newFormData = {
-                      ...formData,
-                      pickupAddress: e.target.value,
-                    };
-                    setFormData(newFormData);
-
-                    // Calculate distance if both addresses are set
-                    if (
-                      newFormData.pickupAddress &&
-                      newFormData.destinationAddress &&
-                      newFormData.pickupLat &&
-                      newFormData.destinationLat
-                    ) {
-                      calculateDistanceBetweenLocations(
-                        parseFloat(newFormData.pickupLat),
-                        parseFloat(newFormData.pickupLng),
-                        parseFloat(newFormData.destinationLat),
-                        parseFloat(newFormData.destinationLng)
-                      );
-                    }
-                  }}
-                  rows={2}
-                />
-              </div>
-
-              {/* Pickup Contact Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="pickupContactName">Contact Person</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="pickupContactName"
-                      placeholder="Contact name"
-                      value={formData.pickupContactName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          pickupContactName: e.target.value,
-                        })
-                      }
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="pickupContactPhone">Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="pickupContactPhone"
-                      placeholder="+250 123 456 789"
-                      value={formData.pickupContactPhone}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          pickupContactPhone: e.target.value,
-                        })
-                      }
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="pickupOpeningHours">Opening Hours</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="pickupOpeningHours"
-                    placeholder="e.g., Mon-Fri 8AM-6PM, Sat 9AM-3PM"
-                    value={formData.pickupOpeningHours}
-                    onChange={(e) =>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-green-600" />
+                  Pickup Location
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Label
+                    htmlFor="useExistingPickupLocation"
+                    className="text-sm"
+                  >
+                    Use existing location
+                  </Label>
+                  <Switch
+                    id="useExistingPickupLocation"
+                    checked={formData.useExistingPickupLocation}
+                    onCheckedChange={(checked) =>
                       setFormData({
                         ...formData,
-                        pickupOpeningHours: e.target.value,
+                        useExistingPickupLocation: checked,
+                        selectedPickupLocationId: checked
+                          ? formData.selectedPickupLocationId
+                          : "",
                       })
                     }
-                    className="pl-10"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="savePickupData"
-                  checked={formData.savePickupData}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      savePickupData: e.target.checked,
-                    })
-                  }
-                  className="rounded"
-                />
-                <Label
-                  htmlFor="savePickupData"
-                  className="text-sm flex items-center gap-1"
-                >
-                  <Save className="h-4 w-4" />
-                  Save pickup details for future use
-                </Label>
-              </div>
+              {/* Existing Location Selection */}
+              {formData.useExistingPickupLocation && (
+                <div className="space-y-2">
+                  <Label>Select Existing Pickup Location</Label>
+
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search locations..."
+                      value={pickupLocationSearch}
+                      onChange={(e) => setPickupLocationSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {/* Location Dropdown */}
+                  <Select
+                    value={formData.selectedPickupLocationId}
+                    onValueChange={(value) =>
+                      handleExistingLocationSelect(value, true)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a pickup location..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {filterLocations(
+                        myLocations || [],
+                        pickupLocationSearch,
+                        LocationType.PICKUP_POINT
+                      ).length > 0 ? (
+                        filterLocations(
+                          myLocations || [],
+                          pickupLocationSearch,
+                          LocationType.PICKUP_POINT
+                        ).map((location) => (
+                          <SelectItem key={location.id} value={location.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {location.name}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                {location.address}
+                              </span>
+                              {/* {location.contact_person && (
+                                <span className="text-xs text-muted-foreground">
+                                  Contact: {location.contact_person}
+                                </span>
+                              )} */}
+                            </div>
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          No locations found
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Show selected location info */}
+                  {formData.selectedPickupLocationId && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="h-4 w-4 text-blue-600" />
+                        <span className="font-medium text-blue-900">
+                          Selected Location
+                        </span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <p>
+                          <span className="font-medium">Name:</span>{" "}
+                          {formData.newPickupLocationName}
+                        </p>
+                        <p>
+                          <span className="font-medium">Address:</span>{" "}
+                          {formData.pickupAddress}
+                        </p>
+                        {formData.pickupContactName && (
+                          <p>
+                            <span className="font-medium">Contact:</span>{" "}
+                            {formData.pickupContactName}
+                          </p>
+                        )}
+                        {formData.pickupContactPhone && (
+                          <p>
+                            <span className="font-medium">Phone:</span>{" "}
+                            {formData.pickupContactPhone}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-xs text-blue-700 mt-2">
+                        💡 You can edit contact details below for this specific
+                        cargo
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* New Location Creation */}
+              {!formData.useExistingPickupLocation && (
+                <>
+                  {/* Location Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="newPickupLocationName">Location Name</Label>
+                    <Input
+                      id="newPickupLocationName"
+                      placeholder="e.g., My Office, Home Address"
+                      value={formData.newPickupLocationName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          newPickupLocationName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Address Search */}
+                  <div className="space-y-2">
+                    <Label>Pickup Address</Label>
+                    <div className="relative">
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            placeholder="Search pickup location..."
+                            value={pickupSearchQuery}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setPickupSearchQuery(value);
+                              if (value.length > 2) {
+                                searchLocation(value, true);
+                              } else {
+                                setPickupSearchResults([]);
+                              }
+                            }}
+                            className="pl-10"
+                          />
+                          {isSearchingPickup && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            searchLocation(pickupSearchQuery, true)
+                          }
+                          disabled={
+                            isSearchingPickup || pickupSearchQuery.length < 3
+                          }
+                        >
+                          {isSearchingPickup ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                              Searching...
+                            </>
+                          ) : (
+                            <>
+                              <Search className="h-4 w-4 mr-2" />
+                              Search
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Search Results */}
+                      {pickupSearchResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                          {pickupSearchResults.map((result) => (
+                            <div
+                              key={result.place_id}
+                              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                              onClick={() => selectLocation(result, true)}
+                            >
+                              <div className="font-medium">
+                                {result.structured_formatting.main_text}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {result.structured_formatting.secondary_text}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <Textarea
+                      placeholder="Enter complete pickup address..."
+                      value={formData.pickupAddress}
+                      onChange={(e) => {
+                        const newFormData = {
+                          ...formData,
+                          pickupAddress: e.target.value,
+                        };
+                        setFormData(newFormData);
+
+                        // Calculate distance if both addresses are set
+                        if (
+                          newFormData.pickupAddress &&
+                          newFormData.destinationAddress &&
+                          newFormData.pickupLat &&
+                          newFormData.destinationLat
+                        ) {
+                          calculateDistanceBetweenLocations(
+                            parseFloat(newFormData.pickupLat),
+                            parseFloat(newFormData.pickupLng),
+                            parseFloat(newFormData.destinationLat),
+                            parseFloat(newFormData.destinationLng)
+                          );
+                        }
+                      }}
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Pickup Contact Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pickupContactName">Contact Person</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="pickupContactName"
+                          placeholder="Contact name"
+                          value={formData.pickupContactName}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              pickupContactName: e.target.value,
+                            })
+                          }
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pickupContactPhone">Phone Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="pickupContactPhone"
+                          placeholder="+250 123 456 789"
+                          value={formData.pickupContactPhone}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              pickupContactPhone: e.target.value,
+                            })
+                          }
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="pickupOpeningHours">Opening Hours</Label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="pickupOpeningHours"
+                        placeholder="e.g., Mon-Fri 8AM-6PM, Sat 9AM-3PM"
+                        value={formData.pickupOpeningHours}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            pickupOpeningHours: e.target.value,
+                          })
+                        }
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="savePickupData"
+                      checked={formData.savePickupData}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          savePickupData: e.target.checked,
+                        })
+                      }
+                      className="rounded"
+                    />
+                    <Label
+                      htmlFor="savePickupData"
+                      className="text-sm flex items-center gap-1"
+                    >
+                      <Save className="h-4 w-4" />
+                      Save pickup details for future use
+                    </Label>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Destination Location Section */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-red-600" />
-                Delivery Location
-              </h3>
-
-              {/* Address Search */}
-              <div className="space-y-2">
-                <Label>Delivery Address</Label>
-                <div className="relative">
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Search delivery location..."
-                        value={destinationSearchQuery}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setDestinationSearchQuery(value);
-                          if (value.length > 2) {
-                            searchLocation(value, false);
-                          } else {
-                            setDestinationSearchResults([]);
-                          }
-                        }}
-                        className="pl-10"
-                      />
-                      {isSearchingDestination && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        searchLocation(destinationSearchQuery, false)
-                      }
-                      disabled={
-                        isSearchingDestination ||
-                        destinationSearchQuery.length < 3
-                      }
-                    >
-                      {isSearchingDestination ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Searching...
-                        </>
-                      ) : (
-                        <>
-                          <Search className="h-4 w-4 mr-2" />
-                          Search
-                        </>
-                      )}
-                    </Button>
-                  </div>
-
-                  {/* Search Results */}
-                  {destinationSearchResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                      {destinationSearchResults.map((result) => (
-                        <div
-                          key={result.place_id}
-                          className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                          onClick={() => selectLocation(result, false)}
-                        >
-                          <div className="font-medium">
-                            {result.structured_formatting.main_text}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {result.structured_formatting.secondary_text}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <Textarea
-                  placeholder="Enter complete delivery address..."
-                  value={formData.destinationAddress}
-                  onChange={(e) => {
-                    const newFormData = {
-                      ...formData,
-                      destinationAddress: e.target.value,
-                    };
-                    setFormData(newFormData);
-
-                    // Calculate distance if both addresses are set
-                    if (
-                      newFormData.pickupAddress &&
-                      newFormData.destinationAddress &&
-                      newFormData.pickupLat &&
-                      newFormData.destinationLat
-                    ) {
-                      calculateDistanceBetweenLocations(
-                        parseFloat(newFormData.pickupLat),
-                        parseFloat(newFormData.pickupLng),
-                        parseFloat(newFormData.destinationLat),
-                        parseFloat(newFormData.destinationLng)
-                      );
-                    }
-                  }}
-                  rows={2}
-                />
-              </div>
-
-              {/* Destination Contact Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="destinationContactName">Contact Person</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="destinationContactName"
-                      placeholder="Contact name"
-                      value={formData.destinationContactName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          destinationContactName: e.target.value,
-                        })
-                      }
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="destinationContactPhone">Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="destinationContactPhone"
-                      placeholder="+250 123 456 789"
-                      value={formData.destinationContactPhone}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          destinationContactPhone: e.target.value,
-                        })
-                      }
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="destinationOpeningHours">Opening Hours</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="destinationOpeningHours"
-                    placeholder="e.g., Mon-Fri 8AM-6PM, Sat 9AM-3PM"
-                    value={formData.destinationOpeningHours}
-                    onChange={(e) =>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-red-600" />
+                  Delivery Location
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Label
+                    htmlFor="useExistingDestinationLocation"
+                    className="text-sm"
+                  >
+                    Use existing location
+                  </Label>
+                  <Switch
+                    id="useExistingDestinationLocation"
+                    checked={formData.useExistingDestinationLocation}
+                    onCheckedChange={(checked) =>
                       setFormData({
                         ...formData,
-                        destinationOpeningHours: e.target.value,
+                        useExistingDestinationLocation: checked,
+                        selectedDestinationLocationId: checked
+                          ? formData.selectedDestinationLocationId
+                          : "",
                       })
                     }
-                    className="pl-10"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="saveDestinationData"
-                  checked={formData.saveDestinationData}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      saveDestinationData: e.target.checked,
-                    })
-                  }
-                  className="rounded"
-                />
-                <Label
-                  htmlFor="saveDestinationData"
-                  className="text-sm flex items-center gap-1"
-                >
-                  <Save className="h-4 w-4" />
-                  Save delivery details for future use
-                </Label>
-              </div>
+              {/* Existing Location Selection */}
+              {formData.useExistingDestinationLocation && (
+                <div className="space-y-2">
+                  <Label>Select Existing Delivery Location</Label>
+
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Search locations..."
+                      value={destinationLocationSearch}
+                      onChange={(e) =>
+                        setDestinationLocationSearch(e.target.value)
+                      }
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {/* Location Dropdown */}
+                  <Select
+                    value={formData.selectedDestinationLocationId}
+                    onValueChange={(value) =>
+                      handleExistingLocationSelect(value, false)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a delivery location..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {filterLocations(
+                        myLocations || [],
+                        destinationLocationSearch,
+                        LocationType.DELIVERY_POINT
+                      ).length > 0 ? (
+                        filterLocations(
+                          myLocations || [],
+                          destinationLocationSearch,
+                          LocationType.DELIVERY_POINT
+                        ).map((location) => (
+                          <SelectItem key={location.id} value={location.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {location.name}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                {location.address}
+                              </span>
+                              {location.contact_person && (
+                                <span className="text-xs text-muted-foreground">
+                                  Contact: {location.contact_person}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          No locations found
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Show selected location info */}
+                  {formData.selectedDestinationLocationId && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="h-4 w-4 text-red-600" />
+                        <span className="font-medium text-red-900">
+                          Selected Location
+                        </span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <p>
+                          <span className="font-medium">Name:</span>{" "}
+                          {formData.newDestinationLocationName}
+                        </p>
+                        <p>
+                          <span className="font-medium">Address:</span>{" "}
+                          {formData.destinationAddress}
+                        </p>
+                        {formData.destinationContactName && (
+                          <p>
+                            <span className="font-medium">Contact:</span>{" "}
+                            {formData.destinationContactName}
+                          </p>
+                        )}
+                        {formData.destinationContactPhone && (
+                          <p>
+                            <span className="font-medium">Phone:</span>{" "}
+                            {formData.destinationContactPhone}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-xs text-red-700 mt-2">
+                        💡 You can edit contact details below for this specific
+                        cargo
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* New Location Creation */}
+              {!formData.useExistingDestinationLocation && (
+                <>
+                  {/* Location Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="newDestinationLocationName">
+                      Location Name
+                    </Label>
+                    <Input
+                      id="newDestinationLocationName"
+                      placeholder="e.g., Customer Office, Home Address"
+                      value={formData.newDestinationLocationName}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          newDestinationLocationName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Address Search */}
+                  <div className="space-y-2">
+                    <Label>Delivery Address</Label>
+                    <div className="relative">
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          <Input
+                            placeholder="Search delivery location..."
+                            value={destinationSearchQuery}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setDestinationSearchQuery(value);
+                              if (value.length > 2) {
+                                searchLocation(value, false);
+                              } else {
+                                setDestinationSearchResults([]);
+                              }
+                            }}
+                            className="pl-10"
+                          />
+                          {isSearchingDestination && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            searchLocation(destinationSearchQuery, false)
+                          }
+                          disabled={
+                            isSearchingDestination ||
+                            destinationSearchQuery.length < 3
+                          }
+                        >
+                          {isSearchingDestination ? (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                              Searching...
+                            </>
+                          ) : (
+                            <>
+                              <Search className="h-4 w-4 mr-2" />
+                              Search
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Search Results */}
+                      {destinationSearchResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                          {destinationSearchResults.map((result) => (
+                            <div
+                              key={result.place_id}
+                              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                              onClick={() => selectLocation(result, false)}
+                            >
+                              <div className="font-medium">
+                                {result.structured_formatting.main_text}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {result.structured_formatting.secondary_text}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <Textarea
+                      placeholder="Enter complete delivery address..."
+                      value={formData.destinationAddress}
+                      onChange={(e) => {
+                        const newFormData = {
+                          ...formData,
+                          destinationAddress: e.target.value,
+                        };
+                        setFormData(newFormData);
+
+                        // Calculate distance if both addresses are set
+                        if (
+                          newFormData.pickupAddress &&
+                          newFormData.destinationAddress &&
+                          newFormData.pickupLat &&
+                          newFormData.destinationLat
+                        ) {
+                          calculateDistanceBetweenLocations(
+                            parseFloat(newFormData.pickupLat),
+                            parseFloat(newFormData.pickupLng),
+                            parseFloat(newFormData.destinationLat),
+                            parseFloat(newFormData.destinationLng)
+                          );
+                        }
+                      }}
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Destination Contact Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="destinationContactName">
+                        Contact Person
+                      </Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="destinationContactName"
+                          placeholder="Contact name"
+                          value={formData.destinationContactName}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              destinationContactName: e.target.value,
+                            })
+                          }
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="destinationContactPhone">
+                        Phone Number
+                      </Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="destinationContactPhone"
+                          placeholder="+250 123 456 789"
+                          value={formData.destinationContactPhone}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              destinationContactPhone: e.target.value,
+                            })
+                          }
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="destinationOpeningHours">
+                      Opening Hours
+                    </Label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="destinationOpeningHours"
+                        placeholder="e.g., Mon-Fri 8AM-6PM, Sat 9AM-3PM"
+                        value={formData.destinationOpeningHours}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            destinationOpeningHours: e.target.value,
+                          })
+                        }
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="saveDestinationData"
+                      checked={formData.saveDestinationData}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          saveDestinationData: e.target.checked,
+                        })
+                      }
+                      className="rounded"
+                    />
+                    <Label
+                      htmlFor="saveDestinationData"
+                      className="text-sm flex items-center gap-1"
+                    >
+                      <Save className="h-4 w-4" />
+                      Save delivery details for future use
+                    </Label>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Additional Details */}

@@ -39,7 +39,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
     { title: t("navigation.createCargo"), url: "/create-cargo", icon: Plus },
     { title: t("navigation.myCargos"), url: "/my-cargos", icon: Package },
     { title: t("navigation.liveTracking"), url: "/tracking", icon: MapPin },
-    { title: t("navigation.history"), url: "/history", icon: History },
+    // { title: t("navigation.history"), url: "/history", icon: History },
     { title: t("navigation.invoices"), url: "/invoices", icon: Receipt },
   ],
   driver: [

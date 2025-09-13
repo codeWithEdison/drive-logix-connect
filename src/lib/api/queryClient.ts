@@ -94,6 +94,16 @@ export const queryKeys = {
     detail: (id: string) => ["cargo-categories", "detail", id] as const,
   },
 
+  // Locations
+  locations: {
+    all: (params?: Record<string, any>) =>
+      ["locations", "all", params] as const,
+    detail: (id: string) => ["locations", "detail", id] as const,
+    my: () => ["locations", "my"] as const,
+    suggestions: (type?: string) => ["locations", "suggestions", type] as const,
+    byType: (type: string) => ["locations", "by-type", type] as const,
+  },
+
   // Deliveries
   deliveries: {
     all: (params?: Record<string, any>) =>

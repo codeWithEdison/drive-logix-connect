@@ -136,6 +136,84 @@ export enum LocationType {
   OFFICE = "office",
 }
 
+// ===========================================
+// LOCATION INTERFACES
+// ===========================================
+
+export interface Location {
+  id: UUID;
+  name: string;
+  type: LocationType;
+  address: string;
+  city?: string;
+  country?: string;
+  postal_code?: string;
+  latitude?: number;
+  longitude?: number;
+  contact_person?: string;
+  contact_phone?: string;
+  operating_hours?: Record<string, any>;
+  is_active: boolean;
+  created_by: UUID;
+  created_at: string;
+  creator?: {
+    id: UUID;
+    full_name: string;
+    email: string;
+  };
+}
+
+export interface CreateLocationRequest {
+  name: string;
+  type: LocationType;
+  address: string;
+  city?: string;
+  country?: string;
+  postal_code?: string;
+  latitude?: number;
+  longitude?: number;
+  contact_person?: string;
+  contact_phone?: string;
+  operating_hours?: Record<string, any>;
+  is_active?: boolean;
+}
+
+export interface UpdateLocationRequest {
+  name?: string;
+  type?: LocationType;
+  address?: string;
+  city?: string;
+  country?: string;
+  postal_code?: string;
+  latitude?: number;
+  longitude?: number;
+  contact_person?: string;
+  contact_phone?: string;
+  operating_hours?: Record<string, any>;
+  is_active?: boolean;
+}
+
+export interface LocationSearchParams extends PaginationParams {
+  type?: LocationType;
+  city?: string;
+  country?: string;
+  is_active?: boolean;
+  created_by?: UUID;
+  search?: string;
+}
+
+export interface LocationListResponse {
+  locations: Location[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
 export enum CargoStatus {
   PENDING = "pending",
   QUOTED = "quoted",
@@ -437,15 +515,18 @@ export interface CreateCargoRequest {
     width?: number;
     height?: number;
   };
+  pickup_location_id?: UUID;
   pickup_address?: string;
   pickup_contact?: string;
   pickup_phone?: string;
   pickup_instructions?: string;
+  destination_location_id?: UUID;
   destination_address?: string;
   destination_contact?: string;
   destination_phone?: string;
   delivery_instructions?: string;
   special_requirements?: string;
+  description?: string; // Add description field
   insurance_required?: boolean;
   insurance_amount?: number;
   fragile?: boolean;
