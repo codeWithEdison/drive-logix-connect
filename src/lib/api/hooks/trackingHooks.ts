@@ -92,7 +92,7 @@ export const useInTransitCargo = (
       userRole: params?.userRole,
     }),
     queryFn: () => TrackingService.getInTransitCargo(params),
-    select: (data) => {
+    select: (data: any) => {
       console.log("🔍 useInTransitCargo select function:", {
         rawData: data,
         extractedData: data.data,
