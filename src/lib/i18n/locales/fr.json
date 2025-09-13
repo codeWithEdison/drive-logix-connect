@@ -161,7 +161,9 @@
     "english": "Anglais",
     "kinyarwanda": "Kinyarwanda",
     "french": "Français",
-    "lastLogin": "Dernière connexion"
+    "lastLogin": "Dernière connexion",
+    "preferredLanguage": "Langue préférée",
+    "password": "Mot de passe"
   },
   "auth": {
     "login": "Connexion",
