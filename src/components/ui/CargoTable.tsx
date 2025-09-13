@@ -408,9 +408,14 @@ export function CargoTable({
       }
     } else if (user?.role === "client") {
       // Client actions based on status flow
-      if (cargo.driver) {
+      // Show call driver button when driver is assigned (assigned, picked_up, in_transit)
+      if (
+        cargo.driver &&
+        cargo.driverPhone &&
+        ["assigned", "picked_up", "in_transit"].includes(cargo.status)
+      ) {
         actions.push({
-          key: "call",
+          key: "call-driver",
           label: "Call Driver",
           icon: <Phone className="h-3 w-3 mr-1" />,
           onClick: () => onCallDriver?.(cargo.driverPhone || cargo.phone),
@@ -565,7 +570,7 @@ export function CargoTable({
               <div className="flex items-center gap-2 mb-2">
                 <Package className="h-4 w-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-900">
-                  {data.type || "General Cargo"}
+                  {data.id || "General Cargo"}
                 </span>
                 {getStatusBadge(data.status)}
               </div>
@@ -610,18 +615,42 @@ export function CargoTable({
           )}
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRowClick(cargo);
-              }}
-              className="flex items-center gap-1"
-            >
-              <Eye className="h-3 w-3" />
-              View Details
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRowClick(cargo);
+                }}
+                className="flex items-center gap-1"
+              >
+                <Eye className="h-3 w-3" />
+                View Details
+              </Button>
+
+              {/* Show call driver button prominently for clients when driver is assigned */}
+              {user?.role === "client" &&
+                cargo.driver &&
+                cargo.driverPhone &&
+                ["assigned", "picked_up", "in_transit"].includes(
+                  cargo.status
+                ) && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCallDriver?.(cargo.driverPhone || cargo.phone);
+                    }}
+                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
+                  >
+                    <Phone className="h-3 w-3" />
+                    Call Driver
+                  </Button>
+                )}
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -879,7 +908,7 @@ export function CargoTable({
                         onClick={() => handleRowClick(cargo)}
                       >
                         <TableCell className="text-sm text-gray-500">
-                          {startIndex + index + 1}
+                          {data.id || `#${startIndex + index + 1}`}
                         </TableCell>
                         <TableCell>
                           <div>

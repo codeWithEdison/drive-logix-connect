@@ -1,7 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CargoTable } from "@/components/ui/CargoTable";
 import { CargoDetail } from "@/components/ui/CargoDetailModal";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Plus,
   RefreshCw,
@@ -9,6 +17,8 @@ import {
   Package,
   CheckCircle,
   Clock,
+  Search,
+  Filter,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +33,11 @@ const MyCargos = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
   // API hooks
   const { data: cargosData, isLoading, error, refetch } = useClientCargos();
@@ -120,70 +135,146 @@ const MyCargos = () => {
       </div>
 
       {/* Quick Stats */}
-      {!isLoading && !error && actualCargos && actualCargos.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Cargos
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {actualCargos.length}
-                </p>
+      {!isLoading &&
+        !error &&
+        transformedCargos &&
+        transformedCargos.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Cargos
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {transformedCargos.length}
+                  </p>
+                </div>
+                <Package className="h-8 w-8 text-blue-500" />
               </div>
-              <Package className="h-8 w-8 text-blue-500" />
             </div>
-          </div>
 
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">In Transit</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {
-                    actualCargos.filter(
-                      (c) =>
-                        c.status === "in_transit" || c.status === "picked_up"
-                    ).length
-                  }
-                </p>
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    In Transit
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {
+                      transformedCargos.filter(
+                        (c) =>
+                          c.status === "in_transit" || c.status === "picked_up"
+                      ).length
+                    }
+                  </p>
+                </div>
+                <RefreshCw className="h-8 w-8 text-green-500" />
               </div>
-              <RefreshCw className="h-8 w-8 text-green-500" />
             </div>
-          </div>
 
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Delivered</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {actualCargos.filter((c) => c.status === "delivered").length}
-                </p>
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Delivered</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {
+                      transformedCargos.filter((c) => c.status === "delivered")
+                        .length
+                    }
+                  </p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
-          </div>
 
-          <div className="bg-white rounded-lg border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {
-                    actualCargos.filter((c) =>
-                      ["pending", "quoted", "accepted", "assigned"].includes(
-                        c.status
-                      )
-                    ).length
-                  }
-                </p>
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Pending</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {
+                      transformedCargos.filter((c) =>
+                        ["pending", "quoted", "accepted", "assigned"].includes(
+                          c.status
+                        )
+                      ).length
+                    }
+                  </p>
+                </div>
+                <Clock className="h-8 w-8 text-yellow-500" />
               </div>
-              <Clock className="h-8 w-8 text-yellow-500" />
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+      {/* Filters Section */}
+      {!isLoading &&
+        !error &&
+        transformedCargos &&
+        transformedCargos.length > 0 && (
+          <div className="bg-white rounded-lg border p-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Search */}
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by client, location, cargo number, or type..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="quoted">Quoted</SelectItem>
+                    <SelectItem value="accepted">Accepted</SelectItem>
+                    <SelectItem value="assigned">Assigned</SelectItem>
+                    <SelectItem value="picked_up">Picked Up</SelectItem>
+                    <SelectItem value="in_transit">In Transit</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Priority Filter */}
+                <Select
+                  value={priorityFilter}
+                  onValueChange={setPriorityFilter}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priority</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Filter Results Summary */}
+            {filteredCargos.length !== transformedCargos.length && (
+              <div className="mt-4 text-sm text-gray-600">
+                Showing {filteredCargos.length} of {transformedCargos.length}{" "}
+                cargos
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 
@@ -353,6 +444,25 @@ const MyCargos = () => {
       };
     }) || [];
 
+  // Apply filters to transformed cargos
+  const filteredCargos = transformedCargos.filter((cargo) => {
+    const matchesSearch =
+      searchTerm === "" ||
+      cargo.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cargo.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cargo.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cargo.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cargo.cargo_number?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" || cargo.status === statusFilter;
+
+    const matchesPriority =
+      priorityFilter === "all" || cargo.priority === priorityFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
+
   // Show a message if no data is available
   if (
     !isLoading &&
@@ -388,8 +498,10 @@ const MyCargos = () => {
       {renderHeader()}
 
       <CargoTable
-        cargos={transformedCargos}
+        cargos={filteredCargos}
         showStats={false} // Hide stats since we have them in header
+        showSearch={false} // Hide search since we have it in header
+        showFilters={false} // Hide filters since we have them in header
         onCallDriver={handleCallDriver}
         onTrackCargo={handleTrackCargo}
         onCancelCargo={handleCancelCargo}
