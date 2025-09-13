@@ -47,35 +47,62 @@ import {
   AlertCircle,
 } from "lucide-react";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   CargoDetailModal,
   CargoDetail,
 } from "@/components/ui/CargoDetailModal";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Status configuration for different cargo types
+// Status configuration for different cargo types with meaningful descriptions
 const statusConfig = {
   pending: {
-    label: "Pending",
+    label: "Awaiting Quote",
+    description: "Request submitted, waiting for pricing",
     className: "bg-yellow-100 text-yellow-600",
   },
+  quoted: {
+    label: "Quote Sent",
+    description: "Price quote provided, awaiting acceptance",
+    className: "bg-blue-100 text-blue-600",
+  },
+  accepted: {
+    label: "Quote Accepted",
+    description: "Client confirmed, ready for assignment",
+    className: "bg-indigo-100 text-indigo-600",
+  },
   assigned: {
-    label: "Assigned",
+    label: "Driver Assigned",
+    description: "Driver and vehicle assigned for pickup",
     className: "bg-purple-100 text-purple-600",
   },
   picked_up: {
-    label: "Picked Up",
+    label: "Cargo Collected",
+    description: "Successfully picked up, now in transit",
     className: "bg-orange-100 text-orange-600",
   },
   in_transit: {
     label: "In Transit",
+    description: "Being transported to destination",
     className: "bg-blue-100 text-blue-600",
   },
   delivered: {
     label: "Delivered",
+    description: "Successfully delivered to destination",
     className: "bg-green-100 text-green-600",
   },
   cancelled: {
     label: "Cancelled",
+    description: "Shipment was cancelled",
+    className: "bg-red-100 text-red-600",
+  },
+  disputed: {
+    label: "Disputed",
+    description: "Issue reported, under investigation",
     className: "bg-red-100 text-red-600",
   },
 };
@@ -177,17 +204,69 @@ export function CargoTable({
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status as keyof typeof statusConfig];
     return config ? (
-      <Badge className={config.className}>{config.label}</Badge>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge className={config.className}>{config.label}</Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{config.description}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     ) : (
-      <Badge className="bg-gray-100 text-gray-600">{status}</Badge>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge className="bg-gray-100 text-gray-600">{status}</Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Status: {status}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
   const getPriorityBadge = (priority: string) => {
-    return priority === "urgent" ? (
-      <Badge className="bg-red-100 text-red-600">Urgent</Badge>
-    ) : (
-      <Badge className="bg-gray-100 text-gray-600">Standard</Badge>
+    const priorityConfig = {
+      urgent: {
+        label: "Urgent",
+        description: "Critical shipment requiring immediate attention",
+        className: "bg-red-100 text-red-600",
+      },
+      high: {
+        label: "High",
+        description: "Important shipment requiring faster processing",
+        className: "bg-orange-100 text-orange-600",
+      },
+      normal: {
+        label: "Normal",
+        description: "Standard priority, default processing",
+        className: "bg-blue-100 text-blue-600",
+      },
+      low: {
+        label: "Low",
+        description: "Non-urgent, can be processed during normal operations",
+        className: "bg-gray-100 text-gray-600",
+      },
+    };
+
+    const config =
+      priorityConfig[priority as keyof typeof priorityConfig] ||
+      priorityConfig.normal;
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge className={config.className}>{config.label}</Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{config.description}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
@@ -204,16 +283,15 @@ export function CargoTable({
     const actions = [];
 
     if (user?.role === "admin") {
-      // Admin actions based on status flow
+      // Admin actions based on status flow - can transition between any states
       const availableTransitions = getAvailableStatusTransitions(cargo.status);
 
       // Add status change actions
       availableTransitions.forEach((status) => {
+        const statusLabel = getStatusLabel(status);
         actions.push({
           key: `status-${status}`,
-          label: `Change to ${
-            status?.replace("_", " ").toUpperCase() || status
-          }`,
+          label: `Change to ${statusLabel}`,
           icon: <CheckCircle className="h-3 w-3 mr-1" />,
           onClick: () => onStatusChange?.(cargo.id, status),
           variant: "outline" as const,
@@ -226,7 +304,7 @@ export function CargoTable({
           key: "call-client",
           label: "Call Client",
           icon: <Phone className="h-3 w-3 mr-1" />,
-          onClick: () => onCallClient?.(cargo.phone),
+          onClick: () => onCallClient?.(cargo.clientPhone || cargo.phone),
           variant: "outline" as const,
         });
       }
@@ -236,7 +314,7 @@ export function CargoTable({
           key: "call-driver",
           label: "Call Driver",
           icon: <Phone className="h-3 w-3 mr-1" />,
-          onClick: () => onCallDriver?.(cargo.phone),
+          onClick: () => onCallDriver?.(cargo.driverPhone || cargo.phone),
           variant: "outline" as const,
         });
       }
@@ -282,61 +360,97 @@ export function CargoTable({
         });
       }
     } else if (user?.role === "driver") {
-      // Driver actions
+      // Driver actions based on status flow
       if (cargo.status === "pending") {
         actions.push({
           key: "accept",
-          label: "Accept",
+          label: "Accept Cargo",
           icon: <CheckCircle className="h-3 w-3 mr-1" />,
           onClick: () => onAcceptCargo?.(cargo.id),
           variant: "default" as const,
         });
       }
-      if (cargo.status === "active") {
+      if (cargo.status === "assigned") {
         actions.push({
-          key: "start",
-          label: "Start",
+          key: "pickup",
+          label: "Mark Picked Up",
+          icon: <Package className="h-3 w-3 mr-1" />,
+          onClick: () => onStatusChange?.(cargo.id, "picked_up"),
+          variant: "default" as const,
+        });
+      }
+      if (cargo.status === "picked_up") {
+        actions.push({
+          key: "transit",
+          label: "Start Transit",
           icon: <Navigation className="h-3 w-3 mr-1" />,
-          onClick: () => onStartDelivery?.(cargo.id),
+          onClick: () => onStatusChange?.(cargo.id, "in_transit"),
+          variant: "default" as const,
+        });
+      }
+      if (cargo.status === "in_transit") {
+        actions.push({
+          key: "deliver",
+          label: "Mark Delivered",
+          icon: <CheckCircle className="h-3 w-3 mr-1" />,
+          onClick: () => onStatusChange?.(cargo.id, "delivered"),
           variant: "default" as const,
         });
       }
       if (cargo.client) {
         actions.push({
           key: "call",
-          label: "Call",
+          label: "Call Client",
           icon: <Phone className="h-3 w-3 mr-1" />,
-          onClick: () => onCallClient?.(cargo.phone),
+          onClick: () => onCallClient?.(cargo.clientPhone || cargo.phone),
           variant: "outline" as const,
         });
       }
     } else if (user?.role === "client") {
-      // Client actions
+      // Client actions based on status flow
       if (cargo.driver) {
         actions.push({
           key: "call",
-          label: "Call",
+          label: "Call Driver",
           icon: <Phone className="h-3 w-3 mr-1" />,
-          onClick: () => onCallDriver?.(cargo.phone),
+          onClick: () => onCallDriver?.(cargo.driverPhone || cargo.phone),
           variant: "outline" as const,
         });
       }
-      if (cargo.status === "pending") {
+
+      // Cancellation is only allowed before picked_up status (except for admins)
+      if (
+        ["pending", "quoted", "accepted", "assigned"].includes(cargo.status)
+      ) {
         actions.push({
           key: "cancel",
-          label: "Cancel",
+          label: "Cancel Cargo",
           icon: <X className="h-3 w-3 mr-1" />,
           onClick: () => onCancelCargo?.(cargo.id),
           variant: "outline" as const,
           className: "text-red-600",
         });
       }
+
       if (cargo.status === "delivered") {
         actions.push({
           key: "receipt",
-          label: "Receipt",
+          label: "Download Receipt",
           icon: <Download className="h-3 w-3 mr-1" />,
           onClick: () => onDownloadReceipt?.(cargo.id),
+          variant: "outline" as const,
+        });
+      }
+
+      if (
+        onTrackCargo &&
+        ["assigned", "picked_up", "in_transit"].includes(cargo.status)
+      ) {
+        actions.push({
+          key: "track",
+          label: "Track Cargo",
+          icon: <Navigation className="h-3 w-3 mr-1" />,
+          onClick: () => onTrackCargo(cargo.id),
           variant: "outline" as const,
         });
       }
@@ -345,15 +459,24 @@ export function CargoTable({
     return actions;
   };
 
+  // Get status label for display
+  const getStatusLabel = (status: string) => {
+    const config = statusConfig[status as keyof typeof statusConfig];
+    return config ? config.label : status.replace("_", " ").toUpperCase();
+  };
+
   // Get available status transitions for admin based on current status
   const getAvailableStatusTransitions = (currentStatus: string) => {
     const transitions: { [key: string]: string[] } = {
-      pending: ["assigned", "cancelled"],
+      pending: ["quoted", "cancelled"],
+      quoted: ["accepted", "cancelled"],
+      accepted: ["assigned", "cancelled"],
       assigned: ["picked_up", "cancelled"],
       picked_up: ["in_transit", "cancelled"],
       in_transit: ["delivered", "cancelled"],
       delivered: [], // No transitions from delivered
       cancelled: [], // No transitions from cancelled
+      disputed: ["delivered", "cancelled"], // Disputed can be resolved
     };
     return transitions[currentStatus] || [];
   };
@@ -411,7 +534,7 @@ export function CargoTable({
     } else {
       return {
         id: cargo.cargo_number || cargo.id, // Use cargo_number if available, fallback to id
-        client: cargo.client, // Fixed: should be client, not driver
+        client: cargo.client,
         driver: cargo.driver,
         phone: cargo.phone,
         from: cargo.from,
@@ -717,8 +840,8 @@ export function CargoTable({
               <Table className="w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs font-medium text-gray-600 w-16">
-                      #
+                    <TableHead className="text-xs font-medium text-gray-600 w-20">
+                      Cargo #
                     </TableHead>
                     {user?.role === "driver" ? (
                       <TableHead className="text-xs font-medium text-gray-600 w-32">
@@ -916,8 +1039,11 @@ export function CargoTable({
         onAccept={onAcceptCargo}
         onStartDelivery={onStartDelivery}
         onCallClient={onCallClient}
+        onCallDriver={onCallDriver}
         onUploadPhoto={onUploadPhoto}
         onReportIssue={onReportIssue}
+        onCancelCargo={onCancelCargo}
+        onDownloadReceipt={onDownloadReceipt}
       />
     </div>
   );

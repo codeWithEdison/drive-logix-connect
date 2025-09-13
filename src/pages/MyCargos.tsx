@@ -2,7 +2,14 @@ import { useEffect } from "react";
 import { CargoTable } from "@/components/ui/CargoTable";
 import { CargoDetail } from "@/components/ui/CargoDetailModal";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, AlertCircle, Package } from "lucide-react";
+import {
+  Plus,
+  RefreshCw,
+  AlertCircle,
+  Package,
+  CheckCircle,
+  Clock,
+} from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClientCargos, useCancelCargo } from "@/lib/api/hooks";
@@ -79,14 +86,139 @@ const MyCargos = () => {
     refetch();
   };
 
+  // Header component
+  const renderHeader = () => (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            {t("myCargos.title")}
+          </h1>
+          <p className="text-muted-foreground mt-2">{t("myCargos.subtitle")}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            {t("common.refresh")}
+          </Button>
+          <Button
+            className="bg-gradient-primary hover:bg-primary-hover"
+            onClick={handleCreateNewCargo}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {t("myCargos.createNewCargo")}
+          </Button>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      {!isLoading && !error && actualCargos && actualCargos.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Total Cargos
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {actualCargos.length}
+                </p>
+              </div>
+              <Package className="h-8 w-8 text-blue-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">In Transit</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {
+                    actualCargos.filter(
+                      (c) =>
+                        c.status === "in_transit" || c.status === "picked_up"
+                    ).length
+                  }
+                </p>
+              </div>
+              <RefreshCw className="h-8 w-8 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Delivered</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {actualCargos.filter((c) => c.status === "delivered").length}
+                </p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {
+                    actualCargos.filter((c) =>
+                      ["pending", "quoted", "accepted", "assigned"].includes(
+                        c.status
+                      )
+                    ).length
+                  }
+                </p>
+              </div>
+              <Clock className="h-8 w-8 text-yellow-500" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   // Loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-10 w-40" />
+        {/* Header with loading skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-40" />
+          </div>
         </div>
+
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-12" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Table skeleton */}
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="border rounded-lg p-4">
@@ -108,24 +240,7 @@ const MyCargos = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">
-            {t("myCargos.title")}
-          </h1>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              {t("common.refresh")}
-            </Button>
-            <Button
-              className="bg-gradient-primary hover:bg-primary-hover"
-              onClick={handleCreateNewCargo}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {t("myCargos.createNewCargo")}
-            </Button>
-          </div>
-        </div>
+        {renderHeader()}
 
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <div className="flex items-center gap-3">
@@ -170,31 +285,26 @@ const MyCargos = () => {
   // Transform API data to CargoDetail format
   const transformedCargos: CargoDetail[] =
     actualCargos.map((cargo) => {
-      // Map status to expected values
-      const statusMap: Record<string, CargoDetail["status"]> = {
-        pending: "pending",
-        quoted: "pending",
-        accepted: "pending",
-        assigned: "active",
-        picked_up: "transit",
-        in_transit: "transit",
-        delivered: "delivered",
-        cancelled: "cancelled",
-        disputed: "cancelled",
-      };
-
-      const mappedStatus = statusMap[cargo.status] || "pending";
+      // Map API status to CargoDetail status format
+      // Keep original API status values for proper display
+      const mappedStatus = cargo.status as CargoDetail["status"];
 
       return {
         id: cargo.id,
+        cargo_number: cargo.cargo_number, // Add cargo number
         status: mappedStatus,
         from: cargo.pickup_address || "Unknown Location",
         to: cargo.destination_address || "Unknown Location",
+        client:
+          cargo.client?.user?.full_name ||
+          cargo.client?.contact_person ||
+          "Unknown Client",
         driver:
           (cargo as any).delivery_assignment?.driver?.user?.full_name ||
           (cargo.status === "assigned" ||
           cargo.status === "picked_up" ||
-          cargo.status === "in_transit"
+          cargo.status === "in_transit" ||
+          cargo.status === "delivered"
             ? t("myCargos.driverAssigned")
             : t("myCargos.noDriverAssigned")),
         phone:
@@ -204,6 +314,7 @@ const MyCargos = () => {
           : t("myCargos.estimatedTime"),
         weight: `${cargo.weight_kg || 0} kg`,
         type: cargo.type || t("myCargos.unknownType"),
+        priority: cargo.priority || "normal", // Add priority
         createdDate: cargo.created_at?.split("T")[0] || "",
         cost: parseFloat(
           String(cargo.estimated_cost || cargo.final_cost || "0")
@@ -224,6 +335,21 @@ const MyCargos = () => {
         pickupContactPhone: cargo.pickup_phone || "",
         deliveryContact: cargo.destination_contact || "",
         deliveryContactPhone: cargo.destination_phone || "",
+        // Enhanced fields for better data display
+        clientPhone: cargo.client?.user?.phone || cargo.pickup_phone || "",
+        clientCompany: cargo.client?.company_name || "",
+        clientContactPerson: cargo.client?.contact_person || "",
+        driverName:
+          (cargo as any).delivery_assignment?.driver?.user?.full_name || "",
+        driverPhone:
+          (cargo as any).delivery_assignment?.driver?.emergency_phone || "",
+        driverRating: (cargo as any).delivery_assignment?.driver?.rating || "",
+        driverLicense:
+          (cargo as any).delivery_assignment?.driver?.license_number || "",
+        vehiclePlate:
+          (cargo as any).delivery_assignment?.vehicle?.plate_number || "",
+        vehicleMake: (cargo as any).delivery_assignment?.vehicle?.make || "",
+        vehicleModel: (cargo as any).delivery_assignment?.vehicle?.model || "",
       };
     }) || [];
 
@@ -235,24 +361,7 @@ const MyCargos = () => {
   ) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">
-            {t("myCargos.title")}
-          </h1>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              {t("common.refresh")}
-            </Button>
-            <Button
-              className="bg-gradient-primary hover:bg-primary-hover"
-              onClick={handleCreateNewCargo}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {t("myCargos.createNewCargo")}
-            </Button>
-          </div>
-        </div>
+        {renderHeader()}
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
           <Package className="h-12 w-12 text-blue-500 mx-auto mb-4" />
@@ -275,38 +384,20 @@ const MyCargos = () => {
   }
 
   return (
-    <CargoTable
-      cargos={transformedCargos}
-      title={t("myCargos.title")}
-      customActions={
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-            />
-            {t("common.refresh")}
-          </Button>
-          <Button
-            className="bg-gradient-primary hover:bg-primary-hover"
-            onClick={handleCreateNewCargo}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {t("myCargos.createNewCargo")}
-          </Button>
-        </div>
-      }
-      onCallDriver={handleCallDriver}
-      onTrackCargo={handleTrackCargo}
-      onCancelCargo={handleCancelCargo}
-      onDownloadReceipt={handleDownloadReceipt}
-      onUploadPhoto={handleUploadPhoto}
-      onReportIssue={handleReportIssue}
-    />
+    <div className="space-y-6">
+      {renderHeader()}
+
+      <CargoTable
+        cargos={transformedCargos}
+        showStats={false} // Hide stats since we have them in header
+        onCallDriver={handleCallDriver}
+        onTrackCargo={handleTrackCargo}
+        onCancelCargo={handleCancelCargo}
+        onDownloadReceipt={handleDownloadReceipt}
+        onUploadPhoto={handleUploadPhoto}
+        onReportIssue={handleReportIssue}
+      />
+    </div>
   );
 };
 

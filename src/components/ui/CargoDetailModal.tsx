@@ -17,6 +17,8 @@ import {
   CheckCircle,
   Star,
   Building,
+  X,
+  Download,
 } from "lucide-react";
 
 export interface CargoDetail {
@@ -80,6 +82,8 @@ interface CargoDetailModalProps {
   onCallDriver?: (phone: string) => void;
   onUploadPhoto?: (cargoId: string) => void;
   onReportIssue?: (cargoId: string) => void;
+  onCancelCargo?: (cargoId: string) => void;
+  onDownloadReceipt?: (cargoId: string) => void;
 }
 
 export function CargoDetailModal({
@@ -92,33 +96,54 @@ export function CargoDetailModal({
   onCallDriver,
   onUploadPhoto,
   onReportIssue,
+  onCancelCargo,
+  onDownloadReceipt,
 }: CargoDetailModalProps) {
   if (!cargo) return null;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "active":
-        return <Badge className="bg-green-100 text-green-600">Active</Badge>;
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-600">Pending</Badge>;
+        return (
+          <Badge className="bg-yellow-100 text-yellow-600">
+            Awaiting Quote
+          </Badge>
+        );
+      case "quoted":
+        return <Badge className="bg-blue-100 text-blue-600">Quote Sent</Badge>;
+      case "accepted":
+        return (
+          <Badge className="bg-indigo-100 text-indigo-600">
+            Quote Accepted
+          </Badge>
+        );
       case "assigned":
         return (
-          <Badge className="bg-purple-100 text-purple-600">Assigned</Badge>
+          <Badge className="bg-purple-100 text-purple-600">
+            Driver Assigned
+          </Badge>
         );
       case "picked_up":
         return (
-          <Badge className="bg-orange-100 text-orange-600">Picked Up</Badge>
+          <Badge className="bg-orange-100 text-orange-600">
+            Cargo Collected
+          </Badge>
         );
       case "in_transit":
-        return <Badge className="bg-blue-100 text-blue-600">In Transit</Badge>;
-      case "completed":
-        return <Badge className="bg-blue-100 text-blue-600">Completed</Badge>;
-      case "transit":
         return <Badge className="bg-blue-100 text-blue-600">In Transit</Badge>;
       case "delivered":
         return <Badge className="bg-green-100 text-green-600">Delivered</Badge>;
       case "cancelled":
         return <Badge className="bg-red-100 text-red-600">Cancelled</Badge>;
+      case "disputed":
+        return <Badge className="bg-red-100 text-red-600">Disputed</Badge>;
+      // Legacy status mappings for backward compatibility
+      case "active":
+        return <Badge className="bg-green-100 text-green-600">Active</Badge>;
+      case "completed":
+        return <Badge className="bg-blue-100 text-blue-600">Completed</Badge>;
+      case "transit":
+        return <Badge className="bg-blue-100 text-blue-600">In Transit</Badge>;
       default:
         return (
           <Badge className="bg-gray-100 text-gray-600 capitalize">
@@ -140,6 +165,52 @@ export function CargoDetailModal({
         return <Badge className="bg-gray-100 text-gray-600">Low</Badge>;
       default:
         return <Badge className="bg-gray-100 text-gray-600">Standard</Badge>;
+    }
+  };
+
+  const getPriorityDescription = (priority: string) => {
+    switch (priority) {
+      case "urgent":
+        return "Critical shipment requiring immediate attention (e.g., medical supplies, emergency deliveries)";
+      case "high":
+        return "Important shipment requiring faster processing (e.g., business documents, important packages)";
+      case "normal":
+        return "Standard priority, default processing for most regular shipments";
+      case "low":
+        return "Non-urgent, can be processed during normal operations (e.g., regular deliveries, non-time-sensitive items)";
+      default:
+        return "Standard priority processing";
+    }
+  };
+
+  const getStatusDescription = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "Request submitted, waiting for pricing";
+      case "quoted":
+        return "Price quote provided, awaiting acceptance";
+      case "accepted":
+        return "Client confirmed, ready for assignment";
+      case "assigned":
+        return "Driver and vehicle assigned for pickup";
+      case "picked_up":
+        return "Successfully picked up, now in transit";
+      case "in_transit":
+        return "Being transported to destination";
+      case "delivered":
+        return "Successfully delivered to destination";
+      case "cancelled":
+        return "Shipment was cancelled";
+      case "disputed":
+        return "Issue reported, under investigation";
+      case "active":
+        return "Cargo is active and being processed";
+      case "completed":
+        return "Cargo delivery completed";
+      case "transit":
+        return "Being transported to destination";
+      default:
+        return `Status: ${status}`;
     }
   };
 
@@ -169,6 +240,39 @@ export function CargoDetailModal({
             {getStatusBadge(cargo.status)}
             {cargo.priority && getPriorityBadge(cargo.priority)}
           </div>
+        </div>
+
+        {/* Status and Priority Description */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="text-sm font-semibold text-blue-800 mb-1">
+                  Current Status
+                </h4>
+                <p className="text-sm text-blue-700">
+                  {getStatusDescription(cargo.status)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {cargo.priority && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-semibold text-orange-800 mb-1">
+                    Priority Level
+                  </h4>
+                  <p className="text-sm text-orange-700">
+                    {getPriorityDescription(cargo.priority)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Client Information */}
@@ -558,9 +662,9 @@ export function CargoDetailModal({
               className="w-full"
               onClick={() => {
                 if (isDriverCargo) {
-                  onCallClient?.(cargo.phone);
+                  onCallClient?.(cargo.clientPhone || cargo.phone);
                 } else if (isClientCargo) {
-                  onCallDriver?.(cargo.phone);
+                  onCallDriver?.(cargo.driverPhone || cargo.phone);
                 }
               }}
             >
@@ -577,24 +681,79 @@ export function CargoDetailModal({
             </Button>
           </div>
 
-          {isDriverCargo && cargo.status === "pending" && (
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700"
-              onClick={() => onAccept?.(cargo.id)}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Accept Cargo
-            </Button>
+          {/* Driver Actions */}
+          {isDriverCargo && (
+            <>
+              {cargo.status === "pending" && (
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() => onAccept?.(cargo.id)}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Accept Cargo
+                </Button>
+              )}
+
+              {cargo.status === "assigned" && (
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={() => onStartDelivery?.(cargo.id)}
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Mark Picked Up
+                </Button>
+              )}
+
+              {cargo.status === "picked_up" && (
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={() => onStartDelivery?.(cargo.id)}
+                >
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Start Transit
+                </Button>
+              )}
+
+              {cargo.status === "in_transit" && (
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() => onStartDelivery?.(cargo.id)}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark Delivered
+                </Button>
+              )}
+            </>
           )}
 
-          {isDriverCargo && cargo.status === "active" && (
-            <Button
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              onClick={() => onStartDelivery?.(cargo.id)}
-            >
-              <Navigation className="h-4 w-4 mr-2" />
-              Start Delivery
-            </Button>
+          {/* Client Actions */}
+          {isClientCargo && (
+            <>
+              {/* Cancellation is only allowed before picked_up status */}
+              {["pending", "quoted", "accepted", "assigned"].includes(
+                cargo.status
+              ) && (
+                <Button
+                  variant="outline"
+                  className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
+                  onClick={() => onCancelCargo?.(cargo.id)}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel Cargo
+                </Button>
+              )}
+
+              {cargo.status === "delivered" && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => onDownloadReceipt?.(cargo.id)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Receipt
+                </Button>
+              )}
+            </>
           )}
 
           <Button
