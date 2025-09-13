@@ -33,6 +33,8 @@ export function UsersDistributionChart() {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      if (!data || !data.name) return null;
+      
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-900">
@@ -54,9 +56,13 @@ export function UsersDistributionChart() {
   };
 
   const CustomLegend = ({ payload }: any) => {
+    if (!payload || !Array.isArray(payload)) return null;
+    
     return (
       <div className="flex flex-wrap gap-4 justify-center mt-4">
-        {payload?.map((entry: any, index: number) => {
+        {payload.map((entry: any, index: number) => {
+          if (!entry || !entry.name) return null;
+          
           const data = chartData[index];
           const IconComponent =
             entry.name === "Clients"

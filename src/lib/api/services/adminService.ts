@@ -55,6 +55,27 @@ export class AdminService {
     return response.data;
   }
 
+  // Create admin user
+  static async createAdmin(data: {
+    full_name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    preferred_language?: "en" | "rw" | "fr";
+  }): Promise<
+    ApiResponse<{
+      user: any;
+      message: string;
+    }>
+  > {
+    const response = await axiosInstance.post("/admin/users", {
+      ...data,
+      role: "admin"
+    });
+    return response.data;
+  }
+
+
   // Get financial reports
   static async getFinancialReports(params?: {
     start_date?: string;
@@ -94,11 +115,11 @@ export class AdminService {
   static async createClient(data: {
     full_name: string;
     email: string;
+    phone: string;
     password: string;
+    preferred_language: "en" | "rw" | "fr";
     company_name: string;
     business_type: "individual" | "corporate" | "government";
-    phone?: string;
-    preferred_language?: "en" | "rw" | "fr";
     tax_id?: string;
     address?: string;
     city?: string;
@@ -134,12 +155,12 @@ export class AdminService {
   static async createDriver(data: {
     full_name: string;
     email: string;
+    phone: string;
     password: string;
+    preferred_language: "en" | "rw" | "fr";
     license_number: string;
-    license_type: "A" | "B" | "C" | "D" | "E";
-    phone?: string;
-    preferred_language?: "en" | "rw" | "fr";
     license_expiry?: string;
+    license_type: "A" | "B" | "C" | "D" | "E";
     date_of_birth?: string;
     emergency_contact?: string;
     emergency_phone?: string;

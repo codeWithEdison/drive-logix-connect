@@ -25,7 +25,7 @@ const periods = [
 
 export function UsageTrendsChart() {
   const { t } = useLanguage();
-  const [selectedPeriod, setSelectedPeriod] = useState("daily");
+  const [selectedPeriod, setSelectedPeriod] = useState("day");
 
   // API hook
   const {
