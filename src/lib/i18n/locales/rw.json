@@ -150,11 +150,13 @@
     "false": "Ntibyemewe",
     "fromLastMonth": "kuva ukwezi kwabaye",
     "fromLastWeek": "kuva icyumweru cyabaye",
-    "fromLastYear": "kuva umwaka wabaye",
+    "fromLastYear": "kuva umwaka wabaye", 
     "count": "Umubare",
     "percentage": "Ikimenyetso",
     "revenue": "Amafaranga yinjira",
-    "users": "Abakoresha"
+    "users": "Abakoresha",
+    "preferredLanguage": "Ururimi Rwifuza",
+    "password": "Ijambo ry'ibanga"
   },
   "auth": {
     "login": "Injira",

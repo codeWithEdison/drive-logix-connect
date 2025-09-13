@@ -301,13 +301,13 @@ function App() {
       >
         <ApiProvider>
           <TooltipProvider>
-            <LanguageProvider>
-              <AuthProvider>
+            <AuthProvider>
+              <LanguageProvider>
                 <AppContent />
                 <Toaster />
                 <Sonner />
-              </AuthProvider>
-            </LanguageProvider>
+              </LanguageProvider>
+            </AuthProvider>
           </TooltipProvider>
         </ApiProvider>
       </Router>

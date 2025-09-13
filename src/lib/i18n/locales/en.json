@@ -210,7 +210,9 @@
     "english": "English",
     "kinyarwanda": "Kinyarwanda",
     "french": "French",
-    "lastLogin": "Last Login"
+    "lastLogin": "Last Login",
+    "preferredLanguage": "Preferred Language",
+    "password":"Password"
   },
   "auth": {
     "login": "Login",
