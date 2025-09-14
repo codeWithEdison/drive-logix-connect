@@ -21,6 +21,7 @@ import {
 } from '@/lib/api/hooks/utilityHooks';
 import { useAdminClients } from '@/lib/api/hooks/clientHooks';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 import { User, Driver, Client, UserRole } from '@/types/shared';
 import {
     Users,
@@ -53,6 +54,7 @@ const formatCurrency = (amount: number): string => {
 
 export default function SuperAdminUsers() {
     const { t } = useLanguage();
+    const { toast } = useToast();
     const [activeTab, setActiveTab] = useState('admins');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -301,10 +303,11 @@ export default function SuperAdminUsers() {
                 preferred_language: formData.preferred_language
             };
 
+            let result;
             if (selectedUserType === 'admin') {
-                await createAdminMutation.mutateAsync(baseData);
+                result = await createAdminMutation.mutateAsync(baseData);
             } else if (selectedUserType === 'driver') {
-                await createDriverMutation.mutateAsync({
+                result = await createDriverMutation.mutateAsync({
                     ...baseData,
                     license_number: formData.license_number,
                     license_expiry: formData.license_expiry,
@@ -316,7 +319,7 @@ export default function SuperAdminUsers() {
                     medical_certificate_expiry: formData.medical_certificate_expiry
                 });
             } else if (selectedUserType === 'client') {
-                await createClientMutation.mutateAsync({
+                result = await createClientMutation.mutateAsync({
                     ...baseData,
                     company_name: formData.company_name,
                     business_type: formData.business_type,
@@ -331,10 +334,26 @@ export default function SuperAdminUsers() {
                 });
             }
 
+            // Show success toast
+            toast({
+                title: t('userManagement.userCreated'),
+                description: t('userManagement.userCreatedSuccess', { 
+                    type: t(`userManagement.${selectedUserType}s`),
+                    name: formData.full_name 
+                }),
+            });
+
             setShowAddUserModal(false);
             resetForm();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating user:', error);
+            
+            // Show error toast
+            toast({
+                title: t('userManagement.createUserError'),
+                description: error?.response?.data?.message || t('userManagement.createUserErrorDesc'),
+                variant: "destructive",
+            });
         }
     };
 
@@ -350,10 +369,26 @@ export default function SuperAdminUsers() {
                 }
             });
 
+            // Show success toast
+            toast({
+                title: t('userManagement.userStatusUpdated'),
+                description: t('userManagement.userStatusUpdatedSuccess', { 
+                    name: editingUser.full_name,
+                    status: formData.is_active ? t('common.active') : t('common.inactive')
+                }),
+            });
+
             setShowEditUserModal(false);
             resetForm();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error updating user status:', error);
+            
+            // Show error toast
+            toast({
+                title: t('userManagement.updateUserError'),
+                description: error?.response?.data?.message || t('userManagement.updateUserErrorDesc'),
+                variant: "destructive",
+            });
         }
     };
 
@@ -362,14 +397,34 @@ export default function SuperAdminUsers() {
         // TODO: Implement delete functionality
     };
 
-    const handleUpdateUserStatus = (userId: string, isActive: boolean) => {
-        updateUserStatusMutation.mutate({
-            id: userId,
-            data: { 
-                is_active: isActive,
-                reason: isActive ? 'User activated by super admin' : 'User deactivated by super admin'
-            }
-        });
+    const handleUpdateUserStatus = async (userId: string, isActive: boolean) => {
+        try {
+            await updateUserStatusMutation.mutateAsync({
+                id: userId,
+                data: { 
+                    is_active: isActive,
+                    reason: isActive ? 'User activated by super admin' : 'User deactivated by super admin'
+                }
+            });
+
+            // Show success toast
+            toast({
+                title: t('userManagement.userStatusUpdated'),
+                description: t('userManagement.userStatusUpdatedSuccess', { 
+                    name: 'User',
+                    status: isActive ? t('common.active') : t('common.inactive')
+                }),
+            });
+        } catch (error: any) {
+            console.error('Error updating user status:', error);
+            
+            // Show error toast
+            toast({
+                title: t('userManagement.updateUserError'),
+                description: error?.response?.data?.message || t('userManagement.updateUserErrorDesc'),
+                variant: "destructive",
+            });
+        }
     };
 
     const getStatusColor = (status: string) => {

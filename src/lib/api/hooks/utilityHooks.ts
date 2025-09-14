@@ -291,7 +291,7 @@ export const useUpdateUserStatus = () => {
     }) => AdminService.updateUserStatus(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.users() });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
   });
 };
@@ -309,7 +309,7 @@ export const useCreateAdmin = () => {
       preferred_language?: "en" | "rw" | "fr";
     }) => AdminService.createAdmin(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.users() });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
   });
 };
@@ -334,7 +334,7 @@ export const useCreateDriver = () => {
       medical_certificate_expiry?: string;
     }) => AdminService.createDriver(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.users() });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
   });
 };
@@ -361,7 +361,7 @@ export const useCreateClient = () => {
       payment_terms?: number;
     }) => AdminService.createClient(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.users() });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
   });
 };
