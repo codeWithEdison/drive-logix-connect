@@ -1458,20 +1458,5 @@
     "emergencyPhone": "Emergency Phone",
     "rating": "Rating",
     "preferredLanguage": "Preferred Language"
-  },
-  "driver": {
-    "status": "Status",
-    "statusDescription": {
-      "available": "Ready to accept new assignments",
-      "on_duty": "Currently on a delivery",
-      "unavailable": "Not available for assignments",
-      "suspended": "Account suspended"
-    },
-    "status": {
-      "available": "Available",
-      "on_duty": "On Duty",
-      "unavailable": "Unavailable",
-      "suspended": "Suspended"
-    }
   }
 }

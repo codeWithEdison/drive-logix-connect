@@ -6,10 +6,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
 import { mapDeliveryAssignmentsToCargoDetails } from "@/lib/utils/cargoMapper";
-import { RefreshCw, AlertCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  RefreshCw,
+  AlertCircle,
+  Package,
+  Truck,
+  Clock,
+  CheckCircle,
+  TrendingUp,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export function AssignedCargosPage() {
   const { t } = useLanguage();
@@ -21,7 +29,7 @@ export function AssignedCargosPage() {
     isLoading,
     error,
     refetch,
-  } = useDriverAssignments({limit: 50 });
+  } = useDriverAssignments({ limit: 50 });
 
   const handleAcceptCargo = async (cargoId: string) => {
     try {
@@ -87,34 +95,75 @@ export function AssignedCargosPage() {
   };
 
   // Transform API data to CargoDetail format
-  const transformedCargos: CargoDetail[] = mapDeliveryAssignmentsToCargoDetails(
-    assignmentsData || []
-  );
+  const assignments = assignmentsData || [];
+  const transformedCargos: CargoDetail[] =
+    mapDeliveryAssignmentsToCargoDetails(assignments);
+
+  // Debug logging
+  console.log("🔍 AssignedCargosPage Debug:", {
+    assignmentsData,
+    assignments,
+    assignmentsLength: assignments.length,
+    transformedCargos,
+    transformedCargosLength: transformedCargos.length,
+  });
+
+  // Calculate stats
+  const stats = {
+    total: transformedCargos.length,
+    pending: transformedCargos.filter((c) => c.status === "pending").length,
+    inTransit: transformedCargos.filter((c) => c.status === "in_transit")
+      .length,
+    completed: transformedCargos.filter((c) => c.status === "delivered").length,
+  };
 
   // Loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header Skeleton */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-64" />
           </div>
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card
+              key={i}
+              className="bg-white shadow-lg rounded-xl sm:rounded-2xl overflow-hidden"
+            >
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Table Skeleton */}
+        <Card className="bg-white shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-4 w-8" />
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -123,33 +172,34 @@ export function AssignedCargosPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {t("navigation.assignedCargos")}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               {t("navigation.assignedCargos")} {t("dashboard.subtitle")}
             </p>
           </div>
         </div>
 
-        <Card className="bg-red-50 border-red-200">
-          <CardContent className="p-6">
+        <Card className="bg-red-50 border-red-200 shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              <div>
-                <h3 className="font-semibold text-red-800">
+              <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-red-800 text-sm sm:text-base">
                   {t("common.error")}
                 </h3>
-                <p className="text-red-600 text-sm mt-1">
+                <p className="text-red-600 text-xs sm:text-sm mt-1 break-words">
                   {error.message || t("dashboard.loadError")}
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleRefresh}
-                  className="mt-2"
+                  className="mt-3 border-red-300 text-red-600 hover:bg-red-50"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {t("common.retry")}
@@ -166,54 +216,170 @@ export function AssignedCargosPage() {
   if (!transformedCargos || transformedCargos.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {t("navigation.assignedCargos")}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               {t("navigation.assignedCargos")} {t("dashboard.subtitle")}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+          >
             <RefreshCw className="w-4 h-4 mr-2" />
             {t("common.refresh")}
           </Button>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
-          <Package className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-blue-800 mb-2">
-            {t("navigation.assignedCargos")}
-          </h3>
-          <p className="text-blue-600 mb-4">
-            {t("myCargos.noCargosDescription")}
-          </p>
-        </div>
+        <Card className="bg-blue-50 border-blue-200 shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="p-6 sm:p-8 text-center">
+            <Package className="h-12 w-12 sm:h-16 sm:w-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-blue-800 mb-2">
+              {t("navigation.assignedCargos")}
+            </h3>
+            <p className="text-blue-600 text-sm sm:text-base mb-4">
+              {t("myCargos.noCargosDescription")}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              {t("common.refresh")}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             {t("navigation.assignedCargos")}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             {t("navigation.assignedCargos")} {t("dashboard.subtitle")}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefresh}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          className="border-blue-300 text-blue-600 hover:bg-blue-50"
+        >
           <RefreshCw className="w-4 h-4 mr-2" />
           {t("common.refresh")}
         </Button>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                  Total Assigned
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  {stats.total}
+                </p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  All cargos
+                </p>
+              </div>
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
+                <Package className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                  Pending
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  {stats.pending}
+                </p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  Awaiting pickup
+                </p>
+              </div>
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                  In Transit
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  {stats.inTransit}
+                </p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  Currently moving
+                </p>
+              </div>
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
+                <Truck className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                  Completed
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  {stats.completed}
+                </p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  Successfully delivered
+                </p>
+              </div>
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Cargo Table */}
       <CargoTable
         cargos={transformedCargos}
         title={t("navigation.assignedCargos")}
+        showStats={false}
+        showSearch={true}
+        showFilters={true}
+        showPagination={true}
+        itemsPerPage={10}
         onAcceptCargo={handleAcceptCargo}
         onStartDelivery={handleStartDelivery}
         onCallClient={handleCallClient}

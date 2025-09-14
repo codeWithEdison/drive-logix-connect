@@ -46,27 +46,50 @@ export const mapDashboardCargosToCargoDetails = (
 export const mapDeliveryAssignmentToCargoDetail = (
   assignment: any // Use 'any' to handle the actual API response structure
 ): CargoDetail => {
+  console.log(
+    "🔍 mapDeliveryAssignmentToCargoDetail - assignment:",
+    assignment
+  );
+
+  const cargo = assignment.cargo || {};
+  const client = cargo.client || {};
+  const user = client.user || {};
+
+  console.log("🔍 mapDeliveryAssignmentToCargoDetail - extracted data:", {
+    cargo,
+    client,
+    user,
+  });
+
   return {
-    id: assignment.cargo_id || assignment.id,
-    status: "assigned" as any, // Default status since not in assignment
-    from: assignment.cargo?.pickup_address || "Pickup Location",
-    to: assignment.cargo?.destination_address || "Delivery Location",
-    client: "Client Name", // Default since not in assignment
-    phone: "", // Default since not in assignment
-    weight: "0 kg", // Default since not in assignment
-    type: assignment.cargo?.type || "General",
-    pickupTime: "TBD", // Default since not in assignment
-    estimatedDelivery: "TBD", // Default since not in assignment
-    priority: "normal" as any, // Default since not in assignment
-    assignedDate: new Date(assignment.assigned_at).toLocaleDateString(),
-    distance: "0 km", // Default since not in assignment
-    earnings: undefined, // Default since not in assignment
-    description: "Delivery assignment", // Default since not in assignment
-    specialInstructions: "", // Default since not in assignment
-    pickupContact: "", // Default since not in assignment
-    pickupContactPhone: "", // Default since not in assignment
-    deliveryContact: "", // Default since not in assignment
-    deliveryContactPhone: "", // Default since not in assignment
+    id: cargo.id || assignment.cargo_id || assignment.id,
+    cargo_number: cargo.cargo_number || "",
+    status: "assigned" as any, // Default status since these are assignments
+    from: cargo.pickup_address || "Pickup Location",
+    to: cargo.destination_address || "Delivery Location",
+    client: user.full_name || "Client Name",
+    clientCompany: client.company_name || "",
+    phone: client.phone || "",
+    weight: `${cargo.weight || 0} kg`,
+    type: cargo.type || "General",
+    pickupTime: cargo.pickup_time || "TBD",
+    estimatedDelivery: cargo.estimated_delivery_time || "TBD",
+    priority: cargo.priority || ("normal" as any),
+    assignedDate: assignment.assigned_at
+      ? new Date(assignment.assigned_at).toLocaleDateString()
+      : new Date().toLocaleDateString(),
+    distance: `${cargo.distance_km || 0} km`,
+    earnings: cargo.earnings,
+    description: cargo.description || "Delivery assignment",
+    specialInstructions: cargo.special_instructions || "",
+    pickupContact: cargo.pickup_contact || "",
+    pickupContactPhone: cargo.pickup_phone || "",
+    deliveryContact: cargo.delivery_contact || "",
+    deliveryContactPhone: cargo.delivery_phone || "",
+    driver: assignment.driver_name,
+    driverPhone: assignment.driver_phone,
+    cost: cargo.cost,
+    estimatedTime: cargo.estimated_time,
   };
 };
 

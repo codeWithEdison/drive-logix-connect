@@ -568,26 +568,32 @@ export function CargoTable({
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  #{startIndex + index + 1}
+                </span>
                 <Package className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-900">
-                  {data.id || "General Cargo"}
+                <span className="text-sm font-semibold text-gray-900">
+                  {cargo.cargo_number || data.id || "General Cargo"}
                 </span>
                 {getStatusBadge(data.status)}
               </div>
               <div className="flex items-center gap-2 mb-2">
                 <User className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-700">
-                  {user?.role === "driver" ? data.client : data.driver}
-                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm text-gray-700 font-medium">
+                    {user?.role === "driver" ? data.client : data.driver}
+                  </span>
+                  {cargo.clientCompany && (
+                    <p className="text-xs text-gray-500 truncate">
+                      {cargo.clientCompany}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm font-bold text-gray-900">
-                {user?.role === "driver"
-                  ? data.earnings
-                  : formatFRW(data.cost || 0)}
-              </p>
-              <p className="text-xs text-gray-500">{data.weight}</p>
+              <p className="text-sm font-bold text-gray-900">{data.weight}</p>
+              <p className="text-xs text-gray-500">{data.distance}</p>
             </div>
           </div>
 
@@ -607,12 +613,6 @@ export function CargoTable({
               <span>{data.distance}</span>
             </div>
           </div>
-
-          {user?.role === "driver" && (
-            <div className="mb-3">
-              {getPriorityBadge(cargo.priority || "standard")}
-            </div>
-          )}
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
             <div className="flex gap-2">
@@ -869,29 +869,20 @@ export function CargoTable({
               <Table className="w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs font-medium text-gray-600 w-20">
+                    <TableHead className="text-xs font-medium text-gray-600 w-16">
+                      #
+                    </TableHead>
+                    <TableHead className="text-xs font-medium text-gray-600 w-28">
                       Cargo #
                     </TableHead>
-                    {user?.role === "driver" ? (
-                      <TableHead className="text-xs font-medium text-gray-600 w-32">
-                        Client
-                      </TableHead>
-                    ) : (
-                      <TableHead className="text-xs font-medium text-gray-600 w-36">
-                        Client
-                      </TableHead>
-                    )}
+                    <TableHead className="text-xs font-medium text-gray-600 w-40">
+                      Client
+                    </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 flex-1">
                       Route
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 w-24">
                       Status
-                    </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-24">
-                      Priority
-                    </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-32">
-                      Cost
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 w-20">
                       Actions
@@ -907,26 +898,40 @@ export function CargoTable({
                         className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => handleRowClick(cargo)}
                       >
-                        <TableCell className="text-sm text-gray-500">
-                          {data.id || `#${startIndex + index + 1}`}
+                        <TableCell className="text-sm text-gray-500 font-medium">
+                          {startIndex + index + 1}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-900 font-semibold">
+                          {cargo.cargo_number ||
+                            data.id ||
+                            `#${startIndex + index + 1}`}
                         </TableCell>
                         <TableCell>
                           <div>
                             <p className="text-sm font-medium text-gray-900">
                               {data.client || "N/A"}
                             </p>
-                            <p className="text-xs text-gray-500">
-                              {data.phone || "N/A"}
-                            </p>
+                            {cargo.clientCompany && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {cargo.clientCompany}
+                              </p>
+                            )}
+                            {data.phone && (
+                              <p className="text-xs text-gray-400">
+                                {data.phone}
+                              </p>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="max-w-xs">
                             <div className="flex items-start gap-2">
                               <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />{" "}
-                              {data.from}{" "}
-                              <span className="text-gray-500">to</span>{" "}
-                              {data.to}
+                              <span className="text-sm">{data.from}</span>
+                            </div>
+                            <div className="flex items-start gap-2 mt-1">
+                              <MapPin className="h-3 w-3 text-blue-500 mt-0.5 flex-shrink-0" />{" "}
+                              <span className="text-sm">{data.to}</span>
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
                               {data.distance}
@@ -934,19 +939,6 @@ export function CargoTable({
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(data.status)}</TableCell>
-                        <TableCell>
-                          {getPriorityBadge(cargo.priority || "normal")}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="text-sm font-bold text-gray-900">
-                              {formatFRW(data.cost || 0)}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {data.weight}
-                            </p>
-                          </div>
-                        </TableCell>
                         <TableCell>{renderActions(cargo)}</TableCell>
                       </TableRow>
                     );
