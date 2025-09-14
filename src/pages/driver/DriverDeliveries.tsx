@@ -3,20 +3,28 @@ import { CustomTabs } from "@/components/ui/CustomTabs";
 import { DeliveryCard } from "@/components/ui/DeliveryCard";
 import { DeliveryDetailModal } from "@/components/ui/DeliveryDetailModal";
 import { DeliveryTable, Delivery } from "@/components/ui/DeliveryTable";
+import { CargoTable } from "@/components/ui/CargoTable";
+import {
+  CargoDetail,
+  CargoDetailModal,
+} from "@/components/ui/CargoDetailModal";
 import { ContactDropdown } from "@/components/ui/ContactDropdown";
 import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
 import { SignatureCapture } from "@/components/ui/SignatureCapture";
 import ModernModel from "@/components/modal/ModernModel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useDriverCargos } from "@/lib/api/hooks";
+import { useDriverCargos, useCargoById } from "@/lib/api/hooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { customToast } from "@/lib/utils/toast";
-import { mapCargosToCargoDetails } from "@/lib/utils/cargoMapper";
+import {
+  mapCargosToCargoDetails,
+  mapCargoToCargoDetail,
+} from "@/lib/utils/cargoMapper";
 import gpsTrackingService, {
   LocationData,
 } from "@/services/GpsTrackingService";
@@ -41,7 +49,9 @@ export default function DriverDeliveries() {
   const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(
     null
   );
+  const [selectedCargoId, setSelectedCargoId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isCargoModalOpen, setIsCargoModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
   const [photoUploadType, setPhotoUploadType] = useState<
@@ -56,58 +66,95 @@ export default function DriverDeliveries() {
 
   // API hooks - Using CargoService.getDriverCargos for driver deliveries
   const {
-    data: activeCargosData,
+    data: allCargosData,
     isLoading: isLoadingActive,
     error: activeError,
     refetch: refetchActive,
-  } = useDriverCargos({ status: "assigned" as any, limit: 50 });
+  } = useDriverCargos({ limit: 50 });
 
+  // Fetch full cargo details when a cargo is selected
   const {
-    data: completedCargosData,
-    isLoading: isLoadingCompleted,
-    error: completedError,
-    refetch: refetchCompleted,
-  } = useDriverCargos({ status: "delivered" as any, limit: 50 });
+    data: selectedCargo,
+    isLoading: isLoadingCargo,
+    error: cargoError,
+  } = useCargoById(selectedCargoId || "");
+
+  // Debug logging for API response
+  console.log("🔍 DriverDeliveries - API Response:", allCargosData);
+  console.log("🔍 DriverDeliveries - isLoading:", isLoadingActive);
+  console.log("🔍 DriverDeliveries - error:", activeError);
+  console.log("🔍 DriverDeliveries - allCargosData:", allCargosData);
+  console.log(
+    "🔍 DriverDeliveries - Array.isArray(allCargosData):",
+    Array.isArray(allCargosData)
+  );
+  console.log(
+    "🔍 DriverDeliveries - allCargosData length:",
+    Array.isArray(allCargosData) ? allCargosData.length : 0
+  );
 
   // Transform API data to Delivery format
-  const activeDeliveries: Delivery[] = mapCargosToCargoDetails(
-    activeCargosData?.data || []
-  ).map((cargo) => ({
-    id: cargo.id,
-    cargo: cargo.type,
-    from: cargo.from,
-    to: cargo.to,
-    client: cargo.client || "",
-    phone: cargo.phone || "",
-    status: cargo.status as any,
-    priority: cargo.priority as any,
-    estimatedTime: cargo.estimatedDelivery || "TBD",
-    distance: cargo.distance,
-    pickupContact: cargo.pickupContact || "",
-    pickupContactPhone: cargo.pickupContactPhone || "",
-    deliveryContact: cargo.deliveryContact || "",
-    deliveryContactPhone: cargo.deliveryContactPhone || "",
-  }));
+  // Note: useDriverCargos already extracts data.data, so allCargosData is the array directly
+  const allCargos = (allCargosData as unknown as any[]) || [];
 
-  const completedDeliveries: Delivery[] = mapCargosToCargoDetails(
-    completedCargosData?.data || []
-  ).map((cargo) => ({
-    id: cargo.id,
-    cargo: cargo.type,
-    from: cargo.from,
-    to: cargo.to,
-    client: cargo.client || "",
-    phone: cargo.phone || "",
-    status: "delivered" as const,
-    priority: cargo.priority as any,
-    completedAt: cargo.assignedDate,
-    rating: 4.5, // Default rating since not available in CargoDetail
-    distance: cargo.distance,
-    pickupContact: cargo.pickupContact || "",
-    pickupContactPhone: cargo.pickupContactPhone || "",
-    deliveryContact: cargo.deliveryContact || "",
-    deliveryContactPhone: cargo.deliveryContactPhone || "",
-  }));
+  // Helper function to map priority values
+  const mapPriority = (priority: string): "urgent" | "normal" | "standard" => {
+    switch (priority) {
+      case "high":
+      case "urgent":
+        return "urgent";
+      case "low":
+        return "normal";
+      case "normal":
+      default:
+        return "normal";
+    }
+  };
+
+  // Filter active deliveries (not delivered status)
+  const activeCargos = allCargos.filter(
+    (cargo: any) => cargo.status !== "delivered"
+  );
+
+  // Filter completed deliveries (delivered status)
+  const completedCargos = allCargos.filter(
+    (cargo: any) => cargo.status === "delivered"
+  );
+
+  console.log("🔍 DriverDeliveries - allCargos:", allCargos);
+  console.log("🔍 DriverDeliveries - allCargos length:", allCargos.length);
+  console.log("🔍 DriverDeliveries - Sample cargo structure:", allCargos[0]);
+
+  console.log("🔍 DriverDeliveries - activeCargos:", activeCargos);
+  console.log(
+    "🔍 DriverDeliveries - activeCargos length:",
+    activeCargos.length
+  );
+  console.log("🔍 DriverDeliveries - completedCargos:", completedCargos);
+  console.log(
+    "🔍 DriverDeliveries - completedCargos length:",
+    completedCargos.length
+  );
+
+  // Transform API data to CargoDetail format
+  const activeCargoDetails: CargoDetail[] =
+    mapCargosToCargoDetails(activeCargos);
+  const completedCargoDetails: CargoDetail[] =
+    mapCargosToCargoDetails(completedCargos);
+
+  console.log("🔍 DriverDeliveries - activeCargoDetails:", activeCargoDetails);
+  console.log(
+    "🔍 DriverDeliveries - activeCargoDetails length:",
+    activeCargoDetails.length
+  );
+  console.log(
+    "🔍 DriverDeliveries - completedCargoDetails:",
+    completedCargoDetails
+  );
+  console.log(
+    "🔍 DriverDeliveries - completedCargoDetails length:",
+    completedCargoDetails.length
+  );
 
   // GPS Tracking setup
   useEffect(() => {
@@ -129,6 +176,56 @@ export default function DriverDeliveries() {
   const handleViewDetails = (delivery: Delivery) => {
     setSelectedDelivery(delivery);
     setIsDetailModalOpen(true);
+  };
+
+  // Handle opening cargo detail modal
+  const handleOpenCargoModal = (cargoId: string) => {
+    setSelectedCargoId(cargoId);
+    setIsCargoModalOpen(true);
+  };
+
+  // Handle closing cargo detail modal
+  const handleCloseCargoModal = () => {
+    setIsCargoModalOpen(false);
+    setSelectedCargoId(null);
+  };
+
+  const handleStartDelivery = async (cargoId: string) => {
+    try {
+      // TODO: Implement start delivery API call
+      console.log("Starting delivery for cargo:", cargoId);
+      customToast.success(t("delivery.deliveryStarted"));
+    } catch (error) {
+      customToast.error(t("errors.serverError"));
+    }
+  };
+
+  const handleUploadPhoto = async (cargoId: string) => {
+    try {
+      // TODO: Implement upload photo API call
+      console.log("Uploading photo for cargo:", cargoId);
+      customToast.success(
+        t("common.upload") +
+          " " +
+          t("delivery.uploadProof") +
+          " " +
+          t("common.success")
+      );
+    } catch (error) {
+      customToast.error(t("errors.serverError"));
+    }
+  };
+
+  const handleReportIssue = async (cargoId: string) => {
+    try {
+      // TODO: Implement report issue API call
+      console.log("Reporting issue for cargo:", cargoId);
+      customToast.success(
+        t("common.report") + " " + t("common.issue") + " " + t("common.success")
+      );
+    } catch (error) {
+      customToast.error(t("errors.serverError"));
+    }
   };
 
   const handleCallClient = (phone: string) => {
@@ -237,77 +334,81 @@ export default function DriverDeliveries() {
       );
       // Refresh the data after completion
       refetchActive();
-      refetchCompleted();
     } catch (error) {
       console.error("Delivery completion failed:", error);
       customToast.error(t("errors.completionFailed"));
     }
   };
 
-  const handleReportIssue = (delivery: Delivery) => {
-    customToast.info(t("driver.issueReported", { deliveryId: delivery.id }));
-  };
-
   const handleRefresh = () => {
-    if (activeTab === "active") {
-      refetchActive();
-    } else {
-      refetchCompleted();
-    }
+    refetchActive();
   };
 
   const tabs = [
     {
       value: "active",
       label: t("navigation.activeDeliveries"),
-      count: activeDeliveries.length,
+      count: activeCargoDetails.length,
     },
     {
       value: "completed",
       label: t("status.completed"),
-      count: completedDeliveries.length,
+      count: completedCargoDetails.length,
     },
   ];
 
-  const currentDeliveries =
-    activeTab === "active" ? activeDeliveries : completedDeliveries;
-  const isLoading =
-    activeTab === "active" ? isLoadingActive : isLoadingCompleted;
-  const error = activeTab === "active" ? activeError : completedError;
+  const currentCargos =
+    activeTab === "active" ? activeCargoDetails : completedCargoDetails;
+  const isLoading = isLoadingActive;
+  const error = activeError;
 
   // Loading state
   if (isLoading) {
     return (
       <div className="space-y-6">
         {/* Header Skeleton */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-64" />
           </div>
-          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-10 w-32" />
         </div>
 
-        {/* Tabs Skeleton */}
-        <div className="flex space-x-1">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-32" />
-          ))}
-        </div>
-
-        {/* Content Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="p-6">
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-24" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-8 w-full" />
-              </div>
+            <Card
+              key={i}
+              className="bg-white shadow-lg rounded-xl sm:rounded-2xl overflow-hidden"
+            >
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-16" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Table Skeleton */}
+        <Card className="bg-white shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-4 w-8" />
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -316,33 +417,34 @@ export default function DriverDeliveries() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {t("navigation.myDeliveries")}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               {t("driver.manageDeliveries")}
             </p>
           </div>
         </div>
 
-        <Card className="bg-red-50 border-red-200">
-          <CardContent className="p-6">
+        <Card className="bg-red-50 border-red-200 shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              <div>
-                <h3 className="font-semibold text-red-800">
+              <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-red-800 text-sm sm:text-base">
                   {t("common.error")}
                 </h3>
-                <p className="text-red-600 text-sm mt-1">
+                <p className="text-red-600 text-xs sm:text-sm mt-1 break-words">
                   {error.message || t("dashboard.loadError")}
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleRefresh}
-                  className="mt-2"
+                  className="mt-3 border-red-300 text-red-600 hover:bg-red-50"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {t("common.retry")}
@@ -358,17 +460,22 @@ export default function DriverDeliveries() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             {t("navigation.myDeliveries")}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             {t("driver.manageDeliveries")}
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+          >
             <RefreshCw className="w-4 h-4 mr-2" />
             {t("common.refresh")}
           </Button>
@@ -381,63 +488,200 @@ export default function DriverDeliveries() {
         </div>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                  Total Deliveries
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  {activeCargoDetails.length + completedCargoDetails.length}
+                </p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  All deliveries
+                </p>
+              </div>
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
+                <Truck className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                  Active
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  {activeCargoDetails.length}
+                </p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  In progress
+                </p>
+              </div>
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
+                <Navigation className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                  Completed
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  {completedCargoDetails.length}
+                </p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  Successfully delivered
+                </p>
+              </div>
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                  GPS Status
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  {isGpsTracking ? "ON" : "OFF"}
+                </p>
+                <p className="text-xs text-gray-500 hidden sm:block">
+                  {isGpsTracking ? "Tracking active" : "Not tracking"}
+                </p>
+              </div>
+              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Custom Tabs */}
       <CustomTabs value={activeTab} onValueChange={setActiveTab} tabs={tabs} />
 
       {/* Delivery Table for Large Screens */}
       <div className="hidden lg:block">
-        <DeliveryTable
-          deliveries={currentDeliveries}
-          title={
-            activeTab === "active"
-              ? t("navigation.activeDeliveries")
-              : t("status.completed") + " " + t("navigation.deliveries")
-          }
-          showStats={false}
-          showSearch={true}
-          showFilters={true}
-          showPagination={true}
-          itemsPerPage={5}
-          onViewDetails={handleViewDetails}
-          onNavigate={handleNavigate}
-          onCallClient={handleCallClient}
-          onUploadLoadingPhotos={(delivery) => handlePhotoUpload("loading")}
-          onUploadDeliveryPhotos={(delivery) => handlePhotoUpload("delivery")}
-          onUploadReceiptPhotos={(delivery) => handlePhotoUpload("receipt")}
-          onCaptureSignature={handleSignatureCapture}
-          onReportIssue={handleReportIssue}
-          onMarkDelivered={handleMarkDelivered}
-        />
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-gray-900">
+              {activeTab === "active"
+                ? t("navigation.activeDeliveries")
+                : t("status.completed") + " " + t("navigation.deliveries")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <CargoTable
+              cargos={currentCargos}
+              title=""
+              showStats={false}
+              showSearch={true}
+              showFilters={true}
+              showPagination={true}
+              itemsPerPage={5}
+              onViewDetails={(cargo) => handleOpenCargoModal(cargo.id)}
+              onStartDelivery={handleStartDelivery}
+              onCallClient={handleCallClient}
+              onUploadPhoto={handleUploadPhoto}
+              onReportIssue={handleReportIssue}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Mobile Cards View */}
       <div className="lg:hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {currentDeliveries.map((delivery) => (
-            <DeliveryCard
-              key={delivery.id}
-              delivery={delivery}
-              onViewDetails={handleViewDetails}
-              onNavigate={() => handleNavigate(delivery)}
-              onCallClient={() => handleCallClient(delivery.phone)}
-              onMarkDelivered={() => handleMarkDelivered(delivery)}
-              onUploadLoadingPhotos={() => handlePhotoUpload("loading")}
-              onUploadDeliveryPhotos={() => handlePhotoUpload("delivery")}
-              onUploadReceiptPhotos={() => handlePhotoUpload("receipt")}
-              onCaptureSignature={handleSignatureCapture}
-              onReportIssue={() => handleReportIssue(delivery)}
-              showActions={activeTab === "active"}
-            />
-          ))}
-        </div>
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-gray-900">
+              {activeTab === "active"
+                ? t("navigation.activeDeliveries")
+                : t("status.completed") + " " + t("navigation.deliveries")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              {currentCargos.map((cargo) => (
+                <div
+                  key={cargo.id}
+                  className="p-4 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">
+                        {cargo.cargo_number || cargo.id}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {typeof cargo.client === "string"
+                          ? cargo.client
+                          : (cargo.client as any)?.user?.full_name ||
+                            (cargo.client as any)?.company_name ||
+                            "Unknown Client"}
+                      </p>
+                      <div className="text-sm text-gray-700">
+                        <p className="font-medium">{cargo.from}</p>
+                        <p className="text-gray-500">→</p>
+                        <p className="font-medium">{cargo.to}</p>
+                      </div>
+                    </div>
+                    <Badge
+                      className={`ml-2 ${
+                        cargo.status === "delivered"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {cargo.status}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleOpenCargoModal(cargo.id)}
+                    >
+                      View Details
+                    </Button>
+                    {activeTab === "active" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStartDelivery(cargo.id)}
+                      >
+                        Start Delivery
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Empty State */}
-      {currentDeliveries.length === 0 && (
-        <Card className="text-center py-12">
-          <CardContent>
-            <Truck className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      {currentCargos.length === 0 && (
+        <Card className="bg-blue-50 border-blue-200 shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="p-6 sm:p-8 text-center">
+            <Truck className="h-12 w-12 sm:h-16 sm:w-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-blue-800 mb-2">
               {t("driver.noDeliveries", {
                 type:
                   activeTab === "active"
@@ -445,31 +689,37 @@ export default function DriverDeliveries() {
                     : t("status.completed"),
               })}
             </h3>
-            <p className="text-gray-600">
+            <p className="text-blue-600 text-sm sm:text-base mb-4">
               {activeTab === "active"
                 ? t("driver.noActiveDeliveries")
                 : t("driver.noCompletedDeliveries")}
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              {t("common.refresh")}
+            </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Delivery Detail Modal */}
-      <DeliveryDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => {
-          setIsDetailModalOpen(false);
-          setSelectedDelivery(null);
-        }}
-        delivery={selectedDelivery}
-        onCallClient={() =>
-          selectedDelivery && handleCallClient(selectedDelivery.phone)
+      {/* Cargo Detail Modal */}
+      <CargoDetailModal
+        isOpen={isCargoModalOpen}
+        onClose={handleCloseCargoModal}
+        cargo={selectedCargo ? mapCargoToCargoDetail(selectedCargo) : null}
+        userRole={
+          (user?.role as "admin" | "superadmin" | "driver" | "client") ||
+          "driver"
         }
-        onNavigate={() => selectedDelivery && handleNavigate(selectedDelivery)}
-        onUploadPhoto={() => handlePhotoUpload("delivery")}
-        onReportIssue={() =>
-          selectedDelivery && handleReportIssue(selectedDelivery)
-        }
+        onStartDelivery={handleStartDelivery}
+        onCallClient={handleCallClient}
+        onUploadPhoto={handleUploadPhoto}
+        onReportIssue={handleReportIssue}
       />
 
       {/* Photo Upload Modal */}
