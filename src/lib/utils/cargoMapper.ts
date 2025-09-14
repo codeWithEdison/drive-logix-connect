@@ -126,12 +126,19 @@ export const mapCargoToCargoDetail = (cargo: any): CargoDetail => {
     cargo.client?.user?.full_name
   );
 
-  // Extract client name with proper fallback
+  // Extract client name with proper fallback - prioritize user full name
   const clientName =
-    cargo.client?.company_name ||
     cargo.client?.user?.full_name ||
+    cargo.client?.company_name ||
     cargo.client?.contact_person ||
     "N/A";
+
+  console.log("🔍 Client name resolution:", {
+    userFullName: cargo.client?.user?.full_name,
+    companyName: cargo.client?.company_name,
+    contactPerson: cargo.client?.contact_person,
+    finalName: clientName,
+  });
 
   // Extract phone number with proper fallback
   const clientPhone =
@@ -142,6 +149,7 @@ export const mapCargoToCargoDetail = (cargo: any): CargoDetail => {
 
   return {
     id: cargo.id,
+    cargo_number: cargo.cargo_number, // Add cargo number to the mapped data
     status: cargo.status as any,
     from: cargo.pickup_address || "",
     to: cargo.destination_address || "",
@@ -153,6 +161,15 @@ export const mapCargoToCargoDetail = (cargo: any): CargoDetail => {
     estimatedDelivery: cargo.delivery_date || "TBD",
     priority: cargo.priority as any,
     assignedDate: new Date(cargo.created_at || new Date()).toLocaleDateString(),
+    createdDate: cargo.created_at
+      ? new Date(cargo.created_at).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A",
     distance: `${cargo.distance_km || 0} km`,
     cost: cargo.estimated_cost ? parseFloat(cargo.estimated_cost) : undefined,
     earnings: cargo.final_cost

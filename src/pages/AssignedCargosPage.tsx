@@ -1,5 +1,9 @@
+import { useState } from "react";
 import { CargoTable } from "@/components/ui/CargoTable";
-import { CargoDetail } from "@/components/ui/CargoDetailModal";
+import {
+  CargoDetail,
+  CargoDetailModal,
+} from "@/components/ui/CargoDetailModal";
 import {
   useMyAssignments,
   useAcceptAssignment,
@@ -8,11 +12,15 @@ import {
   useUpdateDeliveryAssignment,
   useCreateAssignment,
 } from "@/lib/api/hooks/assignmentHooks";
+import { useCargoById } from "@/lib/api/hooks/cargoHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
-import { mapDeliveryAssignmentsToCargoDetails } from "@/lib/utils/cargoMapper";
+import {
+  mapDeliveryAssignmentsToCargoDetails,
+  mapCargoToCargoDetail,
+} from "@/lib/utils/cargoMapper";
 import {
   RefreshCw,
   AlertCircle,
@@ -29,6 +37,17 @@ import { Badge } from "@/components/ui/badge";
 export function AssignedCargosPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
+
+  // Modal state management
+  const [selectedCargoId, setSelectedCargoId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Fetch full cargo details when a cargo is selected
+  const {
+    data: selectedCargo,
+    isLoading: isLoadingCargo,
+    error: cargoError,
+  } = useCargoById(selectedCargoId || "");
 
   // API hooks - Using new assignment service for driver assignments
   const {
@@ -149,6 +168,11 @@ export function AssignedCargosPage() {
     window.open(`tel:${phone}`, "_self");
   };
 
+  const handleCallDriver = (phone: string) => {
+    console.log("Calling driver:", phone);
+    window.open(`tel:${phone}`, "_self");
+  };
+
   const handleUploadPhoto = async (cargoId: string) => {
     try {
       // TODO: Implement upload photo API call
@@ -179,6 +203,24 @@ export function AssignedCargosPage() {
 
   const handleRefresh = () => {
     refetch();
+  };
+
+  // Handle opening cargo detail modal
+  const handleOpenCargoModal = (cargoId: string) => {
+    setSelectedCargoId(cargoId);
+    setIsModalOpen(true);
+  };
+
+  // Handle closing cargo detail modal
+  const handleCloseCargoModal = () => {
+    setIsModalOpen(false);
+    setSelectedCargoId(null);
+  };
+
+  // Handle calling contacts
+  const handleCallContact = (phone: string, name?: string) => {
+    console.log(`Calling ${name || "contact"} at ${phone}`);
+    window.open(`tel:${phone}`, "_self");
   };
 
   // Transform API data to CargoDetail format
@@ -469,6 +511,30 @@ export function AssignedCargosPage() {
         onChangeVehicle={handleChangeVehicle}
         onChangeDriver={handleChangeDriver}
         onCreateAssignment={handleCreateAssignment}
+        onViewDetails={(cargo) => handleOpenCargoModal(cargo.id)}
+      />
+
+      {/* Cargo Detail Modal */}
+      <CargoDetailModal
+        isOpen={isModalOpen}
+        onClose={handleCloseCargoModal}
+        cargo={selectedCargo ? mapCargoToCargoDetail(selectedCargo) : null}
+        userRole={
+          (user?.role as "admin" | "superadmin" | "driver" | "client") ||
+          "driver"
+        }
+        onAcceptAssignment={handleAcceptAssignment}
+        onRejectAssignment={handleRejectAssignment}
+        onCancelAssignment={handleCancelAssignment}
+        onChangeVehicle={handleChangeVehicle}
+        onChangeDriver={handleChangeDriver}
+        onCreateAssignment={handleCreateAssignment}
+        onStartDelivery={handleStartDelivery}
+        onCallClient={handleCallClient}
+        onCallDriver={handleCallDriver}
+        onUploadPhoto={handleUploadPhoto}
+        onReportIssue={handleReportIssue}
+        onCallContact={handleCallContact}
       />
     </div>
   );
