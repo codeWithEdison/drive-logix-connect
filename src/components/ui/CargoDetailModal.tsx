@@ -70,6 +70,28 @@ export interface CargoDetail {
   vehiclePlate?: string;
   vehicleMake?: string;
   vehicleModel?: string;
+  // New fields for enhanced table display
+  pickupLocation?: any;
+  destinationLocation?: any;
+  vehicleInfo?: {
+    plate_number: string;
+    make: string;
+    model: string;
+  };
+  // Assignment system fields
+  assignmentStatus?: "pending" | "accepted" | "rejected" | "cancelled";
+  driverRespondedAt?: string;
+  rejectionReason?: string;
+  assignmentExpiresAt?: string;
+  assignmentCreatedBy?: string;
+  assignmentNotes?: string;
+  assignmentId?: string;
+  driverStatus?:
+    | "available"
+    | "pending_assignment"
+    | "on_duty"
+    | "unavailable"
+    | "suspended";
 }
 
 interface CargoDetailModalProps {
@@ -84,6 +106,22 @@ interface CargoDetailModalProps {
   onReportIssue?: (cargoId: string) => void;
   onCancelCargo?: (cargoId: string) => void;
   onDownloadReceipt?: (cargoId: string) => void;
+  // Assignment system actions
+  onAcceptAssignment?: (assignmentId: string, notes?: string) => void;
+  onRejectAssignment?: (
+    assignmentId: string,
+    reason: string,
+    notes?: string
+  ) => void;
+  onCancelAssignment?: (assignmentId: string) => void;
+  onChangeVehicle?: (assignmentId: string, vehicleId: string) => void;
+  onChangeDriver?: (assignmentId: string, driverId: string) => void;
+  onCreateAssignment?: (
+    cargoId: string,
+    driverId: string,
+    vehicleId: string,
+    notes?: string
+  ) => void;
 }
 
 export function CargoDetailModal({
@@ -98,8 +136,42 @@ export function CargoDetailModal({
   onReportIssue,
   onCancelCargo,
   onDownloadReceipt,
+  onAcceptAssignment,
+  onRejectAssignment,
+  onCancelAssignment,
+  onChangeVehicle,
+  onChangeDriver,
+  onCreateAssignment,
 }: CargoDetailModalProps) {
   if (!cargo) return null;
+
+  // Helper functions for assignment system
+  const isAssignmentExpired = () => {
+    if (!cargo.assignmentExpiresAt) return false;
+    return new Date() > new Date(cargo.assignmentExpiresAt);
+  };
+
+  const getTimeUntilExpiry = () => {
+    if (!cargo.assignmentExpiresAt) return null;
+    const now = new Date();
+    const expiry = new Date(cargo.assignmentExpiresAt);
+    const diffMs = expiry.getTime() - now.getTime();
+
+    if (diffMs <= 0) return "Expired";
+
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+    return `${minutes}m ${seconds}s`;
+  };
+
+  const canDriverRespond = () => {
+    return cargo.assignmentStatus === "pending" && !isAssignmentExpired();
+  };
+
+  const canAdminManage = () => {
+    return ["pending", "accepted"].includes(cargo.assignmentStatus || "");
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -150,6 +222,35 @@ export function CargoDetailModal({
             {status}
           </Badge>
         );
+    }
+  };
+
+  const getAssignmentStatusBadge = (assignmentStatus: string) => {
+    switch (assignmentStatus) {
+      case "pending":
+        return (
+          <Badge className="bg-yellow-100 text-yellow-600">
+            Assignment Pending
+          </Badge>
+        );
+      case "accepted":
+        return (
+          <Badge className="bg-green-100 text-green-600">
+            Assignment Accepted
+          </Badge>
+        );
+      case "rejected":
+        return (
+          <Badge className="bg-red-100 text-red-600">Assignment Rejected</Badge>
+        );
+      case "cancelled":
+        return (
+          <Badge className="bg-gray-100 text-gray-600">
+            Assignment Cancelled
+          </Badge>
+        );
+      default:
+        return null;
     }
   };
 
@@ -235,12 +336,96 @@ export function CargoDetailModal({
                 ? `Assigned on ${cargo.assignedDate}`
                 : `Created on ${cargo.createdDate}`}
             </p>
+            {/* Assignment expiry timer */}
+            {cargo.assignmentStatus === "pending" &&
+              cargo.assignmentExpiresAt && (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500">
+                    Response required within:{" "}
+                    <span
+                      className={`font-semibold ${
+                        isAssignmentExpired()
+                          ? "text-red-600"
+                          : "text-orange-600"
+                      }`}
+                    >
+                      {getTimeUntilExpiry()}
+                    </span>
+                  </p>
+                </div>
+              )}
           </div>
           <div className="flex items-center gap-2">
             {getStatusBadge(cargo.status)}
+            {cargo.assignmentStatus &&
+              getAssignmentStatusBadge(cargo.assignmentStatus)}
             {cargo.priority && getPriorityBadge(cargo.priority)}
           </div>
         </div>
+
+        {/* Assignment Information */}
+        {cargo.assignmentStatus && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <Clock className="h-5 w-5 text-purple-600" />
+                <h4 className="font-semibold text-gray-900">
+                  Assignment Information
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Assignment Status
+                  </p>
+                  <div className="mt-1">
+                    {getAssignmentStatusBadge(cargo.assignmentStatus)}
+                  </div>
+                </div>
+                {cargo.assignmentExpiresAt && (
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Expires At
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {new Date(cargo.assignmentExpiresAt).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                {cargo.driverRespondedAt && (
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Driver Responded
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {new Date(cargo.driverRespondedAt).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                {cargo.rejectionReason && (
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Rejection Reason
+                    </p>
+                    <p className="text-sm text-red-600">
+                      {cargo.rejectionReason}
+                    </p>
+                  </div>
+                )}
+                {cargo.assignmentNotes && (
+                  <div className="md:col-span-2">
+                    <p className="text-xs text-gray-500 font-medium">
+                      Assignment Notes
+                    </p>
+                    <p className="text-sm text-gray-900">
+                      {cargo.assignmentNotes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Status and Priority Description */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -656,6 +841,101 @@ export function CargoDetailModal({
 
         {/* Action Buttons */}
         <div className="space-y-3">
+          {/* Assignment System Actions */}
+          {cargo.assignmentStatus === "pending" && canDriverRespond() && (
+            <div className="space-y-2">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm text-yellow-800 font-medium mb-2">
+                  Assignment Response Required
+                </p>
+                <p className="text-xs text-yellow-700">
+                  You have {getTimeUntilExpiry()} to respond to this assignment.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() =>
+                    onAcceptAssignment?.(cargo.assignmentId || cargo.id)
+                  }
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Accept Assignment
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
+                  onClick={() => {
+                    const reason = prompt(
+                      "Please provide a reason for rejection:"
+                    );
+                    if (reason) {
+                      onRejectAssignment?.(
+                        cargo.assignmentId || cargo.id,
+                        reason
+                      );
+                    }
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Reject Assignment
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Assignment Expired */}
+          {cargo.assignmentStatus === "pending" && isAssignmentExpired() && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-800 font-medium">
+                Assignment Expired
+              </p>
+              <p className="text-xs text-red-700">
+                This assignment has expired and will be automatically rejected.
+              </p>
+            </div>
+          )}
+
+          {/* Admin Assignment Management */}
+          {canAdminManage() && (
+            <div className="space-y-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800 font-medium mb-2">
+                  Assignment Management
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const vehicleId = prompt("Enter new vehicle ID:");
+                    if (vehicleId) {
+                      onChangeVehicle?.(
+                        cargo.assignmentId || cargo.id,
+                        vehicleId
+                      );
+                    }
+                  }}
+                >
+                  <Truck className="h-4 w-4 mr-2" />
+                  Change Vehicle
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
+                  onClick={() =>
+                    onCancelAssignment?.(cargo.assignmentId || cargo.id)
+                  }
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel Assignment
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Standard Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
@@ -682,18 +962,8 @@ export function CargoDetailModal({
           </div>
 
           {/* Driver Actions */}
-          {isDriverCargo && (
+          {isDriverCargo && cargo.assignmentStatus === "accepted" && (
             <>
-              {cargo.status === "pending" && (
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => onAccept?.(cargo.id)}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Accept Cargo
-                </Button>
-              )}
-
               {cargo.status === "assigned" && (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"

@@ -139,6 +139,22 @@ export interface CargoTableProps {
   onViewDetails?: (cargo: CargoDetail) => void;
   onStatusChange?: (cargoId: string, newStatus: string) => void;
   customActions?: React.ReactNode;
+  // Assignment system props
+  onAcceptAssignment?: (assignmentId: string, notes?: string) => void;
+  onRejectAssignment?: (
+    assignmentId: string,
+    reason: string,
+    notes?: string
+  ) => void;
+  onCancelAssignment?: (assignmentId: string) => void;
+  onChangeVehicle?: (assignmentId: string, vehicleId: string) => void;
+  onChangeDriver?: (assignmentId: string, driverId: string) => void;
+  onCreateAssignment?: (
+    cargoId: string,
+    driverId: string,
+    vehicleId: string,
+    notes?: string
+  ) => void;
 }
 
 export function CargoTable({
@@ -163,6 +179,12 @@ export function CargoTable({
   onViewDetails,
   onStatusChange,
   customActions,
+  onAcceptAssignment,
+  onRejectAssignment,
+  onCancelAssignment,
+  onChangeVehicle,
+  onChangeDriver,
+  onCreateAssignment,
 }: CargoTableProps) {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -561,60 +583,137 @@ export function CargoTable({
     return (
       <Card
         key={cargo.id}
-        className="mb-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+        className="mb-4 cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50/30 to-white"
         onClick={() => handleRowClick(cargo)}
       >
         <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-3">
+          {/* Header Section */}
+          <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  #{startIndex + index + 1}
-                </span>
-                <Package className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-semibold text-gray-900">
-                  {cargo.cargo_number || data.id || "General Cargo"}
-                </span>
-                {getStatusBadge(data.status)}
-              </div>
-              <div className="flex items-center gap-2 mb-2">
-                <User className="h-4 w-4 text-gray-500" />
-                <div className="min-w-0 flex-1">
-                  <span className="text-sm text-gray-700 font-medium">
-                    {user?.role === "driver" ? data.client : data.driver}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white bg-blue-600 px-2 py-1 rounded-full shadow-sm">
+                    #{startIndex + index + 1}
                   </span>
+                  <Package className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-900 truncate">
+                    {cargo.cargo_number || data.id || "General Cargo"}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 border-0"
+                    >
+                      {cargo.type || "General"}
+                    </Badge>
+                    {getStatusBadge(data.status)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Client Information */}
+              <div className="flex items-center gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
+                <User className="h-4 w-4 text-gray-600" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {data.client || "N/A"}
+                  </p>
                   {cargo.clientCompany && (
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-gray-600 truncate">
                       {cargo.clientCompany}
                     </p>
                   )}
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm font-bold text-gray-900">{data.weight}</p>
-              <p className="text-xs text-gray-500">{data.distance}</p>
-            </div>
-          </div>
 
-          <div className="space-y-2 mb-3">
-            <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-gray-900 truncate">
-                  {data.from}
-                </p>
-                <p className="text-gray-500 text-xs">to</p>
-                <p className="font-medium text-blue-600 truncate">{data.to}</p>
+            {/* Vehicle & Distance Info */}
+            <div className="flex flex-col items-end gap-2 ml-3">
+              <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 rounded-lg">
+                <Truck className="h-3 w-3 text-orange-600" />
+                <span className="text-xs font-medium text-orange-700">
+                  {cargo.vehicleInfo?.plate_number || "N/A"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-lg">
+                <Navigation className="h-3 w-3 text-green-600" />
+                <span className="text-xs font-medium text-green-700">
+                  {data.distance}
+                </span>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Navigation className="h-3 w-3" />
-              <span>{data.distance}</span>
+          </div>
+
+          {/* Route Information */}
+          <div className="space-y-3 mb-4">
+            {/* Pickup Location */}
+            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-start gap-2">
+                <div className="flex-shrink-0">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                    <MapPin className="h-3 w-3 text-white" />
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">
+                    Pickup Location
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 mb-1">
+                    {data.from}
+                  </p>
+                  {cargo.pickupLocation?.name && (
+                    <p className="text-xs text-gray-600">
+                      📍 {cargo.pickupLocation.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Destination Location */}
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start gap-2">
+                <div className="flex-shrink-0">
+                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                    <MapPin className="h-3 w-3 text-white" />
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                    Destination
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 mb-1">
+                    {data.to}
+                  </p>
+                  {cargo.destinationLocation?.name && (
+                    <p className="text-xs text-gray-600">
+                      📍 {cargo.destinationLocation.name}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          {/* Additional Info */}
+          {cargo.description && (
+            <div className="mb-4 p-2 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-600 mb-1">Description:</p>
+              <p className="text-sm text-gray-700">{cargo.description}</p>
+            </div>
+          )}
+
+          {/* Footer Actions */}
+          <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <span className="text-xs text-gray-500">
+                Assigned: {cargo.assignedDate || "N/A"}
+              </span>
+            </div>
+
             <div className="flex gap-2">
               <Button
                 size="sm"
@@ -623,10 +722,10 @@ export function CargoTable({
                   e.stopPropagation();
                   handleRowClick(cargo);
                 }}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 text-xs px-3 py-1.5"
               >
                 <Eye className="h-3 w-3" />
-                View Details
+                Details
               </Button>
 
               {/* Show call driver button prominently for clients when driver is assigned */}
@@ -643,41 +742,13 @@ export function CargoTable({
                       e.stopPropagation();
                       onCallDriver?.(cargo.driverPhone || cargo.phone);
                     }}
-                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
+                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-xs px-3 py-1.5"
                   >
                     <Phone className="h-3 w-3" />
-                    Call Driver
+                    Call
                   </Button>
                 )}
             </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {getRoleBasedActions(cargo).map((action) => (
-                  <DropdownMenuItem
-                    key={action.key}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      action.onClick();
-                    }}
-                    className={action.className}
-                  >
-                    {action.icon}
-                    {action.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </CardContent>
       </Card>
@@ -872,14 +943,23 @@ export function CargoTable({
                     <TableHead className="text-xs font-medium text-gray-600 w-16">
                       #
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-28">
-                      Cargo #
+                    <TableHead className="text-xs font-medium text-gray-600 w-32">
+                      Cargo Info
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 w-40">
                       Client
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 flex-1">
-                      Route
+                    <TableHead className="text-xs font-medium text-gray-600 w-48">
+                      Pickup Address
+                    </TableHead>
+                    <TableHead className="text-xs font-medium text-gray-600 w-48">
+                      Destination Address
+                    </TableHead>
+                    <TableHead className="text-xs font-medium text-gray-600 w-20">
+                      Distance
+                    </TableHead>
+                    <TableHead className="text-xs font-medium text-gray-600 w-32">
+                      Vehicle
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 w-24">
                       Status
@@ -901,10 +981,22 @@ export function CargoTable({
                         <TableCell className="text-sm text-gray-500 font-medium">
                           {startIndex + index + 1}
                         </TableCell>
-                        <TableCell className="text-sm text-gray-900 font-semibold">
-                          {cargo.cargo_number ||
-                            data.id ||
-                            `#${startIndex + index + 1}`}
+                        <TableCell>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {cargo.cargo_number ||
+                                data.id ||
+                                `#${startIndex + index + 1}`}
+                            </p>
+                            <p className="text-xs text-blue-600 font-medium">
+                              {cargo.type || "General"}
+                            </p>
+                            {cargo.description && (
+                              <p className="text-xs text-gray-500 truncate max-w-32">
+                                {cargo.description}
+                              </p>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div>
@@ -926,15 +1018,44 @@ export function CargoTable({
                         <TableCell>
                           <div className="max-w-xs">
                             <div className="flex items-start gap-2">
-                              <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />{" "}
+                              <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
                               <span className="text-sm">{data.from}</span>
                             </div>
-                            <div className="flex items-start gap-2 mt-1">
-                              <MapPin className="h-3 w-3 text-blue-500 mt-0.5 flex-shrink-0" />{" "}
+                            {cargo.pickupLocation?.name && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {cargo.pickupLocation.name}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-xs">
+                            <div className="flex items-start gap-2">
+                              <MapPin className="h-3 w-3 text-blue-500 mt-0.5 flex-shrink-0" />
                               <span className="text-sm">{data.to}</span>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">
+                            {cargo.destinationLocation?.name && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {cargo.destinationLocation.name}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-center">
+                            <p className="text-sm font-medium text-gray-900">
                               {data.distance}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {cargo.vehicleInfo?.plate_number || "N/A"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {cargo.vehicleInfo?.make}{" "}
+                              {cargo.vehicleInfo?.model}
                             </p>
                           </div>
                         </TableCell>

@@ -46,20 +46,10 @@ export const mapDashboardCargosToCargoDetails = (
 export const mapDeliveryAssignmentToCargoDetail = (
   assignment: any // Use 'any' to handle the actual API response structure
 ): CargoDetail => {
-  console.log(
-    "🔍 mapDeliveryAssignmentToCargoDetail - assignment:",
-    assignment
-  );
-
   const cargo = assignment.cargo || {};
   const client = cargo.client || {};
   const user = client.user || {};
-
-  console.log("🔍 mapDeliveryAssignmentToCargoDetail - extracted data:", {
-    cargo,
-    client,
-    user,
-  });
+  const vehicle = assignment.vehicle || {};
 
   return {
     id: cargo.id || assignment.cargo_id || assignment.id,
@@ -70,7 +60,7 @@ export const mapDeliveryAssignmentToCargoDetail = (
     client: user.full_name || "Client Name",
     clientCompany: client.company_name || "",
     phone: client.phone || "",
-    weight: `${cargo.weight || 0} kg`,
+    weight: `${cargo.weight_kg || 0} kg`, // Updated to use weight_kg
     type: cargo.type || "General",
     pickupTime: cargo.pickup_time || "TBD",
     estimatedDelivery: cargo.estimated_delivery_time || "TBD",
@@ -90,6 +80,23 @@ export const mapDeliveryAssignmentToCargoDetail = (
     driverPhone: assignment.driver_phone,
     cost: cargo.cost,
     estimatedTime: cargo.estimated_time,
+    // Add new fields for enhanced display
+    pickupLocation: cargo.pickup_location || {},
+    destinationLocation: cargo.destination_location || {},
+    vehicleInfo: {
+      plate_number: vehicle.plate_number || "",
+      make: vehicle.make || "",
+      model: vehicle.model || "",
+    },
+    // Assignment system fields
+    assignmentStatus: "assigned" as any, // Default to assigned since these are assignments
+    assignmentId: assignment.id,
+    assignmentExpiresAt: assignment.expires_at,
+    driverRespondedAt: assignment.driver_responded_at,
+    rejectionReason: assignment.rejection_reason,
+    assignmentCreatedBy: assignment.created_by,
+    assignmentNotes: assignment.notes,
+    driverStatus: "on_duty" as any, // Default to on_duty for assigned cargos
   };
 };
 

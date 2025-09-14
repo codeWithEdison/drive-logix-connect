@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { StatsCard } from "@/components/ui/StatsCard";
 import { DeliveryDetailModal } from "@/components/ui/DeliveryDetailModal";
-import { useDriverAssignments } from "@/lib/api/hooks";
+import { useDriverDeliveryAssignments } from "@/lib/api/hooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,7 +57,10 @@ const DriverHistory = () => {
     isLoading,
     error,
     refetch,
-  } = useDriverAssignments({ status: "delivered", limit: 100 });
+  } = useDriverDeliveryAssignments(user?.id || "", {
+    status: "accepted",
+    limit: 100,
+  });
 
   // Transform API data to match the expected format
   const driverHistory = mapDeliveryAssignmentsToCargoDetails(

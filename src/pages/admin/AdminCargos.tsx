@@ -27,6 +27,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  useDeliveryAssignments,
+  useCreateAssignment,
+  useUpdateDeliveryAssignment,
+  useCancelAssignment,
+  useAcceptAssignment,
+  useRejectAssignment,
+} from "@/lib/api/hooks/assignmentHooks";
+import {
   useAllCargos,
   useUpdateCargoStatus,
   useCancelCargo,
@@ -194,27 +202,98 @@ export default function AdminCargos() {
     customToast.success(t("common.refreshed"));
   };
 
+  // Assignment mutation hooks
+  const createAssignmentMutation = useCreateAssignment();
+  const updateAssignmentMutation = useUpdateDeliveryAssignment();
+  const cancelAssignmentMutation = useCancelAssignment();
+  const acceptAssignmentMutation = useAcceptAssignment();
+  const rejectAssignmentMutation = useRejectAssignment();
+
   const handleTruckAssignment = async (
     cargoId: string,
     truckId: string,
-    driverId: string
+    driverId: string,
+    notes?: string
   ) => {
     try {
-      // TODO: Implement truck assignment API call
-      console.log(
-        "Assigning truck:",
-        truckId,
-        "and driver:",
-        driverId,
-        "to cargo:",
-        cargoId
-      );
-      customToast.success(t("adminCargos.truckAssigned"));
+      await createAssignmentMutation.mutateAsync({
+        cargo_id: cargoId,
+        driver_id: driverId,
+        vehicle_id: truckId,
+        notes,
+      });
+      customToast.success("Assignment created successfully");
       setIsTruckAssignmentModalOpen(false);
       setCargoForAssignment(null);
-      refetch();
-    } catch (error) {
-      customToast.error(t("errors.assignmentFailed"));
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to create assignment");
+    }
+  };
+
+  const handleAcceptAssignment = async (
+    assignmentId: string,
+    notes?: string
+  ) => {
+    try {
+      await acceptAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { notes },
+      });
+      customToast.success("Assignment accepted");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to accept assignment");
+    }
+  };
+
+  const handleRejectAssignment = async (
+    assignmentId: string,
+    reason: string,
+    notes?: string
+  ) => {
+    try {
+      await rejectAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { reason, notes },
+      });
+      customToast.success("Assignment rejected");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to reject assignment");
+    }
+  };
+
+  const handleCancelAssignment = async (assignmentId: string) => {
+    try {
+      await cancelAssignmentMutation.mutateAsync(assignmentId);
+      customToast.success("Assignment cancelled");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to cancel assignment");
+    }
+  };
+
+  const handleChangeVehicle = async (
+    assignmentId: string,
+    vehicleId: string
+  ) => {
+    try {
+      await updateAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { vehicle_id: vehicleId },
+      });
+      customToast.success("Vehicle changed successfully");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to change vehicle");
+    }
+  };
+
+  const handleChangeDriver = async (assignmentId: string, driverId: string) => {
+    try {
+      await updateAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { driver_id: driverId },
+      });
+      customToast.success("Driver changed successfully");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to change driver");
     }
   };
 
@@ -640,6 +719,12 @@ export default function AdminCargos() {
         onCallDriver={handleCallDriver}
         onUploadPhoto={handleUploadPhoto}
         onReportIssue={handleReportIssue}
+        onAcceptAssignment={handleAcceptAssignment}
+        onRejectAssignment={handleRejectAssignment}
+        onCancelAssignment={handleCancelAssignment}
+        onChangeVehicle={handleChangeVehicle}
+        onChangeDriver={handleChangeDriver}
+        onCreateAssignment={handleTruckAssignment}
       />
 
       {/* Truck Assignment Modal using ModernModel */}
@@ -766,6 +851,17 @@ export default function AdminCargos() {
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Assignment Notes (Optional)
+                    </label>
+                    <textarea
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={3}
+                      placeholder="Add any special instructions or notes for the driver..."
+                    />
                   </div>
                 </div>
               </CardContent>

@@ -17,3 +17,4 @@ export * from "./systemHooks";
 export * from "./utilityHooks";
 export * from "./dashboardHooks";
 export * from "./locationHooks";
+export * from "./assignmentHooks";

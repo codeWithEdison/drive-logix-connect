@@ -1,6 +1,13 @@
 import { CargoTable } from "@/components/ui/CargoTable";
 import { CargoDetail } from "@/components/ui/CargoDetailModal";
-import { useDriverAssignments } from "@/lib/api/hooks";
+import {
+  useMyAssignments,
+  useAcceptAssignment,
+  useRejectAssignment,
+  useCancelAssignment,
+  useUpdateDeliveryAssignment,
+  useCreateAssignment,
+} from "@/lib/api/hooks/assignmentHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,27 +30,107 @@ export function AssignedCargosPage() {
   const { t } = useLanguage();
   const { user } = useAuth();
 
-  // API hooks - Using DriverService.getAssignments for driver assignments
+  // API hooks - Using new assignment service for driver assignments
   const {
-    data: assignmentsData,
+    data: assignmentsResponse,
     isLoading,
     error,
     refetch,
-  } = useDriverAssignments({ limit: 50 });
+  } = useMyAssignments({ limit: 50 });
 
-  const handleAcceptCargo = async (cargoId: string) => {
+  // Extract assignments data from response
+  const assignmentsData = assignmentsResponse || [];
+
+  // Assignment mutation hooks
+  const acceptAssignmentMutation = useAcceptAssignment();
+  const rejectAssignmentMutation = useRejectAssignment();
+  const cancelAssignmentMutation = useCancelAssignment();
+  const updateAssignmentMutation = useUpdateDeliveryAssignment();
+  const createAssignmentMutation = useCreateAssignment();
+
+  const handleAcceptAssignment = async (
+    assignmentId: string,
+    notes?: string
+  ) => {
     try {
-      // TODO: Implement accept cargo API call
-      console.log("Accepting cargo:", cargoId);
-      customToast.success(
-        t("common.accept") +
-          " " +
-          t("cargo.cargoDetails") +
-          " " +
-          t("common.success")
-      );
-    } catch (error) {
-      customToast.error(t("errors.serverError"));
+      await acceptAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { notes },
+      });
+      customToast.success("Assignment accepted successfully");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to accept assignment");
+    }
+  };
+
+  const handleRejectAssignment = async (
+    assignmentId: string,
+    reason: string,
+    notes?: string
+  ) => {
+    try {
+      await rejectAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { reason, notes },
+      });
+      customToast.success("Assignment rejected");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to reject assignment");
+    }
+  };
+
+  const handleCancelAssignment = async (assignmentId: string) => {
+    try {
+      await cancelAssignmentMutation.mutateAsync(assignmentId);
+      customToast.success("Assignment cancelled");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to cancel assignment");
+    }
+  };
+
+  const handleChangeVehicle = async (
+    assignmentId: string,
+    vehicleId: string
+  ) => {
+    try {
+      await updateAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { vehicle_id: vehicleId },
+      });
+      customToast.success("Vehicle changed successfully");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to change vehicle");
+    }
+  };
+
+  const handleChangeDriver = async (assignmentId: string, driverId: string) => {
+    try {
+      await updateAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { driver_id: driverId },
+      });
+      customToast.success("Driver changed successfully");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to change driver");
+    }
+  };
+
+  const handleCreateAssignment = async (
+    cargoId: string,
+    driverId: string,
+    vehicleId: string,
+    notes?: string
+  ) => {
+    try {
+      await createAssignmentMutation.mutateAsync({
+        cargo_id: cargoId,
+        driver_id: driverId,
+        vehicle_id: vehicleId,
+        notes,
+      });
+      customToast.success("Assignment created successfully");
+    } catch (error: any) {
+      customToast.error(error.message || "Failed to create assignment");
     }
   };
 
@@ -98,15 +185,6 @@ export function AssignedCargosPage() {
   const assignments = assignmentsData || [];
   const transformedCargos: CargoDetail[] =
     mapDeliveryAssignmentsToCargoDetails(assignments);
-
-  // Debug logging
-  console.log("🔍 AssignedCargosPage Debug:", {
-    assignmentsData,
-    assignments,
-    assignmentsLength: assignments.length,
-    transformedCargos,
-    transformedCargosLength: transformedCargos.length,
-  });
 
   // Calculate stats
   const stats = {
@@ -380,11 +458,17 @@ export function AssignedCargosPage() {
         showFilters={true}
         showPagination={true}
         itemsPerPage={10}
-        onAcceptCargo={handleAcceptCargo}
+        onAcceptCargo={handleAcceptAssignment}
         onStartDelivery={handleStartDelivery}
         onCallClient={handleCallClient}
         onUploadPhoto={handleUploadPhoto}
         onReportIssue={handleReportIssue}
+        onAcceptAssignment={handleAcceptAssignment}
+        onRejectAssignment={handleRejectAssignment}
+        onCancelAssignment={handleCancelAssignment}
+        onChangeVehicle={handleChangeVehicle}
+        onChangeDriver={handleChangeDriver}
+        onCreateAssignment={handleCreateAssignment}
       />
     </div>
   );

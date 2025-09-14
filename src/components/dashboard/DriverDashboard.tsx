@@ -18,6 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useNavigate } from "react-router-dom";
 import {
   Package,
@@ -48,6 +59,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
 import { DriverStatus } from "@/types/shared";
 import { mapDashboardCargosToCargoDetails } from "@/lib/utils/cargoMapper";
+import {
+  useAcceptAssignment,
+  useRejectAssignment,
+  useMyAssignments,
+} from "@/lib/api/hooks/assignmentHooks";
+import {
+  DriverDashboardData,
+  PendingAssignment,
+  AcceptedAssignment,
+  RejectedAssignment,
+  AssignmentNotifications,
+  AssignedCargo,
+  RecentDelivery,
+  ActiveDelivery,
+  DriverProfile,
+  DriverStats,
+  VehicleInfo,
+} from "@/types/dashboard";
 
 export function DriverDashboard() {
   const { t } = useLanguage();
@@ -60,6 +89,12 @@ export function DriverDashboard() {
   const [selectedDelivery, setSelectedDelivery] = useState<any>(null);
   const [showLiveTracking, setShowLiveTracking] = useState(false);
 
+  // Rejection modal state
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>("");
+  const [rejectionReason, setRejectionReason] = useState<string>("");
+  const [rejectionNotes, setRejectionNotes] = useState<string>("");
+
   // API hooks - Using only DashboardService.getDriverDashboard() for all data
   const {
     data: dashboardData,
@@ -68,7 +103,14 @@ export function DriverDashboard() {
     refetch: refetchDashboard,
   } = useDriverDashboard();
 
+  // Type the dashboard data properly - handle both old and new structure
+  const dashboard = dashboardData?.data as any;
+
   const updateStatusMutation = useUpdateDriverStatus();
+
+  // Assignment system hooks
+  const acceptAssignmentMutation = useAcceptAssignment();
+  const rejectAssignmentMutation = useRejectAssignment();
 
   const statusConfig = {
     available: {
@@ -83,37 +125,40 @@ export function DriverDashboard() {
   };
 
   // Get data from dashboard service - all data comes from single API call
-  const activeDelivery = dashboardData?.data?.active_delivery;
-  const assignedCargos = mapDashboardCargosToCargoDetails(
-    dashboardData?.data?.assigned_cargos || []
-  );
-  const recentDeliveries = dashboardData?.data?.recent_deliveries || [];
+  const activeDelivery = dashboard?.active_delivery;
+  const assignedCargos = dashboard?.assigned_cargos || [];
+  const recentDeliveries = dashboard?.recent_deliveries || [];
 
-  // Stats data for driver dashboard
+  // New assignment system data (may not exist in current API)
+  const pendingAssignments = (dashboard as any)?.pending_assignments || [];
+  const acceptedAssignments = (dashboard as any)?.accepted_assignments || [];
+  const recentRejections = (dashboard as any)?.recent_rejections || [];
+  const notifications = (dashboard as any)?.notifications;
+
+  // Stats data for driver dashboard - Updated for new assignment system
   const driverStatsData = [
     {
-      title: t("navigation.assignedCargos"),
-      value: dashboardData?.data?.stats?.assigned_cargos?.toString() || "0",
-      description: "Ready to deliver",
+      title: t("dashboard.pendingAssignments"),
+      value: (dashboard?.stats as any)?.pending_assignments?.toString() || "0",
+      description: t("dashboard.awaitingResponse"),
+      icon: Clock,
+      iconColor: "text-yellow-600",
+      bgColor: "bg-gradient-to-br from-yellow-50 to-yellow-100",
+      borderColor: "border-yellow-200",
+    },
+    {
+      title: t("dashboard.acceptedAssignments"),
+      value: (dashboard?.stats as any)?.accepted_assignments?.toString() || "0",
+      description: t("dashboard.readyToDeliver"),
       icon: Package,
       iconColor: "text-orange-600",
       bgColor: "bg-gradient-to-br from-orange-50 to-orange-100",
       borderColor: "border-orange-200",
     },
     {
-      title: t("navigation.activeDeliveries"),
-      value: dashboardData?.data?.stats?.active_deliveries?.toString() || "0",
-      description: "In progress",
-      icon: Clock,
-      iconColor: "text-green-600",
-      bgColor: "bg-gradient-to-br from-green-50 to-green-100",
-      borderColor: "border-green-200",
-    },
-    {
       title: t("status.completed"),
-      value:
-        dashboardData?.data?.stats?.completed_deliveries?.toString() || "0",
-      description: "All time",
+      value: dashboard?.stats?.completed_deliveries?.toString() || "0",
+      description: t("dashboard.allTime"),
       icon: CheckCircle,
       iconColor: "text-blue-600",
       bgColor: "bg-gradient-to-br from-blue-50 to-blue-100",
@@ -121,7 +166,7 @@ export function DriverDashboard() {
     },
     {
       title: t("common.rating"),
-      value: dashboardData?.data?.stats?.rating?.toFixed(1) || "0.0",
+      value: dashboard?.stats?.rating?.toFixed(1) || "0.0",
       description: "★★★★☆",
       icon: Star,
       iconColor: "text-pink-600",
@@ -165,6 +210,75 @@ export function DriverDashboard() {
 
   const handleRefresh = () => {
     refetchDashboard();
+  };
+
+  // Assignment handling functions
+  const handleAcceptAssignment = async (assignmentId: string) => {
+    try {
+      await acceptAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { notes: "Accepted from dashboard" },
+      });
+      customToast.success(t("assignment.acceptedSuccessfully"));
+      refetchDashboard();
+    } catch (error: any) {
+      customToast.error(error.message || t("assignment.failedToAccept"));
+    }
+  };
+
+  const handleRejectAssignment = async (
+    assignmentId: string,
+    reason: string
+  ) => {
+    try {
+      await rejectAssignmentMutation.mutateAsync({
+        assignmentId,
+        data: { reason, notes: t("assignment.rejectedFromDashboard") },
+      });
+      customToast.success(t("assignment.rejectedSuccessfully"));
+      refetchDashboard();
+    } catch (error: any) {
+      customToast.error(error.message || t("assignment.failedToReject"));
+    }
+  };
+
+  // Open rejection modal
+  const handleOpenRejectModal = (assignmentId: string) => {
+    setSelectedAssignmentId(assignmentId);
+    setRejectionReason("");
+    setRejectionNotes("");
+    setShowRejectModal(true);
+  };
+
+  // Handle rejection from modal
+  const handleRejectFromModal = async () => {
+    if (!rejectionReason.trim()) {
+      customToast.error(t("assignment.provideRejectionReason"));
+      return;
+    }
+
+    try {
+      await rejectAssignmentMutation.mutateAsync({
+        assignmentId: selectedAssignmentId,
+        data: {
+          reason: rejectionReason,
+          notes: rejectionNotes || "Rejected from dashboard",
+        },
+      });
+      customToast.success("Assignment rejected");
+      setShowRejectModal(false);
+      refetchDashboard();
+    } catch (error: any) {
+      customToast.error(error.message || t("assignment.failedToReject"));
+    }
+  };
+
+  // Close rejection modal
+  const handleCloseRejectModal = () => {
+    setShowRejectModal(false);
+    setSelectedAssignmentId("");
+    setRejectionReason("");
+    setRejectionNotes("");
   };
 
   // Loading state
@@ -278,10 +392,10 @@ export function DriverDashboard() {
               {/* Driver Avatar */}
               <div className="relative flex-shrink-0">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
-                  {dashboardData?.data?.driver_info?.avatar_url ? (
+                  {dashboard?.driver_info?.avatar_url ? (
                     <img
-                      src={dashboardData.data.driver_info.avatar_url}
-                      alt={dashboardData.data.driver_info.name}
+                      src={dashboard.driver_info.avatar_url}
+                      alt={dashboard.driver_info.name}
                       className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover"
                     />
                   ) : (
@@ -298,34 +412,35 @@ export function DriverDashboard() {
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 leading-tight">
                   Welcome back,{" "}
                   <span className="break-words">
-                    {dashboardData?.data?.driver_info?.name ||
+                    {dashboard?.driver_info?.name ||
                       user?.full_name ||
                       t("common.driver")}
                   </span>
                   !
                 </h1>
                 <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-2 sm:mb-3">
-                  Ready to make deliveries today?
+                  {t("dashboard.readyToMakeDeliveries")}
                 </p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
                     <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
                     <span className="font-semibold">
-                      {dashboardData?.data?.driver_info?.rating?.toFixed(1) ||
-                        "0.0"}
+                      {dashboard?.driver_info?.rating?.toFixed(1) || "0.0"}
                     </span>
-                    <span className="text-blue-200">rating</span>
+                    <span className="text-blue-200">{t("common.rating")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Truck className="w-3 h-3 sm:w-4 sm:h-4 text-blue-200" />
                     <span className="font-semibold">
-                      {dashboardData?.data?.driver_info?.total_deliveries || 0}
+                      {dashboard?.driver_info?.total_deliveries || 0}
                     </span>
-                    <span className="text-blue-200">deliveries</span>
+                    <span className="text-blue-200">
+                      {t("dashboard.deliveries")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-green-500/20 text-green-200 border-green-400/30 text-xs">
-                      {dashboardData?.data?.driver_info?.status || driverStatus}
+                      {dashboard?.driver_info?.status || driverStatus}
                     </Badge>
                   </div>
                 </div>
@@ -430,7 +545,7 @@ export function DriverDashboard() {
                       {t("navigation.activeDeliveries")}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-600 font-normal">
-                      Current delivery in progress
+                      {t("dashboard.currentDeliveryInProgress")}
                     </p>
                   </div>
                 </div>
@@ -448,7 +563,7 @@ export function DriverDashboard() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
-                              {(activeDelivery as any)?.cargo_number ||
+                              {activeDelivery?.cargo_number ||
                                 activeDelivery?.cargo_id}
                             </h3>
                             <p className="text-sm text-gray-600 truncate">
@@ -477,7 +592,7 @@ export function DriverDashboard() {
                           </div>
                           <div className="min-w-0 flex-1">
                             <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
-                              {(activeDelivery as any)?.cargo_number ||
+                              {activeDelivery?.cargo_number ||
                                 activeDelivery?.cargo_id}
                             </h3>
                             <p className="text-sm text-gray-600 truncate">
@@ -596,17 +711,16 @@ export function DriverDashboard() {
                     <Package className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
                   </div>
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-                    No Active Deliveries
+                    {t("dashboard.noActiveDeliveries")}
                   </h3>
                   <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">
-                    You don't have any active deliveries at the moment. Check
-                    your assigned cargos to start a new delivery.
+                    {t("dashboard.noActiveDeliveriesDescription")}
                   </p>
                   <Button
                     onClick={handleViewAllCargos}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-xl font-semibold"
                   >
-                    View Assigned Cargos
+                    {t("dashboard.viewAssignedCargos")}
                   </Button>
                 </div>
               )}
@@ -614,22 +728,22 @@ export function DriverDashboard() {
           </Card>
         </div>
 
-        {/* Assigned Cargos with Destination Locations */}
+        {/* Pending Assignments */}
         <div>
           <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden border-0">
-            <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100 p-4 sm:p-6">
+            <CardHeader className="bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-100 p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                 <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-gray-900">
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <Route className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
+                    <div className="p-2 bg-yellow-100 rounded-lg">
+                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                     </div>
                     <div>
                       <h2 className="text-lg sm:text-xl font-bold">
-                        {t("navigation.assignedCargos")}
+                        {t("dashboard.pendingAssignments")}
                       </h2>
                       <p className="text-xs sm:text-sm text-gray-600 font-normal">
-                        Ready for pickup
+                        {t("dashboard.awaitingYourResponse")}
                       </p>
                     </div>
                   </div>
@@ -638,7 +752,7 @@ export function DriverDashboard() {
                   variant="outline"
                   size="sm"
                   onClick={handleViewAllCargos}
-                  className="border-orange-300 text-orange-600 hover:bg-orange-50 w-full sm:w-auto"
+                  className="border-yellow-300 text-yellow-600 hover:bg-yellow-50 w-full sm:w-auto"
                 >
                   {t("common.viewAll")}
                 </Button>
@@ -646,99 +760,169 @@ export function DriverDashboard() {
             </CardHeader>
             <CardContent className="h-80 sm:h-96 overflow-y-auto p-4 sm:p-6">
               <div className="space-y-3 sm:space-y-4">
-                {assignedCargos.map((cargo) => (
-                  <div
-                    key={cargo.id}
-                    className="p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl border border-gray-200 hover:shadow-md transition-all duration-300 space-y-3 sm:space-y-4"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Package className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                        </div>
-                        <span className="font-bold text-gray-900 text-sm sm:text-base truncate">
-                          {cargo.cargo_number || cargo.id}
-                        </span>
-                      </div>
-                      <Badge
-                        className={
-                          cargo.status === "active"
-                            ? "bg-green-100 text-green-700 border-green-200 text-xs"
-                            : "bg-yellow-100 text-yellow-700 border-yellow-200 text-xs"
-                        }
-                      >
-                        {t(`status.${cargo.status}`)}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            {t("common.client")}
-                          </p>
-                          <p className="text-sm font-semibold text-gray-900 truncate">
-                            {cargo.client}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            {t("common.location")}
-                          </p>
-                          <p className="text-sm font-semibold text-blue-600 truncate">
-                            {cargo.to}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                      <div className="p-2 sm:p-3 bg-white rounded-lg border border-gray-200">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                          {t("common.type")}
-                        </p>
-                        <p className="font-semibold text-gray-900 mt-1 text-sm sm:text-base truncate">
-                          {cargo.type}
-                        </p>
-                      </div>
-                      <div className="p-2 sm:p-3 bg-white rounded-lg border border-gray-200">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                          {t("common.weight")}
-                        </p>
-                        <p className="font-semibold text-gray-900 mt-1 text-sm sm:text-base">
-                          {cargo.weight}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button
-                      size="sm"
-                      variant={
-                        cargo.status === "active" ? "default" : "outline"
-                      }
-                      className={`w-full py-2 rounded-xl font-semibold text-sm ${
-                        cargo.status === "active"
-                          ? "bg-blue-600 hover:bg-blue-700 text-white"
-                          : "border-gray-300 hover:bg-gray-50"
-                      }`}
-                      onClick={() => setSelectedDelivery(cargo)}
+                {pendingAssignments.length > 0 ? (
+                  pendingAssignments.map((assignment) => (
+                    <div
+                      key={assignment.id}
+                      className="p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl border border-gray-200 hover:shadow-md transition-all duration-300 space-y-3 sm:space-y-4"
                     >
-                      {cargo.status === "active"
-                        ? t("common.continue")
-                        : t("common.accept")}
-                    </Button>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                          </div>
+                          <span className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                            {assignment.cargo.cargo_number}
+                          </span>
+                        </div>
+                        <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">
+                          {t("dashboard.expiresIn")}{" "}
+                          {Math.floor(assignment.time_remaining / 60)}m
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                              {t("common.client")}
+                            </p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {assignment.cargo.client.name}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                              {t("common.destination")}
+                            </p>
+                            <p className="text-sm font-semibold text-blue-600 truncate">
+                              {assignment.cargo.delivery_location?.address ||
+                                t("common.locationTBD")}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div className="p-2 sm:p-3 bg-white rounded-lg border border-gray-200">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            {t("common.weight")}
+                          </p>
+                          <p className="font-semibold text-gray-900 mt-1 text-sm sm:text-base">
+                            {assignment.cargo.weight} kg
+                          </p>
+                        </div>
+                        <div className="p-2 sm:p-3 bg-white rounded-lg border border-gray-200">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            {t("common.value")}
+                          </p>
+                          <p className="font-semibold text-gray-900 mt-1 text-sm sm:text-base">
+                            ${assignment.cargo.value}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold text-sm"
+                          onClick={() => handleAcceptAssignment(assignment.id)}
+                        >
+                          {t("common.accept")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-300 text-red-600 hover:bg-red-50 py-2 rounded-xl font-semibold text-sm"
+                          onClick={() => handleOpenRejectModal(assignment.id)}
+                        >
+                          {t("common.reject")}
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 sm:py-12">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                      <Clock className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+                      {t("dashboard.noPendingAssignments")}
+                    </h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">
+                      {t("dashboard.noPendingAssignmentsDescription")}
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Assigned Cargos Section */}
+      {assignedCargos.length > 0 && (
+        <Card className="bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 shadow-lg rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Package className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-orange-900">
+                  {t("dashboard.assignedCargos")} ({assignedCargos.length})
+                </h3>
+                <p className="text-sm text-orange-700">
+                  {t("dashboard.assignedCargosDescription", {
+                    count: assignedCargos.length,
+                  })}
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <div className="space-y-3">
+              {assignedCargos.slice(0, 3).map((cargo) => (
+                <div
+                  key={cargo.cargo_id}
+                  className="p-3 rounded-lg border bg-white border-gray-200 hover:shadow-md transition-all duration-300"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full mt-2 bg-orange-500"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {cargo.cargo_number}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {t("common.client")}: {cargo.client_name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {t("common.from")}: {cargo.pickup_address}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {t("common.to")}: {cargo.delivery_address}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
+                          {cargo.cargo_type}
+                        </Badge>
+                        <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
+                          {cargo.weight} kg
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Additional Cards with View All Buttons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
@@ -756,7 +940,7 @@ export function DriverDashboard() {
                       {t("dashboard.recentActivity")}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-600 font-normal">
-                      Latest deliveries
+                      {t("dashboard.latestDeliveries")}
                     </p>
                   </div>
                 </div>
@@ -785,7 +969,7 @@ export function DriverDashboard() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-gray-900 text-sm sm:text-base truncate">
-                          {(delivery as any).cargo_number || delivery.cargo_id}
+                          {delivery.cargo_number || delivery.cargo_id}
                         </p>
                         <p className="text-sm text-gray-600 truncate">
                           {delivery.client_name}
@@ -807,7 +991,18 @@ export function DriverDashboard() {
                     <div className="flex items-center gap-2 text-gray-600">
                       <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span className="text-xs sm:text-sm">
-                        {delivery.delivery_date}
+                        {delivery.delivery_date
+                          ? new Date(delivery.delivery_date).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )
+                          : t("common.notAvailable")}
                       </span>
                     </div>
                     {delivery.rating && (
@@ -847,7 +1042,7 @@ export function DriverDashboard() {
                       {t("driver.driverDetails")}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-600 font-normal">
-                      Performance & vehicle
+                      {t("dashboard.performanceAndVehicle")}
                     </p>
                   </div>
                 </div>
@@ -866,7 +1061,7 @@ export function DriverDashboard() {
             {/* Performance Stats */}
             <div className="space-y-3 sm:space-y-4">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                Performance
+                {t("dashboard.performance")}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="p-3 sm:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
@@ -874,11 +1069,10 @@ export function DriverDashboard() {
                     <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                     <div>
                       <p className="text-xs font-semibold text-yellow-600 uppercase tracking-wide">
-                        Rating
+                        {t("common.rating")}
                       </p>
                       <p className="text-lg sm:text-xl font-bold text-gray-900">
-                        {dashboardData?.data?.stats?.rating?.toFixed(1) ||
-                          "0.0"}
+                        {dashboard?.stats?.rating?.toFixed(1) || "0.0"}
                       </p>
                     </div>
                   </div>
@@ -888,10 +1082,10 @@ export function DriverDashboard() {
                     <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                     <div>
                       <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">
-                        Completed
+                        {t("status.completed")}
                       </p>
                       <p className="text-lg sm:text-xl font-bold text-gray-900">
-                        {dashboardData?.data?.stats?.completed_deliveries || 0}
+                        {dashboard?.stats?.completed_deliveries || 0}
                       </p>
                     </div>
                   </div>
@@ -900,10 +1094,10 @@ export function DriverDashboard() {
             </div>
 
             {/* Vehicle Information */}
-            {dashboardData?.data?.vehicle_info && (
+            {dashboard?.vehicle_info && (
               <div className="space-y-3 sm:space-y-4">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                  Vehicle Information
+                  {t("dashboard.vehicleInformation")}
                 </h3>
                 <div className="p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
                   <div className="flex items-center gap-3 sm:gap-4">
@@ -913,22 +1107,24 @@ export function DriverDashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
                         <p className="text-base sm:text-lg font-bold text-gray-900">
-                          {dashboardData.data.vehicle_info.plate_number}
+                          {dashboard.vehicle_info.plate_number}
                         </p>
                         <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                          {dashboardData.data.vehicle_info.status}
+                          {dashboard.vehicle_info.status}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600">
-                        {dashboardData.data.vehicle_info.make}{" "}
-                        {dashboardData.data.vehicle_info.model}
+                        {dashboard.vehicle_info.make}{" "}
+                        {dashboard.vehicle_info.model}
                       </p>
                       <p className="text-xs text-gray-500 capitalize">
-                        {dashboardData.data.vehicle_info.type} • Insurance
-                        expires:{" "}
-                        {new Date(
-                          dashboardData.data.vehicle_info.insurance_expiry
-                        ).toLocaleDateString()}
+                        {dashboard.vehicle_info.type} •{" "}
+                        {t("dashboard.insuranceExpires")}:{" "}
+                        {dashboard.vehicle_info.insurance_expiry
+                          ? new Date(
+                              dashboard.vehicle_info.insurance_expiry
+                            ).toLocaleDateString()
+                          : t("common.notAvailable")}
                       </p>
                     </div>
                   </div>
@@ -939,13 +1135,13 @@ export function DriverDashboard() {
             {/* Driver Status */}
             <div className="space-y-3 sm:space-y-4">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                Current Status
+                {t("dashboard.currentStatus")}
               </h3>
               <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></div>
                   <span className="text-sm font-semibold text-gray-900">
-                    Status
+                    {t("common.status")}
                   </span>
                 </div>
                 <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
@@ -956,6 +1152,76 @@ export function DriverDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Rejection Modal */}
+      <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{t("assignment.rejectAssignment")}</DialogTitle>
+            <DialogDescription>
+              {t("assignment.rejectAssignmentDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="reason">
+                {t("assignment.reasonForRejection")} *
+              </Label>
+              <Select
+                value={rejectionReason}
+                onValueChange={setRejectionReason}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("assignment.selectReason")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="not_available">
+                    {t("assignment.notAvailable")}
+                  </SelectItem>
+                  <SelectItem value="vehicle_issue">
+                    {t("assignment.vehicleIssue")}
+                  </SelectItem>
+                  <SelectItem value="personal_emergency">
+                    {t("assignment.personalEmergency")}
+                  </SelectItem>
+                  <SelectItem value="route_unsuitable">
+                    {t("assignment.routeUnsuitable")}
+                  </SelectItem>
+                  <SelectItem value="cargo_too_heavy">
+                    {t("assignment.cargoTooHeavy")}
+                  </SelectItem>
+                  <SelectItem value="schedule_conflict">
+                    {t("assignment.scheduleConflict")}
+                  </SelectItem>
+                  <SelectItem value="other">{t("common.other")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="notes">{t("assignment.additionalNotes")}</Label>
+              <Textarea
+                id="notes"
+                placeholder={t("assignment.provideAdditionalDetails")}
+                value={rejectionNotes}
+                onChange={(e) => setRejectionNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseRejectModal}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectFromModal}
+              disabled={!rejectionReason.trim()}
+            >
+              {t("assignment.rejectAssignment")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

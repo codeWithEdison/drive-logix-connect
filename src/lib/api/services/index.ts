@@ -15,6 +15,7 @@ export { AnalyticsService } from "./analyticsService";
 export { GPSService } from "./gpsService";
 export { TrackingService } from "./trackingService";
 export { NotificationService } from "./notificationService";
+export { DeliveryAssignmentService } from "./deliveryAssignmentService";
 export { AdminService } from "./adminService";
 export { FileService } from "./utilityService";
 export { SystemService } from "./systemService";
