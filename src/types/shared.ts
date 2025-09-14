@@ -1347,19 +1347,86 @@ export interface SystemHealthDashboard {
 
 // Dashboard Response Types
 export interface DashboardResponse {
-  overview: DashboardOverview;
+  stats: {
+    total_revenue: number;
+    active_admins: number;
+    total_users: number;
+    system_health_percentage: number;
+    total_drivers: number;
+    total_clients: number;
+    total_vehicles: number;
+    system_uptime: number;
+  };
   charts: {
-    revenue: RevenueChartData;
-    delivery_performance: DeliveryPerformanceChart;
-    geographic: GeographicAnalytics;
+    revenue_trends: RevenueChartData;
+    usage_trends: {
+      user_registrations: Array<{
+        date: string;
+        new_users: number;
+        active_users: number;
+      }>;
+      system_usage: Array<{
+        date: string;
+        api_calls: number;
+        active_sessions: number;
+      }>;
+    };
+    admin_performance: {
+      admin_activities: Array<{
+        admin_id: string;
+        admin_name: string;
+        activities_count: number;
+        last_activity: string;
+      }>;
+      performance_metrics: Array<{
+        date: string;
+        approvals_processed: number;
+        issues_resolved: number;
+      }>;
+    };
+    users_distribution: {
+      users_by_role: Record<string, number>;
+      users_by_status: Record<string, number>;
+      users_by_business_type: Record<string, number>;
+      registration_trends: Array<{
+        date: string;
+        total_users: number;
+        new_registrations: number;
+      }>;
+    };
   };
-  analytics: {
-    driver_performance: DriverPerformanceDashboard;
-    vehicle_analytics: VehicleAnalyticsDashboard;
-    client_analytics: ClientAnalyticsDashboard;
-    system_health: SystemHealthDashboard;
+  tables: {
+    pending_approvals: Array<{
+      id: string;
+      type: string;
+      name: string;
+      email: string;
+      status: string;
+      submitted_at: string;
+      admin_notes?: string;
+    }>;
+    system_alerts: Array<{
+      id: string;
+      type: string;
+      message: string;
+      severity: string;
+      created_at: string;
+      is_resolved: boolean;
+      resolved_by?: string;
+      resolved_at?: string;
+    }>;
   };
-  last_updated: string;
+  system_health: SystemHealthDashboard;
+  recent_logs: Array<{
+    id: string;
+    type: string;
+    user: string;
+    action: string;
+    ip_address: string;
+    timestamp: string;
+    success: boolean;
+    details?: Record<string, any>;
+  }>;
 }
 
 // Dashboard Filter Parameters

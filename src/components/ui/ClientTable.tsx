@@ -104,9 +104,9 @@ export function ClientTable({
 
   const filteredClients = clients.filter((client) => {
     const matchesSearch =
-      client.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (client.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (client.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (client.phone?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (client.company_name &&
         client.company_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -204,7 +204,7 @@ export function ClientTable({
       });
     }
 
-    if (onCallClient) {
+    if (onCallClient && client.phone) {
       actions.push({
         key: "call",
         label: t("actions.callClient"),
@@ -410,10 +410,10 @@ export function ClientTable({
                     <TableCell>
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {client.full_name}
+                          {client.full_name || '-'}
                         </p>
-                        <p className="text-xs text-gray-500">{client.email}</p>
-                        <p className="text-xs text-gray-500">{client.phone}</p>
+                        <p className="text-xs text-gray-500">{client.email || '-'}</p>
+                        <p className="text-xs text-gray-500">{client.phone || '-'}</p>
                       </div>
                     </TableCell>
                     <TableCell>

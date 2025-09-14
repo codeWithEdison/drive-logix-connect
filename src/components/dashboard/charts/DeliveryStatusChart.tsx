@@ -42,6 +42,8 @@ export function DeliveryStatusChart({
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+      if (!data || !data.status) return null;
+      
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-900">
@@ -61,47 +63,53 @@ export function DeliveryStatusChart({
     return null;
   };
 
-  const CustomLegend = ({ payload }: any) => (
-    <div className="mt-6">
-      <div className="overflow-x-auto">
-        <div className="flex gap-3 pb-2 min-w-max">
-          {payload?.map((entry: any, index: number) => {
-            const statusData = data?.status_distribution;
-            const statusKey = String(
-              entry.payload?.status || entry.value || ""
-            ).toLowerCase();
-            const count = statusData?.[statusKey] || 0;
-            const total = Object.values(statusData || {}).reduce(
-              (sum: number, val: any) => sum + val,
-              0
-            );
-            const percentage =
-              total > 0 ? (((count as number) / total) * 100).toFixed(1) : "0";
+  const CustomLegend = ({ payload }: any) => {
+    if (!payload || !Array.isArray(payload)) return null;
+    
+    return (
+      <div className="mt-6">
+        <div className="overflow-x-auto">
+          <div className="flex gap-3 pb-2 min-w-max">
+            {payload.map((entry: any, index: number) => {
+              if (!entry) return null;
+              
+              const statusData = data?.status_distribution;
+              const statusKey = String(
+                entry.payload?.status || entry.value || ""
+              ).toLowerCase();
+              const count = statusData?.[statusKey] || 0;
+              const total = Object.values(statusData || {}).reduce(
+                (sum: number, val: any) => sum + val,
+                0
+              );
+              const percentage =
+                total > 0 ? (((count as number) / total) * 100).toFixed(1) : "0";
 
-            return (
-              <div
-                key={index}
-                className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg whitespace-nowrap min-w-fit flex-shrink-0"
-              >
+              return (
                 <div
-                  className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: entry.color }}
-                />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-900">
-                    {t(`status.${statusKey}`)}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {percentage}% ({count})
-                  </span>
+                  key={index}
+                  className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg whitespace-nowrap min-w-fit flex-shrink-0"
+                >
+                  <div
+                    className="w-3 h-3 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-900">
+                      {t(`status.${statusKey}`)}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {percentage}% ({count})
+                    </span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Loading state
   if (isLoading) {

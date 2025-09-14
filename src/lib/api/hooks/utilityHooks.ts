@@ -291,10 +291,81 @@ export const useUpdateUserStatus = () => {
     }) => AdminService.updateUserStatus(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.users() });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
   });
 };
+
+// Create user hooks
+export const useCreateAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      full_name: string;
+      email: string;
+      password: string;
+      phone?: string;
+      preferred_language?: "en" | "rw" | "fr";
+    }) => AdminService.createAdmin(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+};
+
+export const useCreateDriver = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      full_name: string;
+      email: string;
+      phone: string;
+      password: string;
+      preferred_language: "en" | "rw" | "fr";
+      license_number: string;
+      license_expiry?: string;
+      license_type: "A" | "B" | "C" | "D" | "E";
+      date_of_birth?: string;
+      emergency_contact?: string;
+      emergency_phone?: string;
+      blood_type?: string;
+      medical_certificate_expiry?: string;
+    }) => AdminService.createDriver(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+};
+
+export const useCreateClient = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      full_name: string;
+      email: string;
+      phone: string;
+      password: string;
+      preferred_language: "en" | "rw" | "fr";
+      company_name: string;
+      business_type: "individual" | "corporate" | "government";
+      tax_id?: string;
+      address?: string;
+      city?: string;
+      country?: string;
+      postal_code?: string;
+      contact_person?: string;
+      credit_limit?: number;
+      payment_terms?: number;
+    }) => AdminService.createClient(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+};
+
 
 export const useFinancialReports = (params?: {
   start_date?: string;
