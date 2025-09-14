@@ -7,6 +7,7 @@ import { CargoDetail } from "../../components/ui/CargoDetailModal";
 export const mapDashboardCargoToCargoDetail = (cargo: any): CargoDetail => {
   return {
     id: cargo.cargo_id?.toString() || "",
+    cargo_number: cargo.cargo_number || "", // Add cargo_number field
     status: cargo.status as any,
     from: cargo.pickup_address || "",
     to: cargo.delivery_address || "",

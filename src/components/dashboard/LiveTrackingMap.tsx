@@ -446,16 +446,16 @@ export const LiveTrackingMap: React.FC = () => {
 
   return (
     <LiveTrackingErrorBoundary>
-      <div className="h-full flex gap-4 overflow-hidden">
+      <div className="h-full flex flex-col lg:flex-row gap-2 sm:gap-4 overflow-hidden">
         {/* Left Panel - Cargo List */}
-        <div className="w-[30%] flex flex-col min-w-0">
+        <div className="w-full lg:w-[30%] flex flex-col min-w-0 h-[40vh] lg:h-full">
           <Card className="flex-1 flex flex-col min-h-0">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold">
+                <CardTitle className="text-base sm:text-lg font-semibold">
                   Tracking Cargo
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <ConnectionStatus
                     isConnected={isConnected}
                     isConnecting={isConnecting}
@@ -467,28 +467,32 @@ export const LiveTrackingMap: React.FC = () => {
                     size="sm"
                     onClick={() => refetchCargo()}
                     disabled={cargoLoading}
+                    className="h-8 w-8 sm:h-9 sm:w-9"
                   >
                     <RefreshCw
-                      className={cn("h-4 w-4", cargoLoading && "animate-spin")}
+                      className={cn(
+                        "h-3 w-3 sm:h-4 sm:w-4",
+                        cargoLoading && "animate-spin"
+                      )}
                     />
                   </Button>
                 </div>
               </div>
 
               {/* Search Input */}
-              <div className="mt-3">
+              <div className="mt-2 sm:mt-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                   <Input
-                    placeholder="Search by cargo ID, number, type, or location..."
+                    placeholder="Search cargo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-7 sm:pl-10 h-8 sm:h-10 text-xs sm:text-sm"
                   />
                 </div>
               </div>
 
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
                 {filteredCargoList.length} of {(cargoData || []).length}{" "}
                 in-transit deliveries
               </p>
@@ -497,8 +501,8 @@ export const LiveTrackingMap: React.FC = () => {
             <CardContent className="p-0 flex-1 min-h-0">
               <ScrollArea className="h-full">
                 {cargoLoading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <RefreshCw className="h-6 w-6 animate-spin" />
+                  <div className="flex items-center justify-center p-4 sm:p-8">
+                    <RefreshCw className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
                   </div>
                 ) : cargoError ? (
                   <LiveTrackingMapFallback
@@ -508,21 +512,21 @@ export const LiveTrackingMap: React.FC = () => {
                     isConnecting={cargoLoading}
                   />
                 ) : filteredCargoList.length === 0 ? (
-                  <div className="flex items-center justify-center p-8 text-gray-500">
+                  <div className="flex items-center justify-center p-4 sm:p-8 text-gray-500">
                     <div className="text-center">
-                      <Package className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-lg font-medium mb-2">
+                      <Package className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 text-gray-400" />
+                      <p className="text-sm sm:text-lg font-medium mb-1 sm:mb-2">
                         {searchTerm
                           ? "No matching cargo found"
                           : "No in-transit cargo"}
                       </p>
-                      <p className="text-sm">
+                      <p className="text-xs sm:text-sm">
                         {searchTerm
                           ? "Try adjusting your search terms"
                           : "Cargo will appear here when shipments are in transit"}
                       </p>
                       {!searchTerm && (
-                        <div className="mt-4 text-xs text-gray-400">
+                        <div className="mt-2 sm:mt-4 text-xs text-gray-400">
                           <p>Debug info:</p>
                           <p>User role: {user?.role}</p>
                           <p>Total cargo: {(cargoData || []).length}</p>
@@ -532,7 +536,7 @@ export const LiveTrackingMap: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2 p-2">
+                  <div className="space-y-1 sm:space-y-2 p-1 sm:p-2">
                     {filteredCargoList.map((cargo: CargoWithTracking) => (
                       <Card
                         key={cargo.id}
@@ -543,18 +547,18 @@ export const LiveTrackingMap: React.FC = () => {
                         )}
                         onClick={() => handleCargoSelect(cargo)}
                       >
-                        <CardContent className="p-4">
+                        <CardContent className="p-2 sm:p-4">
                           {/* Header with cargo ID and status */}
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <Package className="h-4 w-4 text-gray-600" />
-                              <h3 className="font-bold text-sm">
+                          <div className="flex items-center justify-between mb-2 sm:mb-3">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <Package className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+                              <h3 className="font-bold text-xs sm:text-sm">
                                 #{cargo.cargo_number || cargo.id}
                               </h3>
                             </div>
                             <Badge
                               className={cn(
-                                "text-white",
+                                "text-white text-xs",
                                 cargo.status === "in_transit"
                                   ? "bg-purple-600"
                                   : cargo.status === "delivered"
@@ -571,10 +575,10 @@ export const LiveTrackingMap: React.FC = () => {
                           </div>
 
                           {/* Progress indicator with route visualization */}
-                          <div className="flex items-center mb-3">
+                          <div className="flex items-center mb-2 sm:mb-3">
                             <div className="flex-1 flex items-center">
                               {/* Pickup point */}
-                              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1 sm:mr-2"></div>
 
                               {/* Progress line container */}
                               <div className="flex-1 relative">
@@ -623,7 +627,7 @@ export const LiveTrackingMap: React.FC = () => {
                                         className="absolute top-1/2 transform -translate-y-1/2 -translate-x-1/2"
                                         style={{ left: `${progressPercent}%` }}
                                       >
-                                        <Truck className="h-4 w-4 text-gray-700 bg-white rounded-full p-0.5" />
+                                        <Truck className="h-3 w-3 sm:h-4 sm:w-4 text-gray-700 bg-white rounded-full p-0.5" />
                                       </div>
                                     </>
                                   );
@@ -631,12 +635,12 @@ export const LiveTrackingMap: React.FC = () => {
                               </div>
 
                               {/* Destination point */}
-                              <div className="w-2 h-2 bg-gray-600 rounded-full ml-2"></div>
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-600 rounded-full ml-1 sm:ml-2"></div>
                             </div>
                           </div>
 
                           {/* Addresses */}
-                          <div className="space-y-2 mb-3">
+                          <div className="space-y-1 sm:space-y-2 mb-2 sm:mb-3">
                             <div className="text-xs text-gray-600">
                               <p className="font-medium truncate">
                                 {cargo.pickup_address}
@@ -651,8 +655,8 @@ export const LiveTrackingMap: React.FC = () => {
 
                           {/* Contact Information */}
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gray-200 rounded-full flex items-center justify-center">
                                 <span className="text-xs font-medium text-gray-600">
                                   {isDriver
                                     ? (
@@ -663,8 +667,8 @@ export const LiveTrackingMap: React.FC = () => {
                                       ) || "D"}
                                 </span>
                               </div>
-                              <div>
-                                <p className="text-xs font-medium">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium truncate">
                                   {isDriver
                                     ? (cargo as CargoWithTracking).client
                                         ?.full_name || "Client"
@@ -676,12 +680,12 @@ export const LiveTrackingMap: React.FC = () => {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-0.5 sm:gap-1">
                               {isClient && cargo.tracking?.driver?.phone && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-6 w-6 p-0"
+                                  className="h-5 w-5 sm:h-6 sm:w-6 p-0"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     window.open(
@@ -690,7 +694,7 @@ export const LiveTrackingMap: React.FC = () => {
                                     );
                                   }}
                                 >
-                                  <Phone className="h-3 w-3" />
+                                  <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                 </Button>
                               )}
                               {isDriver && (
@@ -699,7 +703,7 @@ export const LiveTrackingMap: React.FC = () => {
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      className="h-6 w-6 p-0"
+                                      className="h-5 w-5 sm:h-6 sm:w-6 p-0"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         window.open(
@@ -708,14 +712,14 @@ export const LiveTrackingMap: React.FC = () => {
                                         );
                                       }}
                                     >
-                                      <Phone className="h-3 w-3" />
+                                      <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     </Button>
                                   )}
                                   {cargo.destination_phone && (
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      className="h-6 w-6 p-0"
+                                      className="h-5 w-5 sm:h-6 sm:w-6 p-0"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         window.open(
@@ -724,7 +728,7 @@ export const LiveTrackingMap: React.FC = () => {
                                         );
                                       }}
                                     >
-                                      <Phone className="h-3 w-3" />
+                                      <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     </Button>
                                   )}
                                 </>
@@ -732,9 +736,9 @@ export const LiveTrackingMap: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-6 w-6 p-0"
+                                className="h-5 w-5 sm:h-6 sm:w-6 p-0"
                               >
-                                <Mail className="h-3 w-3" />
+                                <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                               </Button>
                             </div>
                           </div>
@@ -749,13 +753,13 @@ export const LiveTrackingMap: React.FC = () => {
         </div>
 
         {/* Right Panel - Map and Details */}
-        <div className="w-[70%] flex flex-col min-w-0 overflow-hidden">
+        <div className="w-full lg:w-[70%] flex flex-col min-w-0 overflow-hidden h-[60vh] lg:h-full">
           <Card className="flex-1 flex flex-col min-h-0">
             <CardContent className="p-0 h-full flex flex-col min-h-0">
               {/* Map Container */}
               <div
                 className="flex-1 relative min-h-0"
-                style={{ minHeight: "400px" }}
+                style={{ minHeight: "300px" }}
               >
                 {mapError ? (
                   <LiveTrackingMapFallback
@@ -769,16 +773,16 @@ export const LiveTrackingMap: React.FC = () => {
                     <div
                       ref={mapRef}
                       className="w-full h-full rounded-t-lg"
-                      style={{ minHeight: "400px" }}
+                      style={{ minHeight: "300px" }}
                     />
 
                     {/* Map overlay info */}
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Navigation className="h-4 w-4 text-blue-600" />
+                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 sm:p-3 shadow-lg">
+                      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                        <Navigation className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                         <span className="font-medium">Live Tracking</span>
                         {lastUpdate && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 hidden sm:inline">
                             Updated{" "}
                             {formatDistanceToNow(new Date(lastUpdate), {
                               addSuffix: true,
@@ -794,40 +798,46 @@ export const LiveTrackingMap: React.FC = () => {
               {/* Cargo Details */}
               <div className="flex-shrink-0 border-t bg-white">
                 {selectedCargo ? (
-                  <div className="p-6">
+                  <div className="p-3 sm:p-6">
                     {/* Header with Tabs */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                    <div className="flex items-center justify-between mb-3 sm:mb-6">
+                      <div className="flex space-x-0.5 sm:space-x-1 bg-gray-100 rounded-lg p-0.5 sm:p-1 overflow-x-auto">
                         <Button
                           variant={activeTab === "order" ? "default" : "ghost"}
                           size="sm"
-                          className={`text-xs ${
+                          className={`text-xs px-2 sm:px-3 py-1 sm:py-2 ${
                             activeTab === "order"
                               ? "bg-green-600 hover:bg-green-700 text-white"
                               : ""
                           }`}
                           onClick={() => setActiveTab("order")}
                         >
-                          Order details
+                          <span className="hidden sm:inline">
+                            Order details
+                          </span>
+                          <span className="sm:hidden">Order</span>
                         </Button>
                         <Button
                           variant={activeTab === "driver" ? "default" : "ghost"}
                           size="sm"
-                          className={`text-xs ${
+                          className={`text-xs px-2 sm:px-3 py-1 sm:py-2 ${
                             activeTab === "driver"
                               ? "bg-green-600 hover:bg-green-700 text-white"
                               : ""
                           }`}
                           onClick={() => setActiveTab("driver")}
                         >
-                          Driver information
+                          <span className="hidden sm:inline">
+                            Driver information
+                          </span>
+                          <span className="sm:hidden">Driver</span>
                         </Button>
                         <Button
                           variant={
                             activeTab === "vehicle" ? "default" : "ghost"
                           }
                           size="sm"
-                          className={`text-xs ${
+                          className={`text-xs px-2 sm:px-3 py-1 sm:py-2 ${
                             activeTab === "vehicle"
                               ? "bg-green-600 hover:bg-green-700 text-white"
                               : ""
@@ -841,48 +851,54 @@ export const LiveTrackingMap: React.FC = () => {
                             activeTab === "customer" ? "default" : "ghost"
                           }
                           size="sm"
-                          className={`text-xs ${
+                          className={`text-xs px-2 sm:px-3 py-1 sm:py-2 ${
                             activeTab === "customer"
                               ? "bg-green-600 hover:bg-green-700 text-white"
                               : ""
                           }`}
                           onClick={() => setActiveTab("customer")}
                         >
-                          Customer information
+                          <span className="hidden sm:inline">
+                            Customer information
+                          </span>
+                          <span className="sm:hidden">Customer</span>
                         </Button>
                         <Button
                           variant={
                             activeTab === "documents" ? "default" : "ghost"
                           }
                           size="sm"
-                          className={`text-xs ${
+                          className={`text-xs px-2 sm:px-3 py-1 sm:py-2 ${
                             activeTab === "documents"
                               ? "bg-green-600 hover:bg-green-700 text-white"
                               : ""
                           }`}
                           onClick={() => setActiveTab("documents")}
                         >
-                          Documents
+                          Docs
                         </Button>
                       </div>
                     </div>
 
                     {/* Dynamic Content Card */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <div className="bg-white rounded-lg border border-gray-200 p-2 sm:p-4">
                       {activeTab === "order" && (
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                           <div className="flex items-center gap-2">
-                            <Package className="h-5 w-5 text-blue-600" />
-                            <h3 className="font-semibold">
+                            <Package className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                            <h3 className="font-semibold text-sm sm:text-base">
                               {selectedCargo.type || "Cargo"}
                             </h3>
                             <Badge
-                              className={getStatusColor(selectedCargo.status)}
+                              className={cn(
+                                "text-xs",
+                                getStatusColor(selectedCargo.status)
+                              )}
                             >
                               {selectedCargo.status.replace("_", " ")}
                             </Badge>
                           </div>
-                          <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
                             <div>
                               <span className="text-gray-500">Weight:</span>
                               <span className="ml-2 font-medium">
@@ -916,27 +932,27 @@ export const LiveTrackingMap: React.FC = () => {
                       )}
 
                       {activeTab === "driver" && (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className="space-y-2 sm:space-y-3">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
                               {selectedCargo.tracking?.driver?.full_name?.charAt(
                                 0
                               ) || "D"}
                             </div>
-                            <div>
-                              <h3 className="font-semibold">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold text-sm sm:text-base">
                                 {selectedCargo.tracking?.driver?.full_name ||
                                   "Driver"}
                               </h3>
                               {selectedCargo.tracking?.driver?.phone && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Phone className="h-3 w-3" />
-                                  <span>
+                                  <span className="truncate">
                                     {selectedCargo.tracking.driver.phone}
                                   </span>
                                   <Button
                                     size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-white h-6 px-2"
+                                    className="bg-green-600 hover:bg-green-700 text-white h-5 sm:h-6 px-2 text-xs"
                                     onClick={() =>
                                       window.open(
                                         `tel:${selectedCargo.tracking.driver.phone}`,
@@ -954,16 +970,16 @@ export const LiveTrackingMap: React.FC = () => {
                       )}
 
                       {activeTab === "vehicle" && (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3">
-                            <Truck className="h-5 w-5 text-gray-600" />
-                            <h3 className="font-semibold">
+                        <div className="space-y-2 sm:space-y-3">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                            <h3 className="font-semibold text-sm sm:text-base">
                               {selectedCargo.tracking?.vehicle?.license_plate ||
                                 "Vehicle"}
                             </h3>
                           </div>
                           {selectedCargo.tracking?.vehicle?.make && (
-                            <div className="text-sm text-gray-600">
+                            <div className="text-xs sm:text-sm text-gray-600">
                               {selectedCargo.tracking.vehicle.make}{" "}
                               {selectedCargo.tracking.vehicle.model}
                             </div>
@@ -972,23 +988,25 @@ export const LiveTrackingMap: React.FC = () => {
                       )}
 
                       {activeTab === "customer" && (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className="space-y-2 sm:space-y-3">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
                               {selectedCargo.client?.full_name?.charAt(0) ||
                                 "C"}
                             </div>
-                            <div>
-                              <h3 className="font-semibold">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold text-sm sm:text-base">
                                 {selectedCargo.client?.full_name || "Customer"}
                               </h3>
                               {selectedCargo.client?.phone && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Phone className="h-3 w-3" />
-                                  <span>{selectedCargo.client.phone}</span>
+                                  <span className="truncate">
+                                    {selectedCargo.client.phone}
+                                  </span>
                                   <Button
                                     size="sm"
-                                    className="bg-green-600 hover:bg-green-700 text-white h-6 px-2"
+                                    className="bg-green-600 hover:bg-green-700 text-white h-5 sm:h-6 px-2 text-xs"
                                     onClick={() =>
                                       window.open(
                                         `tel:${selectedCargo.client.phone}`,
@@ -1006,12 +1024,14 @@ export const LiveTrackingMap: React.FC = () => {
                       )}
 
                       {activeTab === "documents" && (
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                           <div className="flex items-center gap-2">
-                            <Package className="h-5 w-5 text-orange-600" />
-                            <h3 className="font-semibold">Documents</h3>
+                            <Package className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
+                            <h3 className="font-semibold text-sm sm:text-base">
+                              Documents
+                            </h3>
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-xs sm:text-sm text-gray-500">
                             No documents available
                           </div>
                         </div>
@@ -1022,13 +1042,13 @@ export const LiveTrackingMap: React.FC = () => {
                     {(progressData ||
                       selectedCargo.tracking?.progress_percentage) && (
                       <>
-                        <Separator />
-                        <div className="space-y-3">
+                        <Separator className="my-2 sm:my-3" />
+                        <div className="space-y-2 sm:space-y-3">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-sm text-gray-700">
+                            <h4 className="font-medium text-xs sm:text-sm text-gray-700">
                               Delivery Progress
                             </h4>
-                            <span className="text-sm font-medium text-blue-600">
+                            <span className="text-xs sm:text-sm font-medium text-blue-600">
                               {Math.round(
                                 progressData?.progress_percentage ||
                                   selectedCargo.tracking?.progress_percentage ||
@@ -1038,9 +1058,9 @@ export const LiveTrackingMap: React.FC = () => {
                             </span>
                           </div>
 
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                             <div
-                              className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                              className="bg-blue-600 h-1.5 sm:h-2 rounded-full transition-all duration-500"
                               style={{
                                 width: `${
                                   progressData?.progress_percentage ||
@@ -1052,9 +1072,9 @@ export const LiveTrackingMap: React.FC = () => {
                           </div>
 
                           {progressData?.estimated_arrival && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Clock className="h-4 w-4" />
-                              <span>
+                            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="truncate">
                                 ETA:{" "}
                                 {new Date(
                                   progressData.estimated_arrival
@@ -1064,9 +1084,9 @@ export const LiveTrackingMap: React.FC = () => {
                           )}
 
                           {progressData?.current_location && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <MapPin className="h-4 w-4" />
-                              <span>
+                            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                              <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="truncate">
                                 Current: {progressData.current_location}
                               </span>
                             </div>
@@ -1076,13 +1096,13 @@ export const LiveTrackingMap: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500">
+                  <div className="flex items-center justify-center h-full text-gray-500 p-4 sm:p-6">
                     <div className="text-center">
-                      <Package className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-lg font-medium mb-2">
+                      <Package className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 text-gray-400" />
+                      <p className="text-sm sm:text-lg font-medium mb-1 sm:mb-2">
                         Select a cargo to track
                       </p>
-                      <p className="text-sm">
+                      <p className="text-xs sm:text-sm">
                         Choose from the list to view live tracking details
                       </p>
                     </div>
