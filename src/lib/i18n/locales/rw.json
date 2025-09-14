@@ -311,7 +311,11 @@
     "amount": "Amafaranga",
     "status": "Imiterere",
     "noRecentInvoices": "Nta mafunguzo yabaye",
-    "loadError": "Ntabwo byakozwe neza gufungura amakuru y'ikinyabwoba"
+    "loadError": "Ntabwo byakozwe neza gufungura amakuru y'ikinyabwoba",
+    "day":"Umunsi",
+    "week":"icyumweru",
+    "totalActivities": "Ibyakozwe byose",
+    "performanceMetrics": "Ibyegeranyo by'ikorwa"
   },
   "cargo": {
     "createCargo": "Kurema ikintu",
@@ -1069,6 +1073,14 @@
         "createAdmin": "Kurema Umuyobozi",
         "userType": "Ubwoko bw'Umukoresha",
         "createUser": "Kurema Umukoresha",
+    "userCreated": "Umukoresha Yaremye",
+    "userCreatedSuccess": "{{type}} {{name}} yaremye neza",
+    "createUserError": "Ikosa mu kurema umukoresha",
+    "createUserErrorDesc": "Ntibyashobotse kurema umukoresha. Nyamuneka gerageza nanone.",
+    "userStatusUpdated": "Imiterere y'umukoresha yahinduwe",
+    "userStatusUpdatedSuccess": "Imiterere ya {{name}} yahinduwe kuri {{status}}",
+    "updateUserError": "Ikosa mu guhindura umukoresha",
+    "updateUserErrorDesc": "Ntibyashobotse guhindura imiterere y'umukoresha. Nyamuneka gerageza nanone.",
         "editUser": "Guhindura Umukoresha",
         "updateUser": "Gusubira Umukoresha"
   }

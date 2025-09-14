@@ -317,7 +317,11 @@
     "amount": "Montant",
     "status": "Statut",
     "noRecentInvoices": "Aucune facture récente",
-    "loadError": "Échec du chargement des données du tableau de bord"
+    "loadError": "Échec du chargement des données du tableau de bord",
+    "day": "Jour",
+    "week": "Semaine",
+    "totalActivities": "Total des activités",
+    "performanceMetrics": "Métriques de performance"
   },
   "cargo": {
     "createCargo": "Créer une cargaison",
@@ -1097,6 +1101,14 @@
         "createAdmin": "Créer un administrateur",
         "userType": "Type d'utilisateur",
         "createUser": "Créer un utilisateur",
+    "userCreated": "Utilisateur créé",
+    "userCreatedSuccess": "{{type}} {{name}} a été créé avec succès",
+    "createUserError": "Erreur lors de la création de l'utilisateur",
+    "createUserErrorDesc": "Échec de la création de l'utilisateur. Veuillez réessayer.",
+    "userStatusUpdated": "Statut de l'utilisateur mis à jour",
+    "userStatusUpdatedSuccess": "Le statut de {{name}} a été mis à jour à {{status}}",
+    "updateUserError": "Erreur lors de la mise à jour de l'utilisateur",
+    "updateUserErrorDesc": "Échec de la mise à jour du statut de l'utilisateur. Veuillez réessayer.",
         "editUser": "Modifier l'utilisateur",
         "updateUser": "Mettre à jour l'utilisateur"
   },
