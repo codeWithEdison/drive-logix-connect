@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deliveryAssignmentService } from "../services/deliveryAssignmentService";
-import { notificationService } from "../services/notificationService";
+import {
+  notificationService,
+  NotificationService,
+} from "../services/notificationService";
 import type {
   DeliveryAssignment,
   CreateAssignmentRequest,
@@ -196,7 +199,7 @@ export function useMyAssignments(filters: AssignmentFilters = {}) {
     queryFn: () => deliveryAssignmentService.getMyAssignments(filters),
     staleTime: 30000,
     refetchInterval: 30000, // Refetch every 30 seconds for pending assignments
-    select: (data) => data.data.assignments, // Extract assignments array from response
+    select: (data) => data, // Return full response to preserve pagination info
   });
 }
 
@@ -254,7 +257,7 @@ export function useRejectAssignment() {
 export function useAssignmentNotifications(filters: NotificationFilters = {}) {
   return useQuery({
     queryKey: notificationKeys.list(filters),
-    queryFn: () => notificationService.getNotifications(filters),
+    queryFn: () => NotificationService.getNotifications(filters),
     staleTime: 30000,
     refetchInterval: 60000, // Refetch every minute for new notifications
   });
@@ -266,7 +269,7 @@ export function useAssignmentNotifications(filters: NotificationFilters = {}) {
 export function useAssignmentNotificationStats() {
   return useQuery({
     queryKey: notificationKeys.stats(),
-    queryFn: () => notificationService.getNotificationStats(),
+    queryFn: () => NotificationService.getNotificationStats(),
     staleTime: 60000, // 1 minute
     refetchInterval: 300000, // Refetch every 5 minutes
   });
@@ -280,7 +283,7 @@ export function useMarkAssignmentNotificationAsRead() {
 
   return useMutation({
     mutationFn: (notificationId: string) =>
-      notificationService.markAsRead(notificationId),
+      NotificationService.markAsRead(notificationId),
     onSuccess: () => {
       // Invalidate notification queries
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
@@ -295,7 +298,7 @@ export function useMarkAllAssignmentNotificationsAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => notificationService.markAllAsRead(),
+    mutationFn: () => NotificationService.markAllAsRead(),
     onSuccess: () => {
       // Invalidate notification queries
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
