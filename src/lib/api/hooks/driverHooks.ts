@@ -2,12 +2,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DriverService } from "../services";
 import { queryKeys } from "../queryClient";
 import { UpdateDriverRequest, DriverStatus } from "../../../types/shared";
+import { AvailableDriverFilters } from "../services/driverService";
 
 // Driver hooks
 export const useDriverProfile = () => {
   return useQuery({
     queryKey: queryKeys.drivers.profile,
     queryFn: () => DriverService.getProfile(),
+    select: (data) => data.data,
+  });
+};
+
+export const useAvailableDriversWithoutAssignments = (
+  filters: AvailableDriverFilters = {}
+) => {
+  return useQuery({
+    queryKey: ["available-drivers-without-assignments", filters],
+    queryFn: () => DriverService.getAvailableDriversWithoutAssignments(filters),
     select: (data) => data.data,
   });
 };

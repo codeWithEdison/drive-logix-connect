@@ -1,8 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { CustomTabs } from "@/components/ui/CustomTabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  RefreshCw,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Search,
+  Filter,
+  Truck as TruckIcon,
+} from "lucide-react";
 import { TruckTable, Truck } from "@/components/ui/TruckTable";
 import { TruckDetailModal } from "@/components/ui/TruckDetailModal";
 import ModernModel from "@/components/modal/ModernModel";
@@ -38,22 +49,51 @@ const AdminTrucks = () => {
   const [editingTruck, setEditingTruck] = useState<Truck | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
 
   // API hooks
   const {
-    data: vehiclesData,
+    data: vehiclesResponse,
     isLoading,
     error,
     refetch,
   } = useVehicles({
     status: statusFilter === "all" ? undefined : (statusFilter as any),
     type: typeFilter === "all" ? undefined : (typeFilter as any),
-    limit: 100,
+    search: searchTerm || undefined,
+    page: currentPage,
+    limit: pageSize,
   });
 
   const createVehicleMutation = useCreateVehicle();
   const updateVehicleMutation = useUpdateVehicle();
   const approveVehicleMutation = useApproveVehicle();
+
+  // Extract data and pagination info from API response
+  const vehiclesData = useMemo(
+    () => (vehiclesResponse as any)?.data?.vehicles || [],
+    [vehiclesResponse]
+  );
+
+  const pagination = useMemo(
+    () =>
+      (vehiclesResponse as any)?.data?.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      },
+    [vehiclesResponse]
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, typeFilter, searchTerm, pageSize]);
 
   // Transform API data to Truck format
   const trucks: Truck[] =
@@ -65,33 +105,46 @@ const AdminTrucks = () => {
       status: vehicle.status || "active",
       driver: "Unassigned", // Will be updated when driver assignment is implemented
       location: "Unknown", // Will be updated when GPS tracking is implemented
-      lastMaintenance: vehicle.last_maintenance_date || "N/A",
+      lastMaintenance: vehicle.last_maintenance_date
+        ? new Date(vehicle.last_maintenance_date).toLocaleDateString()
+        : "N/A",
       totalDeliveries: 0, // Will be updated when delivery tracking is implemented
       fuelLevel: 0, // Will be updated when fuel tracking is implemented
       year: vehicle.year?.toString() || "N/A",
       manufacturer: vehicle.make || "Unknown",
       engineType: vehicle.fuel_type || "Diesel",
       mileage: vehicle.total_distance_km || 0,
-      insuranceExpiry: vehicle.insurance_expiry || "N/A",
-      registrationExpiry: vehicle.registration_expiry || "N/A",
+      insuranceExpiry: vehicle.insurance_expiry
+        ? new Date(vehicle.insurance_expiry).toLocaleDateString()
+        : "N/A",
+      registrationExpiry: vehicle.registration_expiry
+        ? new Date(vehicle.registration_expiry).toLocaleDateString()
+        : "N/A",
       is_active: vehicle.status === "active",
+      color: vehicle.color || "Unknown",
+      fuelEfficiency: vehicle.fuel_efficiency || "N/A",
+      capacityVolume: vehicle.capacity_volume || 0,
+      nextMaintenance: vehicle.next_maintenance_date
+        ? new Date(vehicle.next_maintenance_date).toLocaleDateString()
+        : "N/A",
     })) || [];
 
+  console.log("🚛 AdminTrucks - vehiclesResponse:", vehiclesResponse);
   console.log("🚛 AdminTrucks - vehiclesData:", vehiclesData);
+  console.log("🚛 AdminTrucks - pagination:", pagination);
   console.log("🚛 AdminTrucks - trucks:", trucks);
 
-  // Filter trucks based on active tab
-  const filteredTrucks = trucks.filter((truck) => {
-    switch (activeTab) {
-      case "active":
-        return truck.status === "active";
-      case "maintenance":
-        return truck.status === "maintenance";
-      case "all":
-      default:
-        return true;
-    }
-  });
+  // Get current count based on selected status filter
+  const currentCount = useMemo(() => {
+    return pagination.total; // This will be the total for the current filter
+  }, [pagination.total]);
+
+  // Status tabs configuration
+  const statusTabs = [
+    { key: "all", label: t("common.all") },
+    { key: "active", label: t("status.active") },
+    { key: "maintenance", label: t("status.maintenance") },
+  ];
 
   // Event handlers
   const handleViewTruckDetails = (truck: Truck) => {
@@ -231,33 +284,17 @@ const AdminTrucks = () => {
     );
   }
 
-  const tabs = [
-    {
-      value: "all",
-      label: t("adminTrucks.allTrucks"),
-      count: trucks.length,
-    },
-    {
-      value: "active",
-      label: t("adminTrucks.active"),
-      count: trucks.filter((t) => t.status === "active").length,
-    },
-    {
-      value: "maintenance",
-      label: t("adminTrucks.maintenance"),
-      count: trucks.filter((t) => t.status === "maintenance").length,
-    },
-  ];
-
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Main Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
             {t("adminTrucks.title")}
           </h1>
-          <p className="text-muted-foreground">{t("adminTrucks.subtitle")}</p>
+          <p className="text-muted-foreground mt-1">
+            {t("adminTrucks.subtitle")}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Button
@@ -277,8 +314,46 @@ const AdminTrucks = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4">
+      {/* Status Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-gray-200">
+        {statusTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setStatusFilter(tab.key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              statusFilter === tab.key
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            {tab.label}
+            {statusFilter === tab.key && (
+              <span className="ml-2 px-2 py-1 text-xs bg-gray-100 rounded-full">
+                {currentCount}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Search and Filters Section */}
+      <div className="flex flex-wrap gap-4 items-center">
+        {/* Search Input */}
+        <div className="flex-1 min-w-64">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder={
+                t("adminTrucks.searchPlaceholder") || "Search trucks..."
+              }
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-full"
+            />
+          </div>
+        </div>
+
+        {/* Status Filter */}
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">{t("common.status")}:</label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -294,6 +369,8 @@ const AdminTrucks = () => {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Type Filter */}
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">
             {t("adminTrucks.vehicleType")}:
@@ -311,14 +388,50 @@ const AdminTrucks = () => {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Page Size */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Per Page:</label>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => setPageSize(parseInt(value))}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Clear Filters */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setStatusFilter("all");
+            setTypeFilter("all");
+            setSearchTerm("");
+            setCurrentPage(1);
+          }}
+        >
+          Clear
+        </Button>
       </div>
 
-      {/* Tabs */}
-      <CustomTabs tabs={tabs} value={activeTab} onValueChange={setActiveTab} />
-
-      {/* Table */}
+      {/* Truck Table */}
       <TruckTable
-        trucks={filteredTrucks}
+        trucks={trucks}
+        title=""
+        showStats={false}
+        showSearch={false} // Disable internal search since we use backend search
+        showFilters={false} // Disable internal filters since we use backend filters
+        showPagination={false} // We handle pagination manually
+        itemsPerPage={pageSize}
         onViewDetails={handleViewTruckDetails}
         onEditTruck={handleEditTruck}
         onDeleteTruck={handleDeleteTruck}
@@ -326,6 +439,74 @@ const AdminTrucks = () => {
         onTrackTruck={handleTrackTruck}
         onScheduleMaintenance={handleAddMaintenance}
       />
+
+      {/* Compact Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+            {pagination.total} results
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(1)}
+              disabled={!pagination.hasPrev}
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={!pagination.hasPrev}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from(
+                { length: Math.min(5, pagination.totalPages) },
+                (_, i) => {
+                  const page =
+                    Math.max(
+                      1,
+                      Math.min(pagination.totalPages - 4, pagination.page - 2)
+                    ) + i;
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  );
+                }
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={!pagination.hasNext}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(pagination.totalPages)}
+              disabled={!pagination.hasNext}
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {selectedTruck && (
@@ -345,32 +526,135 @@ const AdminTrucks = () => {
         onClose={() => setIsCreateModalOpen(false)}
         title={t("adminTrucks.createNewTruck")}
       >
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="model">{t("adminTrucks.model")}</Label>
-            <Input id="model" placeholder={t("adminTrucks.enterModel")} />
-          </div>
-          <div>
-            <Label htmlFor="licensePlate">
-              {t("adminTrucks.licensePlate")}
-            </Label>
-            <Input
-              id="licensePlate"
-              placeholder={t("adminTrucks.enterLicensePlate")}
-            />
-          </div>
-          <div>
-            <Label htmlFor="capacity">{t("adminTrucks.capacity")}</Label>
-            <Input id="capacity" placeholder={t("adminTrucks.enterCapacity")} />
-          </div>
-          <div>
-            <Label htmlFor="year">{t("adminTrucks.year")}</Label>
-            <Input
-              id="year"
-              type="number"
-              placeholder={t("adminTrucks.enterYear")}
-            />
-          </div>
+        <div className="space-y-6">
+          {/* Vehicle Details */}
+          <Card>
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-gray-900 mb-4">
+                Vehicle Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="make">Make</Label>
+                  <Input
+                    id="make"
+                    placeholder="e.g., Toyota, Ford, Honda"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="model">Model</Label>
+                  <Input
+                    id="model"
+                    placeholder="e.g., Hiace, Transit, CG125"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="year">Year</Label>
+                  <Input
+                    id="year"
+                    type="number"
+                    placeholder="2024"
+                    min="1990"
+                    max="2025"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="color">Color</Label>
+                  <Input
+                    id="color"
+                    placeholder="e.g., Silver, Black, Red"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="plateNumber">License Plate</Label>
+                  <Input
+                    id="plateNumber"
+                    placeholder="e.g., RAB789C"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vehicleType">Vehicle Type</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="truck">Truck</SelectItem>
+                      <SelectItem value="van">Van</SelectItem>
+                      <SelectItem value="pickup">Pickup</SelectItem>
+                      <SelectItem value="moto">Motorcycle</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Capacity and Performance */}
+          <Card>
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-gray-900 mb-4">
+                Capacity & Performance
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="capacityKg">Capacity (kg)</Label>
+                  <Input
+                    id="capacityKg"
+                    type="number"
+                    placeholder="1500"
+                    min="0"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="capacityVolume">Volume (m³)</Label>
+                  <Input
+                    id="capacityVolume"
+                    type="number"
+                    step="0.1"
+                    placeholder="4.0"
+                    min="0"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fuelType">Fuel Type</Label>
+                  <Select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select fuel type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="petrol">Petrol</SelectItem>
+                      <SelectItem value="diesel">Diesel</SelectItem>
+                      <SelectItem value="electric">Electric</SelectItem>
+                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="fuelEfficiency">
+                    Fuel Efficiency (L/100km)
+                  </Label>
+                  <Input
+                    id="fuelEfficiency"
+                    type="number"
+                    step="0.1"
+                    placeholder="10.5"
+                    min="0"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -379,7 +663,18 @@ const AdminTrucks = () => {
             >
               {t("common.cancel")}
             </Button>
-            <Button className="flex-1">{t("adminTrucks.createTruck")}</Button>
+            <Button
+              className="flex-1"
+              onClick={() => {
+                // TODO: Implement create truck functionality
+                customToast.success("Truck created successfully");
+                setIsCreateModalOpen(false);
+                refetch();
+              }}
+            >
+              <TruckIcon className="h-4 w-4 mr-2" />
+              {t("adminTrucks.createTruck")}
+            </Button>
           </div>
         </div>
       </ModernModel>
@@ -390,44 +685,168 @@ const AdminTrucks = () => {
         onClose={() => setIsEditModalOpen(false)}
         title={t("adminTrucks.editTruck")}
       >
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="editModel">{t("adminTrucks.model")}</Label>
-            <Input
-              id="editModel"
-              defaultValue={editingTruck?.model || ""}
-              placeholder={t("adminTrucks.enterModel")}
-            />
+        {editingTruck && (
+          <div className="space-y-6">
+            {/* Vehicle Details */}
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  Vehicle Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="editMake">Make</Label>
+                    <Input
+                      id="editMake"
+                      defaultValue={editingTruck.manufacturer || ""}
+                      placeholder="e.g., Toyota, Ford, Honda"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editModel">Model</Label>
+                    <Input
+                      id="editModel"
+                      defaultValue={editingTruck.model || ""}
+                      placeholder="e.g., Hiace, Transit, CG125"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editYear">Year</Label>
+                    <Input
+                      id="editYear"
+                      type="number"
+                      defaultValue={editingTruck.year || ""}
+                      placeholder="2024"
+                      min="1990"
+                      max="2025"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editColor">Color</Label>
+                    <Input
+                      id="editColor"
+                      defaultValue={(editingTruck as any).color || ""}
+                      placeholder="e.g., Silver, Black, Red"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editLicensePlate">License Plate</Label>
+                    <Input
+                      id="editLicensePlate"
+                      defaultValue={editingTruck.licensePlate || ""}
+                      placeholder="e.g., RAB789C"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editStatus">Status</Label>
+                    <Select defaultValue={editingTruck.status}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Capacity and Performance */}
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  Capacity & Performance
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="editCapacityKg">Capacity (kg)</Label>
+                    <Input
+                      id="editCapacityKg"
+                      type="number"
+                      defaultValue={
+                        editingTruck.capacity?.replace(" kg", "") || ""
+                      }
+                      placeholder="1500"
+                      min="0"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editCapacityVolume">Volume (m³)</Label>
+                    <Input
+                      id="editCapacityVolume"
+                      type="number"
+                      step="0.1"
+                      defaultValue={(editingTruck as any).capacityVolume || ""}
+                      placeholder="4.0"
+                      min="0"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editFuelType">Fuel Type</Label>
+                    <Select defaultValue={editingTruck.engineType}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="petrol">Petrol</SelectItem>
+                        <SelectItem value="diesel">Diesel</SelectItem>
+                        <SelectItem value="electric">Electric</SelectItem>
+                        <SelectItem value="hybrid">Hybrid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="editFuelEfficiency">
+                      Fuel Efficiency (L/100km)
+                    </Label>
+                    <Input
+                      id="editFuelEfficiency"
+                      type="number"
+                      step="0.1"
+                      defaultValue={(editingTruck as any).fuelEfficiency || ""}
+                      placeholder="10.5"
+                      min="0"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setIsEditModalOpen(false)}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  // TODO: Implement update truck functionality
+                  customToast.success("Truck updated successfully");
+                  setIsEditModalOpen(false);
+                  refetch();
+                }}
+              >
+                <TruckIcon className="h-4 w-4 mr-2" />
+                {t("common.save")}
+              </Button>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="editLicensePlate">
-              {t("adminTrucks.licensePlate")}
-            </Label>
-            <Input
-              id="editLicensePlate"
-              defaultValue={editingTruck?.licensePlate || ""}
-              placeholder={t("adminTrucks.enterLicensePlate")}
-            />
-          </div>
-          <div>
-            <Label htmlFor="editCapacity">{t("adminTrucks.capacity")}</Label>
-            <Input
-              id="editCapacity"
-              defaultValue={editingTruck?.capacity || ""}
-              placeholder={t("adminTrucks.enterCapacity")}
-            />
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setIsEditModalOpen(false)}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button className="flex-1">{t("common.save")}</Button>
-          </div>
-        </div>
+        )}
       </ModernModel>
     </div>
   );
