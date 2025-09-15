@@ -1,19 +1,19 @@
 {
   "common": {
-    "loading": "Gukora...",
-    "error": "Ikosa",
-    "success": "Intsinzi",
-    "cancel": "Kureka",
+    "loading": "tegereza...",
+    "error": "ikosa",
+    "success": "byakkunze",
+    "cancel": "Bireke",
     "save": "Bika",
     "edit": "Hindura",
     "delete": "Siba",
     "confirm": "Emeza",
     "back": "Subira inyuma",
     "next": "Ibikurikira",
-    "previous": "Byabanjirije",
+    "previous": "ibibanza",
     "search": "Shakisha",
-    "filter": "Suzuma",
-    "clear": "Subira",
+    "filter": "Shakisha Na",
+    "clear": "Hanagura",
     "submit": "Ohereza",
     "close": "Funga",
     "yes": "Yego",
@@ -659,11 +659,6 @@
     "high": "Hejuru",
     "urgent": "Bihutirwa"
   },
-  "businessType": {
-    "individual": "Umuntu ku giti cye",
-    "corporate": "Ikigo",
-    "government": "Leta"
-  },
   "vehicleType": {
     "truck": "Imiduka",
     "moto": "Imidukira",
@@ -1089,9 +1084,7 @@
     "title": "Gutanga Ibintu",
     "subtitle": "Gucunga gutanga ibintu n'ugutanga abashoferi",
     "createAssignment": "Kora Gutanga",
-    "editAssignment": "Guhindura Gutanga",
     "updateAssignment": "Gusubiramo Gutanga",
-    "cancelAssignment": "Guhagarika Gutanga",
     "assignmentsTable": "Gutanga",
     "filters": "Icyegeranyo",
     "searchPlaceholder": "Shakisha ku ID y'ibintu, izina ry'umushoferi, cyangwa ikinyabiziga...",
