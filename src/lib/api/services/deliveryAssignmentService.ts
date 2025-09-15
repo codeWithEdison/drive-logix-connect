@@ -81,8 +81,6 @@ export interface AssignmentFilters {
   status?: "pending" | "accepted" | "rejected" | "cancelled";
   driver_id?: string;
   vehicle_id?: string;
-  date_from?: string;
-  date_to?: string;
   page?: number;
   limit?: number;
 }
@@ -127,7 +125,7 @@ export interface AssignmentError {
 }
 
 class DeliveryAssignmentService {
-  private baseUrl = "/admin/delivery-assignments";
+  private baseUrl = "/delivery-assignments";
   private driverBaseUrl = "/delivery-assignments";
 
   /**
@@ -156,8 +154,6 @@ class DeliveryAssignmentService {
       if (filters.status) params.append("status", filters.status);
       if (filters.driver_id) params.append("driver_id", filters.driver_id);
       if (filters.vehicle_id) params.append("vehicle_id", filters.vehicle_id);
-      if (filters.date_from) params.append("date_from", filters.date_from);
-      if (filters.date_to) params.append("date_to", filters.date_to);
       if (filters.page) params.append("page", filters.page.toString());
       if (filters.limit) params.append("limit", filters.limit.toString());
 
@@ -261,8 +257,6 @@ class DeliveryAssignmentService {
       const params = new URLSearchParams();
 
       if (filters.status) params.append("status", filters.status);
-      if (filters.date_from) params.append("date_from", filters.date_from);
-      if (filters.date_to) params.append("date_to", filters.date_to);
       if (filters.page) params.append("page", filters.page.toString());
       if (filters.limit) params.append("limit", filters.limit.toString());
 
@@ -285,8 +279,6 @@ class DeliveryAssignmentService {
       const params = new URLSearchParams();
 
       if (filters.status) params.append("status", filters.status);
-      if (filters.date_from) params.append("date_from", filters.date_from);
-      if (filters.date_to) params.append("date_to", filters.date_to);
       if (filters.page) params.append("page", filters.page.toString());
       if (filters.limit) params.append("limit", filters.limit.toString());
 

@@ -5,6 +5,7 @@ import {
   CreateVehicleRequest,
   VehicleSearchParams,
 } from "../../../types/shared";
+import { AvailableVehicleFilters } from "../services/vehicleService";
 
 // Vehicle hooks
 export const useVehicles = (params?: VehicleSearchParams) => {
@@ -22,6 +23,17 @@ export const useVehicles = (params?: VehicleSearchParams) => {
         return [];
       }
     },
+  });
+};
+
+export const useAvailableVehiclesWithoutAssignments = (
+  filters: AvailableVehicleFilters = {}
+) => {
+  return useQuery({
+    queryKey: ["available-vehicles-without-assignments", filters],
+    queryFn: () =>
+      VehicleService.getAvailableVehiclesWithoutAssignments(filters),
+    select: (data) => data.data,
   });
 };
 

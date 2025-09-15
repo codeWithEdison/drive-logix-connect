@@ -9,10 +9,31 @@ import {
   DeliveryAssignment,
 } from "../../../types/shared";
 
+export interface AvailableDriverFilters {
+  date?: string;
+  page?: number;
+  limit?: number;
+}
+
 export class DriverService {
   // Get driver profile
   static async getProfile(): Promise<ApiResponse<Driver>> {
     const response = await axiosInstance.get("/drivers/profile");
+    return response.data;
+  }
+
+  // Get available drivers without assignments - fallback to regular drivers
+  static async getAvailableDriversWithoutAssignments(
+    filters: AvailableDriverFilters = {}
+  ): Promise<ApiResponse<Driver[]>> {
+    const params = new URLSearchParams();
+
+    // Use regular drivers endpoint as fallback
+    params.append("status", "available");
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+
+    const response = await axiosInstance.get(`/drivers?${params.toString()}`);
     return response.data;
   }
 

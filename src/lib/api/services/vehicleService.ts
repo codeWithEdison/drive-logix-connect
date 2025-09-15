@@ -9,12 +9,38 @@ import {
   CreateMaintenanceRecordRequest,
 } from "../../../types/shared";
 
+export interface AvailableVehicleFilters {
+  date?: string;
+  type?: "truck" | "moto" | "van" | "pickup";
+  capacity_min?: number;
+  page?: number;
+  limit?: number;
+}
+
 export class VehicleService {
   // Get all vehicles
   static async getVehicles(
     params?: VehicleSearchParams
   ): Promise<ApiResponse<PaginationResponse<Vehicle>>> {
     const response = await axiosInstance.get("/vehicles", { params });
+    return response.data;
+  }
+
+  // Get available vehicles without assignments - fallback to regular vehicles
+  static async getAvailableVehiclesWithoutAssignments(
+    filters: AvailableVehicleFilters = {}
+  ): Promise<ApiResponse<Vehicle[]>> {
+    const params = new URLSearchParams();
+
+    // Use regular vehicles endpoint as fallback
+    params.append("status", "active");
+    if (filters.type) params.append("type", filters.type);
+    if (filters.capacity_min)
+      params.append("capacity_min", filters.capacity_min.toString());
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+
+    const response = await axiosInstance.get(`/vehicles?${params.toString()}`);
     return response.data;
   }
 
