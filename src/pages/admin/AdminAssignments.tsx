@@ -470,8 +470,10 @@ export default function AdminAssignments() {
                     ) : (
                       (Array.isArray(driversData)
                         ? driversData
-                        : (driversData as any)?.data || []
-                      )?.map((driver: any) => (
+                        : Array.isArray((driversData as any)?.data)
+                        ? (driversData as any).data
+                        : []
+                      ).map((driver: any) => (
                         <SelectItem key={driver.id} value={driver.id}>
                           {driver.user?.full_name || driver.name} -{" "}
                           {driver.user?.phone || driver.phone}
@@ -505,8 +507,10 @@ export default function AdminAssignments() {
                     ) : (
                       (Array.isArray(vehiclesData)
                         ? vehiclesData
-                        : (vehiclesData as any)?.data || []
-                      )?.map((vehicle: any) => (
+                        : Array.isArray((vehiclesData as any)?.data)
+                        ? (vehiclesData as any).data
+                        : []
+                      ).map((vehicle: any) => (
                         <SelectItem key={vehicle.id} value={vehicle.id}>
                           {vehicle.make} {vehicle.model} -{" "}
                           {vehicle.plate_number}
