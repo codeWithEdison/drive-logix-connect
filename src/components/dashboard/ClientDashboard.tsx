@@ -292,14 +292,14 @@ export function ClientDashboard() {
               {/* Client Info */}
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 leading-tight">
-                  Welcome back,{" "}
+                  {t("clientDashboard.header.welcomeBack")}{" "}
                   <span className="break-words">
                     {user?.full_name || t("common.client")}
                   </span>
                   !
                 </h1>
                 <p className="text-purple-100 text-sm sm:text-base lg:text-lg mb-2 sm:mb-3">
-                  Track your shipments and manage deliveries
+                  {t("clientDashboard.header.trackShipments")}
                 </p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
@@ -307,18 +307,22 @@ export function ClientDashboard() {
                     <span className="font-semibold">
                       {dashboardData?.data?.stats?.total_cargos || 0}
                     </span>
-                    <span className="text-purple-200">total shipments</span>
+                    <span className="text-purple-200">
+                      {t("clientDashboard.stats.totalShipmentsLabel")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Truck className="w-3 h-3 sm:w-4 sm:h-4 text-purple-200" />
                     <span className="font-semibold">
                       {dashboardData?.data?.stats?.in_transit_cargos || 0}
                     </span>
-                    <span className="text-purple-200">in transit</span>
+                    <span className="text-purple-200">
+                      {t("clientDashboard.stats.inTransitLabel")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-green-500/20 text-green-200 border-green-400/30 text-xs">
-                      Active Client
+                      {t("clientDashboard.header.activeClient")}
                     </Badge>
                   </div>
                 </div>
@@ -362,13 +366,13 @@ export function ClientDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Total Shipments
+                  {t("clientDashboard.stats.totalShipments")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {dashboardData?.data?.stats?.total_cargos || 0}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  All time
+                  {t("clientDashboard.stats.allTime")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
@@ -383,13 +387,13 @@ export function ClientDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  In Transit
+                  {t("clientDashboard.stats.inTransit")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {dashboardData?.data?.stats?.in_transit_cargos || 0}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  Active deliveries
+                  {t("clientDashboard.stats.activeDeliveries")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
@@ -404,13 +408,13 @@ export function ClientDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Delivered
+                  {t("clientDashboard.stats.delivered")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {dashboardData?.data?.stats?.delivered_cargos || 0}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  Completed
+                  {t("clientDashboard.stats.completed")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
@@ -425,7 +429,7 @@ export function ClientDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Pending Payment
+                  {t("clientDashboard.stats.pendingPayment")}
                 </p>
                 <div className="min-w-0">
                   <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 break-words leading-tight">
@@ -435,7 +439,7 @@ export function ClientDashboard() {
                   </p>
                 </div>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  Outstanding
+                  {t("clientDashboard.stats.outstanding")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto flex-shrink-0">
@@ -592,7 +596,7 @@ export function ClientDashboard() {
                       {t("dashboard.invoiceNo")}
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600">
-                      {t("dashboard.cargoId")}
+                      {t("dashboard.cargoNumber")}
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 hidden sm:table-cell">
                       {t("dashboard.client")}
@@ -617,7 +621,9 @@ export function ClientDashboard() {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm text-gray-600">
-                        <p className="truncate">{invoice.cargo_id}</p>
+                        <p className="truncate">
+                          {invoice.cargo_number || invoice.cargo_id}
+                        </p>
                       </TableCell>
                       <TableCell className="text-sm font-medium text-gray-900 hidden sm:table-cell">
                         {user?.full_name}

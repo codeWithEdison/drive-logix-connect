@@ -322,7 +322,8 @@
     "day":"Umunsi",
     "week":"icyumweru",
     "totalActivities": "Ibyakozwe byose",
-    "performanceMetrics": "Ibyegeranyo by'ikorwa"
+    "performanceMetrics": "Ibyegeranyo by'ikorwa",
+    "cargoNumber": "Numero y'ikintu"
   },
   "cargo": {
     "createCargo": "Kurema ikintu",

@@ -1,6 +1,6 @@
 import axiosInstance from "../axios";
-import { 
-  ApiResponse, 
+import {
+  ApiResponse,
   PaginationResponse,
   DashboardResponse,
   DashboardOverview,
@@ -15,7 +15,7 @@ import {
   VehicleAnalyticsDashboard,
   ClientAnalyticsDashboard,
   SystemHealthDashboard,
-  DashboardFilters
+  DashboardFilters,
 } from "../../../types/shared";
 
 // ===========================================
@@ -156,6 +156,7 @@ export class DashboardService {
       recent_invoices: Array<{
         invoice_id: string;
         cargo_id: string;
+        cargo_number?: string; // Optional field for backward compatibility
         invoice_number: string;
         amount: number;
         status: string;
@@ -335,7 +336,9 @@ export class DashboardService {
   }
 
   // Super Admin Dashboard
-  static async getSuperAdminDashboard(): Promise<ApiResponse<DashboardResponse>> {
+  static async getSuperAdminDashboard(): Promise<
+    ApiResponse<DashboardResponse>
+  > {
     const response = await axiosInstance.get("/dashboard/super-admin");
     return response.data;
   }
@@ -641,7 +644,9 @@ export class DashboardService {
   // ===========================================
 
   // Apply Dashboard Filters
-  static async applyDashboardFilters(filters: DashboardFilters): Promise<ApiResponse<any>> {
+  static async applyDashboardFilters(
+    filters: DashboardFilters
+  ): Promise<ApiResponse<any>> {
     const response = await axiosInstance.post("/dashboard/filters", filters);
     return response.data;
   }

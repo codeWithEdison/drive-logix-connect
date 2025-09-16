@@ -15,7 +15,7 @@ import {
   PaymentStatus,
   MaintenanceType,
   PaymentMethod,
-} from '@/types/shared';
+} from "@/types/shared";
 
 // ===========================================
 // DRIVER DASHBOARD INTERFACES
@@ -185,6 +185,7 @@ export interface ClientCargo {
 export interface ClientInvoice {
   invoice_id: UUID;
   cargo_id: UUID;
+  cargo_number?: string; // Optional field for backward compatibility
   invoice_number: string;
   amount: number;
   status: InvoiceStatus;
@@ -267,10 +268,10 @@ export interface RecentDeliveryTable {
 
 export interface PendingApproval {
   id: UUID;
-  type: 'driver_registration' | 'client_registration' | 'vehicle_registration';
+  type: "driver_registration" | "client_registration" | "vehicle_registration";
   name: string;
   email: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   submitted_at: string;
   documents_count: number;
 }
@@ -287,7 +288,7 @@ export interface SystemAlert {
 
 export interface FinancialTransaction {
   id: UUID;
-  type: 'payment' | 'refund' | 'invoice';
+  type: "payment" | "refund" | "invoice";
   amount: number;
   currency: string;
   status: PaymentStatus;
@@ -343,17 +344,25 @@ export interface SuperAdminTables {
 
 export interface SuperAdminApproval {
   id: UUID;
-  type: 'admin_registration' | 'driver_registration' | 'client_registration' | 'system_config';
+  type:
+    | "admin_registration"
+    | "driver_registration"
+    | "client_registration"
+    | "system_config";
   name: string;
   email: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   submitted_at: string;
   admin_notes?: string;
 }
 
 export interface SuperAdminAlert {
   id: UUID;
-  type: 'system_maintenance' | 'security_alert' | 'performance_alert' | 'data_backup';
+  type:
+    | "system_maintenance"
+    | "security_alert"
+    | "performance_alert"
+    | "data_backup";
   message: string;
   severity: ActivitySeverity;
   created_at: string;
@@ -382,7 +391,12 @@ export interface SystemHealth {
 
 export interface SystemLog {
   id: UUID;
-  type: 'user_login' | 'system_config' | 'data_export' | 'user_creation' | 'security_alert';
+  type:
+    | "user_login"
+    | "system_config"
+    | "data_export"
+    | "user_creation"
+    | "security_alert";
   user: string;
   action: string;
   ip_address: string;
@@ -510,7 +524,7 @@ export interface AdminPerformanceChart {
 
 export interface UsersDistributionChart {
   users_by_role: Record<UserRole, number>;
-  users_by_status: Record<'active' | 'inactive', number>;
+  users_by_status: Record<"active" | "inactive", number>;
   users_by_business_type: Record<BusinessType, number>;
   registration_trends: Array<{
     date: string;
@@ -524,37 +538,37 @@ export interface UsersDistributionChart {
 // ===========================================
 
 export type ActivityType =
-  | 'cargo_created'
-  | 'cargo_assigned'
-  | 'cargo_picked_up'
-  | 'cargo_delivered'
-  | 'cargo_cancelled'
-  | 'payment_received'
-  | 'invoice_generated'
-  | 'driver_registered'
-  | 'client_registered'
-  | 'system_alert'
-  | 'maintenance_due'
-  | 'license_expiring';
+  | "cargo_created"
+  | "cargo_assigned"
+  | "cargo_picked_up"
+  | "cargo_delivered"
+  | "cargo_cancelled"
+  | "payment_received"
+  | "invoice_generated"
+  | "driver_registered"
+  | "client_registered"
+  | "system_alert"
+  | "maintenance_due"
+  | "license_expiring";
 
 export type AlertType =
-  | 'system_maintenance'
-  | 'security_alert'
-  | 'performance_alert'
-  | 'data_backup'
-  | 'license_expiry'
-  | 'maintenance_due'
-  | 'payment_overdue'
-  | 'delivery_delay';
+  | "system_maintenance"
+  | "security_alert"
+  | "performance_alert"
+  | "data_backup"
+  | "license_expiry"
+  | "maintenance_due"
+  | "payment_overdue"
+  | "delivery_delay";
 
-export type ActivitySeverity = 'low' | 'medium' | 'high' | 'critical';
+export type ActivitySeverity = "low" | "medium" | "high" | "critical";
 
 // ===========================================
 // FILTER INTERFACES
 // ===========================================
 
 export interface DashboardFilters {
-  period?: 'day' | 'week' | 'month' | 'year';
+  period?: "day" | "week" | "month" | "year";
   start_date?: string;
   end_date?: string;
   limit?: number;

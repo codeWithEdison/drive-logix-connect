@@ -328,7 +328,8 @@
     "day": "Jour",
     "week": "Semaine",
     "totalActivities": "Total des activités",
-    "performanceMetrics": "Métriques de performance"
+    "performanceMetrics": "Métriques de performance",
+    "cargoNumber": "Numéro de cargaison"
   },
   "cargo": {
     "createCargo": "Créer une cargaison",

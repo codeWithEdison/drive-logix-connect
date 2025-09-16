@@ -144,7 +144,6 @@
     "destination": "Destination",
     "from": "From",
     "value": "Value",
-    "rating": "Rating",
     "other": "Other",
     "notAvailable": "N/A",
     "locationTBD": "Location TBD",
@@ -212,14 +211,13 @@
     "user": "User",
     "users": "Users",
     "filters": "Filters",
-    "loading": "Loading",
     "loadError": "Failed to load data",
     "english": "English",
     "kinyarwanda": "Kinyarwanda",
     "french": "French",
     "lastLogin": "Last Login",
     "preferredLanguage": "Preferred Language",
-    "password":"Password"
+    "password": "Password"
   },
   "auth": {
     "login": "Login",
@@ -433,7 +431,8 @@
     "totalAdmins": "Total Admins",
     "avgEfficiency": "Avg Efficiency",
     "tasks": "Tasks",
-    "efficiency": "Efficiency"
+    "efficiency": "Efficiency",
+    "cargoNumber": "Cargo Number"
   },
   "cargo": {
     "createCargo": "Create Cargo",
@@ -1166,13 +1165,18 @@
     "title": "Client Dashboard",
     "subtitle": "Welcome to your cargo management dashboard",
     "welcome": "Welcome back, {{name}}!",
+    "welcomeMessage": "Track your shipments and manage deliveries",
     "overview": "Overview",
     "quickStats": "Quick Stats",
     "recentActivity": "Recent Activity",
     "quickActions": "Quick Actions",
     "totalCargos": "Total Cargos",
+    "totalShipments": "Total Shipments",
     "activeDeliveries": "Active Deliveries",
+    "inTransit": "In Transit",
+    "delivered": "Delivered",
     "pendingPayments": "Pending Payments",
+    "pendingPayment": "Pending Payment",
     "totalSpent": "Total Spent",
     "averageRating": "Average Rating",
     "createNewCargo": "Create New Cargo",
@@ -1188,7 +1192,24 @@
     "noInvoicesDescription": "No invoices found",
     "noActivities": "No activities",
     "noActivitiesDescription": "No activities found",
-    "completedDeliveries": "Completed Deliveries"
+    "completedDeliveries": "Completed Deliveries",
+    "stats": {
+      "totalShipments": "Total Shipments",
+      "inTransit": "In Transit",
+      "delivered": "Delivered",
+      "pendingPayment": "Pending Payment",
+      "allTime": "All time",
+      "activeDeliveries": "Active deliveries",
+      "completed": "Completed",
+      "outstanding": "Outstanding",
+      "totalShipmentsLabel": "total shipments",
+      "inTransitLabel": "in transit"
+    },
+    "header": {
+      "welcomeBack": "Welcome back,",
+      "trackShipments": "Track your shipments and manage deliveries",
+      "activeClient": "Active Client"
+    }
   },
   "createCargo": {
     "title": "Create Cargo",
@@ -1491,12 +1512,12 @@
     "userStatusUpdated": "User Status Updated",
     "userStatusUpdatedSuccess": "{{name}} status has been updated to {{status}}",
     "viewReports": "View Reports",
-        "updateAdmin": "Update Admin",
-        "createAdmin": "Create Admin",
-        "userType": "User Type",
-        "createUser": "Create User",
-        "editUser": "Edit User",
-        "updateUser": "Update User"
+    "updateAdmin": "Update Admin",
+    "createAdmin": "Create Admin",
+    "userType": "User Type",
+    "createUser": "Create User",
+    "editUser": "Edit User",
+    "updateUser": "Update User"
   },
 
   "profile": {
