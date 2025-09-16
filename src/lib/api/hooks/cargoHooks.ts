@@ -6,6 +6,7 @@ import {
   CargoStatus,
   CargoSearchParams,
 } from "../../../types/shared";
+import { UnassignedCargoFilters } from "../services/cargoService";
 
 // Cargo hooks
 export const useCreateCargo = () => {
@@ -19,6 +20,14 @@ export const useCreateCargo = () => {
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.cargos.all() });
     },
+  });
+};
+
+export const useUnassignedCargos = (filters: UnassignedCargoFilters = {}) => {
+  return useQuery({
+    queryKey: ["unassigned-cargos", filters],
+    queryFn: () => CargoService.getUnassignedCargos(filters),
+    select: (data) => data.data,
   });
 };
 

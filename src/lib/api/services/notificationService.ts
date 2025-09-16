@@ -88,13 +88,33 @@ export interface MarkReadResponse {
   };
 }
 
+export interface NotificationSettings {
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  pushNotifications: boolean;
+  deliveryUpdates: boolean;
+  paymentNotifications: boolean;
+  systemAlerts: boolean;
+  marketingEmails: boolean;
+}
+
+export interface NotificationSettingsResponse {
+  success: boolean;
+  message: string;
+  data: NotificationSettings;
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
 class NotificationService {
-  private baseUrl = "/drivers/notifications";
+  private static baseUrl = "/drivers/notifications";
 
   /**
    * Get driver notifications
    */
-  async getNotifications(
+  static async getNotifications(
     filters: NotificationFilters = {}
   ): Promise<NotificationListResponse> {
     try {
@@ -108,56 +128,111 @@ class NotificationService {
       if (filters.limit) params.append("limit", filters.limit.toString());
 
       const response = await axiosInstance.get(
-        `${this.baseUrl}?${params.toString()}`
+        `${NotificationService.baseUrl}?${params.toString()}`
       );
       return response.data;
     } catch (error: any) {
-      throw this.handleError(error);
+      throw NotificationService.handleError(error);
     }
   }
 
   /**
    * Mark notification as read
    */
-  async markAsRead(notificationId: string): Promise<MarkReadResponse> {
+  static async markAsRead(notificationId: string): Promise<MarkReadResponse> {
     try {
       const response = await axiosInstance.put(
-        `${this.baseUrl}/${notificationId}/read`
+        `${NotificationService.baseUrl}/${notificationId}/read`
       );
       return response.data;
     } catch (error: any) {
-      throw this.handleError(error);
+      throw NotificationService.handleError(error);
     }
   }
 
   /**
    * Mark all notifications as read
    */
-  async markAllAsRead(): Promise<MarkReadResponse> {
+  static async markAllAsRead(): Promise<MarkReadResponse> {
     try {
-      const response = await axiosInstance.put(`${this.baseUrl}/read-all`);
+      const response = await axiosInstance.put(
+        `${NotificationService.baseUrl}/read-all`
+      );
       return response.data;
     } catch (error: any) {
-      throw this.handleError(error);
+      throw NotificationService.handleError(error);
     }
   }
 
   /**
    * Get notification statistics
    */
-  async getNotificationStats(): Promise<NotificationStatsResponse> {
+  static async getNotificationStats(): Promise<NotificationStatsResponse> {
     try {
-      const response = await axiosInstance.get(`${this.baseUrl}/stats`);
+      const response = await axiosInstance.get(
+        `${NotificationService.baseUrl}/stats`
+      );
       return response.data;
     } catch (error: any) {
-      throw this.handleError(error);
+      throw NotificationService.handleError(error);
+    }
+  }
+
+  /**
+   * Get notification settings
+   */
+  static async getSettings(): Promise<NotificationSettingsResponse> {
+    try {
+      const response = await axiosInstance.get("/admin/notification-settings");
+      return response.data;
+    } catch (error: any) {
+      throw NotificationService.handleError(error);
+    }
+  }
+
+  /**
+   * Update notification settings
+   */
+  static async updateSettings(
+    settings: NotificationSettings
+  ): Promise<NotificationSettingsResponse> {
+    try {
+      const response = await axiosInstance.put(
+        "/admin/notification-settings",
+        settings
+      );
+      return response.data;
+    } catch (error: any) {
+      throw NotificationService.handleError(error);
+    }
+  }
+
+  /**
+   * Send notification
+   */
+  static async sendNotification(data: {
+    user_id: string;
+    type: string;
+    title?: string;
+    message: string;
+    category?: string;
+    data?: any;
+  }): Promise<any> {
+    try {
+      const response = await axiosInstance.post(
+        "/admin/send-notification",
+        data
+      );
+      return response.data;
+    } catch (error: any) {
+      throw NotificationService.handleError(error);
     }
   }
 
   /**
    * Handle API errors
    */
-  private handleError(error: any): Error {
+  private static handleError(error: any): Error {
     if (error.response?.data?.error) {
       const apiError = error.response.data.error;
       return new Error(`${apiError.code}: ${apiError.message}`);

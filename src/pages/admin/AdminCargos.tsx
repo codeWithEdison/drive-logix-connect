@@ -38,8 +38,8 @@ import {
   useAllCargos,
   useUpdateCargoStatus,
   useCancelCargo,
-  useAdminClients,
 } from "@/lib/api/hooks";
+import { useAdminClients } from "@/lib/api/hooks/adminHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -40,6 +40,7 @@ import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminTrucks from "@/pages/admin/AdminTrucks";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminReports from "@/pages/admin/AdminReports";
+import AdminAssignments from "@/pages/admin/AdminAssignments";
 import SuperAdminUsers from "@/pages/superadmin/SuperAdminUsers";
 import SuperAdminSettings from "@/pages/superadmin/SuperAdminSettings";
 import SuperAdminLogs from "@/pages/superadmin/SuperAdminLogs";
@@ -245,6 +246,14 @@ function AppContent() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminReports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/assignments"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminAssignments />
             </ProtectedRoute>
           }
         />

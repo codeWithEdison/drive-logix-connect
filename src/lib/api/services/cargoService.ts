@@ -10,12 +10,36 @@ import {
   CargoTracking,
 } from "../../../types/shared";
 
+export interface UnassignedCargoFilters {
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  limit?: number;
+}
+
 export class CargoService {
   // Create cargo request - backend returns cargo data directly with nested invoice
   static async createCargo(
     data: CreateCargoRequest
   ): Promise<ApiResponse<any>> {
     const response = await axiosInstance.post("/cargos", data);
+    return response.data;
+  }
+
+  // Get unassigned accepted cargo - fallback to regular cargos with status filter
+  static async getUnassignedCargos(
+    filters: UnassignedCargoFilters = {}
+  ): Promise<ApiResponse<Cargo[]>> {
+    const params = new URLSearchParams();
+
+    // Use regular cargos endpoint with status filter as fallback
+    params.append("status", "accepted");
+    if (filters.date_from) params.append("date_from", filters.date_from);
+    if (filters.date_to) params.append("date_to", filters.date_to);
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+
+    const response = await axiosInstance.get(`/cargos?${params.toString()}`);
     return response.data;
   }
 

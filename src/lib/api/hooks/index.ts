@@ -18,3 +18,4 @@ export * from "./utilityHooks";
 export * from "./dashboardHooks";
 export * from "./locationHooks";
 export * from "./assignmentHooks";
+export { useAdminDrivers } from "./adminHooks";

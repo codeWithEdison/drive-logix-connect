@@ -5,23 +5,37 @@ import {
   CreateVehicleRequest,
   VehicleSearchParams,
 } from "../../../types/shared";
+import { AvailableVehicleFilters } from "../services/vehicleService";
 
 // Vehicle hooks
 export const useVehicles = (params?: VehicleSearchParams) => {
   return useQuery({
     queryKey: queryKeys.vehicles.all(params),
     queryFn: () => VehicleService.getVehicles(params),
-    select: (data) => {
+    select: (data: any) => {
       console.log("🔍 useVehicles hook - raw data:", data);
-      // The API returns vehicles directly in data.data array
-      if (data?.data && Array.isArray(data.data)) {
-        return data.data;
+      // The API returns vehicles in data.data.vehicles array with pagination info
+      if (data?.data?.vehicles && Array.isArray(data.data.vehicles)) {
+        return data; // Return the full response to preserve pagination info
+      } else if (data?.data && Array.isArray(data.data)) {
+        return data; // Fallback for different response structure
       } else if (Array.isArray(data)) {
-        return data;
+        return { data: { vehicles: data, pagination: {} } }; // Wrap array response
       } else {
-        return [];
+        return { data: { vehicles: [], pagination: {} } };
       }
     },
+  });
+};
+
+export const useAvailableVehiclesWithoutAssignments = (
+  filters: AvailableVehicleFilters = {}
+) => {
+  return useQuery({
+    queryKey: ["available-vehicles-without-assignments", filters],
+    queryFn: () =>
+      VehicleService.getAvailableVehiclesWithoutAssignments(filters),
+    select: (data) => data.data,
   });
 };
 
