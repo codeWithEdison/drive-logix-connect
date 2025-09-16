@@ -26,20 +26,22 @@ export class CargoService {
     return response.data;
   }
 
-  // Get unassigned accepted cargo - fallback to regular cargos with status filter
+  // Get unassigned accepted cargo - use the correct endpoint
   static async getUnassignedCargos(
     filters: UnassignedCargoFilters = {}
   ): Promise<ApiResponse<Cargo[]>> {
     const params = new URLSearchParams();
 
-    // Use regular cargos endpoint with status filter as fallback
-    params.append("status", "accepted");
+    // Use the correct endpoint for unassigned cargos
     if (filters.date_from) params.append("date_from", filters.date_from);
     if (filters.date_to) params.append("date_to", filters.date_to);
     if (filters.page) params.append("page", filters.page.toString());
     if (filters.limit) params.append("limit", filters.limit.toString());
 
-    const response = await axiosInstance.get(`/cargos?${params.toString()}`);
+    const endpoint = `/cargos/unassigned?${params.toString()}`;
+    console.log("📦 Cargo API Call:", endpoint);
+
+    const response = await axiosInstance.get(endpoint);
     return response.data;
   }
 

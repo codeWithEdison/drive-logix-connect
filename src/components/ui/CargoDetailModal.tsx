@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ModernModel from "@/components/modal/ModernModel";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   MapPin,
   Phone,
@@ -278,6 +279,8 @@ interface CargoDetailModalProps {
   userRole?: "admin" | "superadmin" | "driver" | "client";
   // Call functionality
   onCallContact?: (phone: string, name?: string) => void;
+  // Assignment modal functionality
+  onOpenAssignmentModal?: (cargoId: string) => void;
 }
 
 export function CargoDetailModal({
@@ -300,7 +303,30 @@ export function CargoDetailModal({
   onCreateAssignment,
   userRole = "client",
   onCallContact,
+  onOpenAssignmentModal,
 }: CargoDetailModalProps) {
+  // Get user from auth context to compare roles
+  const { user } = useAuth();
+
+  // Debug logging for all props and auth context
+  console.log("CargoDetailModal Debug Info:", {
+    // Props
+    isOpen,
+    cargo: cargo
+      ? { id: cargo.id, status: cargo.status, cargo_number: cargo.cargo_number }
+      : null,
+    userRoleProp: userRole,
+    onOpenAssignmentModal: !!onOpenAssignmentModal,
+    // Auth Context
+    authUser: user
+      ? { id: user.id, role: user.role, full_name: user.full_name }
+      : null,
+    // Comparison
+    roleMatch: userRole === user?.role,
+    roleFromAuth: user?.role,
+    roleFromProp: userRole,
+  });
+
   // State for countdown timer
   const [countdown, setCountdown] = useState<string>("");
 
@@ -353,9 +379,19 @@ export function CargoDetailModal({
 
   if (!cargo) return null;
 
+  // Debug logging for user role and cargo status
+  console.log("CargoDetailModal Debug Info:", {
+    userRole,
+    cargoStatus: cargo.status,
+    cargoId: cargo.id,
+    cargoNumber: cargo.cargo_number,
+    shouldShowAssignButton: userRole === "admin" && cargo.status === "accepted",
+  });
+
   // Helper functions
   const canViewCostInfo = () => {
-    return ["admin", "superadmin"].includes(userRole);
+    const effectiveRole = userRole === user?.role ? userRole : user?.role;
+    return ["admin", "super_admin"].includes(effectiveRole);
   };
 
   const formatOperatingHours = (operatingHours: any) => {
@@ -1525,6 +1561,41 @@ export function CargoDetailModal({
             </Button>
           </div>
 
+          {/* Admin Actions - Assign Driver for Accepted Cargos */}
+          {(() => {
+            // Use auth context role as fallback if prop role doesn't match
+            const effectiveRole =
+              userRole === user?.role ? userRole : user?.role;
+            const shouldShow =
+              (effectiveRole === "admin" || effectiveRole === "super_admin") &&
+              cargo.status === "accepted" &&
+              !cargo.delivery_assignment; // Only show if no assignment exists
+            console.log("Assign Driver Button Check:", {
+              userRoleProp: userRole,
+              authRole: user?.role,
+              effectiveRole,
+              cargoStatus: cargo.status,
+              hasAssignment: !!cargo.delivery_assignment,
+              shouldShow,
+              onOpenAssignmentModal: !!onOpenAssignmentModal,
+            });
+            return shouldShow;
+          })() && (
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                console.log(
+                  "Assign Driver button clicked for cargo:",
+                  cargo.id
+                );
+                onOpenAssignmentModal?.(cargo.id);
+              }}
+            >
+              <User className="h-4 w-4 mr-2" />
+              Assign Driver
+            </Button>
+          )}
+
           {/* Driver Actions */}
           {isDriverCargo &&
             (cargo.delivery_assignment?.assignment_status === "accepted" ||
@@ -1592,14 +1663,14 @@ export function CargoDetailModal({
             </>
           )}
 
-          <Button
+          {/* <Button
             variant="outline"
             className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
             onClick={() => onReportIssue?.(cargo.id)}
           >
             <AlertCircle className="h-4 w-4 mr-2" />
             Report Issue
-          </Button>
+          </Button> */}
         </div>
       </div>
     </ModernModel>

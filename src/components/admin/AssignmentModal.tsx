@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -25,13 +24,12 @@ import {
   Calendar,
   Phone,
   Mail,
-  Search,
 } from "lucide-react";
 import {
   useCreateAssignment,
   useUpdateDeliveryAssignment,
 } from "@/lib/api/hooks/assignmentHooks";
-import { useUnassignedCargos } from "@/lib/api/hooks/cargoHooks";
+import { useUnassignedCargos, useCargoById } from "@/lib/api/hooks/cargoHooks";
 import { useAvailableDriversWithoutAssignments } from "@/lib/api/hooks/driverHooks";
 import { useAvailableVehiclesWithoutAssignments } from "@/lib/api/hooks/vehicleHooks";
 import { CargoStatus, VehicleStatus } from "@/types/shared";
@@ -45,6 +43,7 @@ interface AssignmentModalProps {
   onSuccess: () => void;
   mode: "create" | "edit";
   assignment?: any;
+  preselectedCargoId?: string;
 }
 
 export default function AssignmentModal({
@@ -53,6 +52,7 @@ export default function AssignmentModal({
   onSuccess,
   mode,
   assignment,
+  preselectedCargoId,
 }: AssignmentModalProps) {
   const { t } = useLanguage();
 
@@ -61,15 +61,9 @@ export default function AssignmentModal({
     cargo_id: "",
     driver_id: "",
     vehicle_id: "",
-    notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Search state
-  const [cargoSearch, setCargoSearch] = useState("");
-  const [driverSearch, setDriverSearch] = useState("");
-  const [vehicleSearch, setVehicleSearch] = useState("");
 
   // API hooks
   const createAssignmentMutation = useCreateAssignment();
@@ -80,19 +74,27 @@ export default function AssignmentModal({
     limit: 100,
   });
 
+  // Fetch preselected cargo data if provided
+  const { data: preselectedCargoData, isLoading: preselectedCargoLoading } =
+    useCargoById(preselectedCargoId || "");
+
   // For edit mode, we need to include the existing assignment's cargo, driver, and vehicle
   // For create mode, we use filtered endpoints
-  const pickupDate =
-    formData.cargo_id &&
-    cargosData?.find((cargo) => cargo.id === formData.cargo_id)?.pickup_date
-      ? new Date(
-          cargosData.find(
-            (cargo) => cargo.id === formData.cargo_id
-          )!.pickup_date
-        )
-          .toISOString()
-          .split("T")[0]
-      : new Date().toISOString().split("T")[0];
+  const getCargoData = () => {
+    if (preselectedCargoData) {
+      return preselectedCargoData;
+    }
+    if (formData.cargo_id && cargosData) {
+      return cargosData.find((cargo) => cargo.id === formData.cargo_id);
+    }
+    return null;
+  };
+
+  const currentCargo = getCargoData();
+
+  const pickupDate = currentCargo?.pickup_date
+    ? new Date(currentCargo.pickup_date).toISOString().split("T")[0]
+    : new Date().toISOString().split("T")[0];
 
   const { data: driversData, isLoading: driversLoading } =
     useAvailableDriversWithoutAssignments({
@@ -103,37 +105,33 @@ export default function AssignmentModal({
   const { data: vehiclesData, isLoading: vehiclesLoading } =
     useAvailableVehiclesWithoutAssignments({
       date: pickupDate,
-      capacity_min:
-        (formData.cargo_id &&
-          cargosData?.find((cargo) => cargo.id === formData.cargo_id)
-            ?.weight_kg) ||
-        0,
+      capacity_min: currentCargo?.weight_kg || 0,
       limit: 100,
     });
 
-  // Initialize form data when editing
+  // Initialize form data when editing or when preselectedCargoId is provided
   useEffect(() => {
     if (mode === "edit" && assignment) {
       setFormData({
         cargo_id: assignment.cargo_id || "",
         driver_id: assignment.driver_id || "",
         vehicle_id: assignment.vehicle_id || "",
-        notes: assignment.notes || "",
+      });
+    } else if (preselectedCargoId) {
+      setFormData({
+        cargo_id: preselectedCargoId,
+        driver_id: "",
+        vehicle_id: "",
       });
     } else {
       setFormData({
         cargo_id: "",
         driver_id: "",
         vehicle_id: "",
-        notes: "",
       });
     }
     setErrors({});
-    // Clear search terms
-    setCargoSearch("");
-    setDriverSearch("");
-    setVehicleSearch("");
-  }, [mode, assignment, isOpen]);
+  }, [mode, assignment, preselectedCargoId, isOpen]);
 
   // Get selected cargo, driver, and vehicle details
   const cargos = Array.isArray(cargosData)
@@ -147,12 +145,29 @@ export default function AssignmentModal({
     : (vehiclesData as any)?.data || [];
 
   // For edit mode, ensure the existing assignment's cargo, driver, and vehicle are included
-  const allCargos =
-    mode === "edit" &&
-    assignment?.cargo &&
-    !cargos.find((c) => c.id === assignment.cargo.id)
-      ? [...cargos, assignment.cargo]
-      : cargos;
+  // For preselected cargo, include it in the cargos list
+  const allCargos = (() => {
+    let result = [...cargos];
+
+    // Add preselected cargo if it's not already in the list
+    if (
+      preselectedCargoData &&
+      !result.find((c) => c.id === preselectedCargoData.id)
+    ) {
+      result = [preselectedCargoData, ...result];
+    }
+
+    // Add assignment cargo for edit mode
+    if (
+      mode === "edit" &&
+      assignment?.cargo &&
+      !result.find((c) => c.id === assignment.cargo.id)
+    ) {
+      result = [...result, assignment.cargo];
+    }
+
+    return result;
+  })();
 
   const allDrivers =
     mode === "edit" &&
@@ -169,40 +184,15 @@ export default function AssignmentModal({
       : vehicles;
 
   // Filter data based on search terms
-  const filteredCargos = allCargos.filter(
-    (cargo: any) =>
-      cargo.cargo_number?.toLowerCase().includes(cargoSearch.toLowerCase()) ||
-      cargo.id.toLowerCase().includes(cargoSearch.toLowerCase()) ||
-      cargo.pickup_address?.toLowerCase().includes(cargoSearch.toLowerCase()) ||
-      cargo.destination_address
-        ?.toLowerCase()
-        .includes(cargoSearch.toLowerCase())
-  );
+  const filteredCargos = allCargos;
 
-  const filteredDrivers = allDrivers.filter(
-    (driver: any) =>
-      (driver.user?.full_name || driver.name)
-        ?.toLowerCase()
-        .includes(driverSearch.toLowerCase()) ||
-      (driver.user?.phone || driver.phone)
-        ?.toLowerCase()
-        .includes(driverSearch.toLowerCase()) ||
-      driver.license_number?.toLowerCase().includes(driverSearch.toLowerCase())
-  );
+  const filteredDrivers = allDrivers;
 
-  const filteredVehicles = allVehicles.filter(
-    (vehicle: any) =>
-      vehicle.make?.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
-      vehicle.model?.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
-      vehicle.plate_number
-        ?.toLowerCase()
-        .includes(vehicleSearch.toLowerCase()) ||
-      vehicle.type?.toLowerCase().includes(vehicleSearch.toLowerCase())
-  );
+  const filteredVehicles = allVehicles;
 
-  const selectedCargo = allCargos.find(
-    (cargo: any) => cargo.id === formData.cargo_id
-  );
+  const selectedCargo =
+    currentCargo ||
+    allCargos.find((cargo: any) => cargo.id === formData.cargo_id);
   const selectedDriver = allDrivers.find(
     (driver: any) => driver.id === formData.driver_id
   );
@@ -225,8 +215,8 @@ export default function AssignmentModal({
     }
 
     // Check if cargo weight exceeds vehicle capacity
-    if (selectedCargo && selectedVehicle) {
-      const cargoWeight = selectedCargo.weight_kg || 0;
+    if (currentCargo && selectedVehicle) {
+      const cargoWeight = currentCargo.weight_kg || 0;
       const vehicleCapacity =
         selectedVehicle.capacity_kg || selectedVehicle.capacity || 0;
       if (cargoWeight > vehicleCapacity) {
@@ -316,80 +306,121 @@ export default function AssignmentModal({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              {t("adminAssignments.selectCargo")}
+              {preselectedCargoId
+                ? "Cargo Information"
+                : t("adminAssignments.selectCargo")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Cargo Search */}
-            <div className="space-y-2">
-              <Label htmlFor="cargo_search">Search Cargo</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="cargo_search"
-                  placeholder="Search by cargo number, pickup address, or destination..."
-                  value={cargoSearch}
-                  onChange={(e) => setCargoSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cargo_id">{t("common.cargo")}</Label>
-              <Select
-                value={formData.cargo_id}
-                onValueChange={(value) => handleFieldChange("cargo_id", value)}
-                disabled={mode === "edit"}
-              >
-                <SelectTrigger
-                  className={errors.cargo_id ? "border-red-500" : ""}
+            {/* Cargo Selection - Only show when not preselected */}
+            {!preselectedCargoId && (
+              <div className="space-y-2">
+                <Label htmlFor="cargo_id">{t("common.cargo")}</Label>
+                <Select
+                  value={formData.cargo_id}
+                  onValueChange={(value) =>
+                    handleFieldChange("cargo_id", value)
+                  }
+                  disabled={mode === "edit"}
                 >
-                  <SelectValue
-                    placeholder={t("adminAssignments.selectCargoPlaceholder")}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {cargosLoading ? (
-                    <SelectItem value="loading" disabled>
-                      {t("common.loading")}...
-                    </SelectItem>
-                  ) : filteredCargos.length === 0 ? (
-                    <SelectItem value="no-cargos" disabled>
-                      {cargoSearch
-                        ? "No cargos found matching your search"
-                        : t("adminAssignments.noCargosAvailable")}
-                    </SelectItem>
-                  ) : (
-                    filteredCargos.map((cargo: any) => (
-                      <SelectItem key={cargo.id} value={cargo.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {cargo.cargo_number ||
-                                `Cargo #${cargo.id.slice(-8)}`}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              Pickup:{" "}
-                              {new Date(cargo.pickup_date).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <Badge variant="outline" className="ml-2">
-                            {cargo.weight_kg}kg
-                          </Badge>
-                        </div>
+                  <SelectTrigger
+                    className={errors.cargo_id ? "border-red-500" : ""}
+                  >
+                    <SelectValue
+                      placeholder={t("adminAssignments.selectCargoPlaceholder")}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cargosLoading ? (
+                      <SelectItem value="loading" disabled>
+                        {t("common.loading")}...
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              {errors.cargo_id && (
-                <p className="text-sm text-red-500">{errors.cargo_id}</p>
-              )}
-            </div>
+                    ) : filteredCargos.length === 0 ? (
+                      <SelectItem value="no-cargos" disabled>
+                        {t("adminAssignments.noCargosAvailable")}
+                      </SelectItem>
+                    ) : (
+                      filteredCargos.map((cargo: any) => (
+                        <SelectItem key={cargo.id} value={cargo.id}>
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {cargo.cargo_number ||
+                                  `Cargo #${cargo.id.slice(-8)}`}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Pickup:{" "}
+                                {new Date(
+                                  cargo.pickup_date
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <Badge variant="outline" className="ml-2">
+                              {cargo.weight_kg}kg
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {errors.cargo_id && (
+                  <p className="text-sm text-red-500">{errors.cargo_id}</p>
+                )}
+              </div>
+            )}
+
+            {/* Preselected Cargo Info */}
+            {preselectedCargoId && (
+              <div className="space-y-2">
+                <Label>{t("common.cargo")}</Label>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="font-semibold text-blue-900">
+                        {preselectedCargoLoading ? (
+                          "Loading cargo details..."
+                        ) : (
+                          <>
+                            {currentCargo?.cargo_number ||
+                              `Cargo #${currentCargo?.id.slice(-8)}`}
+                            <span className="text-sm text-blue-700 ml-2">
+                              ✓ Automatically selected
+                            </span>
+                          </>
+                        )}
+                      </p>
+                      {currentCargo && (
+                        <p className="text-sm text-blue-700">
+                          Weight: {currentCargo.weight_kg}kg • Pickup:{" "}
+                          {new Date(
+                            currentCargo.pickup_date
+                          ).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Selected Cargo Details */}
-            {selectedCargo && (
+            {preselectedCargoLoading && preselectedCargoId ? (
+              <Alert>
+                <Package className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <div className="font-medium">
+                      {t("adminAssignments.cargoDetails")}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Loading cargo details...
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            ) : currentCargo ? (
               <Alert>
                 <Package className="h-4 w-4" />
                 <AlertDescription>
@@ -398,35 +429,44 @@ export default function AssignmentModal({
                       {t("adminAssignments.cargoDetails")}
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="col-span-2">
+                        <span className="font-medium">
+                          {t("common.cargoNumber")}:
+                        </span>{" "}
+                        <span className="font-bold text-blue-600">
+                          {currentCargo.cargo_number ||
+                            `Cargo #${currentCargo.id.slice(-8)}`}
+                        </span>
+                      </div>
                       <div>
                         <span className="font-medium">{t("common.type")}:</span>{" "}
-                        {selectedCargo.type || t("common.notAvailable")}
+                        {currentCargo.type || t("common.notAvailable")}
                       </div>
                       <div>
                         <span className="font-medium">
                           {t("common.weight")}:
                         </span>{" "}
-                        {selectedCargo.weight_kg}kg
+                        {currentCargo.weight_kg}kg
                       </div>
                       <div className="col-span-2">
                         <span className="font-medium">
                           {t("common.pickupAddress")}:
                         </span>{" "}
-                        {selectedCargo.pickup_address ||
+                        {currentCargo.pickup_address ||
                           t("common.notAvailable")}
                       </div>
                       <div className="col-span-2">
                         <span className="font-medium">
                           {t("common.destinationAddress")}:
                         </span>{" "}
-                        {selectedCargo.destination_address ||
+                        {currentCargo.destination_address ||
                           t("common.notAvailable")}
                       </div>
                     </div>
                   </div>
                 </AlertDescription>
               </Alert>
-            )}
+            ) : null}
           </CardContent>
         </Card>
 
@@ -439,21 +479,6 @@ export default function AssignmentModal({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Driver Search */}
-            <div className="space-y-2">
-              <Label htmlFor="driver_search">Search Driver</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="driver_search"
-                  placeholder="Search by name, phone, or license number..."
-                  value={driverSearch}
-                  onChange={(e) => setDriverSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="driver_id">{t("common.driver")}</Label>
               <Select
@@ -474,9 +499,7 @@ export default function AssignmentModal({
                     </SelectItem>
                   ) : filteredDrivers.length === 0 ? (
                     <SelectItem value="no-drivers" disabled>
-                      {driverSearch
-                        ? "No drivers found matching your search"
-                        : t("adminAssignments.noDriversAvailable")}
+                      {t("adminAssignments.noDriversAvailable")}
                     </SelectItem>
                   ) : (
                     filteredDrivers.map((driver: any) => (
@@ -556,21 +579,6 @@ export default function AssignmentModal({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Vehicle Search */}
-            <div className="space-y-2">
-              <Label htmlFor="vehicle_search">Search Vehicle</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="vehicle_search"
-                  placeholder="Search by make, model, plate number, or type..."
-                  value={vehicleSearch}
-                  onChange={(e) => setVehicleSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="vehicle_id">{t("common.vehicle")}</Label>
               <Select
@@ -593,9 +601,7 @@ export default function AssignmentModal({
                     </SelectItem>
                   ) : filteredVehicles.length === 0 ? (
                     <SelectItem value="no-vehicles" disabled>
-                      {vehicleSearch
-                        ? "No vehicles found matching your search"
-                        : t("adminAssignments.noVehiclesAvailable")}
+                      {t("adminAssignments.noVehiclesAvailable")}
                     </SelectItem>
                   ) : (
                     filteredVehicles.map((vehicle: any) => (
@@ -667,9 +673,9 @@ export default function AssignmentModal({
             )}
 
             {/* Capacity Warning */}
-            {selectedCargo &&
+            {currentCargo &&
               selectedVehicle &&
-              selectedCargo.weight_kg >
+              currentCargo.weight_kg >
                 (selectedVehicle.capacity_kg || selectedVehicle.capacity) && (
                 <Alert className="border-red-500 bg-red-50">
                   <AlertCircle className="h-4 w-4 text-red-500" />
@@ -678,25 +684,6 @@ export default function AssignmentModal({
                   </AlertDescription>
                 </Alert>
               )}
-          </CardContent>
-        </Card>
-
-        {/* Notes */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("adminAssignments.additionalNotes")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="notes">{t("common.notes")}</Label>
-              <Textarea
-                id="notes"
-                placeholder={t("adminAssignments.notesPlaceholder")}
-                value={formData.notes}
-                onChange={(e) => handleFieldChange("notes", e.target.value)}
-                rows={3}
-              />
-            </div>
           </CardContent>
         </Card>
 

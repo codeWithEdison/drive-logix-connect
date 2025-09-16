@@ -45,6 +45,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
 import { mapCargosToCargoDetails } from "@/lib/utils/cargoMapper";
+import AssignmentModal from "@/components/admin/AssignmentModal";
 
 export default function AdminCargos() {
   const { t } = useLanguage();
@@ -55,6 +56,8 @@ export default function AdminCargos() {
     useState(false);
   const [cargoForAssignment, setCargoForAssignment] =
     useState<CargoDetail | null>(null);
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+  const [selectedCargoId, setSelectedCargoId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [clientIdFilter, setClientIdFilter] = useState<string>("all-clients");
@@ -167,6 +170,7 @@ export default function AdminCargos() {
   const statusTabs = [
     { key: "all", label: t("common.all") },
     { key: "pending", label: t("status.pending") },
+    { key: "accepted", label: t("status.accepted") },
     { key: "assigned", label: t("status.assigned") },
     { key: "picked_up", label: "Picked Up" },
     { key: "in_transit", label: t("status.inTransit") },
@@ -182,6 +186,18 @@ export default function AdminCargos() {
   const handleAssignTruck = (cargo: CargoDetail) => {
     setCargoForAssignment(cargo);
     setIsTruckAssignmentModalOpen(true);
+  };
+
+  const handleOpenAssignmentModal = (cargoId: string) => {
+    setSelectedCargoId(cargoId);
+    setIsAssignmentModalOpen(true);
+  };
+
+  const handleAssignmentCreated = () => {
+    setIsAssignmentModalOpen(false);
+    setSelectedCargoId(null);
+    refetch(); // Refresh the cargos list
+    customToast.success("Assignment created successfully");
   };
 
   const handleCreateNewCargo = () => {
@@ -715,6 +731,11 @@ export default function AdminCargos() {
           setSelectedCargo(null);
         }}
         cargo={selectedCargo}
+        userRole={
+          user?.role === "super_admin"
+            ? "superadmin"
+            : (user?.role as any) || "client"
+        }
         onCallClient={handleCallClient}
         onCallDriver={handleCallDriver}
         onUploadPhoto={handleUploadPhoto}
@@ -725,6 +746,7 @@ export default function AdminCargos() {
         onChangeVehicle={handleChangeVehicle}
         onChangeDriver={handleChangeDriver}
         onCreateAssignment={handleTruckAssignment}
+        onOpenAssignmentModal={handleOpenAssignmentModal}
       />
 
       {/* Truck Assignment Modal using ModernModel */}
@@ -765,7 +787,11 @@ export default function AdminCargos() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Client</p>
-                    <p className="text-lg">{cargoForAssignment.client}</p>
+                    <p className="text-lg">
+                      {cargoForAssignment.client?.company_name ||
+                        (cargoForAssignment.client as any)?.user?.full_name ||
+                        "Unknown Client"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Route</p>
@@ -896,6 +922,18 @@ export default function AdminCargos() {
           </div>
         )}
       </ModernModel>
+
+      {/* Assignment Modal */}
+      <AssignmentModal
+        isOpen={isAssignmentModalOpen}
+        onClose={() => {
+          setIsAssignmentModalOpen(false);
+          setSelectedCargoId(null);
+        }}
+        onSuccess={handleAssignmentCreated}
+        mode="create"
+        preselectedCargoId={selectedCargoId || undefined}
+      />
     </div>
   );
 }

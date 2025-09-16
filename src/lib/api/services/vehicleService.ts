@@ -26,21 +26,23 @@ export class VehicleService {
     return response.data;
   }
 
-  // Get available vehicles without assignments - fallback to regular vehicles
+  // Get available vehicles without assignments
   static async getAvailableVehiclesWithoutAssignments(
     filters: AvailableVehicleFilters = {}
   ): Promise<ApiResponse<Vehicle[]>> {
     const params = new URLSearchParams();
 
-    // Use regular vehicles endpoint as fallback
-    params.append("status", "active");
+    if (filters.date) params.append("date", filters.date);
     if (filters.type) params.append("type", filters.type);
     if (filters.capacity_min)
       params.append("capacity_min", filters.capacity_min.toString());
     if (filters.page) params.append("page", filters.page.toString());
     if (filters.limit) params.append("limit", filters.limit.toString());
 
-    const response = await axiosInstance.get(`/vehicles?${params.toString()}`);
+    const endpoint = `/vehicles/available-without-assignments?${params.toString()}`;
+    console.log("🚛 Vehicle API Call:", endpoint);
+
+    const response = await axiosInstance.get(endpoint);
     return response.data;
   }
 

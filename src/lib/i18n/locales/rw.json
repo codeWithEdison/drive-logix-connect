@@ -169,7 +169,8 @@
     "revenue": "Amafaranga yinjira",
     "users": "Abakoresha",
     "preferredLanguage": "Ururimi Rwifuza",
-    "password": "Ijambo ry'ibanga"
+    "password": "Ijambo ry'ibanga",
+    "cargo": "Umuzigo"
   },
   "auth": {
     "login": "Injira",
@@ -498,8 +499,8 @@
     "provideAdditionalDetails": "Tanga ibindi byerekeye...",
     "status": {
       "pending": "Bitegereje",
-      "accepted": "Byemewe",
-      "rejected": "Byangiwe",
+      "accepted": "Bitegereje Gutanga",
+      "assigned": "Byatangijwe",
       "cancelled": "Byahagaritswe",
       "in_progress": "Bikora",
       "completed": "Byakozwe",
@@ -1121,6 +1122,7 @@
     "selectDriverPlaceholder": "Hitamo umushoferi",
     "selectVehiclePlaceholder": "Hitamo ikinyabiziga",
     "cargoDetails": "Ibyerekeye Ibintu",
+    "selectedCargoDetails": "Ibyerekeye Ibintu Byahisemo",
     "driverDetails": "Ibyerekeye Umushoferi",
     "vehicleDetails": "Ibyerekeye Ikinyabiziga",
     "additionalNotes": "Inyandiko zongewe",

@@ -1,6 +1,5 @@
 {
   "common": {
-    "loading": "Chargement...",
     "error": "Erreur",
     "success": "Succès",
     "cancel": "Annuler",
@@ -176,7 +175,8 @@
     "french": "Français",
     "lastLogin": "Dernière connexion",
     "preferredLanguage": "Langue préférée",
-    "password": "Mot de passe"
+    "password": "Mot de passe",
+    "cargo": "Cargaison"
   },
   "auth": {
     "login": "Connexion",
@@ -937,6 +937,7 @@
     "etaUnknown": "ETA inconnue",
     "status": {
       "pending": "En attente",
+      "accepted": "En attente d'assignation",
       "assigned": "Assigné",
       "active": "Actif",
       "pickup_completed": "Ramassage terminé",
@@ -1120,6 +1121,7 @@
     "selectDriverPlaceholder": "Choisir un chauffeur",
     "selectVehiclePlaceholder": "Choisir un véhicule",
     "cargoDetails": "Détails de la Cargaison",
+    "selectedCargoDetails": "Détails de la Cargaison Sélectionnée",
     "driverDetails": "Détails du Chauffeur",
     "vehicleDetails": "Détails du Véhicule",
     "additionalNotes": "Notes Supplémentaires",

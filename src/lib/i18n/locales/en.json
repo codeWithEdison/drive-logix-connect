@@ -151,7 +151,6 @@
     "licensePlate": "License Plate",
     "model": "Model",
     "capacity": "Capacity",
-    "total": "Total",
     "locationTBD": "Location TBD",
     "approve": "Approve",
     "decline": "Decline",
@@ -223,7 +222,8 @@
     "french": "French",
     "lastLogin": "Last Login",
     "preferredLanguage": "Preferred Language",
-    "password": "Password"
+    "password": "Password",
+    "cargo": "Cargo"
   },
   "auth": {
     "login": "Login",
@@ -815,6 +815,7 @@
     "selectDriverPlaceholder": "Choose a driver",
     "selectVehiclePlaceholder": "Choose a vehicle",
     "cargoDetails": "Cargo Details",
+    "selectedCargoDetails": "Selected Cargo Details",
     "driverDetails": "Driver Details",
     "vehicleDetails": "Vehicle Details",
     "additionalNotes": "Additional Notes",
@@ -1112,6 +1113,7 @@
     "etaUnknown": "ETA unknown",
     "status": {
       "pending": "Pending",
+      "accepted": "Waiting for Assignment",
       "assigned": "Assigned",
       "active": "Active",
       "pickup_completed": "Pickup Completed",

@@ -63,7 +63,8 @@ import {
   useCancelAssignment,
 } from "@/lib/api/hooks/assignmentHooks";
 import { useAdminDrivers } from "@/lib/api/hooks/adminHooks";
-import { useVehicles } from "@/lib/api/hooks/vehicleHooks";
+import { useAvailableDriversWithoutAssignments } from "@/lib/api/hooks/driverHooks";
+import { useAvailableVehiclesWithoutAssignments } from "@/lib/api/hooks/vehicleHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,12 +88,32 @@ export default function AdminAssignments() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Data hooks for dropdowns
-  const { data: driversData, isLoading: driversLoading } = useAdminDrivers({
-    limit: 100,
-  });
-  const { data: vehiclesData, isLoading: vehiclesLoading } = useVehicles({
-    limit: 100,
+  // Data hooks for dropdowns - use correct endpoints
+  const { data: driversData, isLoading: driversLoading } =
+    useAvailableDriversWithoutAssignments({
+      limit: 100,
+    });
+  const { data: vehiclesData, isLoading: vehiclesLoading } =
+    useAvailableVehiclesWithoutAssignments({
+      limit: 100,
+    });
+
+  // Debug logging for AdminAssignments
+  console.log("AdminAssignments Debug:", {
+    driversData,
+    driversLoading,
+    vehiclesData,
+    vehiclesLoading,
+    driversDataStructure: {
+      isArray: Array.isArray(driversData),
+      hasData: !!(driversData as any)?.data,
+      rawData: driversData,
+    },
+    vehiclesDataStructure: {
+      isArray: Array.isArray(vehiclesData),
+      hasData: !!(vehiclesData as any)?.data,
+      rawData: vehiclesData,
+    },
   });
 
   // API hooks

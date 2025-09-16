@@ -22,18 +22,20 @@ export class DriverService {
     return response.data;
   }
 
-  // Get available drivers without assignments - fallback to regular drivers
+  // Get available drivers without assignments
   static async getAvailableDriversWithoutAssignments(
     filters: AvailableDriverFilters = {}
   ): Promise<ApiResponse<Driver[]>> {
     const params = new URLSearchParams();
 
-    // Use regular drivers endpoint as fallback
-    params.append("status", "available");
+    if (filters.date) params.append("date", filters.date);
     if (filters.page) params.append("page", filters.page.toString());
     if (filters.limit) params.append("limit", filters.limit.toString());
 
-    const response = await axiosInstance.get(`/drivers?${params.toString()}`);
+    const endpoint = `/drivers/available-without-assignments?${params.toString()}`;
+    console.log("🚗 Driver API Call:", endpoint);
+
+    const response = await axiosInstance.get(endpoint);
     return response.data;
   }
 
