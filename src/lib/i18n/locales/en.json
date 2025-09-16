@@ -1325,6 +1325,11 @@
     "subtitle": "Create a new cargo shipment",
     "success": "Cargo created successfully!",
     "error": "Failed to create cargo. Please try again.",
+    "requiredFieldsNote": "Fields marked with * are required",
+    "validation": {
+      "requiredFields": "Please fill in all required fields",
+      "requiredFieldsNote": "Fields marked with * are required"
+    },
     "steps": {
       "cargoDetails": {
         "title": "Cargo Details",

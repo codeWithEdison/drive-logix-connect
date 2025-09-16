@@ -163,7 +163,7 @@
     "false": "Ntibyemewe",
     "fromLastMonth": "kuva ukwezi kwabaye",
     "fromLastWeek": "kuva icyumweru cyabaye",
-    "fromLastYear": "kuva umwaka wabaye", 
+    "fromLastYear": "kuva umwaka wabaye",
     "count": "Umubare",
     "percentage": "Ikimenyetso",
     "revenue": "Amafaranga yinjira",
@@ -325,8 +325,8 @@
     "status": "Imiterere",
     "noRecentInvoices": "Nta mafunguzo yabaye",
     "loadError": "Ntabwo byakozwe neza gufungura amakuru y'ikinyabwoba",
-    "day":"Umunsi",
-    "week":"icyumweru",
+    "day": "Umunsi",
+    "week": "icyumweru",
     "totalActivities": "Ibyakozwe byose",
     "performanceMetrics": "Ibyegeranyo by'ikorwa",
     "cargoNumber": "Numero y'ikintu"
@@ -774,13 +774,35 @@
     "manageInvoices": "Gucunga amafunguzo",
     "noRecentActivity": "Nta byakozwe byabaye",
     "loadError": "Ntabwo byakozwe neza gufungura amakuru y'ikinyabwoba",
-    "refreshData": "Subira amakuru"
+    "refreshData": "Subira amakuru",
+    "stats": {
+      "totalShipments": "Total Shipments",
+      "inTransit": "In Transit",
+      "delivered": "Delivered",
+      "pendingPayment": "Pending Payment",
+      "allTime": "All time",
+      "activeDeliveries": "Active deliveries",
+      "completed": "Completed",
+      "outstanding": "Outstanding",
+      "totalShipmentsLabel": "total shipments",
+      "inTransitLabel": "in transit"
+    },
+    "header": {
+      "welcomeBack": "Welcome back,",
+      "trackShipments": "Track your shipments and manage deliveries",
+      "activeClient": "Active Client"
+    }
   },
   "createCargo": {
     "title": "Kurema ikintu",
     "subtitle": "Kurema ibyohereza bishya",
     "success": "Ikintu cyaremwe neza!",
     "error": "Ntabwo cyakozwe neza gukora ikintu. Gerageza nanone.",
+    "requiredFieldsNote": " * bisobanuye ko  utakomeza utahujuje ",
+    "validation": {
+      "requiredFields": "Nyamuneka uzuzemo amakuru  yose ya ngombwa",
+      "requiredFieldsNote": " * bisobanuye ko  utakomeza utahujuje  "
+    },
     "steps": {
       "cargoDetails": {
         "title": "Ibyingenzi by'ikintu",
@@ -1220,10 +1242,10 @@
     "manageUsers": "Gucunga Abakoresha",
     "manageCargos": "Gucunga Ibintu",
     "viewReports": "Reba Raporo",
-        "updateAdmin": "Gusubira Umuyobozi",
-        "createAdmin": "Kurema Umuyobozi",
-        "userType": "Ubwoko bw'Umukoresha",
-        "createUser": "Kurema Umukoresha",
+    "updateAdmin": "Gusubira Umuyobozi",
+    "createAdmin": "Kurema Umuyobozi",
+    "userType": "Ubwoko bw'Umukoresha",
+    "createUser": "Kurema Umukoresha",
     "userCreated": "Umukoresha Yaremye",
     "userCreatedSuccess": "{{type}} {{name}} yaremye neza",
     "createUserError": "Ikosa mu kurema umukoresha",
@@ -1232,7 +1254,7 @@
     "userStatusUpdatedSuccess": "Imiterere ya {{name}} yahinduwe kuri {{status}}",
     "updateUserError": "Ikosa mu guhindura umukoresha",
     "updateUserErrorDesc": "Ntibyashobotse guhindura imiterere y'umukoresha. Nyamuneka gerageza nanone.",
-        "editUser": "Guhindura Umukoresha",
-        "updateUser": "Gusubira Umukoresha"
+    "editUser": "Guhindura Umukoresha",
+    "updateUser": "Gusubira Umukoresha"
   }
 }

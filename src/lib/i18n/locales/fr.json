@@ -784,6 +784,11 @@
     "subtitle": "Créer un nouvel envoi de cargaison",
     "success": "Cargaison créée avec succès !",
     "error": "Échec de la création de la cargaison. Veuillez réessayer.",
+    "requiredFieldsNote": "Les champs marqués d'un * sont obligatoires",
+    "validation": {
+      "requiredFields": "Veuillez remplir tous les champs obligatoires",
+      "requiredFieldsNote": "Les champs marqués d'un * sont obligatoires"
+    },
     "steps": {
       "cargoDetails": {
         "title": "Détails de la cargaison",
@@ -1255,10 +1260,10 @@
     "manageUsers": "Gérer les utilisateurs",
     "manageCargos": "Gérer les cargaisons",
     "viewReports": "Voir les rapports",
-        "updateAdmin": "Mettre à jour l'administrateur",
-        "createAdmin": "Créer un administrateur",
-        "userType": "Type d'utilisateur",
-        "createUser": "Créer un utilisateur",
+    "updateAdmin": "Mettre à jour l'administrateur",
+    "createAdmin": "Créer un administrateur",
+    "userType": "Type d'utilisateur",
+    "createUser": "Créer un utilisateur",
     "userCreated": "Utilisateur créé",
     "userCreatedSuccess": "{{type}} {{name}} a été créé avec succès",
     "createUserError": "Erreur lors de la création de l'utilisateur",
@@ -1267,8 +1272,8 @@
     "userStatusUpdatedSuccess": "Le statut de {{name}} a été mis à jour à {{status}}",
     "updateUserError": "Erreur lors de la mise à jour de l'utilisateur",
     "updateUserErrorDesc": "Échec de la mise à jour du statut de l'utilisateur. Veuillez réessayer.",
-        "editUser": "Modifier l'utilisateur",
-        "updateUser": "Mettre à jour l'utilisateur"
+    "editUser": "Modifier l'utilisateur",
+    "updateUser": "Mettre à jour l'utilisateur"
   },
   "profile": {
     "profile": "Profil",

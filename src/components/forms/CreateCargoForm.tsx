@@ -47,6 +47,7 @@ import {
   User,
   Phone,
   Save,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -848,12 +849,21 @@ export function CreateCargoForm() {
               <Package className="h-5 w-5 text-primary" />
               {t("createCargo.steps.cargoDetails.title")}
             </CardTitle>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-sm font-semibold text-red-700">
+                  {t("createCargo.requiredFieldsNote")}
+                </span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cargoType">
-                  {t("createCargo.steps.cargoDetails.cargoType")}
+                  {t("createCargo.steps.cargoDetails.cargoType")}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.cargoType}
@@ -892,7 +902,9 @@ export function CreateCargoForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cargoCategoryId">Cargo Category</Label>
+                <Label htmlFor="cargoCategoryId">
+                  Cargo Category <span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={formData.cargoCategoryId}
                   onValueChange={(value) =>
@@ -915,7 +927,8 @@ export function CreateCargoForm() {
               {formData.cargoType === "other" && (
                 <div className="space-y-2">
                   <Label htmlFor="otherCargoType">
-                    {t("createCargo.steps.cargoDetails.specifyType")}
+                    {t("createCargo.steps.cargoDetails.specifyType")}{" "}
+                    <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="otherCargoType"
@@ -935,7 +948,8 @@ export function CreateCargoForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="weight">
-                  {t("createCargo.steps.cargoDetails.weight")}
+                  {t("createCargo.steps.cargoDetails.weight")}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="weight"
@@ -1051,6 +1065,14 @@ export function CreateCargoForm() {
               <MapPin className="h-5 w-5 text-primary" />
               Pickup & Delivery Locations
             </CardTitle>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-sm font-semibold text-red-700">
+                  {t("createCargo.requiredFieldsNote")}
+                </span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-8">
             {/* Pickup Location Section */}
@@ -1205,7 +1227,9 @@ export function CreateCargoForm() {
 
                   {/* Address Search */}
                   <div className="space-y-2">
-                    <Label>Pickup Address</Label>
+                    <Label>
+                      Pickup Address <span className="text-red-500">*</span>
+                    </Label>
                     <div className="relative">
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
@@ -1544,7 +1568,9 @@ export function CreateCargoForm() {
 
                   {/* Address Search */}
                   <div className="space-y-2">
-                    <Label>Delivery Address</Label>
+                    <Label>
+                      Delivery Address <span className="text-red-500">*</span>
+                    </Label>
                     <div className="relative">
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
@@ -1737,21 +1763,62 @@ export function CreateCargoForm() {
             {/* Additional Details */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="pickupDate">Preferred Pickup Date</Label>
+                <Label htmlFor="pickupDate">
+                  Preferred Pickup Date <span className="text-red-500">*</span>
+                </Label>
                 <div className="relative">
-                  <Input
-                    id="pickupDate"
-                    type="date"
-                    value={formData.pickupDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, pickupDate: e.target.value })
-                    }
-                  />
-                  {vehiclesLoading && formData.pickupDate && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                    </div>
-                  )}
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="pickupDate"
+                      type="date"
+                      value={formData.pickupDate}
+                      onChange={(e) => {
+                        const selectedDate = e.target.value;
+                        const today = new Date().toISOString().split("T")[0];
+
+                        if (selectedDate < today) {
+                          toast.error(
+                            "Please select a date from today onwards"
+                          );
+                          return;
+                        }
+
+                        setFormData({ ...formData, pickupDate: selectedDate });
+                      }}
+                      min={new Date().toISOString().split("T")[0]} // Disable past dates
+                      className="pl-10 bg-white border-gray-300 focus:border-primary focus:ring-primary"
+                      placeholder="Select pickup date"
+                    />
+                    {vehiclesLoading && formData.pickupDate ? (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    ) : formData.pickupDate ? (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-500">
+                      📅 Select a date from today onwards
+                    </p>
+                    {formData.pickupDate && (
+                      <p className="text-xs text-green-600 font-medium">
+                        Selected:{" "}
+                        {new Date(formData.pickupDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            weekday: "short",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 {formData.pickupDate &&
                   !vehiclesLoading &&
@@ -1850,6 +1917,14 @@ export function CreateCargoForm() {
               <Truck className="h-5 w-5 text-primary" />
               {t("createCargo.steps.vehicleSelection.title")}
             </CardTitle>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-sm font-semibold text-red-700">
+                  {t("createCargo.requiredFieldsNote")}
+                </span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
@@ -2018,6 +2093,14 @@ export function CreateCargoForm() {
               <Calculator className="h-5 w-5 text-primary" />
               {t("createCargo.steps.confirmation.title")}
             </CardTitle>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-sm font-semibold text-red-700">
+                  {t("createCargo.requiredFieldsNote")}
+                </span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Vehicle Summary */}
