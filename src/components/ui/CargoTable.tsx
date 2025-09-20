@@ -203,7 +203,9 @@ export function CargoTable({
 
   const filteredCargos = cargos.filter((cargo) => {
     const matchesSearch =
-      cargo.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(cargo.client || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       cargo.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cargo.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cargo.type.toLowerCase().includes(searchTerm.toLowerCase());
@@ -618,7 +620,7 @@ export function CargoTable({
                 <User className="h-4 w-4 text-gray-600" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-gray-900 truncate">
-                    {data.client || "N/A"}
+                    {String(data.client || "N/A")}
                   </p>
                   {cargo.clientCompany && (
                     <p className="text-xs text-gray-600 truncate">
@@ -1001,7 +1003,7 @@ export function CargoTable({
                         <TableCell>
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {data.client || "N/A"}
+                              {String(data.client || "N/A")}
                             </p>
                             {cargo.clientCompany && (
                               <p className="text-xs text-gray-500 truncate">
