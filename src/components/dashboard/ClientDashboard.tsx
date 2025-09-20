@@ -136,6 +136,23 @@ export function ClientDashboard() {
     refetch();
   };
 
+  // Navigation handlers for stats cards
+  const handleTotalCargosClick = () => {
+    navigate("/my-cargos");
+  };
+
+  const handleInTransitClick = () => {
+    navigate("/my-cargos?status=in_transit");
+  };
+
+  const handleDeliveredClick = () => {
+    navigate("/my-cargos?status=delivered");
+  };
+
+  const handlePendingPaymentsClick = () => {
+    navigate("/invoices");
+  };
+
   // Loading state
   if (isLoading || isLanguageLoading) {
     return (
@@ -361,7 +378,10 @@ export function ClientDashboard() {
 
       {/* Stats Cards - Modern Design */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+        <Card
+          className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer hover:scale-105"
+          onClick={handleTotalCargosClick}
+        >
           <CardContent className="p-3 sm:p-4 lg:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
@@ -382,7 +402,10 @@ export function ClientDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+        <Card
+          className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer hover:scale-105"
+          onClick={handleInTransitClick}
+        >
           <CardContent className="p-3 sm:p-4 lg:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
@@ -403,7 +426,10 @@ export function ClientDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+        <Card
+          className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer hover:scale-105"
+          onClick={handleDeliveredClick}
+        >
           <CardContent className="p-3 sm:p-4 lg:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
@@ -424,7 +450,10 @@ export function ClientDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
+        <Card
+          className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer hover:scale-105"
+          onClick={handlePendingPaymentsClick}
+        >
           <CardContent className="p-3 sm:p-4 lg:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
