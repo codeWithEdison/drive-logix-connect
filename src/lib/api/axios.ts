@@ -3,7 +3,7 @@ import { ApiResponse, ApiError } from "../../types/shared";
 
 // Base configuration
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  import.meta.env.VITE_API_BASE_URL || "https://loveway-logistics-backends.onrender.com";
 const API_VERSION = "v1";
 
 // Request throttling
