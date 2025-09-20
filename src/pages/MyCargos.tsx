@@ -19,6 +19,8 @@ import {
   Clock,
   Search,
   Filter,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,8 +41,23 @@ const MyCargos = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // API hooks
-  const { data: cargosData, isLoading, error, refetch } = useClientCargos();
+  const {
+    data: cargosData,
+    isLoading,
+    error,
+    refetch,
+  } = useClientCargos({
+    status: statusFilter === "all" ? undefined : (statusFilter as any),
+    priority: priorityFilter === "all" ? undefined : (priorityFilter as any),
+    search: searchTerm || undefined,
+    page: currentPage,
+    limit: pageSize,
+  });
   const cancelCargoMutation = useCancelCargo();
 
   // Add useEffect to track data changes
@@ -101,6 +118,32 @@ const MyCargos = () => {
     refetch();
   };
 
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: string) => {
+    setPageSize(parseInt(size));
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // Reset pagination when filters change
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setCurrentPage(1);
+  };
+
+  const handlePriorityFilterChange = (priority: string) => {
+    setPriorityFilter(priority);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+  };
+
   // Header component
   const renderHeader = () => (
     <div className="space-y-6">
@@ -147,7 +190,7 @@ const MyCargos = () => {
                     Total Cargos
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {transformedCargos.length}
+                    {pagination?.total || transformedCargos.length}
                   </p>
                 </div>
                 <Package className="h-8 w-8 text-blue-500" />
@@ -222,7 +265,7 @@ const MyCargos = () => {
                   <Input
                     placeholder="Search by client, location, cargo number, or type..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -230,7 +273,10 @@ const MyCargos = () => {
 
               {/* Status Filter */}
               <div className="flex gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={handleStatusFilterChange}
+                >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
@@ -250,7 +296,7 @@ const MyCargos = () => {
                 {/* Priority Filter */}
                 <Select
                   value={priorityFilter}
-                  onValueChange={setPriorityFilter}
+                  onValueChange={handlePriorityFilterChange}
                 >
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="Priority" />
@@ -359,14 +405,18 @@ const MyCargos = () => {
     );
   }
 
+  // Extract cargos and pagination data
+  const actualCargos = cargosData?.cargos || [];
+  const pagination = cargosData?.pagination || null;
 
-
-  // The hook should now return the data array directly
-  const actualCargos = (cargosData as any[]) || [];
+  // Debug logging to understand the data structure
+  console.log("🔍 MyCargos - cargosData:", cargosData);
+  console.log("🔍 MyCargos - actualCargos:", actualCargos);
+  console.log("🔍 MyCargos - pagination:", pagination);
 
   // Transform API data to CargoDetail format
   const transformedCargos: CargoDetail[] =
-    actualCargos.map((cargo) => {
+    (Array.isArray(actualCargos) ? actualCargos : []).map((cargo) => {
       // Map API status to CargoDetail status format
       // Keep original API status values for proper display
       const mappedStatus = cargo.status as CargoDetail["status"];
@@ -378,8 +428,8 @@ const MyCargos = () => {
         from: cargo.pickup_address || "Unknown Location",
         to: cargo.destination_address || "Unknown Location",
         client:
-          cargo.client?.user?.full_name ||
-          cargo.client?.contact_person ||
+          (cargo as any).client?.user?.full_name ||
+          (cargo as any).client?.contact_person ||
           "Unknown Client",
         driver:
           (cargo as any).delivery_assignment?.driver?.user?.full_name ||
@@ -418,9 +468,10 @@ const MyCargos = () => {
         deliveryContact: cargo.destination_contact || "",
         deliveryContactPhone: cargo.destination_phone || "",
         // Enhanced fields for better data display
-        clientPhone: cargo.client?.user?.phone || cargo.pickup_phone || "",
-        clientCompany: cargo.client?.company_name || "",
-        clientContactPerson: cargo.client?.contact_person || "",
+        clientPhone:
+          (cargo as any).client?.user?.phone || cargo.pickup_phone || "",
+        clientCompany: (cargo as any).client?.company_name || "",
+        clientContactPerson: (cargo as any).client?.contact_person || "",
         driverName:
           (cargo as any).delivery_assignment?.driver?.user?.full_name || "",
         driverPhone:
@@ -439,7 +490,9 @@ const MyCargos = () => {
   const filteredCargos = transformedCargos.filter((cargo) => {
     const matchesSearch =
       searchTerm === "" ||
-      cargo.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(cargo.client || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       cargo.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cargo.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cargo.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -458,7 +511,7 @@ const MyCargos = () => {
   if (
     !isLoading &&
     !error &&
-    (!actualCargos || (actualCargos as any[]).length === 0)
+    (!actualCargos || !Array.isArray(actualCargos) || actualCargos.length === 0)
   ) {
     return (
       <div className="space-y-6">
@@ -500,6 +553,85 @@ const MyCargos = () => {
         onUploadPhoto={handleUploadPhoto}
         onReportIssue={handleReportIssue}
       />
+
+      {/* Pagination Controls */}
+      {pagination && (
+        <div className="bg-white rounded-lg border p-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Show per page:</span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={handlePageSizeChange}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Pagination Info */}
+            <div className="text-sm text-gray-600">
+              Showing {(currentPage - 1) * pageSize + 1} -{" "}
+              {Math.min(currentPage * pageSize, pagination.total || 0)} of{" "}
+              {pagination.total || 0} results
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from(
+                  { length: Math.min(5, pagination.totalPages || 1) },
+                  (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={
+                          currentPage === pageNum ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= (pagination.totalPages || 1)}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

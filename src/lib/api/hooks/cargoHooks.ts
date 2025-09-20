@@ -70,17 +70,25 @@ export const useClientCargos = (params?: CargoSearchParams) => {
       console.log("🔍 useClientCargos select - raw data:", data);
       console.log("🔍 useClientCargos select - data.data:", data.data);
       console.log("🔍 useClientCargos select - data.meta:", (data as any).meta);
-      // Return both the data array and pagination metadata
+      console.log(
+        "🔍 useClientCargos select - data.meta.pagination:",
+        (data as any).meta?.pagination
+      );
+
+      // Handle the API response structure with meta object
+      const responseData = data.data || [];
+      const paginationData = (data as any).meta?.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      };
+
       return {
-        cargos: data.data || [],
-        pagination: (data as any).meta?.pagination || {
-          page: 1,
-          limit: 10,
-          total: 0,
-          totalPages: 0,
-          hasNext: false,
-          hasPrev: false,
-        },
+        cargos: Array.isArray(responseData) ? responseData : [],
+        pagination: paginationData,
       };
     },
     staleTime: 0, // Force fresh data
