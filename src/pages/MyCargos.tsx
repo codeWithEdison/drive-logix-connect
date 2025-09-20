@@ -144,6 +144,29 @@ const MyCargos = () => {
     setCurrentPage(1);
   };
 
+  // Navigation handlers for stats cards
+  const handleTotalCargosClick = () => {
+    setStatusFilter("all");
+    setPriorityFilter("all");
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
+
+  const handleInTransitClick = () => {
+    setStatusFilter("in_transit");
+    setCurrentPage(1);
+  };
+
+  const handleDeliveredClick = () => {
+    setStatusFilter("delivered");
+    setCurrentPage(1);
+  };
+
+  const handlePendingClick = () => {
+    setStatusFilter("pending");
+    setCurrentPage(1);
+  };
+
   // Header component
   const renderHeader = () => (
     <div className="space-y-6">
@@ -183,7 +206,10 @@ const MyCargos = () => {
         transformedCargos &&
         transformedCargos.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg border p-4">
+            <div
+              className="bg-white rounded-lg border p-4 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300"
+              onClick={handleTotalCargosClick}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
@@ -197,7 +223,10 @@ const MyCargos = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border p-4">
+            <div
+              className="bg-white rounded-lg border p-4 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300"
+              onClick={handleInTransitClick}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
@@ -216,7 +245,10 @@ const MyCargos = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border p-4">
+            <div
+              className="bg-white rounded-lg border p-4 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300"
+              onClick={handleDeliveredClick}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Delivered</p>
@@ -231,7 +263,10 @@ const MyCargos = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border p-4">
+            <div
+              className="bg-white rounded-lg border p-4 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300"
+              onClick={handlePendingClick}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Pending</p>
@@ -313,12 +348,24 @@ const MyCargos = () => {
             </div>
 
             {/* Filter Results Summary */}
-            {filteredCargos.length !== transformedCargos.length && (
-              <div className="mt-4 text-sm text-gray-600">
-                Showing {filteredCargos.length} of {transformedCargos.length}{" "}
-                cargos
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {filteredCargos.length !== transformedCargos.length
+                  ? `Showing ${filteredCargos.length} of ${transformedCargos.length} cargos`
+                  : `Showing ${transformedCargos.length} cargos`}
               </div>
-            )}
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTotalCargosClick}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Clear Filters
+                </Button>
+              )}
+            </div>
           </div>
         )}
     </div>
@@ -507,6 +554,10 @@ const MyCargos = () => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  // Check if we have any filters applied
+  const hasActiveFilters =
+    statusFilter !== "all" || priorityFilter !== "all" || searchTerm !== "";
+
   // Show a message if no data is available
   if (
     !isLoading &&
@@ -520,18 +571,34 @@ const MyCargos = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
           <Package className="h-12 w-12 text-blue-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-blue-800 mb-2">
-            {t("myCargos.noCargos")}
+            {hasActiveFilters
+              ? "No cargos match your filters"
+              : t("myCargos.noCargos")}
           </h3>
           <p className="text-blue-600 mb-4">
-            {t("myCargos.noCargosDescription")}
+            {hasActiveFilters
+              ? "Try adjusting your search terms or filters to find what you're looking for."
+              : t("myCargos.noCargosDescription")}
           </p>
-          <Button
-            className="bg-gradient-primary hover:bg-primary-hover"
-            onClick={handleCreateNewCargo}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {t("myCargos.createNewCargo")}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                onClick={handleTotalCargosClick}
+                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Clear All Filters
+              </Button>
+            )}
+            <Button
+              className="bg-gradient-primary hover:bg-primary-hover"
+              onClick={handleCreateNewCargo}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {t("myCargos.createNewCargo")}
+            </Button>
+          </div>
         </div>
       </div>
     );
