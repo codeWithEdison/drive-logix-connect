@@ -57,8 +57,14 @@ export function AssignedCargosPage() {
     refetch,
   } = useMyAssignments({ limit: 50 });
 
-  // Extract assignments data from response
-  const assignmentsData = assignmentsResponse || [];
+  // Extract assignments data from response (normalize to array)
+  const assignmentsData = Array.isArray(assignmentsResponse)
+    ? assignmentsResponse
+    : Array.isArray((assignmentsResponse as any)?.data?.assignments)
+    ? (assignmentsResponse as any).data.assignments
+    : Array.isArray((assignmentsResponse as any)?.data)
+    ? (assignmentsResponse as any).data
+    : [];
 
   // Assignment mutation hooks
   const acceptAssignmentMutation = useAcceptAssignment();
@@ -224,9 +230,11 @@ export function AssignedCargosPage() {
   };
 
   // Transform API data to CargoDetail format
-  const assignments = assignmentsData || [];
+  const assignments = Array.isArray(assignmentsData) ? assignmentsData : [];
   const transformedCargos: CargoDetail[] =
-    mapDeliveryAssignmentsToCargoDetails(assignments);
+    assignments.length > 0
+      ? mapDeliveryAssignmentsToCargoDetails(assignments)
+      : [];
 
   // Calculate stats
   const stats = {
