@@ -11,15 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { PaymentComponent } from "./PaymentComponent";
-import { PaymentFlow } from "@/components/payments/PaymentFlow";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useCreateCargo,
-  useAvailableVehiclesForDate,
   useEstimateCargoCost,
   useCargoCategories,
   useMyLocations,
@@ -36,13 +32,10 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import {
   MapPin,
   Package,
-  Truck,
   Calculator,
   ArrowRight,
   Clock,
   CheckCircle,
-  Bike,
-  Car,
   Search,
   User,
   Phone,
@@ -83,7 +76,6 @@ export function CreateCargoForm() {
     pickupDate: "",
     specialInstructions: "",
     urgency: "standard",
-    selectedVehicle: "",
     distance: 0,
     savePickupData: false,
     saveDestinationData: false,
@@ -109,11 +101,6 @@ export function CreateCargoForm() {
   const [cargoData, setCargoData] = useState<{
     id: string;
     cargo_number: string;
-  } | null>(null);
-  const [invoiceData, setInvoiceData] = useState<{
-    id: string;
-    invoice_number: string;
-    total_amount: number;
   } | null>(null);
   const [pickupSearchQuery, setPickupSearchQuery] = useState("");
   const [destinationSearchQuery, setDestinationSearchQuery] = useState("");
@@ -145,14 +132,6 @@ export function CreateCargoForm() {
   const { data: cargoCategories } = useCargoCategories({ is_active: true });
   const { data: myLocations } = useMyLocations();
   const createLocationMutation = useCreateLocation();
-  // Get available vehicles for the selected pickup date
-  const { data: availableVehiclesData, isLoading: vehiclesLoading } =
-    useAvailableVehiclesForDate({
-      date: formData.pickupDate,
-      type: undefined, // Remove selectedVehicleType as it doesn't exist
-      capacity_min: parseFloat(formData.weight) || undefined,
-      duration_hours: 8, // Default 8 hours
-    });
   const estimateCostMutation = useEstimateCargoCost();
 
   // Cleanup effect for timeouts and abort controllers
@@ -332,9 +311,7 @@ export function CreateCargoForm() {
           hasPickupLocation && hasDestinationLocation && !!formData.pickupDate
         );
       }
-      case 3: // Vehicle Selection
-        return !!formData.selectedVehicle;
-      case 4: // Confirmation
+      case 3: // Confirmation
         return true; // No validation needed for confirmation
       default:
         return false;
@@ -501,18 +478,6 @@ export function CreateCargoForm() {
     }
   };
 
-  // Filter vehicles based on cargo weight and availability
-  const getAvailableVehicles = () => {
-    if (!availableVehiclesData) {
-      return []; // Return empty array if no API data
-    }
-
-    const cargoWeight = parseFloat(formData.weight || "0");
-    return availableVehiclesData.filter(
-      (vehicle) => vehicle.capacity_kg >= cargoWeight
-    );
-  };
-
   const handleNext = async () => {
     // Validate current step before proceeding
     if (!validateStep(step)) {
@@ -544,18 +509,7 @@ export function CreateCargoForm() {
         setEstimatedCost(cost);
       }
     }
-    // Remove manual cargo ID generation - backend will handle this
     setStep(step + 1);
-  };
-
-  const handlePaymentComplete = (paymentData: any) => {
-    // Handle payment completion
-    console.log("Payment completed:", paymentData);
-    setStep(6); // Move to success step
-  };
-
-  const handlePaymentCancel = () => {
-    setStep(4); // Go back to confirmation step
   };
 
   const handleSubmit = async () => {
@@ -627,29 +581,16 @@ export function CreateCargoForm() {
 
       const result = await createCargoMutation.mutateAsync(cargoRequest);
 
-      // Handle new response format with both cargo and invoice data
+      // Handle cargo creation response
       if (result.success && result.data) {
-        // Backend returns cargo data directly in data, with invoice nested inside
-        const cargo = result.data;
-        const invoice = result.data.invoice;
-
-        // Store cargo and invoice data for payment
+        // Store cargo data
         setCargoData({
-          id: cargo.id,
-          cargo_number: cargo.cargo_number,
+          id: result.data.id,
+          cargo_number: result.data.cargo_number,
         });
-
-        setInvoiceData({
-          id: invoice.id,
-          invoice_number: invoice.invoice_number,
-          total_amount: parseFloat(invoice.total_amount), // Convert string to number
-        });
-
-        // Update estimated cost with invoice amount
-        setEstimatedCost(parseFloat(invoice.total_amount));
 
         toast.success(t("createCargo.success"));
-        handleNext();
+        setStep(4); // Go directly to success step
       } else {
         throw new Error(result.message || "Failed to create cargo");
       }
@@ -658,11 +599,6 @@ export function CreateCargoForm() {
       toast.error(t("createCargo.error"));
     }
   };
-
-  const availableVehiclesList = getAvailableVehicles();
-  const selectedVehicle = availableVehiclesData?.find(
-    (v) => v.id === formData.selectedVehicle
-  );
 
   // Optimized search function that uses debouncing and caching
   const searchLocation = useCallback(
@@ -811,7 +747,7 @@ export function CreateCargoForm() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Enhanced Progress Bar - Mobile Responsive */}
       <div className="flex items-center justify-between mb-8 overflow-x-auto  p-2">
-        {[1, 2, 3, 4, 5, 6].map((number) => (
+        {[1, 2, 3, 4].map((number) => (
           <div key={number} className="flex items-center flex-shrink-0">
             <div
               className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs md:text-sm font-medium transition-all duration-300 shadow-sm ${
@@ -822,13 +758,13 @@ export function CreateCargoForm() {
                   : "bg-gray-200 text-gray-500" // Future step - gray
               }`}
             >
-              {number === 6 ? (
+              {number === 4 ? (
                 <CheckCircle className="h-4 w-4 md:h-5 md:w-5" />
               ) : (
                 number
               )}
             </div>
-            {number < 6 && (
+            {number < 4 && (
               <div
                 className={`w-8 md:w-16 h-1 mx-1 md:mx-3 transition-all duration-300 rounded-full ${
                   step > number
@@ -1790,11 +1726,7 @@ export function CreateCargoForm() {
                       className="pl-10 bg-white border-gray-300 focus:border-primary focus:ring-primary"
                       placeholder="Select pickup date"
                     />
-                    {vehiclesLoading && formData.pickupDate ? (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                      </div>
-                    ) : formData.pickupDate ? (
+                    {formData.pickupDate ? (
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
                       </div>
@@ -1820,14 +1752,11 @@ export function CreateCargoForm() {
                     )}
                   </div>
                 </div>
-                {formData.pickupDate &&
-                  !vehiclesLoading &&
-                  availableVehiclesData && (
-                    <p className="text-sm text-green-600">
-                      ✓ {availableVehiclesData.length} vehicles available for
-                      this date
-                    </p>
-                  )}
+                {formData.pickupDate && (
+                  <p className="text-sm text-green-600">
+                    ✓ Pickup date selected
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -1901,192 +1830,16 @@ export function CreateCargoForm() {
                 disabled={!validateStep(2)}
                 className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
               >
-                Select Vehicle
-                <Truck className="ml-2 h-4 w-4" />
+                Review & Create Cargo
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 3: Vehicle Selection */}
+      {/* Step 3: Cost Estimate & Confirmation */}
       {step === 3 && (
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5 text-primary" />
-              {t("createCargo.steps.vehicleSelection.title")}
-            </CardTitle>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <span className="text-sm font-semibold text-red-700">
-                  {t("createCargo.requiredFieldsNote")}
-                </span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2">
-                  Vehicles Suitable for Your Cargo
-                </h3>
-                <p className="text-sm text-blue-700">
-                  Showing {availableVehiclesList.length} vehicles with capacity
-                  ≥ {formData.weight}kg available on {formData.pickupDate}
-                </p>
-              </div>
-
-              {vehiclesLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="border rounded-lg p-4">
-                      <div className="flex items-start gap-4">
-                        <Skeleton className="w-12 h-12 rounded-lg" />
-                        <div className="flex-1 space-y-2">
-                          <Skeleton className="h-4 w-32" />
-                          <Skeleton className="h-3 w-48" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                        <Skeleton className="w-5 h-5 rounded-full" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : !availableVehiclesData ? (
-                <div className="text-center py-8">
-                  <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
-                  <h3 className="text-lg font-semibold text-red-600">
-                    {t("createCargo.steps.vehicleSelection.loadError")}
-                  </h3>
-                  <p className="text-red-500 mb-4">
-                    No vehicles available for the selected date
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => window.location.reload()}
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    {t("common.retry")}
-                  </Button>
-                </div>
-              ) : availableVehiclesList.length === 0 ? (
-                <div className="text-center py-8">
-                  <Truck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold text-muted-foreground">
-                    {t("createCargo.steps.vehicleSelection.noVehicles")}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {t(
-                      "createCargo.steps.vehicleSelection.noVehiclesDescription"
-                    )}
-                  </p>
-                </div>
-              ) : (
-                <RadioGroup
-                  value={formData.selectedVehicle}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, selectedVehicle: value })
-                  }
-                  className="space-y-4"
-                >
-                  {availableVehiclesList.map((vehicle) => {
-                    // Get vehicle icon based on type
-                    const getVehicleIcon = (type: string) => {
-                      switch (type) {
-                        case "moto":
-                          return Bike;
-                        case "truck":
-                          return Truck;
-                        case "van":
-                          return Car;
-                        case "pickup":
-                          return Truck;
-                        default:
-                          return Truck;
-                      }
-                    };
-
-                    const Icon = getVehicleIcon(vehicle.type);
-                    return (
-                      <div
-                        key={vehicle.id}
-                        className="border rounded-lg p-4 hover:border-primary transition-colors"
-                      >
-                        <RadioGroupItem
-                          value={vehicle.id}
-                          id={vehicle.id}
-                          className="sr-only"
-                        />
-                        <label
-                          htmlFor={vehicle.id}
-                          className="flex items-start gap-4 cursor-pointer"
-                        >
-                          <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg">
-                            <Icon className="h-6 w-6 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <h3 className="font-semibold text-foreground">
-                                {vehicle.make} {vehicle.model}
-                              </h3>
-                              <div className="text-sm font-medium text-primary">
-                                {vehicle.capacity_kg}kg
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <span className="font-medium">
-                                  {vehicle.plate_number}
-                                </span>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <span>{vehicle.year}</span>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <span className="capitalize">
-                                  {vehicle.type}
-                                </span>
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-center w-5 h-5 border-2 border-gray-300 rounded-full">
-                            {formData.selectedVehicle === vehicle.id && (
-                              <div className="w-3 h-3 bg-primary rounded-full"></div>
-                            )}
-                          </div>
-                        </label>
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setStep(2)}
-                className="flex-1"
-              >
-                {t("common.back")}
-              </Button>
-              <Button
-                onClick={handleNext}
-                disabled={!validateStep(3) || vehiclesLoading}
-                className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
-              >
-                {t("createCargo.steps.vehicleSelection.getCostEstimate")}
-                <Calculator className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 4: Cost Estimate & Confirmation */}
-      {step === 4 && (
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -2103,37 +1856,6 @@ export function CreateCargoForm() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Vehicle Summary */}
-            {selectedVehicle && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  {(() => {
-                    const Icon = selectedVehicle.type === "moto" ? Bike : Truck;
-                    return <Icon className="h-5 w-5 text-blue-600" />;
-                  })()}
-                  <h3 className="font-semibold text-blue-900">
-                    {selectedVehicle.make} {selectedVehicle.model}
-                  </h3>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-blue-700">
-                      {t("createCargo.steps.confirmation.capacity")}:
-                    </span>
-                    <span className="ml-2 font-medium">
-                      {selectedVehicle.capacity_kg} kg
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-blue-700">Plate Number:</span>
-                    <span className="ml-2 font-medium">
-                      {selectedVehicle.plate_number}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Cost Breakdown */}
             <div className="bg-muted rounded-lg p-4 space-y-3">
               <h3 className="font-semibold text-foreground">
@@ -2199,7 +1921,7 @@ export function CreateCargoForm() {
                   ) : (
                     <div className="text-center py-4">
                       <p className="text-muted-foreground">
-                        Cost breakdown will be calculated after vehicle
+                        Cost breakdown will be calculated after location
                         selection
                       </p>
                     </div>
@@ -2229,14 +1951,6 @@ export function CreateCargoForm() {
                     {t("createCargo.steps.confirmation.weight")}
                   </p>
                   <p className="font-medium">{formData.weight} kg</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">
-                    {t("createCargo.steps.confirmation.vehicle")}
-                  </p>
-                  <p className="font-medium">
-                    {selectedVehicle?.make} {selectedVehicle?.model}
-                  </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">
@@ -2311,7 +2025,7 @@ export function CreateCargoForm() {
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                onClick={() => setStep(3)}
+                onClick={() => setStep(2)}
                 className="flex-1"
               >
                 {t("common.back")}
@@ -2323,38 +2037,16 @@ export function CreateCargoForm() {
               >
                 {createCargoMutation.isPending
                   ? t("common.loading")
-                  : t("createCargo.steps.confirmation.proceedToPayment")}
-                <Clock className="ml-2 h-4 w-4" />
+                  : t("createCargo.steps.confirmation.createCargo")}
+                <Package className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 5: Payment */}
-      {step === 5 && invoiceData && (
-        <PaymentFlow
-          invoice={{
-            id: invoiceData.id,
-            invoice_number: invoiceData.invoice_number,
-            cargo_id: cargoData?.cargo_number || "",
-            total_amount: invoiceData.total_amount,
-            currency: "RWF",
-            status: "sent",
-            cargo: {
-              id: cargoData?.id || "",
-              type: formData.cargoType,
-              pickup_address: formData.pickupAddress,
-              destination_address: formData.destinationAddress,
-            },
-          }}
-          onSuccess={handlePaymentComplete}
-          onCancel={handlePaymentCancel}
-        />
-      )}
-
-      {/* Step 6: Success */}
-      {step === 6 && (
+      {/* Step 4: Success */}
+      {step === 4 && (
         <Card className="card-elevated">
           <CardContent className="pt-6">
             <div className="text-center space-y-6">
@@ -2382,29 +2074,10 @@ export function CreateCargoForm() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Invoice Number:
-                  </span>
-                  <span className="font-medium">
-                    {invoiceData?.invoice_number || "N/A"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {t("createCargo.steps.success.vehicle")}
-                  </span>
-                  <span className="font-medium">
-                    {selectedVehicle?.make} {selectedVehicle?.model}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
                     {t("createCargo.steps.success.totalAmount")}
                   </span>
                   <span className="font-bold">
-                    RWF{" "}
-                    {(
-                      invoiceData?.total_amount || estimatedCost
-                    ).toLocaleString()}
+                    RWF {estimatedCost.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -2412,7 +2085,7 @@ export function CreateCargoForm() {
                     {t("createCargo.steps.success.status")}
                   </span>
                   <span className="text-green-600 font-medium">
-                    {t("createCargo.steps.success.paymentConfirmed")}
+                    {t("createCargo.steps.success.cargoCreated")}
                   </span>
                 </div>
               </div>
