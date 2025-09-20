@@ -14,6 +14,10 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Package,
+  CheckCircle,
+  X,
+  User,
 } from "lucide-react";
 import ModernModel from "@/components/modal/ModernModel";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,6 +50,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
 import { mapCargosToCargoDetails } from "@/lib/utils/cargoMapper";
 import AssignmentModal from "@/components/admin/AssignmentModal";
+import ReviewAndInvoiceModal from "@/components/modals/ReviewAndInvoiceModal";
 
 export default function AdminCargos() {
   const { t } = useLanguage();
@@ -58,6 +63,10 @@ export default function AdminCargos() {
     useState<CargoDetail | null>(null);
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [selectedCargoId, setSelectedCargoId] = useState<string | null>(null);
+  const [isReviewInvoiceModalOpen, setIsReviewInvoiceModalOpen] =
+    useState(false);
+  const [cargoForReviewInvoice, setCargoForReviewInvoice] =
+    useState<CargoDetail | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [clientIdFilter, setClientIdFilter] = useState<string>("all-clients");
@@ -160,6 +169,11 @@ export default function AdminCargos() {
   console.log("Cargos data:", cargosData);
   console.log("Pagination:", pagination);
   console.log("Cargos length:", cargosData.length);
+  console.log(
+    "🔍 Modal state - isReviewInvoiceModalOpen:",
+    isReviewInvoiceModalOpen
+  );
+  console.log("🔍 Modal state - cargoForReviewInvoice:", cargoForReviewInvoice);
 
   // Get current count based on selected status filter
   const currentCount = useMemo(() => {
@@ -198,6 +212,13 @@ export default function AdminCargos() {
     setSelectedCargoId(null);
     refetch(); // Refresh the cargos list
     customToast.success("Assignment created successfully");
+  };
+
+  const handleReviewInvoiceCreated = (invoice: any) => {
+    setIsReviewInvoiceModalOpen(false);
+    setCargoForReviewInvoice(null);
+    refetch(); // Refresh the cargos list
+    customToast.success("Invoice created successfully");
   };
 
   const handleCreateNewCargo = () => {
@@ -340,17 +361,167 @@ export default function AdminCargos() {
     }
   };
 
-  // Get available status transitions for admin based on current status
-  const getAvailableStatusTransitions = (currentStatus: string) => {
-    const transitions: { [key: string]: string[] } = {
-      pending: ["assigned", "cancelled"],
-      assigned: ["picked_up", "cancelled"],
-      picked_up: ["in_transit", "cancelled"],
-      in_transit: ["delivered", "cancelled"],
-      delivered: [], // No transitions from delivered
-      cancelled: [], // No transitions from cancelled
-    };
-    return transitions[currentStatus] || [];
+  const handleReviewAndInvoice = async (cargoId: string) => {
+    try {
+      console.log("🔍 handleReviewAndInvoice called with cargoId:", cargoId);
+      console.log(
+        "🔍 Available cargos:",
+        cargos.map((c) => ({ id: c.id, cargo_number: c.cargo_number }))
+      );
+
+      // Find the cargo to pre-populate the modal
+      const cargo = cargos.find((c) => c.id === cargoId);
+      console.log("🔍 Found cargo:", cargo);
+
+      if (cargo) {
+        console.log("🔍 Setting cargo for review invoice:", cargo.id);
+        setCargoForReviewInvoice(cargo);
+        setIsReviewInvoiceModalOpen(true);
+        console.log(
+          "🔍 Modal state set - isReviewInvoiceModalOpen should be true"
+        );
+      } else {
+        console.error("🔍 Cargo not found in cargos list");
+        customToast.error("Cargo not found");
+      }
+    } catch (error) {
+      console.error("🔍 Error in handleReviewAndInvoice:", error);
+      customToast.error("Failed to open review and invoice modal");
+    }
+  };
+
+  // Get available admin actions based on status transition matrix
+  const getAvailableAdminActions = (cargo: CargoDetail) => {
+    const actions = [];
+    const status = cargo.status;
+
+    switch (status) {
+      case "pending":
+        actions.push(
+          {
+            key: "review-invoice",
+            label: "Review and Invoicing",
+            description: "Review cargo details and create invoice",
+            icon: <Package className="h-4 w-4 mr-2" />,
+            variant: "default" as const,
+            onClick: () => handleReviewAndInvoice(cargo.id),
+          },
+          // {
+          //   key: "mark-accepted",
+          //   label: "Mark as Accepted",
+          //   description: "Manually mark cargo as accepted",
+          //   icon: <CheckCircle className="h-4 w-4 mr-2" />,
+          //   variant: "outline" as const,
+          //   onClick: () => handleStatusChange(cargo.id, "accepted"),
+          // },
+          {
+            key: "cancel-cargo",
+            label: "Cancel Cargo",
+            description: "Cancel this cargo request",
+            icon: <X className="h-4 w-4 mr-2" />,
+            variant: "outline" as const,
+            className:
+              "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+            onClick: () => handleCancelCargo(cargo.id),
+          }
+        );
+        break;
+
+      case "quoted":
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => handleCancelCargo(cargo.id),
+        });
+        break;
+
+      case "accepted":
+        actions.push(
+          {
+            key: "assign-driver",
+            label: "Assign Driver",
+            description: "Assign driver and vehicle to this cargo",
+            icon: <User className="h-4 w-4 mr-2" />,
+            variant: "default" as const,
+            onClick: () => handleOpenAssignmentModal(cargo.id),
+          },
+          {
+            key: "cancel-cargo",
+            label: "Cancel Cargo",
+            description: "Cancel this cargo request",
+            icon: <X className="h-4 w-4 mr-2" />,
+            variant: "outline" as const,
+            className:
+              "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+            onClick: () => handleCancelCargo(cargo.id),
+          }
+        );
+        break;
+
+      case "assigned":
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => handleCancelCargo(cargo.id),
+        });
+        break;
+
+      case "picked_up":
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => handleCancelCargo(cargo.id),
+        });
+        break;
+
+      case "in_transit":
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => handleCancelCargo(cargo.id),
+        });
+        break;
+
+      case "delivered":
+      case "cancelled":
+        // No actions available for final states
+        break;
+
+      default:
+        // For any other status, show basic actions
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => handleCancelCargo(cargo.id),
+        });
+    }
+
+    return actions;
   };
 
   const handleTrackCargo = (cargoId: string) => {
@@ -653,6 +824,8 @@ export default function AdminCargos() {
         onUploadPhoto={handleUploadPhoto}
         onReportIssue={handleReportIssue}
         onViewDetails={handleViewDetails}
+        // Admin-specific actions
+        getCustomActions={getAvailableAdminActions}
       />
 
       {/* Compact Pagination */}
@@ -934,6 +1107,26 @@ export default function AdminCargos() {
         mode="create"
         preselectedCargoId={selectedCargoId || undefined}
       />
+
+      {/* Review and Invoice Modal */}
+      <ModernModel
+        isOpen={isReviewInvoiceModalOpen}
+        onClose={() => {
+          setIsReviewInvoiceModalOpen(false);
+          setCargoForReviewInvoice(null);
+        }}
+        title="Review and Invoicing"
+      >
+        <ReviewAndInvoiceModal
+          isOpen={true}
+          onClose={() => {
+            setIsReviewInvoiceModalOpen(false);
+            setCargoForReviewInvoice(null);
+          }}
+          onSuccess={handleReviewInvoiceCreated}
+          preselectedCargoId={cargoForReviewInvoice?.id}
+        />
+      </ModernModel>
     </div>
   );
 }

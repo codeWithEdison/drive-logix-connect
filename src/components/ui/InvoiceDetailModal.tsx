@@ -22,9 +22,14 @@ import {
   DollarSign,
   Package,
   Truck,
+  Edit,
+  X,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUpdateInvoiceStatus } from "@/lib/api/hooks/invoiceHooks";
 import { toast } from "sonner";
+import PaymentConfirmationModal from "@/components/modals/PaymentConfirmationModal";
 
 export interface InvoiceDetail {
   id: string;
@@ -60,6 +65,7 @@ interface InvoiceDetailModalProps {
   onDownload?: (invoiceId: string) => void;
   onPay?: (invoiceId: string) => void;
   onPaymentSuccess?: (paymentData: any) => void;
+  showAdminActions?: boolean;
 }
 
 export function InvoiceDetailModal({
@@ -69,9 +75,13 @@ export function InvoiceDetailModal({
   onDownload,
   onPay,
   onPaymentSuccess,
+  showAdminActions = false,
 }: InvoiceDetailModalProps) {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isPaymentConfirmationModalOpen, setIsPaymentConfirmationModalOpen] =
+    useState(false);
 
   if (!invoice) return null;
 
@@ -135,11 +145,16 @@ export function InvoiceDetailModal({
   };
 
   const handlePayNow = () => {
-    setIsPaymentModalOpen(true);
+    if (showAdminActions) {
+      setIsPaymentConfirmationModalOpen(true);
+    } else {
+      setIsPaymentModalOpen(true);
+    }
   };
 
   const handlePaymentSuccess = (paymentData: any) => {
     setIsPaymentModalOpen(false);
+    setIsPaymentConfirmationModalOpen(false);
     if (onPaymentSuccess) {
       onPaymentSuccess(paymentData);
     }
@@ -148,6 +163,13 @@ export function InvoiceDetailModal({
 
   const canPay = () => {
     return invoice.status === "sent" && !invoice.paid;
+  };
+
+  const canAdminAction = () => {
+    return (
+      showAdminActions &&
+      (invoice.status === "sent" || invoice.status === "draft")
+    );
   };
 
   return (
@@ -354,7 +376,17 @@ export function InvoiceDetailModal({
               onClick={handlePayNow}
             >
               <DollarSign className="h-4 w-4 mr-2" />
-              Pay Now
+              {showAdminActions ? "Mark as Paid" : "Pay Now"}
+            </Button>
+          )}
+          {canAdminAction() && (
+            <Button
+              variant="outline"
+              className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => setIsPaymentConfirmationModalOpen(true)}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel Invoice
             </Button>
           )}
         </div>
@@ -372,6 +404,20 @@ export function InvoiceDetailModal({
         }
         onPaymentSuccess={handlePaymentSuccess}
       />
+
+      {/* Payment Confirmation Modal for Admin */}
+      <ModernModel
+        isOpen={isPaymentConfirmationModalOpen}
+        onClose={() => setIsPaymentConfirmationModalOpen(false)}
+        title="Payment Confirmation"
+      >
+        <PaymentConfirmationModal
+          isOpen={isPaymentConfirmationModalOpen}
+          onClose={() => setIsPaymentConfirmationModalOpen(false)}
+          invoice={invoice}
+          onSuccess={handlePaymentSuccess}
+        />
+      </ModernModel>
     </ModernModel>
   );
 }

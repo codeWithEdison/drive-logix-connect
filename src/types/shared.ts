@@ -535,6 +535,7 @@ export interface CreateCargoRequest {
   pickup_date?: string;
   delivery_date?: string;
   estimated_cost?: number; // Add estimated cost field
+  distance_km?: number; // Add distance field
 }
 
 // ===========================================
@@ -591,6 +592,25 @@ export interface Invoice {
   notes?: string;
   created_at: string;
   updated_at: string;
+  // Nested objects from API response
+  cargo?: Cargo & {
+    client?: Client & {
+      user?: {
+        id: UUID;
+        full_name: string;
+        email: string;
+        phone: string;
+      };
+    };
+  };
+  client?: Client & {
+    user?: {
+      id: UUID;
+      full_name: string;
+      email: string;
+      phone: string;
+    };
+  };
 }
 
 export interface CreateInvoiceRequest {

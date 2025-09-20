@@ -41,9 +41,11 @@ import AdminTrucks from "@/pages/admin/AdminTrucks";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminReports from "@/pages/admin/AdminReports";
 import AdminAssignments from "@/pages/admin/AdminAssignments";
+import AdminInvoices from "@/pages/admin/AdminInvoices";
 import SuperAdminUsers from "@/pages/superadmin/SuperAdminUsers";
 import SuperAdminSettings from "@/pages/superadmin/SuperAdminSettings";
 import SuperAdminLogs from "@/pages/superadmin/SuperAdminLogs";
+import SuperAdminInvoices from "@/pages/superadmin/SuperAdminInvoices";
 import NotFound from "@/pages/NotFound";
 import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
 import { ProfilePage } from "@/pages/Profile";
@@ -257,6 +259,14 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/invoices"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminInvoices />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Super Admin Routes */}
         <Route
@@ -288,6 +298,14 @@ function AppContent() {
           element={
             <ProtectedRoute allowedRoles={["super_admin"]}>
               <SuperAdminLogs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/super-admin/invoices"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <SuperAdminInvoices />
             </ProtectedRoute>
           }
         />

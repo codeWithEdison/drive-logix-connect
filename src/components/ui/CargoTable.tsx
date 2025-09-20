@@ -139,6 +139,21 @@ export interface CargoTableProps {
   onViewDetails?: (cargo: CargoDetail) => void;
   onStatusChange?: (cargoId: string, newStatus: string) => void;
   customActions?: React.ReactNode;
+  getCustomActions?: (cargo: CargoDetail) => Array<{
+    key: string;
+    label: string;
+    description?: string;
+    icon?: React.ReactNode;
+    variant?:
+      | "default"
+      | "outline"
+      | "ghost"
+      | "link"
+      | "destructive"
+      | "secondary";
+    className?: string;
+    onClick: () => void;
+  }>;
   // Assignment system props
   onAcceptAssignment?: (assignmentId: string, notes?: string) => void;
   onRejectAssignment?: (
@@ -179,6 +194,7 @@ export function CargoTable({
   onViewDetails,
   onStatusChange,
   customActions,
+  getCustomActions,
   onAcceptAssignment,
   onRejectAssignment,
   onCancelAssignment,
@@ -511,7 +527,9 @@ export function CargoTable({
   };
 
   const renderActions = (cargo: CargoDetail) => {
-    const actions = getRoleBasedActions(cargo);
+    const actions = getCustomActions
+      ? getCustomActions(cargo)
+      : getRoleBasedActions(cargo);
 
     return (
       <DropdownMenu>

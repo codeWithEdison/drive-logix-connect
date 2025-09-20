@@ -70,6 +70,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
     },
     { title: t("navigation.users"), url: "/admin/users", icon: Users },
     { title: t("navigation.trucks"), url: "/admin/trucks", icon: Truck },
+    { title: t("navigation.invoices"), url: "/admin/invoices", icon: Receipt },
     { title: t("navigation.reports"), url: "/admin/reports", icon: BarChart3 },
     { title: t("navigation.settings"), url: "/admin/settings", icon: Settings },
   ],
@@ -79,6 +80,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       title: t("navigation.userManagement"),
       url: "/super-admin/users",
       icon: Users,
+    },
+    {
+      title: t("navigation.invoices"),
+      url: "/super-admin/invoices",
+      icon: Receipt,
     },
     {
       title: t("navigation.systemSettings"),

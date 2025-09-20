@@ -6,7 +6,21 @@ import {
   CreateInvoiceRequest,
   InvoiceStatus,
   PaymentMethod,
+  Invoice,
 } from "../../../types/shared";
+
+// Interface for the return type of useAllInvoices
+interface InvoicesResponse {
+  data: Invoice[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
 
 // Invoice hooks
 export const useGenerateInvoice = () => {
@@ -101,6 +115,28 @@ export const useAllInvoices = (params?: {
   return useQuery({
     queryKey: queryKeys.invoices.all(params),
     queryFn: () => InvoiceService.getAllInvoices(params),
-    select: (data) => data.data,
+    select: (data): InvoicesResponse => {
+      // Handle the actual API response structure
+      // API returns: { success: true, data: Invoice[], meta: { pagination: {...} } }
+      console.log("🔍 useAllInvoices select - raw data:", data);
+      console.log("🔍 useAllInvoices select - data.data:", data.data);
+      console.log("🔍 useAllInvoices select - data.meta:", data.meta);
+      console.log(
+        "🔍 useAllInvoices select - data.meta.pagination:",
+        data.meta?.pagination
+      );
+
+      return {
+        data: data.data || [],
+        pagination: data.meta?.pagination || {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    },
   });
 };

@@ -427,6 +427,151 @@ export function CargoDetailModal({
     }
   };
 
+  const handleGenerateInvoice = () => {
+    // Navigate to invoice generation page or open invoice modal
+    window.location.href = `/admin/invoices/create?cargoId=${cargo.id}`;
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    // This would typically call a status change API
+    console.log(`Changing status to: ${newStatus}`);
+    // You can implement the actual API call here
+  };
+
+  // Get available admin actions based on status transition matrix
+  const getAvailableAdminActions = () => {
+    const actions = [];
+    const status = cargo.status;
+
+    switch (status) {
+      case "pending":
+        actions.push(
+          {
+            key: "generate-invoice",
+            label: "Generate Invoice",
+            description: "Create invoice for this cargo",
+            icon: <Package className="h-4 w-4 mr-2" />,
+            variant: "default" as const,
+            onClick: () => handleGenerateInvoice(),
+          },
+          {
+            key: "mark-accepted",
+            label: "Mark as Accepted",
+            description: "Manually mark cargo as accepted",
+            icon: <CheckCircle className="h-4 w-4 mr-2" />,
+            variant: "outline" as const,
+            onClick: () => handleStatusChange("accepted"),
+          },
+          {
+            key: "cancel-cargo",
+            label: "Cancel Cargo",
+            description: "Cancel this cargo request",
+            icon: <X className="h-4 w-4 mr-2" />,
+            variant: "outline" as const,
+            className:
+              "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+            onClick: () => onCancelCargo?.(cargo.id),
+          }
+        );
+        break;
+
+      case "quoted":
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => onCancelCargo?.(cargo.id),
+        });
+        break;
+
+      case "accepted":
+        actions.push(
+          {
+            key: "assign-driver",
+            label: "Assign Driver",
+            description: "Assign driver and vehicle to this cargo",
+            icon: <User className="h-4 w-4 mr-2" />,
+            variant: "default" as const,
+            onClick: () => onOpenAssignmentModal?.(cargo.id),
+          },
+          {
+            key: "cancel-cargo",
+            label: "Cancel Cargo",
+            description: "Cancel this cargo request",
+            icon: <X className="h-4 w-4 mr-2" />,
+            variant: "outline" as const,
+            className:
+              "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+            onClick: () => onCancelCargo?.(cargo.id),
+          }
+        );
+        break;
+
+      case "assigned":
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => onCancelCargo?.(cargo.id),
+        });
+        break;
+
+      case "picked_up":
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => onCancelCargo?.(cargo.id),
+        });
+        break;
+
+      case "in_transit":
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => onCancelCargo?.(cargo.id),
+        });
+        break;
+
+      case "delivered":
+      case "cancelled":
+        // No actions available for final states
+        break;
+
+      default:
+        // For any other status, show basic actions
+        actions.push({
+          key: "cancel-cargo",
+          label: "Cancel Cargo",
+          description: "Cancel this cargo request",
+          icon: <X className="h-4 w-4 mr-2" />,
+          variant: "outline" as const,
+          className:
+            "text-red-600 border-red-600 hover:bg-red-600 hover:text-white",
+          onClick: () => onCancelCargo?.(cargo.id),
+        });
+    }
+
+    return actions;
+  };
+
   // Helper functions for assignment system
   const isAssignmentExpired = () => {
     const expiresAt =
@@ -1561,40 +1706,42 @@ export function CargoDetailModal({
             </Button>
           </div>
 
-          {/* Admin Actions - Assign Driver for Accepted Cargos */}
+          {/* Admin Actions - Based on Status Transition Matrix */}
           {(() => {
             // Use auth context role as fallback if prop role doesn't match
             const effectiveRole =
               userRole === user?.role ? userRole : user?.role;
-            const shouldShow =
-              (effectiveRole === "admin" || effectiveRole === "super_admin") &&
-              cargo.status === "accepted" &&
-              !cargo.delivery_assignment; // Only show if no assignment exists
-            console.log("Assign Driver Button Check:", {
-              userRoleProp: userRole,
-              authRole: user?.role,
-              effectiveRole,
-              cargoStatus: cargo.status,
-              hasAssignment: !!cargo.delivery_assignment,
-              shouldShow,
-              onOpenAssignmentModal: !!onOpenAssignmentModal,
-            });
-            return shouldShow;
-          })() && (
-            <Button
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              onClick={() => {
-                console.log(
-                  "Assign Driver button clicked for cargo:",
-                  cargo.id
-                );
-                onOpenAssignmentModal?.(cargo.id);
-              }}
-            >
-              <User className="h-4 w-4 mr-2" />
-              Assign Driver
-            </Button>
-          )}
+            const isAdmin =
+              effectiveRole === "admin" || effectiveRole === "super_admin";
+
+            if (!isAdmin) return null;
+
+            const adminActions = getAvailableAdminActions();
+
+            return adminActions.length > 0 ? (
+              <div className="space-y-2">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 font-medium mb-2">
+                    Admin Actions
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  {adminActions.map((action) => (
+                    <Button
+                      key={action.key}
+                      variant={action.variant}
+                      className={`w-full ${action.className || ""}`}
+                      onClick={action.onClick}
+                      title={action.description}
+                    >
+                      {action.icon}
+                      {action.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ) : null;
+          })()}
 
           {/* Driver Actions */}
           {isDriverCargo &&

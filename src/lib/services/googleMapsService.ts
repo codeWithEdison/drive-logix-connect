@@ -241,7 +241,10 @@ class GoogleMapsService {
 
         const request: google.maps.places.AutocompleteRequest = {
           input: query,
-        };
+          componentRestrictions: {
+            country: countryCode,
+          },
+        } as any;
 
         console.log("📡 Making Places API request:", request);
 

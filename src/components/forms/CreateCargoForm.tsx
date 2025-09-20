@@ -536,7 +536,7 @@ export function CreateCargoForm() {
         }
       }
 
-      const cargoRequest: CreateCargoRequest = {
+      const cargoRequest: CreateCargoRequest & { distance_km?: number } = {
         category_id: formData.cargoCategoryId || undefined,
         type:
           formData.cargoType === "other"
@@ -577,7 +577,10 @@ export function CreateCargoForm() {
             : CargoPriority.URGENT,
         pickup_date: formData.pickupDate,
         estimated_cost: estimatedCost,
+        distance_km: formData.distance || 0, // Include calculated distance
       };
+
+      console.log("🚚 Creating cargo with distance:", formData.distance, "km");
 
       const result = await createCargoMutation.mutateAsync(cargoRequest);
 
@@ -712,6 +715,7 @@ export function CreateCargoForm() {
             }
 
             setFormData((prev) => ({ ...prev, distance: distanceKm }));
+            console.log(`📏 Distance calculated: ${distanceKm} km`);
             toast.success(`Distance calculated: ${distanceKm} km`);
           } else {
             toast.error("Failed to calculate distance");

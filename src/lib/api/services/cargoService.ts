@@ -64,6 +64,46 @@ export class CargoService {
     return response.data;
   }
 
+  // Update cargo details (Admin)
+  static async updateCargo(
+    id: string,
+    data: {
+      category_id?: string;
+      type?: string;
+      description?: string;
+      weight_kg?: number;
+      volume?: number;
+      dimensions?: {
+        length: number;
+        width: number;
+        height: number;
+      };
+      pickup_location_id?: string;
+      pickup_address?: string;
+      pickup_contact?: string;
+      pickup_phone?: string;
+      pickup_instructions?: string;
+      destination_location_id?: string;
+      destination_address?: string;
+      destination_contact?: string;
+      destination_phone?: string;
+      delivery_instructions?: string;
+      special_requirements?: string;
+      insurance_required?: boolean;
+      insurance_amount?: number;
+      fragile?: boolean;
+      temperature_controlled?: boolean;
+      priority?: "low" | "normal" | "high" | "urgent";
+      pickup_date?: string;
+      delivery_date?: string;
+      estimated_cost?: number;
+      distance_km?: number;
+    }
+  ): Promise<ApiResponse<Cargo>> {
+    const response = await axiosInstance.put(`/cargos/${id}`, data);
+    return response.data;
+  }
+
   // Get client cargos
   static async getClientCargos(
     params?: CargoSearchParams

@@ -63,7 +63,7 @@ export class InvoiceService {
     status?: string;
     page?: number;
     limit?: number;
-  }): Promise<ApiResponse<PaginationResponse<Invoice>>> {
+  }): Promise<ApiResponse<Invoice[]>> {
     const response = await axiosInstance.get("/invoices", { params });
     return response.data;
   }
