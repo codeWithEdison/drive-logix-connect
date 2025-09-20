@@ -359,19 +359,10 @@ const MyCargos = () => {
     );
   }
 
-  // Debug: Let's see exactly what we're getting
-  console.log("🔍 DEBUGGING MyCargos - NEW VERSION:");
-  console.log("📊 cargosData:", cargosData);
-  console.log("📊 Array.isArray(cargosData):", Array.isArray(cargosData));
-  console.log("📊 cargosData?.length:", (cargosData as any[])?.length);
-  console.log("📊 isLoading:", isLoading);
-  console.log("📊 error:", error);
+
 
   // The hook should now return the data array directly
   const actualCargos = (cargosData as any[]) || [];
-  console.log("📊 actualCargos:", actualCargos);
-  console.log("📊 actualCargos.length:", actualCargos.length);
-  console.log("📊 First cargo:", actualCargos[0]);
 
   // Transform API data to CargoDetail format
   const transformedCargos: CargoDetail[] =

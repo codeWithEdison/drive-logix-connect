@@ -33,6 +33,8 @@ import {
   MoreHorizontal,
   RefreshCw,
   MapPin,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -151,6 +153,10 @@ export default function Invoices() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // Modal state
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceDetail | null>(
     null
@@ -163,18 +169,48 @@ export default function Invoices() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // API hooks
-  const { data: invoicesData, isLoading, error, refetch } = useClientInvoices();
+  const {
+    data: invoicesData,
+    isLoading,
+    error,
+    refetch,
+  } = useClientInvoices({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    page: currentPage,
+    limit: pageSize,
+  });
 
   // Debug: Let's see what we're getting
   console.log("🔍 DEBUGGING Invoices:");
   console.log("📊 invoicesData:", invoicesData);
-  console.log("📊 Array.isArray(invoicesData):", Array.isArray(invoicesData));
-  console.log("📊 invoicesData type:", typeof invoicesData);
+  console.log("📊 invoicesData.invoices:", invoicesData?.invoices);
+  console.log("📊 invoicesData.pagination:", invoicesData?.pagination);
   console.log("📊 isLoading:", isLoading);
   console.log("📊 error:", error);
 
   const handleRefresh = () => {
     refetch();
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: string) => {
+    setPageSize(parseInt(size));
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // Reset pagination when filters change
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
   };
 
   const handleDownloadInvoice = (invoiceId: string) => {
@@ -222,8 +258,11 @@ export default function Invoices() {
     // In real app, this would download all invoices as a zip file
   };
 
-  // Filter and sort invoices
-  const actualInvoices = Array.isArray(invoicesData) ? invoicesData : [];
+  // Filter and sort invoices (client-side filtering for search only)
+  const actualInvoices = invoicesData?.invoices || [];
+  const pagination = invoicesData?.pagination || null;
+
+  // Apply client-side search filtering only (status filtering is done server-side)
   const filteredInvoices = actualInvoices.filter((invoice: any) => {
     const matchesSearch =
       searchTerm === "" ||
@@ -231,9 +270,7 @@ export default function Invoices() {
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       invoice.cargo_id?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || invoice.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   const sortedInvoices = [...filteredInvoices].sort((a: any, b: any) => {
@@ -259,18 +296,11 @@ export default function Invoices() {
     }
   });
 
-  const totalPaid = actualInvoices
-    .filter((inv: any) => inv.status === "paid")
-    .reduce(
-      (sum: number, inv: any) => sum + parseFloat(inv.total_amount || 0),
-      0
-    );
-  const totalOutstanding = actualInvoices
-    .filter((inv: any) => inv.status === "sent" || inv.status === "overdue")
-    .reduce(
-      (sum: number, inv: any) => sum + parseFloat(inv.total_amount || 0),
-      0
-    );
+  // Use pagination data for all totals (accurate totals from backend)
+  const totalInvoices = pagination?.total || actualInvoices.length;
+  const totalPaid = pagination?.totalPaid || 0;
+  const totalOutstanding = pagination?.totalOutstanding || 0;
+  const totalAmount = pagination?.totalAmount || 0;
 
   // Loading state
   if (isLoading) {
@@ -415,7 +445,7 @@ export default function Invoices() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -424,7 +454,7 @@ export default function Invoices() {
                   {t("invoices.totalInvoices")}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {actualInvoices.length}
+                  {totalInvoices}
                 </p>
               </div>
               <Receipt className="h-8 w-8 text-blue-500" />
@@ -463,6 +493,22 @@ export default function Invoices() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("invoices.totalAmount")}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(totalAmount)}
+                </p>
+              </div>
+              <DollarSign className="h-8 w-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters and Search */}
@@ -476,11 +522,14 @@ export default function Invoices() {
                   placeholder={t("invoices.searchPlaceholder")}
                   className="pl-10"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={handleStatusFilterChange}
+            >
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder={t("invoices.filterByStatus")} />
               </SelectTrigger>
@@ -695,6 +744,90 @@ export default function Invoices() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      {pagination && (
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              {/* Page Size Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  {t("invoices.showPerPage")}:
+                </span>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={handlePageSizeChange}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Pagination Info */}
+              <div className="text-sm text-gray-600">
+                {t("invoices.showing")} {(currentPage - 1) * pageSize + 1} -{" "}
+                {Math.min(currentPage * pageSize, pagination.total || 0)}{" "}
+                {t("invoices.of")} {pagination.total || 0}{" "}
+                {t("invoices.results")}
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  {t("common.previous")}
+                </Button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {Array.from(
+                    { length: Math.min(5, pagination.totalPages || 1) },
+                    (_, i) => {
+                      const pageNum = i + 1;
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={
+                            currentPage === pageNum ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    }
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= (pagination.totalPages || 1)}
+                >
+                  {t("common.next")}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Invoice Detail Modal */}
       <InvoiceDetailModal

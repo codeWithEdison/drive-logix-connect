@@ -68,14 +68,21 @@ export const useClientInvoices = (params?: {
     select: (data) => {
       // Handle the actual API response structure
       // API returns: { success: true, data: { invoices: Invoice[], pagination: {...} } }
-      // We need to return the invoices array directly
+      // Return both invoices and pagination data
       console.log("🔍 useClientInvoices select - raw data:", data);
       console.log("🔍 useClientInvoices select - data.data:", data.data);
       console.log(
         "🔍 useClientInvoices select - data.data.invoices:",
         data.data.invoices
       );
-      return data.data.invoices;
+      console.log(
+        "🔍 useClientInvoices select - data.data.pagination:",
+        data.data.pagination
+      );
+      return {
+        invoices: data.data.invoices,
+        pagination: data.data.pagination,
+      };
     },
   });
 };

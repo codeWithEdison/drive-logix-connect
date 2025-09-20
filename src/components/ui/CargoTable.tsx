@@ -61,17 +61,17 @@ import { useAuth } from "@/contexts/AuthContext";
 // Status configuration for different cargo types with meaningful descriptions
 const statusConfig = {
   pending: {
-    label: "Awaiting Quote",
+    label: "Pending for Review ",
     description: "Request submitted, waiting for pricing",
     className: "bg-yellow-100 text-yellow-600",
   },
   quoted: {
-    label: "Quote Sent",
+    label: "Invoice Sent",
     description: "Price quote provided, awaiting acceptance",
     className: "bg-blue-100 text-blue-600",
   },
   accepted: {
-    label: "Quote Accepted",
+    label: "Invoice Paid",
     description: "Client confirmed, ready for assignment",
     className: "bg-indigo-100 text-indigo-600",
   },
