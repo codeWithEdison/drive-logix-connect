@@ -22,3 +22,6 @@ export { SystemService } from "./systemService";
 export { LocalizationService, OperationalService } from "./localizationService";
 export { DashboardService } from "./dashboardService";
 export { LocationService } from "./locationService";
+export { BranchService } from "./branchService";
+export { DistrictService } from "./districtService";
+export { CargoImageService } from "./cargoImageService";

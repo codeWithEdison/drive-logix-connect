@@ -155,6 +155,7 @@ export interface Location {
   operating_hours?: Record<string, any>;
   is_active: boolean;
   created_by: UUID;
+  district_id?: UUID; // New field
   created_at: string;
   creator?: {
     id: UUID;
@@ -176,6 +177,7 @@ export interface CreateLocationRequest {
   contact_phone?: string;
   operating_hours?: Record<string, any>;
   is_active?: boolean;
+  district_id?: UUID; // New field
 }
 
 export interface UpdateLocationRequest {
@@ -199,6 +201,7 @@ export interface LocationSearchParams extends PaginationParams {
   country?: string;
   is_active?: boolean;
   created_by?: UUID;
+  district_id?: UUID; // New field
   search?: string;
 }
 
@@ -315,6 +318,7 @@ export interface User {
   is_active: boolean;
   is_verified: boolean;
   last_login?: string;
+  branch_id?: UUID; // New field for admin/super_admin roles
   created_at: string;
   updated_at: string;
 }
@@ -326,6 +330,7 @@ export interface CreateUserRequest {
   password: string;
   role: UserRole;
   preferred_language?: Language;
+  branch_id?: UUID; // New field for admin/super_admin roles
 }
 
 export interface LoginRequest {
@@ -388,6 +393,8 @@ export interface Driver extends User {
   rating: number;
   total_deliveries: number;
   total_distance_km: number;
+  branch_id?: UUID; // New field
+  code_number?: string; // New field
 }
 
 export interface UpdateDriverRequest {
@@ -436,6 +443,7 @@ export interface Vehicle {
   last_maintenance_date?: string;
   next_maintenance_date?: string;
   total_distance_km: number;
+  branch_id?: UUID; // New field
   created_at: string;
   updated_at: string;
 }
@@ -453,6 +461,7 @@ export interface CreateVehicleRequest {
   type: VehicleType;
   insurance_expiry?: string;
   registration_expiry?: string;
+  branch_id?: UUID; // New field
 }
 
 // ===========================================
@@ -675,6 +684,7 @@ export interface UserSearchParams extends PaginationParams {
   role?: UserRole;
   status?: "active" | "inactive";
   search?: string;
+  branch_id?: UUID;
 }
 
 export interface CargoSearchParams extends PaginationParams {
@@ -692,6 +702,7 @@ export interface VehicleSearchParams extends PaginationParams {
   status?: VehicleStatus;
   capacity_min?: number;
   search?: string;
+  branch_id?: UUID;
 }
 
 // ===========================================
@@ -1461,4 +1472,161 @@ export interface DashboardFilters {
   vehicle_type?: VehicleType;
   cargo_status?: CargoStatus;
   payment_method?: PaymentMethod;
+}
+
+// ===========================================
+// BRANCH MANAGEMENT INTERFACES
+// ===========================================
+
+export interface Branch {
+  id: UUID;
+  name: string;
+  code: string;
+  address: string;
+  city: string;
+  country: string;
+  postal_code: string;
+  phone: string;
+  email: string;
+  manager_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBranchRequest {
+  name: string;
+  code: string;
+  address: string;
+  city: string;
+  country: string;
+  postal_code: string;
+  phone: string;
+  email: string;
+  manager_name: string;
+  is_active?: boolean;
+}
+
+export interface UpdateBranchRequest {
+  name?: string;
+  code?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  postal_code?: string;
+  phone?: string;
+  email?: string;
+  manager_name?: string;
+  is_active?: boolean;
+}
+
+export interface BranchSearchParams extends PaginationParams {
+  search?: string;
+  is_active?: boolean;
+  city?: string;
+  country?: string;
+}
+
+export interface BranchListResponse {
+  branches: Branch[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ===========================================
+// DISTRICT MANAGEMENT INTERFACES
+// ===========================================
+
+export interface District {
+  id: UUID;
+  name: string;
+  code: string;
+  branch_id: UUID;
+  branch: {
+    id: UUID;
+    name: string;
+    code: string;
+  };
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateDistrictRequest {
+  name: string;
+  code: string;
+  branch_id: UUID;
+  is_active?: boolean;
+}
+
+export interface UpdateDistrictRequest {
+  name?: string;
+  code?: string;
+  branch_id?: UUID;
+  is_active?: boolean;
+}
+
+export interface DistrictSearchParams extends PaginationParams {
+  search?: string;
+  branch_id?: UUID;
+  is_active?: boolean;
+}
+
+export interface DistrictListResponse {
+  districts: District[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ===========================================
+// CARGO IMAGE MANAGEMENT INTERFACES
+// ===========================================
+
+export enum CargoImageType {
+  PICKUP = "pickup",
+  DELIVERY = "delivery",
+  DAMAGE = "damage",
+  PACKAGING = "packaging",
+  DOCUMENTATION = "documentation",
+}
+
+export interface CargoImage {
+  id: UUID;
+  cargo_id: UUID;
+  image_url: string;
+  image_type: CargoImageType;
+  description?: string;
+  is_primary: boolean;
+  uploaded_by: UUID;
+  created_at: string;
+}
+
+export interface CreateCargoImageRequest {
+  image: globalThis.File;
+  image_type: CargoImageType;
+  description?: string;
+  is_primary?: boolean;
+}
+
+export interface UpdateCargoImageRequest {
+  image_type?: CargoImageType;
+  description?: string;
+  is_primary?: boolean;
+}
+
+export interface CargoImageSearchParams extends PaginationParams {
+  image_type?: CargoImageType;
+  is_primary?: boolean;
+}
+
+export interface CargoImageListResponse {
+  images: CargoImage[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }

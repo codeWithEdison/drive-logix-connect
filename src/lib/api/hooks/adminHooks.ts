@@ -53,6 +53,7 @@ export const useAdminDrivers = (params?: {
   search?: string;
   page?: number;
   limit?: number;
+  branch_id?: string;
 }) => {
   return useQuery({
     queryKey: queryKeys.admin.drivers(params),
@@ -69,11 +70,11 @@ export const useCreateAdminDriver = () => {
     mutationFn: (data: {
       full_name: string;
       email: string;
+      phone: string;
       password: string;
+      preferred_language: "en" | "rw" | "fr";
       license_number: string;
       license_type: "A" | "B" | "C" | "D" | "E";
-      phone?: string;
-      preferred_language?: "en" | "rw" | "fr";
       license_expiry?: string;
       date_of_birth?: string;
       emergency_contact?: string;
