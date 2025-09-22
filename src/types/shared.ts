@@ -321,6 +321,7 @@ export interface User {
   branch_id?: UUID; // New field for admin/super_admin roles
   created_at: string;
   updated_at: string;
+  branch?: Branch; // Branch information for admin/driver users
 }
 
 export interface CreateUserRequest {
@@ -545,6 +546,7 @@ export interface CreateCargoRequest {
   delivery_date?: string;
   estimated_cost?: number; // Add estimated cost field
   distance_km?: number; // Add distance field
+  branch_id?: UUID; // Branch of the selected pickup location
 }
 
 // ===========================================

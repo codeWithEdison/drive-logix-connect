@@ -118,13 +118,13 @@ export default function Register() {
                   <strong>💡 {t("auth.checkSpamFolder")}</strong>
                 </p>
                 <div className="pt-4 space-y-2">
-                  <Link
+                  {/* <Link
                     to={`/verify-email?email=${encodeURIComponent(userEmail)}`}
                   >
                     <Button className="w-full">
                       {t("auth.goToVerification")}
                     </Button>
-                  </Link>
+                  </Link> */}
                   <Link to="/login">
                     <Button variant="outline" className="w-full">
                       {t("auth.backToLogin")}

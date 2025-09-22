@@ -316,7 +316,14 @@
     "preferredLanguage": "Preferred Language",
     "optional": "Optional",
     "verificationEmailSent": "Verification email sent! Please check your inbox.",
-    "verificationInstructions": "Please check your inbox for the verification link. The link will expire in 1 hour."
+    "verificationInstructions": "Please check your inbox for the verification link. The link will expire in 1 hour.",
+    "emailVerification": "Email Verification",
+    "verifyEmailTitle": "Verify Your Email",
+    "verifyEmailDescription": "Please verify your email address to complete your registration",
+    "verificationSuccess": "Your email has been verified successfully!",
+    "verificationFailed": "Email verification failed. Please try again.",
+    "verificationToken": "Verification Token",
+    "enterVerificationToken": "Enter verification token"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -629,6 +636,16 @@
   "adminDashboard": {
     "title": "Admin Dashboard",
     "subtitle": "Monitor and manage all logistics operations",
+    "header": {
+      "welcomeBack": "Welcome back",
+      "manageSystem": "Monitor and manage all logistics operations",
+      "systemAdmin": "System Admin",
+      "systemError": "System Error"
+    },
+    "stats": {
+      "monthlyRevenueLabel": "Monthly Revenue",
+      "activeDeliveriesLabel": "Active Deliveries"
+    },
     "monthlyRevenue": "Monthly Revenue",
     "activeDeliveries": "Active Deliveries",
     "availableDrivers": "Available Drivers",
@@ -843,8 +860,6 @@
     "assignedAt": "Assigned At",
     "driverRespondedAt": "Driver Responded At",
     "viewDetails": "View Details",
-    "editAssignment": "Edit Assignment",
-    "cancelAssignment": "Cancel Assignment",
     "clearAllFilters": "Clear All Filters",
     "assignmentStatus": "Assignment Status",
     "driverFilter": "Driver",

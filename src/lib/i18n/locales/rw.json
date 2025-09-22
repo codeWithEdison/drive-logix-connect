@@ -263,7 +263,14 @@
     "preferredLanguage": "Ururimi Rwifuza",
     "optional": "Rihari",
     "verificationEmailSent": "Imeli yo kwemeza yoherejwe! Nyamuneka reba mu inbox yawe.",
-    "verificationInstructions": "Nyamuneka reba mu inbox yawe kugira ngo ubone imeli yo kwemeza. Uwo murongo uzagaruka mu isaha imwe."
+    "verificationInstructions": "Nyamuneka reba mu inbox yawe kugira ngo ubone imeli yo kwemeza. Uwo murongo uzagaruka mu isaha imwe.",
+    "emailVerification": "Kwemeza Imeli",
+    "verifyEmailTitle": "Emeza Imeli Yawe",
+    "verifyEmailDescription": "Nyamuneka wemeze aderesi yawe ya imeli kugira ngo urangize kwiyandikisha",
+    "verificationSuccess": "Imeli yawe yemejwe neza!",
+    "verificationFailed": "Kwemeza imeli byanze. Gerageza nanone.",
+    "verificationToken": "Ikimenyetso cyo Kwemeza",
+    "enterVerificationToken": "Andika ikimenyetso cyo kwemeza"
   },
   "navigation": {
     "dashboard": "Ikibaho",
@@ -1026,6 +1033,16 @@
   "adminDashboard": {
     "title": "Ikibaho cy'umuyobozi",
     "subtitle": "Kurikirana no gucunga ibikorwa byose by'ubucuruzi",
+    "header": {
+      "welcomeBack": "Murakaza neza",
+      "manageSystem": "Kurikirana no gucunga ibikorwa byose by'ubucuruzi",
+      "systemAdmin": "Umucyobozi w'ubucuruzi",
+      "systemError": "Ikosa ry'ubucuruzi"
+    },
+    "stats": {
+      "monthlyRevenueLabel": "Amafaranga y'ukwezi",
+      "activeDeliveriesLabel": "Gutanga bikora"
+    },
     "day": "Umunsi",
     "month": "Ukwezi",
     "totalRevenue": "Amafaranga yose",

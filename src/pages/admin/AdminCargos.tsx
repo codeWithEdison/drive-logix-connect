@@ -46,6 +46,7 @@ import {
 import { useAdminClients } from "@/lib/api/hooks/adminHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { Language } from "@/types/shared";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
 import { mapCargosToCargoDetails } from "@/lib/utils/cargoMapper";
@@ -758,7 +759,7 @@ export default function AdminCargos() {
                     <SelectItem key={client.id} value={client.id}>
                       {client.client?.company_name ||
                         client.full_name ||
-                        `Client ${client.id.slice(0, 8)}`}
+                        `Client ${client.id?.slice(0, 8) || "Unknown"}`}
                     </SelectItem>
                   ))}
                 </>
@@ -920,6 +921,7 @@ export default function AdminCargos() {
         onChangeDriver={handleChangeDriver}
         onCreateAssignment={handleTruckAssignment}
         onOpenAssignmentModal={handleOpenAssignmentModal}
+        onReviewAndInvoice={handleReviewAndInvoice}
       />
 
       {/* Truck Assignment Modal using ModernModel */}
@@ -1109,24 +1111,15 @@ export default function AdminCargos() {
       />
 
       {/* Review and Invoice Modal */}
-      <ModernModel
+      <ReviewAndInvoiceModal
         isOpen={isReviewInvoiceModalOpen}
         onClose={() => {
           setIsReviewInvoiceModalOpen(false);
           setCargoForReviewInvoice(null);
         }}
-        title="Review and Invoicing"
-      >
-        <ReviewAndInvoiceModal
-          isOpen={true}
-          onClose={() => {
-            setIsReviewInvoiceModalOpen(false);
-            setCargoForReviewInvoice(null);
-          }}
-          onSuccess={handleReviewInvoiceCreated}
-          preselectedCargoId={cargoForReviewInvoice?.id}
-        />
-      </ModernModel>
+        onSuccess={handleReviewInvoiceCreated}
+        preselectedCargoId={cargoForReviewInvoice?.id}
+      />
     </div>
   );
 }

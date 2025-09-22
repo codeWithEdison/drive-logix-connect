@@ -21,7 +21,7 @@ import {
   useMyLocations,
   useCreateLocation,
 } from "@/lib/api/hooks";
-import { useActiveDistricts } from "@/lib/api/hooks/districtHooks";
+import { useActiveDistricts, useDistrict } from "@/lib/api/hooks/districtHooks";
 import {
   CreateCargoRequest,
   CargoPriority,
@@ -93,6 +93,7 @@ export function CreateCargoForm() {
   });
 
   const [estimatedCost, setEstimatedCost] = useState(0);
+  const [pickupBranchId, setPickupBranchId] = useState<string | null>(null);
   const [costBreakdown, setCostBreakdown] = useState<{
     base_cost: number;
     weight_cost: number;
@@ -137,6 +138,18 @@ export function CreateCargoForm() {
   const { data: districts } = useActiveDistricts();
   const createLocationMutation = useCreateLocation();
   const estimateCostMutation = useEstimateCargoCost();
+
+  // Get district details for branch_id resolution
+  const { data: pickupDistrict } = useDistrict(formData.pickupDistrictId);
+
+  // Update branch_id when pickup district changes
+  useEffect(() => {
+    if (pickupDistrict?.branch_id) {
+      setPickupBranchId(pickupDistrict.branch_id);
+    } else {
+      setPickupBranchId(null);
+    }
+  }, [pickupDistrict]);
 
   // Cleanup effect for timeouts and abort controllers
   useEffect(() => {
@@ -397,6 +410,7 @@ export function CreateCargoForm() {
             pickupContactPhone: location.contact_phone || "",
             pickupLat: location.latitude?.toString() || "",
             pickupLng: location.longitude?.toString() || "",
+            pickupDistrictId: location.district_id || "",
             newPickupLocationName: location.name,
           }
         : {
@@ -406,6 +420,7 @@ export function CreateCargoForm() {
             destinationContactPhone: location.contact_phone || "",
             destinationLat: location.latitude?.toString() || "",
             destinationLng: location.longitude?.toString() || "",
+            destinationDistrictId: location.district_id || "",
             newDestinationLocationName: location.name,
           }),
     };
@@ -599,9 +614,11 @@ export function CreateCargoForm() {
         pickup_date: formData.pickupDate,
         estimated_cost: estimatedCost,
         distance_km: formData.distance || 0, // Include calculated distance
+        branch_id: pickupBranchId || undefined, // Include branch_id from pickup location district
       };
 
       console.log("🚚 Creating cargo with distance:", formData.distance, "km");
+      console.log("🏢 Creating cargo with branch_id:", pickupBranchId);
 
       const result = await createCargoMutation.mutateAsync(cargoRequest);
 

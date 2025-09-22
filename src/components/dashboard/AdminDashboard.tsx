@@ -15,7 +15,14 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
-import { RefreshCw, AlertCircle } from "lucide-react";
+import {
+  RefreshCw,
+  AlertCircle,
+  User,
+  Shield,
+  TrendingUp,
+  Activity,
+} from "lucide-react";
 import {
   Package,
   Users,
@@ -35,6 +42,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 export function AdminDashboard() {
   const { t } = useLanguage();
@@ -170,18 +178,32 @@ export function AdminDashboard() {
   // Loading state
   if (dashboardLoading) {
     return (
-      <div className="space-y-8 p-6">
-        {/* Header Skeleton */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-28" />
-            <Skeleton className="h-10 w-24" />
+      <div className="space-y-6 sm:space-y-8">
+        {/* Welcome Header Skeleton */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-blue-700 to-purple-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+              {/* Avatar Skeleton */}
+              <div className="relative flex-shrink-0">
+                <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20" />
+                <Skeleton className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full" />
+              </div>
+              {/* Info Skeleton */}
+              <div className="flex-1 min-w-0 space-y-2">
+                <Skeleton className="h-6 sm:h-8 w-64 bg-white/20" />
+                <Skeleton className="h-4 sm:h-5 w-48 bg-white/20" />
+                <div className="flex gap-4">
+                  <Skeleton className="h-3 w-24 bg-white/20" />
+                  <Skeleton className="h-3 w-20 bg-white/20" />
+                </div>
+              </div>
+            </div>
+            {/* Action Buttons Skeleton */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+              <Skeleton className="h-8 w-20 bg-white/20" />
+              <Skeleton className="h-8 w-24 bg-white/20" />
+              <Skeleton className="h-8 w-28 bg-white/20" />
+            </div>
           </div>
         </div>
 
@@ -208,37 +230,81 @@ export function AdminDashboard() {
   // Error state
   if (dashboardError) {
     return (
-      <div className="space-y-8 p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground font-heading">
-              {t("adminDashboard.title")}
-            </h1>
-            <p className="text-muted-foreground">
-              {t("adminDashboard.subtitle")}
-            </p>
+      <div className="space-y-6 sm:space-y-8">
+        {/* Welcome Header with Error State */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-blue-700 to-purple-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 text-white">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                {/* Admin Avatar */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
+                    {user?.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.full_name}
+                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-white/80" />
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 rounded-full border-2 border-white flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+                  </div>
+                </div>
+
+                {/* Admin Info */}
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 leading-tight">
+                    {t("adminDashboard.header.welcomeBack")}{" "}
+                    <span className="break-words">
+                      {user?.full_name || t("common.admin")}
+                    </span>
+                    !
+                  </h1>
+                  <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-2 sm:mb-3">
+                    {t("adminDashboard.header.manageSystem")}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-red-500/20 text-red-200 border-red-400/30 text-xs">
+                      {t("adminDashboard.header.systemError")}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {t("common.retry")}
+                </Button>
+              </div>
+            </div>
           </div>
+
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
         </div>
 
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-red-50 border border-red-200 rounded-xl sm:rounded-2xl p-4 sm:p-6">
           <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <div>
-              <h3 className="font-semibold text-red-800">
+            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-red-800 text-sm sm:text-base">
                 {t("common.error")}
               </h3>
-              <p className="text-red-600 text-sm mt-1">
+              <p className="text-red-600 text-xs sm:text-sm mt-1 break-words">
                 {dashboardError?.message || t("adminDashboard.loadError")}
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                className="mt-2"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                {t("common.retry")}
-              </Button>
             </div>
           </div>
         </div>
@@ -247,75 +313,149 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8 p-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground font-heading">
-            {t("adminDashboard.title")}
-          </h1>
-          <p className="text-muted-foreground">
-            {t("adminDashboard.subtitle")},{" "}
-            {user?.full_name || t("common.admin")}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={dashboardLoading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${
-                dashboardLoading ? "animate-spin" : ""
-              }`}
-            />
-            {t("common.refresh")}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Calendar className="h-4 w-4 mr-2" />
-                {getPeriodLabel(selectedPeriod)}
-                <ChevronDown className="h-4 w-4 ml-2" />
+    <div className="space-y-6 sm:space-y-8">
+      {/* Welcome Header with Admin Info */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-blue-700 to-purple-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 text-white">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative z-10">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+              {/* Admin Avatar */}
+              <div className="relative flex-shrink-0">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.full_name}
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-white/80" />
+                  )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+                </div>
+              </div>
+
+              {/* Admin Info */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 leading-tight">
+                  {t("adminDashboard.header.welcomeBack")}{" "}
+                  <span className="break-words">
+                    {user?.full_name || t("common.admin")}
+                  </span>
+                  !
+                </h1>
+                <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-2 sm:mb-3">
+                  {t("adminDashboard.header.manageSystem")}
+                </p>
+                {/* <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-blue-200" />
+                    <span className="font-semibold">
+                      RWF{" "}
+                      {(
+                        dashboardData?.data?.stats?.monthly_revenue / 1000000 ||
+                        0
+                      ).toFixed(1)}
+                      M
+                    </span>
+                    <span className="text-blue-200">
+                      {t("adminDashboard.stats.monthlyRevenueLabel")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Package className="w-3 h-3 sm:w-4 sm:h-4 text-blue-200" />
+                    <span className="font-semibold">
+                      {dashboardData?.data?.stats?.active_deliveries || 0}
+                    </span>
+                    <span className="text-blue-200">
+                      {t("adminDashboard.stats.activeDeliveriesLabel")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-green-500/20 text-green-200 border-green-400/30 text-xs">
+                      {t("adminDashboard.header.systemAdmin")}
+                    </Badge>
+                  </div>
+                </div> */}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={dashboardLoading}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 mr-2 ${
+                    dashboardLoading ? "animate-spin" : ""
+                  }`}
+                />
+                {t("common.refresh")}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handlePeriodChange("daily")}>
-                <Calendar className="h-4 w-4 mr-2" />
-                {t("common.daily")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePeriodChange("weekly")}>
-                <Calendar className="h-4 w-4 mr-2" />
-                {t("common.weekly")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePeriodChange("monthly")}>
-                <Calendar className="h-4 w-4 mr-2" />
-                {t("common.monthly")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePeriodChange("yearly")}>
-                <Calendar className="h-4 w-4 mr-2" />
-                {t("common.yearly")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="outline" onClick={handleExportReport}>
-            <Download className="h-4 w-4 mr-2" />
-            {t("adminDashboard.exportReport")}
-          </Button>
-          {/* <Button onClick={handleAddNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t("common.addNew")}
-          </Button>
-          <Button onClick={handleSettings}>
-            <Settings className="h-4 w-4 mr-2" />
-            {t("common.settings")}
-          </Button> */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/10 border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {getPeriodLabel(selectedPeriod)}
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handlePeriodChange("daily")}>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {t("common.daily")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handlePeriodChange("weekly")}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {t("common.weekly")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handlePeriodChange("monthly")}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {t("common.monthly")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handlePeriodChange("yearly")}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {t("common.yearly")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                size="sm"
+                onClick={handleExportReport}
+                className="bg-white/20 border-white/30 text-white hover:bg-white/30 w-full sm:w-auto"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {t("adminDashboard.exportReport")}
+              </Button>
+            </div>
+          </div>
         </div>
+
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+        <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-white/5 rounded-full"></div>
       </div>
 
       {/* Statistics Cards - Individual components */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {adminStats.map((stat, index) => (
           <StatsCard
             key={index}
@@ -329,7 +469,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Charts Section */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Revenue Trends Chart - Full Width */}
         <RevenueChart data={dashboardData?.data?.charts?.revenue_trends} />
 
@@ -351,9 +491,9 @@ export function AdminDashboard() {
       </div>
 
       {/* Tables Section - 2 tables per row */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Recent Deliveries and Pending Approvals - 2 columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           <RecentDeliveriesTable
             data={dashboardData?.data?.tables?.recent_deliveries}
             isLoading={dashboardLoading}
@@ -371,7 +511,7 @@ export function AdminDashboard() {
         </div>
 
         {/* System Alerts and Financial Transactions - 2 columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           <SystemAlertsTable
             data={dashboardData?.data?.tables?.system_alerts}
             isLoading={dashboardLoading}
@@ -390,7 +530,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Recent Activities Messages - Dynamic from API */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           {t("adminDashboard.recentActivities")}
         </h3>

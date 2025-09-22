@@ -25,6 +25,7 @@ export default function VerifyEmail() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
+  const [redirectTimer, setRedirectTimer] = useState(2);
 
   // Get token and email from URL parameters
   const token = searchParams.get("token");
@@ -51,6 +52,23 @@ export default function VerifyEmail() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  // Timer effect for redirect countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isSuccess && redirectTimer > 0) {
+      interval = setInterval(() => {
+        setRedirectTimer((prev) => {
+          if (prev <= 1) {
+            window.location.href = "/login";
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isSuccess, redirectTimer]);
+
   const handleAutoVerification = useCallback(
     async (token: string) => {
       setIsLoading(true);
@@ -61,10 +79,7 @@ export default function VerifyEmail() {
         if (result.success) {
           customToast.success(t("auth.emailVerified"));
           setIsSuccess(true);
-          // Redirect to login after successful verification
-          setTimeout(() => {
-            navigate("/login");
-          }, 2000);
+          setRedirectTimer(2); // Start countdown for redirect
         } else {
           customToast.error(result.message || t("auth.verificationFailed"));
           // If auto-verification fails, show manual form
@@ -81,7 +96,7 @@ export default function VerifyEmail() {
         setIsLoading(false);
       }
     },
-    [verifyEmailMutation, t, navigate]
+    [verifyEmailMutation, t]
   );
 
   // Auto-verify if token is present in URL
@@ -115,10 +130,7 @@ export default function VerifyEmail() {
       if (result.success) {
         customToast.success(t("auth.emailVerified"));
         setIsSuccess(true);
-        // Redirect to login immediately after successful verification
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
+        setRedirectTimer(2); // Start countdown for redirect
       } else {
         customToast.error(result.message || t("auth.verificationFailed"));
       }
@@ -184,7 +196,7 @@ export default function VerifyEmail() {
                   {t("auth.verificationSuccess")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {t("auth.redirectingToLogin")}
+                  {t("auth.redirectingToLogin")} ({redirectTimer}s)
                 </p>
                 <div className="pt-4">
                   <Link to="/login">

@@ -282,6 +282,8 @@ interface CargoDetailModalProps {
   onCallContact?: (phone: string, name?: string) => void;
   // Assignment modal functionality
   onOpenAssignmentModal?: (cargoId: string) => void;
+  // Review and invoice functionality
+  onReviewAndInvoice?: (cargoId: string) => void;
 }
 
 export function CargoDetailModal({
@@ -303,6 +305,7 @@ export function CargoDetailModal({
   userRole = UserRole.CLIENT,
   onCallContact,
   onOpenAssignmentModal,
+  onReviewAndInvoice,
 }: CargoDetailModalProps) {
   // Get user from auth context to compare roles
   const { user } = useAuth();
@@ -431,8 +434,12 @@ export function CargoDetailModal({
   };
 
   const handleGenerateInvoice = () => {
-    // Navigate to invoice generation page or open invoice modal
-    window.location.href = `/admin/invoices/create?cargoId=${cargo.id}`;
+    if (onReviewAndInvoice) {
+      onReviewAndInvoice(cargo.id);
+    } else {
+      // Fallback to navigation if no handler provided
+      window.location.href = `/admin/invoices/create?cargoId=${cargo.id}`;
+    }
   };
 
   const handleStatusChange = (newStatus: string) => {

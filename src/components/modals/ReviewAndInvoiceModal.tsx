@@ -38,6 +38,7 @@ import { useCargoCategories } from "@/lib/api/hooks/cargoHooks";
 import { useMyLocations } from "@/lib/api/hooks";
 import { toast } from "sonner";
 import NewInvoiceModal from "./NewInvoiceModal";
+import ModernModel from "@/components/modal/ModernModel";
 import {
   googleMapsService,
   GooglePlace,
@@ -581,789 +582,804 @@ export default function ReviewAndInvoiceModal({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Step Indicator */}
-      <div className="flex items-center justify-center space-x-4 mb-6">
-        <div
-          className={`flex items-center space-x-2 ${
-            currentStep >= 1 ? "text-blue-600" : "text-gray-400"
-          }`}
-        >
+    <ModernModel isOpen={isOpen} onClose={onClose} title="Review and Invoicing">
+      <div className="space-y-6">
+        {/* Step Indicator */}
+        <div className="flex items-center justify-center space-x-4 mb-6">
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep >= 1 ? "bg-blue-600 text-white" : "bg-gray-200"
+            className={`flex items-center space-x-2 ${
+              currentStep >= 1 ? "text-blue-600" : "text-gray-400"
             }`}
           >
-            {currentStep > 1 ? (
-              <CheckCircle className="w-5 h-5" />
-            ) : (
-              <Edit3 className="w-5 h-5" />
-            )}
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                currentStep >= 1 ? "bg-blue-600 text-white" : "bg-gray-200"
+              }`}
+            >
+              {currentStep > 1 ? (
+                <CheckCircle className="w-5 h-5" />
+              ) : (
+                <Edit3 className="w-5 h-5" />
+              )}
+            </div>
+            <span className="font-medium">Review & Edit</span>
           </div>
-          <span className="font-medium">Review & Edit</span>
-        </div>
-        <div
-          className={`w-8 h-1 ${
-            currentStep >= 2 ? "bg-blue-600" : "bg-gray-200"
-          }`}
-        />
-        <div
-          className={`flex items-center space-x-2 ${
-            currentStep >= 2 ? "text-blue-600" : "text-gray-400"
-          }`}
-        >
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep >= 2 ? "bg-blue-600 text-white" : "bg-gray-200"
+            className={`w-8 h-1 ${
+              currentStep >= 2 ? "bg-blue-600" : "bg-gray-200"
+            }`}
+          />
+          <div
+            className={`flex items-center space-x-2 ${
+              currentStep >= 2 ? "text-blue-600" : "text-gray-400"
             }`}
           >
-            <FileText className="w-5 h-5" />
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                currentStep >= 2 ? "bg-blue-600 text-white" : "bg-gray-200"
+              }`}
+            >
+              <FileText className="w-5 h-5" />
+            </div>
+            <span className="font-medium">Create Invoice</span>
           </div>
-          <span className="font-medium">Create Invoice</span>
         </div>
-      </div>
 
-      {currentStep === 1 ? (
-        <div className="space-y-6">
-          {/* Cargo Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Cargo Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Cargo ID</p>
-                  <p className="text-lg font-semibold">{cargo.cargo_number}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Client</p>
-                  <p className="text-lg">
-                    {(cargo as any)?.client?.user?.full_name ||
-                      "Unknown Client"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Status</p>
-                  <Badge variant="outline">{cargo.status}</Badge>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Route</p>
-                  <p className="text-lg">
-                    {cargo.pickup_address} → {cargo.destination_address}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Priority</p>
-                  <Badge
-                    className={
-                      cargo.priority === "urgent"
-                        ? "bg-red-100 text-red-600"
-                        : cargo.priority === "high"
-                        ? "bg-orange-100 text-orange-600"
-                        : "bg-gray-100 text-gray-600"
-                    }
-                  >
-                    {cargo.priority?.toUpperCase()}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Current Cost
-                  </p>
-                  <p className="text-lg font-semibold text-green-600">
-                    {new Intl.NumberFormat("rw-RW", {
-                      style: "currency",
-                      currency: "RWF",
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    }).format(cargo.estimated_cost || 0)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Editable Cargo Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Edit Cargo Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select
-                    value={formData.category_id}
-                    onValueChange={(value) =>
-                      handleInputChange("category_id", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="type">Type</Label>
-                  <Input
-                    id="type"
-                    value={formData.type}
-                    onChange={(e) => handleInputChange("type", e.target.value)}
-                    placeholder="e.g., Electronics, Furniture"
-                  />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      handleInputChange("description", e.target.value)
-                    }
-                    placeholder="Detailed description of the cargo"
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Physical Properties */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">Physical Properties</h4>
+        {currentStep === 1 ? (
+          <div className="space-y-6">
+            {/* Cargo Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Cargo Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={formData.weight_kg}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "weight_kg",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                    />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">
+                      Cargo ID
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {cargo.cargo_number}
+                    </p>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="volume">Volume (m³)</Label>
-                    <Input
-                      id="volume"
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={formData.volume}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "volume",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                    />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Client</p>
+                    <p className="text-lg">
+                      {(cargo as any)?.client?.user?.full_name ||
+                        "Unknown Client"}
+                    </p>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="distance">Distance (km)</Label>
-                    <Input
-                      id="distance"
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={formData.distance_km}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "distance_km",
-                          parseFloat(e.target.value) || 0
-                        )
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Status</p>
+                    <Badge variant="outline">{cargo.status}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Route</p>
+                    <p className="text-lg">
+                      {cargo.pickup_address} → {cargo.destination_address}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">
+                      Priority
+                    </p>
+                    <Badge
+                      className={
+                        cargo.priority === "urgent"
+                          ? "bg-red-100 text-red-600"
+                          : cargo.priority === "high"
+                          ? "bg-orange-100 text-orange-600"
+                          : "bg-gray-100 text-gray-600"
                       }
-                    />
+                    >
+                      {cargo.priority?.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">
+                      Current Cost
+                    </p>
+                    <p className="text-lg font-semibold text-green-600">
+                      {new Intl.NumberFormat("rw-RW", {
+                        style: "currency",
+                        currency: "RWF",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(cargo.estimated_cost || 0)}
+                    </p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label>Dimensions (cm)</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Input
-                      placeholder="Length"
-                      type="number"
-                      min="0"
-                      value={formData.dimensions.length}
-                      onChange={(e) =>
-                        handleDimensionsChange(
-                          "length",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                    />
-                    <Input
-                      placeholder="Width"
-                      type="number"
-                      min="0"
-                      value={formData.dimensions.width}
-                      onChange={(e) =>
-                        handleDimensionsChange(
-                          "width",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                    />
-                    <Input
-                      placeholder="Height"
-                      type="number"
-                      min="0"
-                      value={formData.dimensions.height}
-                      onChange={(e) =>
-                        handleDimensionsChange(
-                          "height",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Location Information */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">Location Information</h4>
-
-                {/* Pickup Location */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="pickup_address">Pickup Address</Label>
-                    <div className="relative">
-                      <Input
-                        id="pickup_address"
-                        value={pickupSearchQuery || formData.pickup_address}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setPickupSearchQuery(value);
-                          if (value.length > 2) {
-                            searchLocation(value, true);
-                          } else {
-                            setPickupSearchResults([]);
-                          }
-                        }}
-                        placeholder="Search pickup location..."
-                        className="pr-10"
-                      />
-                      {isSearchingPickup && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                        </div>
-                      )}
-                    </div>
-
-                    
-                    {pickupSearchResults.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-48 overflow-y-auto">
-                        {pickupSearchResults.map((place) => (
-                          <div
-                            key={place.place_id}
-                            className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                            onClick={() => selectPlace(place, true)}
-                          >
-                            <div className="font-medium">
-                              {place.structured_formatting.main_text}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {place.structured_formatting.secondary_text}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="pickup_contact">
-                        Pickup Contact (Read-only)
-                      </Label>
-                      <Input
-                        id="pickup_contact"
-                        value={formData.pickup_contact}
-                        readOnly
-                        className="bg-gray-50"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="pickup_phone">
-                        Pickup Phone (Read-only)
-                      </Label>
-                      <Input
-                        id="pickup_phone"
-                        value={formData.pickup_phone}
-                        readOnly
-                        className="bg-gray-50"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Destination Location */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="destination_address">
-                      Destination Address
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="destination_address"
-                        value={
-                          destinationSearchQuery || formData.destination_address
-                        }
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setDestinationSearchQuery(value);
-                          if (value.length > 2) {
-                            searchLocation(value, false);
-                          } else {
-                            setDestinationSearchResults([]);
-                          }
-                        }}
-                        placeholder="Search destination location..."
-                        className="pr-10"
-                      />
-                      {isSearchingDestination && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                        </div>
-                      )}
-                    </div>
-
-                
-                    {destinationSearchResults.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-48 overflow-y-auto">
-                        {destinationSearchResults.map((place) => (
-                          <div
-                            key={place.place_id}
-                            className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                            onClick={() => selectPlace(place, false)}
-                          >
-                            <div className="font-medium">
-                              {place.structured_formatting.main_text}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {place.structured_formatting.secondary_text}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="destination_contact">
-                        Destination Contact (Read-only)
-                      </Label>
-                      <Input
-                        id="destination_contact"
-                        value={formData.destination_contact}
-                        readOnly
-                        className="bg-gray-50"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="destination_phone">
-                        Destination Phone (Read-only)
-                      </Label>
-                      <Input
-                        id="destination_phone"
-                        value={formData.destination_phone}
-                        readOnly
-                        className="bg-gray-50"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Distance Calculation */}
-                {formData.pickupLat && formData.destinationLat && (
-                  <div className="space-y-2">
-                    <Label>Distance Calculation</Label>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (formData.pickupLat && formData.destinationLat) {
-                            calculateDistance(
-                              parseFloat(formData.pickupLat),
-                              parseFloat(formData.pickupLng),
-                              parseFloat(formData.destinationLat),
-                              parseFloat(formData.destinationLng)
-                            );
-                          }
-                        }}
-                        disabled={isCalculatingDistance}
-                      >
-                        {isCalculatingDistance
-                          ? "Calculating..."
-                          : "Recalculate Distance"}
-                      </Button>
-                      {calculatedDistance && (
-                        <span className="text-sm text-green-600 font-medium">
-                          📏 {calculatedDistance.toFixed(2)} km
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Special Requirements */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">Special Requirements</h4>
+            {/* Editable Cargo Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Cargo Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Basic Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="fragile"
-                      checked={formData.fragile}
-                      onCheckedChange={(checked) =>
-                        handleInputChange("fragile", checked)
-                      }
-                    />
-                    <Label htmlFor="fragile">Fragile</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="temperature_controlled"
-                      checked={formData.temperature_controlled}
-                      onCheckedChange={(checked) =>
-                        handleInputChange("temperature_controlled", checked)
-                      }
-                    />
-                    <Label htmlFor="temperature_controlled">
-                      Temperature Controlled
-                    </Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="insurance_required"
-                      checked={formData.insurance_required}
-                      onCheckedChange={(checked) =>
-                        handleInputChange("insurance_required", checked)
-                      }
-                    />
-                    <Label htmlFor="insurance_required">
-                      Insurance Required
-                    </Label>
-                  </div>
-
-                  {formData.insurance_required && (
-                    <div className="space-y-2">
-                      <Label htmlFor="insurance_amount">
-                        Insurance Amount (RWF)
-                      </Label>
-                      <Input
-                        id="insurance_amount"
-                        type="number"
-                        min="0"
-                        value={formData.insurance_amount}
-                        onChange={(e) =>
-                          handleInputChange(
-                            "insurance_amount",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="special_requirements">
-                    Special Requirements
-                  </Label>
-                  <Textarea
-                    id="special_requirements"
-                    value={formData.special_requirements}
-                    onChange={(e) =>
-                      handleInputChange("special_requirements", e.target.value)
-                    }
-                    placeholder="Any special handling requirements"
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Priority and Dates */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">Priority & Scheduling</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="priority">Priority</Label>
+                    <Label htmlFor="category">Category</Label>
                     <Select
-                      value={formData.priority}
+                      value={formData.category_id}
                       onValueChange={(value) =>
-                        handleInputChange("priority", value)
+                        handleInputChange("category_id", value)
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select category..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="normal">Normal</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
+                        {categories.map((category: any) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="pickup_date">Pickup Date</Label>
+                    <Label htmlFor="type">Type</Label>
                     <Input
-                      id="pickup_date"
-                      type="date"
-                      value={formData.pickup_date}
+                      id="type"
+                      value={formData.type}
                       onChange={(e) =>
-                        handleInputChange("pickup_date", e.target.value)
+                        handleInputChange("type", e.target.value)
                       }
+                      placeholder="e.g., Electronics, Furniture"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        handleInputChange("description", e.target.value)
+                      }
+                      placeholder="Detailed description of the cargo"
+                      rows={3}
                     />
                   </div>
                 </div>
-              </div>
 
-              <Separator />
+                <Separator />
 
-              {/* Cost Estimation */}
-              <div className="space-y-4">
-                <h4 className="font-semibold">Cost Estimation</h4>
-
-                {/* Current Distance Display */}
-                {formData.distance_km > 0 && (
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-blue-800">
-                        Current Distance:
-                      </span>
-                      <span className="text-lg font-semibold text-blue-600">
-                        📏 {formData.distance_km.toFixed(2)} km
-                      </span>
+                {/* Physical Properties */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Physical Properties</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="weight">Weight (kg)</Label>
+                      <Input
+                        id="weight"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={formData.weight_kg}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "weight_kg",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
                     </div>
-                    {calculatedDistance &&
-                      calculatedDistance !== formData.distance_km && (
-                        <div className="mt-2 text-xs text-blue-600">
-                          ⚠️ Distance updated from{" "}
-                          {formData.distance_km.toFixed(2)} km to{" "}
-                          {calculatedDistance.toFixed(2)} km
+
+                    <div className="space-y-2">
+                      <Label htmlFor="volume">Volume (m³)</Label>
+                      <Input
+                        id="volume"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={formData.volume}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "volume",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="distance">Distance (km)</Label>
+                      <Input
+                        id="distance"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={formData.distance_km}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "distance_km",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Dimensions (cm)</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Input
+                        placeholder="Length"
+                        type="number"
+                        min="0"
+                        value={formData.dimensions.length}
+                        onChange={(e) =>
+                          handleDimensionsChange(
+                            "length",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
+                      <Input
+                        placeholder="Width"
+                        type="number"
+                        min="0"
+                        value={formData.dimensions.width}
+                        onChange={(e) =>
+                          handleDimensionsChange(
+                            "width",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
+                      <Input
+                        placeholder="Height"
+                        type="number"
+                        min="0"
+                        value={formData.dimensions.height}
+                        onChange={(e) =>
+                          handleDimensionsChange(
+                            "height",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Location Information */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Location Information</h4>
+
+                  {/* Pickup Location */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pickup_address">Pickup Address</Label>
+                      <div className="relative">
+                        <Input
+                          id="pickup_address"
+                          value={pickupSearchQuery || formData.pickup_address}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setPickupSearchQuery(value);
+                            if (value.length > 2) {
+                              searchLocation(value, true);
+                            } else {
+                              setPickupSearchResults([]);
+                            }
+                          }}
+                          placeholder="Search pickup location..."
+                          className="pr-10"
+                        />
+                        {isSearchingPickup && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {pickupSearchResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-48 overflow-y-auto">
+                          {pickupSearchResults.map((place) => (
+                            <div
+                              key={place.place_id}
+                              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                              onClick={() => selectPlace(place, true)}
+                            >
+                              <div className="font-medium">
+                                {place.structured_formatting.main_text}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {place.structured_formatting.secondary_text}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
-                  </div>
-                )}
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="estimated_cost">Estimated Cost (RWF)</Label>
-                    <Input
-                      id="estimated_cost"
-                      type="number"
-                      min="0"
-                      step="100"
-                      value={formData.estimated_cost}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "estimated_cost",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="pickup_contact">
+                          Pickup Contact (Read-only)
+                        </Label>
+                        <Input
+                          id="pickup_contact"
+                          value={formData.pickup_contact}
+                          readOnly
+                          className="bg-gray-50"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="pickup_phone">
+                          Pickup Phone (Read-only)
+                        </Label>
+                        <Input
+                          id="pickup_phone"
+                          value={formData.pickup_phone}
+                          readOnly
+                          className="bg-gray-50"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  {formData.weight_kg &&
-                    formData.distance_km &&
-                    formData.category_id && (
-                      <div className="flex items-end">
+                  {/* Destination Location */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="destination_address">
+                        Destination Address
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          id="destination_address"
+                          value={
+                            destinationSearchQuery ||
+                            formData.destination_address
+                          }
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setDestinationSearchQuery(value);
+                            if (value.length > 2) {
+                              searchLocation(value, false);
+                            } else {
+                              setDestinationSearchResults([]);
+                            }
+                          }}
+                          placeholder="Search destination location..."
+                          className="pr-10"
+                        />
+                        {isSearchingDestination && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {destinationSearchResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-48 overflow-y-auto">
+                          {destinationSearchResults.map((place) => (
+                            <div
+                              key={place.place_id}
+                              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                              onClick={() => selectPlace(place, false)}
+                            >
+                              <div className="font-medium">
+                                {place.structured_formatting.main_text}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {place.structured_formatting.secondary_text}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="destination_contact">
+                          Destination Contact (Read-only)
+                        </Label>
+                        <Input
+                          id="destination_contact"
+                          value={formData.destination_contact}
+                          readOnly
+                          className="bg-gray-50"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="destination_phone">
+                          Destination Phone (Read-only)
+                        </Label>
+                        <Input
+                          id="destination_phone"
+                          value={formData.destination_phone}
+                          readOnly
+                          className="bg-gray-50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Distance Calculation */}
+                  {formData.pickupLat && formData.destinationLat && (
+                    <div className="space-y-2">
+                      <Label>Distance Calculation</Label>
+                      <div className="flex items-center gap-2">
                         <Button
                           type="button"
                           variant="outline"
+                          size="sm"
                           onClick={() => {
-                            estimateCostMutation.mutate(
-                              {
-                                weight_kg: formData.weight_kg,
-                                distance_km: Math.max(
-                                  calculatedDistance ||
-                                    formData.distance_km ||
-                                    1,
-                                  1
-                                ),
-                                category_id: formData.category_id,
-                              },
-                              {
-                                onSuccess: (response) => {
-                                  const estimatedCost =
-                                    response.data?.estimated_cost || 0;
-                                  handleInputChange(
-                                    "estimated_cost",
-                                    estimatedCost
-                                  );
-                                  toast.success(
-                                    `Cost recalculated: ${new Intl.NumberFormat(
-                                      "rw-RW",
-                                      {
-                                        style: "currency",
-                                        currency: "RWF",
-                                        minimumFractionDigits: 0,
-                                        maximumFractionDigits: 0,
-                                      }
-                                    ).format(estimatedCost)}`
-                                  );
-                                },
-                                onError: (error) => {
-                                  toast.error("Failed to recalculate cost");
-                                },
-                              }
-                            );
+                            if (formData.pickupLat && formData.destinationLat) {
+                              calculateDistance(
+                                parseFloat(formData.pickupLat),
+                                parseFloat(formData.pickupLng),
+                                parseFloat(formData.destinationLat),
+                                parseFloat(formData.destinationLng)
+                              );
+                            }
                           }}
-                          disabled={estimateCostMutation.isPending}
-                          className="w-full"
+                          disabled={isCalculatingDistance}
                         >
-                          {estimateCostMutation.isPending
+                          {isCalculatingDistance
                             ? "Calculating..."
-                            : "Recalculate Cost"}
+                            : "Recalculate Distance"}
                         </Button>
-                      </div>
-                    )}
-                </div>
-
-                {/* Cost Breakdown Display */}
-                {estimateCostMutation.data?.data?.breakdown && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h5 className="font-medium text-gray-800 mb-2">
-                      Cost Breakdown:
-                    </h5>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        Base Cost:{" "}
-                        {new Intl.NumberFormat("rw-RW", {
-                          style: "currency",
-                          currency: "RWF",
-                        }).format(
-                          estimateCostMutation.data.data.breakdown.base_cost
+                        {calculatedDistance && (
+                          <span className="text-sm text-green-600 font-medium">
+                            📏 {calculatedDistance.toFixed(2)} km
+                          </span>
                         )}
-                      </div>
-                      <div>
-                        Weight Cost:{" "}
-                        {new Intl.NumberFormat("rw-RW", {
-                          style: "currency",
-                          currency: "RWF",
-                        }).format(
-                          estimateCostMutation.data.data.breakdown.weight_cost
-                        )}
-                      </div>
-                      <div>
-                        Distance Cost:{" "}
-                        {new Intl.NumberFormat("rw-RW", {
-                          style: "currency",
-                          currency: "RWF",
-                        }).format(
-                          estimateCostMutation.data.data.breakdown.distance_cost
-                        )}
-                      </div>
-                      <div>
-                        Category Multiplier:{" "}
-                        {
-                          estimateCostMutation.data.data.breakdown
-                            .category_multiplier
-                        }
-                        x
                       </div>
                     </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Special Requirements */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Special Requirements</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="fragile"
+                        checked={formData.fragile}
+                        onCheckedChange={(checked) =>
+                          handleInputChange("fragile", checked)
+                        }
+                      />
+                      <Label htmlFor="fragile">Fragile</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="temperature_controlled"
+                        checked={formData.temperature_controlled}
+                        onCheckedChange={(checked) =>
+                          handleInputChange("temperature_controlled", checked)
+                        }
+                      />
+                      <Label htmlFor="temperature_controlled">
+                        Temperature Controlled
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="insurance_required"
+                        checked={formData.insurance_required}
+                        onCheckedChange={(checked) =>
+                          handleInputChange("insurance_required", checked)
+                        }
+                      />
+                      <Label htmlFor="insurance_required">
+                        Insurance Required
+                      </Label>
+                    </div>
+
+                    {formData.insurance_required && (
+                      <div className="space-y-2">
+                        <Label htmlFor="insurance_amount">
+                          Insurance Amount (RWF)
+                        </Label>
+                        <Input
+                          id="insurance_amount"
+                          type="number"
+                          min="0"
+                          value={formData.insurance_amount}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "insurance_amount",
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Step 1 Actions */}
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleStep1Submit}
-              disabled={updateCargoMutation.isPending}
-            >
-              {updateCargoMutation.isPending
-                ? "Updating..."
-                : "Continue to Invoice"}
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Step 2: Invoice Creation */}
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">Create Invoice</h3>
-            <p className="text-gray-600">
-              Cargo details have been updated. Now create the invoice for this
-              cargo.
-            </p>
-          </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="special_requirements">
+                      Special Requirements
+                    </Label>
+                    <Textarea
+                      id="special_requirements"
+                      value={formData.special_requirements}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "special_requirements",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Any special handling requirements"
+                      rows={3}
+                    />
+                  </div>
+                </div>
 
-          {!cargo ? (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">
-                  Loading cargo details for invoice...
-                </p>
-              </div>
+                <Separator />
+
+                {/* Priority and Dates */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Priority & Scheduling</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select
+                        value={formData.priority}
+                        onValueChange={(value) =>
+                          handleInputChange("priority", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pickup_date">Pickup Date</Label>
+                      <Input
+                        id="pickup_date"
+                        type="date"
+                        value={formData.pickup_date}
+                        onChange={(e) =>
+                          handleInputChange("pickup_date", e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Cost Estimation */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Cost Estimation</h4>
+
+                  {/* Current Distance Display */}
+                  {formData.distance_km > 0 && (
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-blue-800">
+                          Current Distance:
+                        </span>
+                        <span className="text-lg font-semibold text-blue-600">
+                          📏 {formData.distance_km.toFixed(2)} km
+                        </span>
+                      </div>
+                      {calculatedDistance &&
+                        calculatedDistance !== formData.distance_km && (
+                          <div className="mt-2 text-xs text-blue-600">
+                            ⚠️ Distance updated from{" "}
+                            {formData.distance_km.toFixed(2)} km to{" "}
+                            {calculatedDistance.toFixed(2)} km
+                          </div>
+                        )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="estimated_cost">
+                        Estimated Cost (RWF)
+                      </Label>
+                      <Input
+                        id="estimated_cost"
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={formData.estimated_cost}
+                        onChange={(e) =>
+                          handleInputChange(
+                            "estimated_cost",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
+
+                    {formData.weight_kg &&
+                      formData.distance_km &&
+                      formData.category_id && (
+                        <div className="flex items-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              estimateCostMutation.mutate(
+                                {
+                                  weight_kg: formData.weight_kg,
+                                  distance_km: Math.max(
+                                    calculatedDistance ||
+                                      formData.distance_km ||
+                                      1,
+                                    1
+                                  ),
+                                  category_id: formData.category_id,
+                                },
+                                {
+                                  onSuccess: (response) => {
+                                    const estimatedCost =
+                                      response.data?.estimated_cost || 0;
+                                    handleInputChange(
+                                      "estimated_cost",
+                                      estimatedCost
+                                    );
+                                    toast.success(
+                                      `Cost recalculated: ${new Intl.NumberFormat(
+                                        "rw-RW",
+                                        {
+                                          style: "currency",
+                                          currency: "RWF",
+                                          minimumFractionDigits: 0,
+                                          maximumFractionDigits: 0,
+                                        }
+                                      ).format(estimatedCost)}`
+                                    );
+                                  },
+                                  onError: (error) => {
+                                    toast.error("Failed to recalculate cost");
+                                  },
+                                }
+                              );
+                            }}
+                            disabled={estimateCostMutation.isPending}
+                            className="w-full"
+                          >
+                            {estimateCostMutation.isPending
+                              ? "Calculating..."
+                              : "Recalculate Cost"}
+                          </Button>
+                        </div>
+                      )}
+                  </div>
+
+                  {/* Cost Breakdown Display */}
+                  {estimateCostMutation.data?.data?.breakdown && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-medium text-gray-800 mb-2">
+                        Cost Breakdown:
+                      </h5>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          Base Cost:{" "}
+                          {new Intl.NumberFormat("rw-RW", {
+                            style: "currency",
+                            currency: "RWF",
+                          }).format(
+                            estimateCostMutation.data.data.breakdown.base_cost
+                          )}
+                        </div>
+                        <div>
+                          Weight Cost:{" "}
+                          {new Intl.NumberFormat("rw-RW", {
+                            style: "currency",
+                            currency: "RWF",
+                          }).format(
+                            estimateCostMutation.data.data.breakdown.weight_cost
+                          )}
+                        </div>
+                        <div>
+                          Distance Cost:{" "}
+                          {new Intl.NumberFormat("rw-RW", {
+                            style: "currency",
+                            currency: "RWF",
+                          }).format(
+                            estimateCostMutation.data.data.breakdown
+                              .distance_cost
+                          )}
+                        </div>
+                        <div>
+                          Category Multiplier:{" "}
+                          {
+                            estimateCostMutation.data.data.breakdown
+                              .category_multiplier
+                          }
+                          x
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Step 1 Actions */}
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleStep1Submit}
+                disabled={updateCargoMutation.isPending}
+              >
+                {updateCargoMutation.isPending
+                  ? "Updating..."
+                  : "Continue to Invoice"}
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
             </div>
-          ) : (
-            <NewInvoiceModal
-              isOpen={true}
-              onClose={() => setCurrentStep(1)}
-              onSuccess={handleInvoiceCreated}
-              preselectedCargoId={preselectedCargoId}
-            />
-          )}
-
-          {/* Step 2 Actions */}
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setCurrentStep(1)}>
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Back to Review
-            </Button>
-            <Button variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Step 2: Invoice Creation */}
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-2">Create Invoice</h3>
+              <p className="text-gray-600">
+                Cargo details have been updated. Now create the invoice for this
+                cargo.
+              </p>
+            </div>
+
+            {!cargo ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">
+                    Loading cargo details for invoice...
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <NewInvoiceModal
+                isOpen={true}
+                onClose={() => setCurrentStep(1)}
+                onSuccess={handleInvoiceCreated}
+                preselectedCargoId={preselectedCargoId}
+              />
+            )}
+
+            {/* Step 2 Actions */}
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setCurrentStep(1)}>
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Back to Review
+              </Button>
+              <Button variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </ModernModel>
   );
 }
