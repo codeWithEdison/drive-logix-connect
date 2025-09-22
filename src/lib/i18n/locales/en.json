@@ -1427,7 +1427,8 @@
         "status": "Status",
         "paymentConfirmed": "Payment Confirmed",
         "viewMyCargos": "View My Cargos",
-        "createAnotherCargo": "Create Another Cargo"
+        "createAnotherCargo": "Create Another Cargo",
+        "cargoCreated": "Cargo created successfully"
       }
     }
   },

@@ -898,7 +898,8 @@
         "status": "Imiterere",
         "paymentConfirmed": "Kwishyura kwemejwe",
         "viewMyCargos": "Reba ibintu byanjye",
-        "createAnotherCargo": "Kurema ikindi kintu"
+        "createAnotherCargo": "Kurema ikindi kintu",
+        "cargoCreated": "Umuzigo wawe wamaze kwandikwa neza"
       }
     }
   },

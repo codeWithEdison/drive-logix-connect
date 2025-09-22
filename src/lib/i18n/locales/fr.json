@@ -882,7 +882,8 @@
         "status": "Statut",
         "paymentConfirmed": "Paiement confirmé",
         "viewMyCargos": "Voir mes cargaisons",
-        "createAnotherCargo": "Créer une autre cargaison"
+        "createAnotherCargo": "Créer une autre cargaison",
+        "cargoCreated": "Cargaison créée avec succès"
       }
     }
   },

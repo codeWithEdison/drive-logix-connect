@@ -1206,6 +1206,13 @@ export function CargoTable({
         onReportIssue={onReportIssue}
         onCancelCargo={onCancelCargo}
         onDownloadReceipt={onDownloadReceipt}
+        userRole={user?.role}
+        onAcceptAssignment={onAcceptAssignment}
+        onRejectAssignment={onRejectAssignment}
+        onCancelAssignment={onCancelAssignment}
+        onChangeVehicle={onChangeVehicle}
+        onChangeDriver={onChangeDriver}
+        onCreateAssignment={onCreateAssignment}
       />
     </div>
   );
