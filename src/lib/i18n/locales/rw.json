@@ -887,7 +887,8 @@
         "pickup": "Gufata",
         "delivery": "Kohereza",
         "contact": "Kwihurira",
-        "proceedToPayment": "Komeza kwishyura"
+        "proceedToPayment": "Komeza kwishyura",
+        "createCargo": " Ohereza Umuzigo wawe "
       },
       "success": {
         "title": "Ikintu cyaremwe neza!",

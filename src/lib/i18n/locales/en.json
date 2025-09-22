@@ -1416,7 +1416,8 @@
         "pickup": "Pickup",
         "delivery": "Delivery",
         "contact": "Contact",
-        "proceedToPayment": "Proceed to Payment"
+        "proceedToPayment": "Proceed to Payment",
+        "createCargo": "Create Cargo"
       },
       "success": {
         "title": "Cargo Created Successfully!",

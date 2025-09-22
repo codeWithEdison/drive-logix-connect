@@ -871,7 +871,8 @@
         "pickup": "Ramassage",
         "delivery": "Livraison",
         "contact": "Contact",
-        "proceedToPayment": "Procéder au paiement"
+        "proceedToPayment": "Procéder au paiement",
+        "createCargo": "Créer une cargaison"
       },
       "success": {
         "title": "Cargaison créée avec succès !",
