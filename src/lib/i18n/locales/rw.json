@@ -177,12 +177,12 @@
   "register": "Iyandikishe",
   "logout": "Sohoka",
   "email": "Imeli",
-  "password": "Ijambo ry'ibanga",
-  "confirmPassword": "Emeza ijambo ry'ibanga",
+  "password": "Ijambo banga",
+  "confirmPassword": "Emeza ijambo banga",
   "fullName": "Amazina yose",
   "phone": "Numero ya telefone",
-  "forgotPassword": "Wibagiwe ijambo ry'ibanga?",
-  "resetPassword": "Subiramo ijambo ry'ibanga",
+  "forgotPassword": "Wibagiwe ijambo banga?",
+  "resetPassword": "Subiramo ijambo banga",
   "verifyEmail": "Emeza imeli",
   "resendVerification": "Ohereza nanone ubutumwa bwo kwemeza",
   "changePassword": "Hindura ijambo ry'ibanga",
@@ -301,8 +301,8 @@
     "revenue": "Amafaranga yinjira"
   },
   "dashboard": {
-  "title": "Umutwe",
-  "subtitle": "Umutwe w’inyongera",
+  "title": "Ibibaho nyamukuru",
+  "subtitle": "Murakaza neza ku rubaho rwanyu rwo kugenzura imizigo",
   "welcome": "Murakaza neza",
   "overview": "Incamake",
   "totalCargos": "Imizigo yose",
@@ -598,8 +598,8 @@
   },
   "tracking": {
   "tracking": "Gukurikirana",
-  "title": "Umutwe",
-  "subtitle": "Umutwe w’inyongera",
+  "title": "Gukurikirana mu gihe nyacyo",
+  "subtitle": "Kurikira imizigo yawe mu gihe nyacyo",
   "enterCargoIdPlaceholder": "Shyiramo nimero y’umuzigo",
   "track": "Kurikirana",
   "currentLocation": "Aho ubu uri",
@@ -715,8 +715,8 @@
   "cancellationFailed": "Kureka iki gikorwa Ntibikunze. Ongera ugerageze."
   },
   "superAdminDashboard": {
- "title": "Umutwe",
-  "subtitle": "Umutwe w’inyongera",
+ "title": "Urupapuro ngenzura rw'umuyobozi mukuru",
+  "subtitle": "Gukurikirana no kugenzura ibikorwa byose bya sisitemu mu Rwanda hose",
   "totalRevenue": "Amafaranga yinjiye yose",
   "activeAdmins": "Abayobozi bakora",
   "systemUsers": "Abakoresha sisiteme",
@@ -759,8 +759,8 @@
 
   },
   "clientDashboard": {
-    "title": "Umutwe",
-    "subtitle": "Umutwe w’inyongera",
+    "title": "Urupapuro ngenzura rw’Umukiliya",
+    "subtitle": "Murakaza neza ku rubaho rwanyu rwo Kugenzura imizigo",
     "welcome": "Murakaza neza",
     "overview": "Incamake",
     "quickStats": "Imibare yihuse",
@@ -798,8 +798,8 @@
     }
   },
   "createCargo": {
-    "title": "Umutwe",
-    "subtitle": "Umutwe w’inyongera",
+    "title": "Rema Umuzigo",
+    "subtitle": "Rema kohereza imizigo mishya",
     "success": "Byagenze neza",
     "error": "Ikosa",
     "requiredFieldsNote": " Amakuru yose asabwa ",
@@ -839,8 +839,8 @@
         "nextButton": "ibikurikira"
       },
       "pickupDelivery": {
-        "title": "Umutwe",
-        "subtitle": "Umutwe w’inyongera",
+        "title": "Aho imizigo ikurwa n’aho ishyirwa",
+        "subtitle": "Shyiraho aderesi yaho gukura ndetse nahi imizigo ishyirwa",
         "pickupLocation": "Aho gukura imizigo",
         "deliveryLocation": "Aho kugeza imizigo",
         "searchLocation": "Shakisha aho hantu",
