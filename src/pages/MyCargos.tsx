@@ -216,7 +216,7 @@ const MyCargos = () => {
                     Total Cargos
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {pagination?.total || transformedCargos.length}
+                    {pagination?.total || 0}
                   </p>
                 </div>
                 <Package className="h-8 w-8 text-blue-500" />
@@ -350,9 +350,9 @@ const MyCargos = () => {
             {/* Filter Results Summary */}
             <div className="mt-4 flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                {filteredCargos.length !== transformedCargos.length
-                  ? `Showing ${filteredCargos.length} of ${transformedCargos.length} cargos`
-                  : `Showing ${transformedCargos.length} cargos`}
+                {hasActiveFilters
+                  ? `Filtered results (${pagination?.total || 0} total cargos)`
+                  : `Showing ${pagination?.total || 0} cargos`}
               </div>
               {hasActiveFilters && (
                 <Button
@@ -533,26 +533,8 @@ const MyCargos = () => {
       };
     }) || [];
 
-  // Apply filters to transformed cargos
-  const filteredCargos = transformedCargos.filter((cargo) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      String(cargo.client || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      cargo.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cargo.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cargo.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cargo.cargo_number?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "all" || cargo.status === statusFilter;
-
-    const matchesPriority =
-      priorityFilter === "all" || cargo.priority === priorityFilter;
-
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+  // Use transformed cargos directly since API handles filtering
+  const filteredCargos = transformedCargos;
 
   // Check if we have any filters applied
   const hasActiveFilters =
@@ -613,6 +595,7 @@ const MyCargos = () => {
         showStats={false} // Hide stats since we have them in header
         showSearch={false} // Hide search since we have it in header
         showFilters={false} // Hide filters since we have them in header
+        showPagination={false} // Disable internal pagination - we handle it externally
         onCallDriver={handleCallDriver}
         onTrackCargo={handleTrackCargo}
         onCancelCargo={handleCancelCargo}

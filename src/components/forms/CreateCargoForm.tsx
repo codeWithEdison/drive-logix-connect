@@ -21,6 +21,7 @@ import {
   useMyLocations,
   useCreateLocation,
 } from "@/lib/api/hooks";
+import { useActiveDistricts, useDistrict } from "@/lib/api/hooks/districtHooks";
 import {
   CreateCargoRequest,
   CargoPriority,
@@ -67,12 +68,14 @@ export function CreateCargoForm() {
     pickupOpeningHours: "",
     pickupLat: "",
     pickupLng: "",
+    pickupDistrictId: "", // Add district selection
     destinationAddress: "",
     destinationContactName: "",
     destinationContactPhone: "",
     destinationOpeningHours: "",
     destinationLat: "",
     destinationLng: "",
+    destinationDistrictId: "", // Add district selection
     pickupDate: "",
     specialInstructions: "",
     urgency: "standard",
@@ -90,6 +93,7 @@ export function CreateCargoForm() {
   });
 
   const [estimatedCost, setEstimatedCost] = useState(0);
+  const [pickupBranchId, setPickupBranchId] = useState<string | null>(null);
   const [costBreakdown, setCostBreakdown] = useState<{
     base_cost: number;
     weight_cost: number;
@@ -131,8 +135,21 @@ export function CreateCargoForm() {
   const createCargoMutation = useCreateCargo();
   const { data: cargoCategories } = useCargoCategories({ is_active: true });
   const { data: myLocations } = useMyLocations();
+  const { data: districts } = useActiveDistricts();
   const createLocationMutation = useCreateLocation();
   const estimateCostMutation = useEstimateCargoCost();
+
+  // Get district details for branch_id resolution
+  const { data: pickupDistrict } = useDistrict(formData.pickupDistrictId);
+
+  // Update branch_id when pickup district changes
+  useEffect(() => {
+    if (pickupDistrict?.branch_id) {
+      setPickupBranchId(pickupDistrict.branch_id);
+    } else {
+      setPickupBranchId(null);
+    }
+  }, [pickupDistrict]);
 
   // Cleanup effect for timeouts and abort controllers
   useEffect(() => {
@@ -300,12 +317,17 @@ export function CreateCargoForm() {
         // Locations
         const hasPickupLocation = formData.useExistingPickupLocation
           ? !!formData.selectedPickupLocationId
-          : !!(formData.pickupAddress && formData.pickupAddress.length >= 5);
+          : !!(
+              formData.pickupAddress &&
+              formData.pickupAddress.length >= 5 &&
+              formData.pickupDistrictId
+            );
         const hasDestinationLocation = formData.useExistingDestinationLocation
           ? !!formData.selectedDestinationLocationId
           : !!(
               formData.destinationAddress &&
-              formData.destinationAddress.length >= 5
+              formData.destinationAddress.length >= 5 &&
+              formData.destinationDistrictId
             );
         return (
           hasPickupLocation && hasDestinationLocation && !!formData.pickupDate
@@ -388,6 +410,7 @@ export function CreateCargoForm() {
             pickupContactPhone: location.contact_phone || "",
             pickupLat: location.latitude?.toString() || "",
             pickupLng: location.longitude?.toString() || "",
+            pickupDistrictId: location.district_id || "",
             newPickupLocationName: location.name,
           }
         : {
@@ -397,6 +420,7 @@ export function CreateCargoForm() {
             destinationContactPhone: location.contact_phone || "",
             destinationLat: location.latitude?.toString() || "",
             destinationLng: location.longitude?.toString() || "",
+            destinationDistrictId: location.district_id || "",
             newDestinationLocationName: location.name,
           }),
     };
@@ -431,10 +455,18 @@ export function CreateCargoForm() {
       const lng = isPickup
         ? parseFloat(formData.pickupLng)
         : parseFloat(formData.destinationLng);
+      const districtId = isPickup
+        ? formData.pickupDistrictId
+        : formData.destinationDistrictId;
 
       // Validate required fields
       if (!address || address.length < 5) {
         toast.error(`${isPickup ? "Pickup" : "Delivery"} address is required`);
+        return null;
+      }
+
+      if (!districtId) {
+        toast.error(`${isPickup ? "Pickup" : "Delivery"} district is required`);
         return null;
       }
 
@@ -455,6 +487,7 @@ export function CreateCargoForm() {
         country: "Rwanda", // Default country
         latitude: lat,
         longitude: lng,
+        district_id: districtId, // Add district ID
         contact_person: isPickup
           ? formData.pickupContactName
           : formData.destinationContactName,
@@ -468,6 +501,9 @@ export function CreateCargoForm() {
         `Creating ${isPickup ? "pickup" : "delivery"} location:`,
         locationData
       );
+      console.log(`District ID being sent:`, districtId);
+      console.log(`Full location data:`, JSON.stringify(locationData, null, 2));
+
       const result = await createLocationMutation.mutateAsync(locationData);
       console.log(`Location created successfully:`, result.data);
       return result.data?.id || null;
@@ -578,9 +614,11 @@ export function CreateCargoForm() {
         pickup_date: formData.pickupDate,
         estimated_cost: estimatedCost,
         distance_km: formData.distance || 0, // Include calculated distance
+        branch_id: pickupBranchId || undefined, // Include branch_id from pickup location district
       };
 
       console.log("🚚 Creating cargo with distance:", formData.distance, "km");
+      console.log("🏢 Creating cargo with branch_id:", pickupBranchId);
 
       const result = await createCargoMutation.mutateAsync(cargoRequest);
 
@@ -1165,6 +1203,34 @@ export function CreateCargoForm() {
                     />
                   </div>
 
+                  {/* District Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="pickupDistrictId">
+                      District <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={formData.pickupDistrictId}
+                      onValueChange={(value) => {
+                        console.log("Pickup district selected:", value);
+                        setFormData({
+                          ...formData,
+                          pickupDistrictId: value,
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select pickup district" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districts?.map((district) => (
+                          <SelectItem key={district.id} value={district.id}>
+                            {district.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {/* Address Search */}
                   <div className="space-y-2">
                     <Label>
@@ -1504,6 +1570,34 @@ export function CreateCargoForm() {
                         })
                       }
                     />
+                  </div>
+
+                  {/* District Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="destinationDistrictId">
+                      District <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={formData.destinationDistrictId}
+                      onValueChange={(value) => {
+                        console.log("Destination district selected:", value);
+                        setFormData({
+                          ...formData,
+                          destinationDistrictId: value,
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select delivery district" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districts?.map((district) => (
+                          <SelectItem key={district.id} value={district.id}>
+                            {district.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Address Search */}

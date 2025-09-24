@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ModernModel from "@/components/modal/ModernModel";
 import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/types/shared";
 import {
   MapPin,
   Phone,
@@ -276,11 +277,13 @@ interface CargoDetailModalProps {
     notes?: string
   ) => void;
   // Role-based access control
-  userRole?: "admin" | "superadmin" | "driver" | "client";
+  userRole?: UserRole;
   // Call functionality
   onCallContact?: (phone: string, name?: string) => void;
   // Assignment modal functionality
   onOpenAssignmentModal?: (cargoId: string) => void;
+  // Review and invoice functionality
+  onReviewAndInvoice?: (cargoId: string) => void;
 }
 
 export function CargoDetailModal({
@@ -291,8 +294,6 @@ export function CargoDetailModal({
   onStartDelivery,
   onCallClient,
   onCallDriver,
-  onUploadPhoto,
-  onReportIssue,
   onCancelCargo,
   onDownloadReceipt,
   onAcceptAssignment,
@@ -301,12 +302,16 @@ export function CargoDetailModal({
   onChangeVehicle,
   onChangeDriver,
   onCreateAssignment,
-  userRole = "client",
+  userRole = UserRole.CLIENT,
   onCallContact,
   onOpenAssignmentModal,
+  onReviewAndInvoice,
 }: CargoDetailModalProps) {
   // Get user from auth context to compare roles
   const { user } = useAuth();
+
+  // Use auth context role as the primary role, fallback to prop if needed
+  const effectiveRole = user?.role || userRole;
 
   // Debug logging for all props and auth context
   console.log("CargoDetailModal Debug Info:", {
@@ -322,7 +327,7 @@ export function CargoDetailModal({
       ? { id: user.id, role: user.role, full_name: user.full_name }
       : null,
     // Comparison
-    roleMatch: userRole === user?.role,
+    effectiveRole,
     roleFromAuth: user?.role,
     roleFromProp: userRole,
   });
@@ -390,8 +395,9 @@ export function CargoDetailModal({
 
   // Helper functions
   const canViewCostInfo = () => {
-    const effectiveRole = userRole === user?.role ? userRole : user?.role;
-    return ["admin", "super_admin"].includes(effectiveRole);
+    return [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(
+      effectiveRole as UserRole
+    );
   };
 
   const formatOperatingHours = (operatingHours: any) => {
@@ -428,8 +434,12 @@ export function CargoDetailModal({
   };
 
   const handleGenerateInvoice = () => {
-    // Navigate to invoice generation page or open invoice modal
-    window.location.href = `/admin/invoices/create?cargoId=${cargo.id}`;
+    if (onReviewAndInvoice) {
+      onReviewAndInvoice(cargo.id);
+    } else {
+      // Fallback to navigation if no handler provided
+      window.location.href = `/admin/invoices/create?cargoId=${cargo.id}`;
+    }
   };
 
   const handleStatusChange = (newStatus: string) => {
@@ -448,8 +458,8 @@ export function CargoDetailModal({
         actions.push(
           {
             key: "generate-invoice",
-            label: "Generate Invoice",
-            description: "Create invoice for this cargo",
+            label: "Review and Invoicing",
+            description: " review and invoicing",
             icon: <Package className="h-4 w-4 mr-2" />,
             variant: "default" as const,
             onClick: () => handleGenerateInvoice(),
@@ -696,64 +706,64 @@ export function CargoDetailModal({
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return <Badge className="bg-red-100 text-red-600">Urgent</Badge>;
-      case "high":
-        return <Badge className="bg-orange-100 text-orange-600">High</Badge>;
-      case "normal":
-        return <Badge className="bg-blue-100 text-blue-600">Normal</Badge>;
-      case "low":
-        return <Badge className="bg-gray-100 text-gray-600">Low</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-600">Standard</Badge>;
-    }
-  };
+  // const getPriorityBadge = (priority: string) => {
+  //   switch (priority) {
+  //     case "urgent":
+  //       return <Badge className="bg-red-100 text-red-600">Urgent</Badge>;
+  //     case "high":
+  //       return <Badge className="bg-orange-100 text-orange-600">High</Badge>;
+  //     case "normal":
+  //       return <Badge className="bg-blue-100 text-blue-600">Normal</Badge>;
+  //     case "low":
+  //       return <Badge className="bg-gray-100 text-gray-600">Low</Badge>;
+  //     default:
+  //       return <Badge className="bg-gray-100 text-gray-600">Standard</Badge>;
+  //   }
+  // };
 
-  const getPriorityDescription = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "Critical shipment requiring immediate attention (e.g., medical supplies, emergency deliveries)";
-      case "high":
-        return "Important shipment requiring faster processing (e.g., business documents, important packages)";
-      case "normal":
-        return "Standard priority, default processing for most regular shipments";
-      case "low":
-        return "Non-urgent, can be processed during normal operations (e.g., regular deliveries, non-time-sensitive items)";
-      default:
-        return "Standard priority processing";
-    }
-  };
+  // const getPriorityDescription = (priority: string) => {
+  //   switch (priority) {
+  //     case "urgent":
+  //       return "Critical shipment requiring immediate attention (e.g., medical supplies, emergency deliveries)";
+  //     case "high":
+  //       return "Important shipment requiring faster processing (e.g., business documents, important packages)";
+  //     case "normal":
+  //       return "Standard priority, default processing for most regular shipments";
+  //     case "low":
+  //       return "Non-urgent, can be processed during normal operations (e.g., regular deliveries, non-time-sensitive items)";
+  //     default:
+  //       return "Standard priority processing";
+  //   }
+  // };
 
   const getStatusDescription = (status: string) => {
     switch (status) {
       case "pending":
-        return "Request submitted, waiting for pricing";
+        return "pending";
       case "quoted":
-        return "Price quote provided, awaiting acceptance";
+        return "Invoice Sent";
       case "accepted":
-        return "Client confirmed, ready for assignment";
+        return "Invoice Paid";
       case "assigned":
-        return "Driver and vehicle assigned for pickup";
+        return "Driver Assigned";
       case "picked_up":
-        return "Successfully picked up, now in transit";
+        return "Cargo Collected";
       case "in_transit":
-        return "Being transported to destination";
+        return "In Transit";
       case "delivered":
-        return "Successfully delivered to destination";
+        return "Delivered";
       case "cancelled":
-        return "Shipment was cancelled";
+        return "Cancelled";
       case "disputed":
-        return "Issue reported, under investigation";
+        return "Disputed";
       case "active":
-        return "Cargo is active and being processed";
+        return "Active";
       case "completed":
-        return "Cargo delivery completed";
+        return "Completed";
       case "transit":
-        return "Being transported to destination";
+        return "In Transit";
       default:
-        return `Status: ${status}`;
+        return status;
     }
   };
 
@@ -812,7 +822,7 @@ export function CargoDetailModal({
         </div>
 
         {/* Assignment Information - Only show for drivers with pending assignments */}
-        {userRole === "driver" &&
+        {effectiveRole === UserRole.DRIVER &&
           (cargo.delivery_assignment?.assignment_status === "pending" ||
             cargo.assignmentStatus === "pending") && (
             <Card className="border-orange-200 bg-orange-50">
@@ -981,7 +991,7 @@ export function CargoDetailModal({
         )}
 
         {/* Driver Information - Only show for non-drivers */}
-        {userRole !== "driver" &&
+        {effectiveRole !== UserRole.DRIVER &&
           (cargo.driver || cargo.delivery_assignment?.driver) && (
             <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-green-50/30">
               <CardContent className="p-6">
@@ -1680,39 +1690,11 @@ export function CargoDetailModal({
             </div>
           )}
 
-          {/* Standard Action Buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                if (isDriverCargo) {
-                  onCallClient?.(cargo.clientPhone || cargo.phone);
-                } else if (isClientCargo) {
-                  onCallDriver?.(cargo.driverPhone || cargo.phone);
-                }
-              }}
-            >
-              <Phone className="h-4 w-4 mr-2" />
-              {isDriverCargo ? "Call Client" : "Call Driver"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => onUploadPhoto?.(cargo.id)}
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Upload Photo
-            </Button>
-          </div>
-
           {/* Admin Actions - Based on Status Transition Matrix */}
           {(() => {
-            // Use auth context role as fallback if prop role doesn't match
-            const effectiveRole =
-              userRole === user?.role ? userRole : user?.role;
             const isAdmin =
-              effectiveRole === "admin" || effectiveRole === "super_admin";
+              effectiveRole === UserRole.ADMIN ||
+              effectiveRole === UserRole.SUPER_ADMIN;
 
             if (!isAdmin) return null;
 
@@ -1744,45 +1726,85 @@ export function CargoDetailModal({
           })()}
 
           {/* Driver Actions */}
-          {isDriverCargo &&
-            (cargo.delivery_assignment?.assignment_status === "accepted" ||
-              cargo.assignmentStatus === "accepted") && (
-              <>
-                {cargo.status === "assigned" && (
-                  <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => onStartDelivery?.(cargo.id)}
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    Mark Picked Up
-                  </Button>
-                )}
+          {effectiveRole === UserRole.DRIVER && (
+            <>
+              {cargo.status === "pending" && (
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() => onAccept?.(cargo.id)}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Accept Cargo
+                </Button>
+              )}
 
-                {cargo.status === "picked_up" && (
-                  <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => onStartDelivery?.(cargo.id)}
-                  >
-                    <Navigation className="h-4 w-4 mr-2" />
-                    Start Transit
-                  </Button>
-                )}
+              {cargo.status === "assigned" && (
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={() => onStartDelivery?.(cargo.id)}
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Mark Picked Up
+                </Button>
+              )}
 
-                {cargo.status === "in_transit" && (
-                  <Button
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    onClick={() => onStartDelivery?.(cargo.id)}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Mark Delivered
-                  </Button>
-                )}
-              </>
-            )}
+              {cargo.status === "picked_up" && (
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={() => onStartDelivery?.(cargo.id)}
+                >
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Start Transit
+                </Button>
+              )}
+
+              {cargo.status === "in_transit" && (
+                <Button
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={() => onStartDelivery?.(cargo.id)}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark Delivered
+                </Button>
+              )}
+
+              {/* Call Client Button for Drivers */}
+              {cargo.client && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() =>
+                    onCallClient?.(cargo.clientPhone || cargo.phone)
+                  }
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Call Client
+                </Button>
+              )}
+            </>
+          )}
 
           {/* Client Actions */}
-          {isClientCargo && (
+          {effectiveRole === UserRole.CLIENT && (
             <>
+              {/* Show call driver button when driver is assigned */}
+              {cargo.driver &&
+                cargo.driverPhone &&
+                ["assigned", "picked_up", "in_transit"].includes(
+                  cargo.status
+                ) && (
+                  <Button
+                    variant="default"
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={() =>
+                      onCallDriver?.(cargo.driverPhone || cargo.phone)
+                    }
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    Call Driver
+                  </Button>
+                )}
+
               {/* Cancellation is only allowed before picked_up status */}
               {["pending", "quoted", "accepted", "assigned"].includes(
                 cargo.status
@@ -1794,6 +1816,23 @@ export function CargoDetailModal({
                 >
                   <X className="h-4 w-4 mr-2" />
                   Cancel Cargo
+                </Button>
+              )}
+
+              {/* Track cargo button */}
+              {["assigned", "picked_up", "in_transit"].includes(
+                cargo.status
+              ) && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    // Navigate to tracking page
+                    window.location.href = `/tracking/${cargo.id}`;
+                  }}
+                >
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Track Cargo
                 </Button>
               )}
 

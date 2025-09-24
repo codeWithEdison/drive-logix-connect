@@ -46,6 +46,9 @@ import SuperAdminUsers from "@/pages/superadmin/SuperAdminUsers";
 import SuperAdminSettings from "@/pages/superadmin/SuperAdminSettings";
 import SuperAdminLogs from "@/pages/superadmin/SuperAdminLogs";
 import SuperAdminInvoices from "@/pages/superadmin/SuperAdminInvoices";
+import BranchManagement from "@/pages/superadmin/BranchManagement";
+import BranchDetails from "@/pages/superadmin/BranchDetails";
+import DistrictManagement from "@/pages/superadmin/DistrictManagement";
 import NotFound from "@/pages/NotFound";
 import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
 import { ProfilePage } from "@/pages/Profile";
@@ -306,6 +309,30 @@ function AppContent() {
           element={
             <ProtectedRoute allowedRoles={["super_admin"]}>
               <SuperAdminInvoices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/superadmin/branches"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <BranchManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/superadmin/branches/:id"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <BranchDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/superadmin/districts"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <DistrictManagement />
             </ProtectedRoute>
           }
         />

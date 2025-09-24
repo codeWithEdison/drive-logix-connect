@@ -1,9 +1,18 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { ApiResponse, ApiError } from "../../types/shared";
 
+// Extend AxiosRequestConfig to include metadata
+declare module "axios" {
+  interface AxiosRequestConfig {
+    metadata?: { startTime: number };
+  }
+}
+
 // Base configuration
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://loveway-logistics-backends.onrender.com";
+  import.meta.env.VITE_API_BASE_URL ||
+  // "https://loveway-logistics-backends.onrender.com";
+  "http://localhost:3000";
 const API_VERSION = "v1";
 
 // Request throttling

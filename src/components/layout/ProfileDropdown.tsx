@@ -23,6 +23,7 @@ import {
   Building2,
   Mail,
   Phone,
+  MapPin,
 } from "lucide-react";
 import { Driver, Client } from "@/types/shared";
 
@@ -178,6 +179,16 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
                   {user.is_active ? t("common.active") : t("common.pending")}
                 </Badge>
               </div>
+              {/* Branch Information for Admin and Driver users */}
+              {(user.role === "admin" || user.role === "driver") &&
+                user.branch && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <MapPin className="h-3 w-3 text-gray-500" />
+                    <span className="text-xs text-gray-500">
+                      {user.branch.name} ({user.branch.code})
+                    </span>
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -195,6 +206,26 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
               <Phone className="h-4 w-4" />
               <span>{user.phone}</span>
             </div>
+          )}
+          {/* Branch Information for Admin and Driver users */}
+          {(user.role === "admin" || user.role === "driver") && user.branch && (
+            <>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <MapPin className="h-4 w-4" />
+                <span>{user.branch.name}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-500 ml-6">
+                <span>
+                  {user.branch.address}, {user.branch.city}
+                </span>
+              </div>
+              {user.branch.phone && (
+                <div className="flex items-center gap-2 text-sm text-gray-500 ml-6">
+                  <Phone className="h-3 w-3" />
+                  <span>{user.branch.phone}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
 

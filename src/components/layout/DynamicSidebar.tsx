@@ -31,6 +31,8 @@ import {
   Activity,
   Database,
   User,
+  Building2,
+  Map,
 } from "lucide-react";
 
 const getNavigationConfig = (t: (key: string) => string) => ({
@@ -80,6 +82,16 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       title: t("navigation.userManagement"),
       url: "/super-admin/users",
       icon: Users,
+    },
+    {
+      title: "Branch Management",
+      url: "/superadmin/branches",
+      icon: Building2,
+    },
+    {
+      title: "District Management",
+      url: "/superadmin/districts",
+      icon: Map,
     },
     {
       title: t("navigation.invoices"),

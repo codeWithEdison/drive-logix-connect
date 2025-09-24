@@ -269,7 +269,14 @@
     "preferredLanguage": "Langue Préférée",
     "optional": "Optionnel",
     "verificationEmailSent": "Email de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
-    "verificationInstructions": "Veuillez vérifier votre boîte de réception pour le lien de vérification. Le lien expirera dans 1 heure."
+    "verificationInstructions": "Veuillez vérifier votre boîte de réception pour le lien de vérification. Le lien expirera dans 1 heure.",
+    "emailVerification": "Vérification Email",
+    "verifyEmailTitle": "Vérifiez Votre Email",
+    "verifyEmailDescription": "Veuillez vérifier votre adresse email pour terminer votre inscription",
+    "verificationSuccess": "Votre email a été vérifié avec succès !",
+    "verificationFailed": "La vérification de l'email a échoué. Veuillez réessayer.",
+    "verificationToken": "Jeton de Vérification",
+    "enterVerificationToken": "Entrez le jeton de vérification"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -598,21 +605,6 @@
     "systemNotifications": "Notifications système",
     "settingsUpdated": "Paramètres de notification mis à jour avec succès"
   },
-  "tracking": {
-    "tracking": "Suivi",
-    "currentLocation": "Localisation actuelle",
-    "locationHistory": "Historique des localisations",
-    "liveTracking": "Suivi en direct",
-    "lastUpdated": "Dernière mise à jour",
-    "speed": "Vitesse",
-    "heading": "Direction",
-    "accuracy": "Précision",
-    "batteryLevel": "Niveau de batterie",
-    "startTime": "Heure de début",
-    "endTime": "Heure de fin",
-    "duration": "Durée",
-    "distance": "Distance"
-  },
   "status": {
     "pending": "En attente",
     "quoted": "Devisé",
@@ -871,7 +863,8 @@
         "pickup": "Ramassage",
         "delivery": "Livraison",
         "contact": "Contact",
-        "proceedToPayment": "Procéder au paiement"
+        "proceedToPayment": "Procéder au paiement",
+        "createCargo": "Créer une cargaison"
       },
       "success": {
         "title": "Cargaison créée avec succès !",
@@ -882,7 +875,8 @@
         "status": "Statut",
         "paymentConfirmed": "Paiement confirmé",
         "viewMyCargos": "Voir mes cargaisons",
-        "createAnotherCargo": "Créer une autre cargaison"
+        "createAnotherCargo": "Créer une autre cargaison",
+        "cargoCreated": "Cargaison créée avec succès"
       }
     }
   },
@@ -981,7 +975,7 @@
     "reorder": "Commander à nouveau",
     "uploadPhoto": "Fonctionnalité d'upload de photo bientôt disponible",
     "reportIssue": "Fonctionnalité de signalement de problème bientôt disponible",
-    "status": {
+    "statusOptions": {
       "pending": "En attente",
       "quoted": "Devisé",
       "accepted": "Accepté",
@@ -1063,6 +1057,16 @@
   "adminDashboard": {
     "title": "Tableau de bord administrateur",
     "subtitle": "Surveiller et gérer toutes les opérations logistiques",
+    "header": {
+      "welcomeBack": "Bon retour",
+      "manageSystem": "Surveiller et gérer toutes les opérations logistiques",
+      "systemAdmin": "Administrateur système",
+      "systemError": "Erreur système"
+    },
+    "stats": {
+      "monthlyRevenueLabel": "Revenus mensuels",
+      "activeDeliveriesLabel": "Livraisons actives"
+    },
     "day": "Jour",
     "month": "Mois",
     "totalRevenue": "Revenus totaux",
@@ -1149,8 +1153,6 @@
     "assignedAt": "Assigné le",
     "driverRespondedAt": "Le chauffeur a répondu le",
     "viewDetails": "Voir les Détails",
-    "editAssignment": "Modifier l'Assignation",
-    "cancelAssignment": "Annuler l'Assignation",
     "clearAllFilters": "Effacer Tous les Filtres",
     "assignmentStatus": "Statut de l'Assignation",
     "driverFilter": "Chauffeur",
