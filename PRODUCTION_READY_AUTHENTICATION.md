@@ -110,9 +110,9 @@ const login = async (email: string, password: string): Promise<boolean> => {
 ### **Kinyarwanda Navigation:**
 
 - Ikibaho, Kurema Ibintu, Ibintu Byanjye, Kurikirana mu Buryo, Amateka
-- Ibintu Byashyizweho, Kohereza Bikora, Amateka yo Kohereza
-- Ibintu Byose, Abakoresha, Imiduka, Raporo, Igenamiterere
-- Gucunga Abakoresha, Igenamiterere ry'Ubwoba, Amateka y'Ubwoba
+- Ibintu Byashyizweho, Ibikwiye Koherezwa, Amateka yo Kohereza
+- Imizigo yose, Abakoresha, Amakamyo, Raporo, Igenamiterere
+- Kugenzura Abakoresha, Igenamiterere rya sisteme, Amateka y'Ubwoba
 
 ### **French Navigation:**
 
