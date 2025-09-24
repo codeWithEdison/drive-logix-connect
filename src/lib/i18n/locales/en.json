@@ -628,7 +628,8 @@
       "cancelled": "Cancelled",
       "in_progress": "In Progress",
       "completed": "Completed",
-      "failed": "Failed"
+      "failed": "Failed",
+      "available": "Available"
     },
     "expiresIn": "Expires in",
     "expired": "Expired"
@@ -1142,7 +1143,10 @@
     "pending": "Pending",
     "quoted": "Quoted",
     "accepted": "Accepted",
-    "assigned": "Assigned",
+    "partiallyAssigned": "Partially Assigned",
+    "partially_assigned": "Partially Assigned",
+    "fullyAssigned": "Fully Assigned",
+    "fully_assigned": "Fully Assigned",
     "pickedUp": "Picked Up",
     "picked_up": "Picked Up",
     "inTransit": "In Transit",
@@ -1171,6 +1175,11 @@
     "normal": "Normal",
     "high": "High",
     "urgent": "Urgent"
+  },
+  "assignmentType": {
+    "full": "Full Assignment",
+    "partial": "Partial Assignment",
+    "split": "Split Assignment"
   },
   "businessType": {
     "individual": "Individual",

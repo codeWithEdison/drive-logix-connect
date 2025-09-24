@@ -515,7 +515,8 @@
       "cancelled": "Annulé",
       "in_progress": "En cours",
       "completed": "Terminé",
-      "failed": "Échoué"
+      "failed": "Échoué",
+      "available": "Disponible"
     },
     "expiresIn": "Expire dans",
     "expired": "Expiré"

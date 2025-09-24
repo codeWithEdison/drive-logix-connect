@@ -314,7 +314,13 @@ export interface PaginatedApiState<T = any> extends ApiState<T[]> {
 // UTILITY TYPES
 // ===========================================
 
-export type StatusColor = "green" | "yellow" | "red" | "blue" | "gray";
+export type StatusColor =
+  | "green"
+  | "yellow"
+  | "red"
+  | "blue"
+  | "gray"
+  | "orange";
 
 export interface StatusConfig {
   label: string;
@@ -327,7 +333,11 @@ export const STATUS_CONFIGS: Record<string, StatusConfig> = {
   [CargoStatus.PENDING]: { label: "Pending", color: "yellow" },
   [CargoStatus.QUOTED]: { label: "Quoted", color: "blue" },
   [CargoStatus.ACCEPTED]: { label: "Accepted", color: "green" },
-  [CargoStatus.ASSIGNED]: { label: "Assigned", color: "blue" },
+  [CargoStatus.PARTIALLY_ASSIGNED]: {
+    label: "Partially Assigned",
+    color: "orange",
+  },
+  [CargoStatus.FULLY_ASSIGNED]: { label: "Fully Assigned", color: "blue" },
   [CargoStatus.PICKED_UP]: { label: "Picked Up", color: "green" },
   [CargoStatus.IN_TRANSIT]: { label: "In Transit", color: "blue" },
   [CargoStatus.DELIVERED]: { label: "Delivered", color: "green" },

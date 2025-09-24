@@ -7,6 +7,9 @@ export interface DeliveryAssignment {
   driver_id: string;
   vehicle_id: string;
   assignment_status: "pending" | "accepted" | "rejected" | "cancelled";
+  assigned_weight_kg?: number;
+  assigned_volume?: number;
+  assignment_type: "full" | "partial" | "split";
   expires_at: string;
   driver_responded_at?: string;
   rejection_reason?: string;
@@ -19,6 +22,7 @@ export interface DeliveryAssignment {
     cargo_number: string;
     status: string;
     weight_kg: number;
+    volume?: number;
     pickup_address: string;
     destination_address: string;
     pickup_date?: string;
@@ -59,6 +63,9 @@ export interface CreateAssignmentRequest {
   cargo_id: string;
   driver_id: string;
   vehicle_id: string;
+  assigned_weight_kg?: number;
+  assigned_volume?: number;
+  assignment_type?: "full" | "partial" | "split";
   notes?: string;
 }
 
@@ -106,6 +113,17 @@ export interface AssignmentListResponse {
       total: number;
       totalPages: number;
     };
+    timestamp: string;
+    requestId: string;
+  };
+}
+
+// New interface for cargo assignments response (array format)
+export interface CargoAssignmentsResponse {
+  success: boolean;
+  message: string;
+  data: DeliveryAssignment[];
+  meta: {
     timestamp: string;
     requestId: string;
   };
@@ -167,12 +185,37 @@ class DeliveryAssignmentService {
   }
 
   /**
-   * Get assignment by cargo ID (Admin only)
+   * Get assignments by cargo ID (Admin only) - Returns array of assignments
+   */
+  async getAssignmentsByCargoId(
+    cargoId: string
+  ): Promise<CargoAssignmentsResponse> {
+    try {
+      const response = await axiosInstance.get(`${this.baseUrl}/${cargoId}`);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Get assignment by cargo ID (Admin only) - Backward compatibility
+   * @deprecated Use getAssignmentsByCargoId instead
    */
   async getAssignmentByCargoId(cargoId: string): Promise<AssignmentResponse> {
     try {
       const response = await axiosInstance.get(`${this.baseUrl}/${cargoId}`);
-      return response.data;
+      const data = response.data;
+
+      // Handle both single assignment and array responses for backward compatibility
+      if (Array.isArray(data.data)) {
+        return {
+          ...data,
+          data: data.data[0] || null,
+        };
+      }
+
+      return data;
     } catch (error: any) {
       throw this.handleError(error);
     }

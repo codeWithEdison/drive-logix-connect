@@ -75,9 +75,14 @@ const statusConfig = {
     description: "Client confirmed, ready for assignment",
     className: "bg-indigo-100 text-indigo-600",
   },
-  assigned: {
-    label: "Driver Assigned",
-    description: "Driver and vehicle assigned for pickup",
+  partially_assigned: {
+    label: "Partially Assigned",
+    description: "Some weight assigned, more assignments possible",
+    className: "bg-orange-100 text-orange-600",
+  },
+  fully_assigned: {
+    label: "Fully Assigned",
+    description: "All cargo weight assigned to drivers",
     className: "bg-purple-100 text-purple-600",
   },
   picked_up: {
@@ -212,6 +217,12 @@ export function CargoTable({
     | "transit"
     | "delivered"
     | "cancelled"
+    | "partially_assigned"
+    | "fully_assigned"
+    | "picked_up"
+    | "in_transit"
+    | "quoted"
+    | "accepted"
   >("all");
   const [selectedCargo, setSelectedCargo] = useState<CargoDetail | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -219,7 +230,7 @@ export function CargoTable({
 
   const filteredCargos = cargos.filter((cargo) => {
     const matchesSearch =
-      String(cargo.client || "")
+      String(cargo.clientCompany || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       cargo.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -339,7 +350,7 @@ export function CargoTable({
       });
 
       // Common admin actions
-      if (cargo.client) {
+      if (cargo.clientCompany) {
         actions.push({
           key: "call-client",
           label: "Call Client",
@@ -437,7 +448,7 @@ export function CargoTable({
           variant: "default" as const,
         });
       }
-      if (cargo.client) {
+      if (cargo.clientCompany) {
         actions.push({
           key: "call",
           label: "Call Client",
@@ -515,8 +526,9 @@ export function CargoTable({
     const transitions: { [key: string]: string[] } = {
       pending: ["quoted", "cancelled"],
       quoted: ["accepted", "cancelled"],
-      accepted: ["assigned", "cancelled"],
-      assigned: ["picked_up", "cancelled"],
+      accepted: ["partially_assigned", "fully_assigned", "cancelled"],
+      partially_assigned: ["fully_assigned", "cancelled"],
+      fully_assigned: ["picked_up", "cancelled"],
       picked_up: ["in_transit", "cancelled"],
       in_transit: ["delivered", "cancelled"],
       delivered: [], // No transitions from delivered
@@ -566,7 +578,7 @@ export function CargoTable({
     if (user?.role === "driver") {
       return {
         id: cargo.cargo_number || cargo.id, // Use cargo_number if available, fallback to id
-        client: cargo.client,
+        client: cargo.clientCompany,
         phone: cargo.phone,
         from: cargo.from,
         to: cargo.to,
@@ -581,7 +593,7 @@ export function CargoTable({
     } else {
       return {
         id: cargo.cargo_number || cargo.id, // Use cargo_number if available, fallback to id
-        client: cargo.client,
+        client: cargo.clientCompany,
         driver: cargo.driver,
         phone: cargo.phone,
         from: cargo.from,
@@ -654,7 +666,7 @@ export function CargoTable({
               <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 rounded-lg">
                 <Truck className="h-3 w-3 text-orange-600" />
                 <span className="text-xs font-medium text-orange-700">
-                  {cargo.vehicleInfo?.plate_number || "N/A"}
+                  {(cargo as any).vehicleInfo?.plate_number || "N/A"}
                 </span>
               </div>
               <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-lg">
@@ -683,9 +695,9 @@ export function CargoTable({
                   <p className="text-sm font-medium text-gray-900 mb-1">
                     {data.from}
                   </p>
-                  {cargo.pickupLocation?.name && (
+                  {(cargo as any).pickupLocation?.name && (
                     <p className="text-xs text-gray-600">
-                      📍 {cargo.pickupLocation.name}
+                      📍 {(cargo as any).pickupLocation.name}
                     </p>
                   )}
                 </div>
@@ -707,9 +719,9 @@ export function CargoTable({
                   <p className="text-sm font-medium text-gray-900 mb-1">
                     {data.to}
                   </p>
-                  {cargo.destinationLocation?.name && (
+                  {(cargo as any).destinationLocation?.name && (
                     <p className="text-xs text-gray-600">
-                      📍 {cargo.destinationLocation.name}
+                      📍 {(cargo as any).destinationLocation.name}
                     </p>
                   )}
                 </div>
@@ -1041,9 +1053,9 @@ export function CargoTable({
                               <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
                               <span className="text-sm">{data.from}</span>
                             </div>
-                            {cargo.pickupLocation?.name && (
+                            {(cargo as any).pickupLocation?.name && (
                               <p className="text-xs text-gray-500 mt-1">
-                                {cargo.pickupLocation.name}
+                                {(cargo as any).pickupLocation.name}
                               </p>
                             )}
                           </div>
@@ -1054,9 +1066,9 @@ export function CargoTable({
                               <MapPin className="h-3 w-3 text-blue-500 mt-0.5 flex-shrink-0" />
                               <span className="text-sm">{data.to}</span>
                             </div>
-                            {cargo.destinationLocation?.name && (
+                            {(cargo as any).destinationLocation?.name && (
                               <p className="text-xs text-gray-500 mt-1">
-                                {cargo.destinationLocation.name}
+                                {(cargo as any).destinationLocation.name}
                               </p>
                             )}
                           </div>
@@ -1071,11 +1083,12 @@ export function CargoTable({
                         <TableCell>
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {cargo.vehicleInfo?.plate_number || "N/A"}
+                              {(cargo as any).vehicleInfo?.plate_number ||
+                                "N/A"}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {cargo.vehicleInfo?.make}{" "}
-                              {cargo.vehicleInfo?.model}
+                              {(cargo as any).vehicleInfo?.make}{" "}
+                              {(cargo as any).vehicleInfo?.model}
                             </p>
                           </div>
                         </TableCell>

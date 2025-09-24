@@ -11,7 +11,7 @@ export const mapDashboardCargoToCargoDetail = (cargo: any): CargoDetail => {
     status: cargo.status as any,
     from: cargo.pickup_address || "",
     to: cargo.delivery_address || "",
-    client: cargo.client_name,
+    clientCompany: cargo.client_name,
     phone: cargo.client_phone || "",
     weight: `${cargo.weight || 0} kg`,
     type: cargo.cargo_type || "",
@@ -57,8 +57,7 @@ export const mapDeliveryAssignmentToCargoDetail = (
     status: "assigned" as any, // Default status since these are assignments
     from: cargo.pickup_address || "Pickup Location",
     to: cargo.destination_address || "Delivery Location",
-    client: user.full_name || "Client Name",
-    clientCompany: client.company_name || "",
+    clientCompany: user.full_name || "Client Name",
     phone: client.phone || "",
     weight: `${cargo.weight_kg || 0} kg`, // Updated to use weight_kg
     type: cargo.type || "General",
@@ -81,22 +80,94 @@ export const mapDeliveryAssignmentToCargoDetail = (
     cost: cargo.cost,
     estimatedTime: cargo.estimated_time,
     // Add new fields for enhanced display
-    pickupLocation: cargo.pickup_location || {},
-    destinationLocation: cargo.destination_location || {},
-    vehicleInfo: {
-      plate_number: vehicle.plate_number || "",
-      make: vehicle.make || "",
-      model: vehicle.model || "",
-    },
-    // Assignment system fields
-    assignmentStatus: "assigned" as any, // Default to assigned since these are assignments
-    assignmentId: assignment.id,
-    assignmentExpiresAt: assignment.expires_at,
-    driverRespondedAt: assignment.driver_responded_at,
-    rejectionReason: assignment.rejection_reason,
-    assignmentCreatedBy: assignment.created_by,
-    assignmentNotes: assignment.notes,
-    driverStatus: "on_duty" as any, // Default to on_duty for assigned cargos
+  };
+};
+
+/**
+ * Maps cargo with multiple assignments to CargoDetail for UI components
+ */
+export const mapCargoWithAssignmentsToCargoDetail = (
+  cargo: any,
+  assignments: any[] = []
+): CargoDetail => {
+  const client = cargo.client || {};
+  const user = client.user || {};
+
+  // Calculate assignment totals
+  const totalAssignedWeight = assignments.reduce((sum, assignment) => {
+    return sum + (assignment.assigned_weight_kg || 0);
+  }, 0);
+
+  const totalAssignedVolume = assignments.reduce((sum, assignment) => {
+    return sum + (assignment.assigned_volume || 0);
+  }, 0);
+
+  const remainingWeight = (cargo.weight_kg || 0) - totalAssignedWeight;
+  const remainingVolume = (cargo.volume || 0) - totalAssignedVolume;
+
+  // Determine status based on assignments
+  let status = cargo.status;
+  if (assignments.length > 0) {
+    if (remainingWeight <= 0) {
+      status = "fully_assigned";
+    } else {
+      status = "partially_assigned";
+    }
+  }
+
+  return {
+    id: cargo.id,
+    cargo_number: cargo.cargo_number || "",
+    status: status as any,
+    from: cargo.pickup_address || "Pickup Location",
+    to: cargo.destination_address || "Delivery Location",
+    clientCompany: user.full_name || "Client Name",
+    phone: client.phone || "",
+    weight: `${cargo.weight_kg || 0} kg`,
+    type: cargo.type || "General",
+    pickupTime: cargo.pickup_time || "TBD",
+    estimatedDelivery: cargo.estimated_delivery_time || "TBD",
+    priority: cargo.priority || ("normal" as any),
+    assignedDate:
+      assignments.length > 0
+        ? new Date(assignments[0].created_at).toLocaleDateString()
+        : new Date().toLocaleDateString(),
+    distance: `${cargo.distance_km || 0} km`,
+    earnings: cargo.earnings,
+    description: cargo.description || "Cargo with assignments",
+    specialInstructions: cargo.special_instructions || "",
+    pickupContact: cargo.pickup_contact || "",
+    pickupContactPhone: cargo.pickup_phone || "",
+    deliveryContact: cargo.delivery_contact || "",
+    deliveryContactPhone: cargo.delivery_phone || "",
+    driver: assignments.length > 0 ? assignments[0].driver?.name : undefined,
+    driverPhone:
+      assignments.length > 0 ? assignments[0].driver?.phone : undefined,
+    cost: cargo.cost,
+    estimatedTime: cargo.estimated_time,
+    // Multi-assignment support
+    assignments: assignments.map((assignment) => ({
+      id: assignment.id,
+      driver_id: assignment.driver_id,
+      vehicle_id: assignment.vehicle_id,
+      assignment_status: assignment.assignment_status,
+      assigned_weight_kg: assignment.assigned_weight_kg,
+      assigned_volume: assignment.assigned_volume,
+      assignment_type: assignment.assignment_type,
+      expires_at: assignment.expires_at,
+      driver_responded_at: assignment.driver_responded_at,
+      rejection_reason: assignment.rejection_reason,
+      notes: assignment.notes,
+      created_at: assignment.created_at,
+      updated_at: assignment.updated_at,
+      driver: assignment.driver,
+      vehicle: assignment.vehicle,
+    })),
+    totalAssignedWeight,
+    totalAssignedVolume,
+    remainingWeight,
+    remainingVolume,
+    // Add new fields for enhanced display
   };
 };
 
@@ -153,7 +224,7 @@ export const mapCargoToCargoDetail = (cargo: any): CargoDetail => {
     status: cargo.status as any,
     from: cargo.pickup_address || "",
     to: cargo.destination_address || "",
-    client: clientName,
+    clientCompany: clientName,
     phone: clientPhone,
     weight: `${cargo.weight_kg || 0} kg`,
     type: cargo.type || "",
@@ -185,7 +256,6 @@ export const mapCargoToCargoDetail = (cargo: any): CargoDetail => {
     vehicleType: cargo.delivery_assignment?.vehicle?.plate_number || "",
 
     // Enhanced fields for better data display
-    clientCompany: cargo.client?.company_name || "",
     clientContactPerson: cargo.client?.contact_person || "",
     clientPhone: cargo.client?.user?.phone || "",
     driverName: cargo.delivery_assignment?.driver?.user?.full_name || "",

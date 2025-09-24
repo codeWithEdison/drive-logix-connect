@@ -63,6 +63,19 @@ export function useAssignmentByCargoId(cargoId: string) {
 }
 
 /**
+ * Get assignments by cargo ID (returns array of assignments)
+ */
+export function useAssignmentsByCargoId(cargoId: string) {
+  return useQuery({
+    queryKey: assignmentKeys.detail(cargoId),
+    queryFn: () => deliveryAssignmentService.getAssignmentsByCargoId(cargoId),
+    enabled: !!cargoId,
+    staleTime: 30000,
+    refetchInterval: 30000, // Refetch every 30 seconds for assignment updates
+  });
+}
+
+/**
  * Create delivery assignment (Admin only)
  */
 export function useCreateAssignment() {

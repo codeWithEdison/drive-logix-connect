@@ -61,6 +61,10 @@ export default function AssignmentModal({
     cargo_id: "",
     driver_id: "",
     vehicle_id: "",
+    assigned_weight_kg: "",
+    assigned_volume: "",
+    assignment_type: "full" as "full" | "partial" | "split",
+    notes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,18 +120,30 @@ export default function AssignmentModal({
         cargo_id: assignment.cargo_id || "",
         driver_id: assignment.driver_id || "",
         vehicle_id: assignment.vehicle_id || "",
+        assigned_weight_kg: assignment.assigned_weight_kg?.toString() || "",
+        assigned_volume: assignment.assigned_volume?.toString() || "",
+        assignment_type: assignment.assignment_type || "full",
+        notes: assignment.notes || "",
       });
     } else if (preselectedCargoId) {
       setFormData({
         cargo_id: preselectedCargoId,
         driver_id: "",
         vehicle_id: "",
+        assigned_weight_kg: "",
+        assigned_volume: "",
+        assignment_type: "full",
+        notes: "",
       });
     } else {
       setFormData({
         cargo_id: "",
         driver_id: "",
         vehicle_id: "",
+        assigned_weight_kg: "",
+        assigned_volume: "",
+        assignment_type: "full",
+        notes: "",
       });
     }
     setErrors({});
@@ -214,9 +230,42 @@ export default function AssignmentModal({
       newErrors.vehicle_id = t("validation.required");
     }
 
+    // Validate assignment type specific fields
+    if (
+      formData.assignment_type === "partial" ||
+      formData.assignment_type === "split"
+    ) {
+      if (!formData.assigned_weight_kg) {
+        newErrors.assigned_weight_kg = t("validation.required");
+      } else {
+        const assignedWeight = parseFloat(formData.assigned_weight_kg);
+        const cargoWeight = selectedCargo?.weight_kg || 0;
+
+        if (assignedWeight <= 0) {
+          newErrors.assigned_weight_kg = "Weight must be greater than 0";
+        } else if (assignedWeight > cargoWeight) {
+          newErrors.assigned_weight_kg = `Weight cannot exceed cargo weight (${cargoWeight} kg)`;
+        }
+      }
+
+      if (formData.assigned_volume) {
+        const assignedVolume = parseFloat(formData.assigned_volume);
+        const cargoVolume = selectedCargo?.volume || 0;
+
+        if (assignedVolume <= 0) {
+          newErrors.assigned_volume = "Volume must be greater than 0";
+        } else if (cargoVolume > 0 && assignedVolume > cargoVolume) {
+          newErrors.assigned_volume = `Volume cannot exceed cargo volume (${cargoVolume})`;
+        }
+      }
+    }
+
     // Check if cargo weight exceeds vehicle capacity
     if (currentCargo && selectedVehicle) {
-      const cargoWeight = currentCargo.weight_kg || 0;
+      const cargoWeight =
+        formData.assignment_type === "full"
+          ? currentCargo.weight_kg || 0
+          : parseFloat(formData.assigned_weight_kg) || 0;
       const vehicleCapacity =
         selectedVehicle.capacity_kg || selectedVehicle.capacity || 0;
       if (cargoWeight > vehicleCapacity) {
@@ -240,12 +289,37 @@ export default function AssignmentModal({
 
     try {
       if (mode === "create") {
-        await createAssignmentMutation.mutateAsync(formData);
+        const assignmentData = {
+          cargo_id: formData.cargo_id,
+          driver_id: formData.driver_id,
+          vehicle_id: formData.vehicle_id,
+          assigned_weight_kg: formData.assigned_weight_kg
+            ? parseFloat(formData.assigned_weight_kg)
+            : undefined,
+          assigned_volume: formData.assigned_volume
+            ? parseFloat(formData.assigned_volume)
+            : undefined,
+          assignment_type: formData.assignment_type,
+          notes: formData.notes,
+        };
+        await createAssignmentMutation.mutateAsync(assignmentData);
         customToast.success(t("adminAssignments.createdSuccessfully"));
       } else {
+        const updateData = {
+          driver_id: formData.driver_id,
+          vehicle_id: formData.vehicle_id,
+          assigned_weight_kg: formData.assigned_weight_kg
+            ? parseFloat(formData.assigned_weight_kg)
+            : undefined,
+          assigned_volume: formData.assigned_volume
+            ? parseFloat(formData.assigned_volume)
+            : undefined,
+          assignment_type: formData.assignment_type,
+          notes: formData.notes,
+        };
         await updateAssignmentMutation.mutateAsync({
           assignmentId: assignment.id,
-          data: formData,
+          data: updateData,
         });
         customToast.success(t("adminAssignments.updatedSuccessfully"));
       }
@@ -684,6 +758,117 @@ export default function AssignmentModal({
                   </AlertDescription>
                 </Alert>
               )}
+          </CardContent>
+        </Card>
+
+        {/* Assignment Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Assignment Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Assignment Type */}
+            <div className="space-y-2">
+              <Label htmlFor="assignment_type">Assignment Type</Label>
+              <Select
+                value={formData.assignment_type}
+                onValueChange={(value) =>
+                  handleFieldChange(
+                    "assignment_type",
+                    value as "full" | "partial" | "split"
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select assignment type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">Full Assignment</SelectItem>
+                  <SelectItem value="partial">Partial Assignment</SelectItem>
+                  <SelectItem value="split">Split Assignment</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Weight Assignment - Show only for partial/split */}
+            {(formData.assignment_type === "partial" ||
+              formData.assignment_type === "split") && (
+              <div className="space-y-2">
+                <Label htmlFor="assigned_weight_kg">
+                  Assigned Weight (kg)
+                  {selectedCargo && (
+                    <span className="text-sm text-gray-500 ml-2">
+                      (Total: {selectedCargo.weight_kg} kg)
+                    </span>
+                  )}
+                </Label>
+                <Input
+                  id="assigned_weight_kg"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  max={selectedCargo?.weight_kg || undefined}
+                  value={formData.assigned_weight_kg}
+                  onChange={(e) =>
+                    handleFieldChange("assigned_weight_kg", e.target.value)
+                  }
+                  className={errors.assigned_weight_kg ? "border-red-500" : ""}
+                  placeholder="Enter weight in kg"
+                />
+                {errors.assigned_weight_kg && (
+                  <p className="text-sm text-red-500">
+                    {errors.assigned_weight_kg}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Volume Assignment - Show only for partial/split */}
+            {(formData.assignment_type === "partial" ||
+              formData.assignment_type === "split") && (
+              <div className="space-y-2">
+                <Label htmlFor="assigned_volume">
+                  Assigned Volume (m³)
+                  {selectedCargo?.volume && (
+                    <span className="text-sm text-gray-500 ml-2">
+                      (Total: {selectedCargo.volume} m³)
+                    </span>
+                  )}
+                </Label>
+                <Input
+                  id="assigned_volume"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  max={selectedCargo?.volume || undefined}
+                  value={formData.assigned_volume}
+                  onChange={(e) =>
+                    handleFieldChange("assigned_volume", e.target.value)
+                  }
+                  className={errors.assigned_volume ? "border-red-500" : ""}
+                  placeholder="Enter volume in m³"
+                />
+                {errors.assigned_volume && (
+                  <p className="text-sm text-red-500">
+                    {errors.assigned_volume}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Input
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => handleFieldChange("notes", e.target.value)}
+                placeholder="Add any additional notes for this assignment"
+              />
+            </div>
           </CardContent>
         </Card>
 

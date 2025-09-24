@@ -221,7 +221,8 @@ export enum CargoStatus {
   PENDING = "pending",
   QUOTED = "quoted",
   ACCEPTED = "accepted",
-  ASSIGNED = "assigned",
+  PARTIALLY_ASSIGNED = "partially_assigned",
+  FULLY_ASSIGNED = "fully_assigned",
   PICKED_UP = "picked_up",
   IN_TRANSIT = "in_transit",
   DELIVERED = "delivered",
@@ -265,6 +266,12 @@ export enum PaymentMethod {
   CARD = "card",
   ONLINE = "online",
   BANK_TRANSFER = "bank_transfer",
+}
+
+export enum AssignmentType {
+  FULL = "full",
+  PARTIAL = "partial",
+  SPLIT = "split",
 }
 
 export enum PaymentStatus {
@@ -558,13 +565,31 @@ export interface DeliveryAssignment {
   cargo_id: UUID;
   driver_id: UUID;
   vehicle_id: UUID;
-  assigned_at: string;
+  assignment_status: "pending" | "accepted" | "rejected" | "cancelled";
+  assigned_weight_kg?: number;
+  assigned_volume?: number;
+  assignment_type: AssignmentType;
+  expires_at: string;
+  driver_responded_at?: string;
+  rejection_reason?: string;
+  notes?: string;
+  created_by: UUID;
+  created_at: string;
+  updated_at: string;
+  // Related data (populated by API)
+  cargo?: Cargo;
+  driver?: Driver;
+  vehicle?: Vehicle;
 }
 
 export interface CreateDeliveryAssignmentRequest {
   cargo_id: UUID;
   driver_id: UUID;
   vehicle_id: UUID;
+  assigned_weight_kg?: number;
+  assigned_volume?: number;
+  assignment_type?: AssignmentType;
+  notes?: string;
 }
 
 export interface DeliveryStatusUpdate {
@@ -873,18 +898,7 @@ export interface CargoTracking {
   status_updates: DeliveryStatusUpdate[];
   estimated_delivery_time?: string;
   last_updated: string;
-  driver?: {
-    id: UUID;
-    full_name: string;
-    phone?: string;
-    rating: number;
-  };
-  vehicle?: {
-    id: UUID;
-    license_plate: string;
-    make?: string;
-    model?: string;
-  };
+  delivery_assignments: DeliveryAssignment[];
   current_location?: string;
   progress_percentage?: number;
 }

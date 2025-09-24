@@ -511,7 +511,8 @@
       "cancelled": "Byahagaritswe",
       "in_progress": "Bikora",
       "completed": "Byakozwe",
-      "failed": "Byanze"
+      "failed": "Byanze",
+      "available": "Yaboneka "
     },
     "expiresIn": "Birahera mu",
     "expired": "Byarahise"

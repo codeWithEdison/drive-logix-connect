@@ -34,6 +34,8 @@ export interface CargoDetail {
     | "delivered"
     | "cancelled"
     | "assigned"
+    | "partially_assigned"
+    | "fully_assigned"
     | "picked_up"
     | "in_transit"
     | "quoted"
@@ -73,178 +75,79 @@ export interface CargoDetail {
   vehiclePlate?: string;
   vehicleMake?: string;
   vehicleModel?: string;
-  // New fields for enhanced table display
-  pickup_location?: {
-    id: string;
-    name: string;
-    type: string;
-    address: string;
-    city: string;
-    country: string;
-    postal_code: string;
-    latitude: string;
-    longitude: string;
-    contact_person: string;
-    contact_phone: string;
-    operating_hours?: {
-      monday?: { start: string; end: string };
-      tuesday?: { start: string; end: string };
-      wednesday?: { start: string; end: string };
-      thursday?: { start: string; end: string };
-      friday?: { start: string; end: string };
-      saturday?: { start: string; end: string };
-      sunday?: { start: string; end: string };
-    };
-    is_active: boolean;
-  };
-  destination_location?: {
-    id: string;
-    name: string;
-    type: string;
-    address: string;
-    city: string;
-    country: string;
-    postal_code: string;
-    latitude: string;
-    longitude: string;
-    contact_person: string;
-    contact_phone: string;
-    operating_hours?: {
-      monday?: { start: string; end: string };
-      tuesday?: { start: string; end: string };
-      wednesday?: { start: string; end: string };
-      thursday?: { start: string; end: string };
-      friday?: { start: string; end: string };
-      saturday?: { start: string; end: string };
-      sunday?: { start: string; end: string };
-    };
-    is_active: boolean;
-  };
-  // Legacy support
-  pickupLocation?: any;
-  destinationLocation?: any;
-  vehicleInfo?: {
-    plate_number: string;
-    make: string;
-    model: string;
-  };
-  // Assignment system fields
-  assignmentStatus?: "pending" | "accepted" | "rejected" | "cancelled";
-  driverRespondedAt?: string;
-  rejectionReason?: string;
+  // Multi-assignment support
+  assignments?: AssignmentDetail[];
+  totalAssignedWeight?: number;
+  totalAssignedVolume?: number;
+  remainingWeight?: number;
+  remainingVolume?: number;
+  // Extended properties for API compatibility
+  client?: any;
+  category?: any;
+  delivery_assignment?: any;
+  pickup_location?: any;
+  destination_location?: any;
+  pickup_address?: string;
+  pickup_contact?: string;
+  pickup_phone?: string;
+  pickup_instructions?: string;
+  destination_address?: string;
+  destination_contact?: string;
+  destination_phone?: string;
+  delivery_instructions?: string;
+  weight_kg?: number;
+  distance_km?: string;
+  assignmentStatus?: string;
   assignmentExpiresAt?: string;
-  assignmentCreatedBy?: string;
   assignmentNotes?: string;
   assignmentId?: string;
-  driverStatus?:
-    | "available"
-    | "pending_assignment"
-    | "on_duty"
-    | "unavailable"
-    | "suspended";
-  // New API response structure fields
-  client_id?: string;
-  category_id?: string;
-  weight_kg?: number;
+  // Additional properties for cargo details
+  final_cost?: string;
+  estimated_cost?: string;
   volume?: number;
   dimensions?: {
     width: number;
     height: number;
     length: number;
   };
-  pickup_location_id?: string;
-  pickup_address?: string;
-  pickup_contact?: string;
-  pickup_phone?: string;
-  pickup_instructions?: string;
-  destination_location_id?: string;
-  destination_address?: string;
-  destination_contact?: string;
-  destination_phone?: string;
-  delivery_instructions?: string;
-  special_requirements?: string;
   insurance_required?: boolean;
   insurance_amount?: number;
   fragile?: boolean;
   temperature_controlled?: boolean;
-  estimated_cost?: string;
-  final_cost?: string;
-  distance_km?: string;
-  created_at?: string;
-  updated_at?: string;
-  // Nested objects from API response
-  client?: {
-    id: string;
-    company_name?: string;
-    business_type?: string;
-    tax_id?: string;
-    address?: string;
-    city?: string;
-    country?: string;
-    postal_code?: string;
-    contact_person?: string;
-    credit_limit?: string;
-    payment_terms?: number;
-    created_at?: string;
-    updated_at?: string;
-    user?: {
-      id: string;
-      full_name: string;
-      email: string;
-      phone: string;
-    };
-  };
-  category?: {
+}
+
+export interface AssignmentDetail {
+  id: string;
+  driver_id: string;
+  vehicle_id: string;
+  assignment_status: "pending" | "accepted" | "rejected" | "cancelled";
+  assigned_weight_kg?: number;
+  assigned_volume?: number;
+  assignment_type: "full" | "partial" | "split";
+  expires_at: string;
+  driver_responded_at?: string;
+  rejection_reason?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  // Related data
+  driver?: {
     id: string;
     name: string;
-    description?: string;
-    base_rate_multiplier?: string;
-    special_handling_required?: boolean;
-    is_active?: boolean;
-    created_at?: string;
+    phone: string;
+    email?: string;
+    status: string;
+    license_number?: string;
   };
-  delivery_assignment?: {
+  vehicle?: {
     id: string;
-    cargo_id: string;
-    driver_id: string;
-    vehicle_id: string;
-    assignment_status: "pending" | "accepted" | "rejected" | "cancelled";
-    assigned_at?: string;
-    driver_responded_at?: string;
-    rejection_reason?: string;
-    expires_at?: string;
-    created_by?: string;
-    notes?: string;
-    updated_at?: string;
-    driver?: {
-      id: string;
-      license_number?: string;
-      license_expiry?: string;
-      license_type?: string;
-      date_of_birth?: string;
-      emergency_contact?: string;
-      emergency_phone?: string;
-      blood_type?: string;
-      medical_certificate_expiry?: string;
-      status?: string;
-      rating?: string;
-      total_deliveries?: number;
-      total_distance_km?: string;
-      created_at?: string;
-      updated_at?: string;
-      user?: {
-        id: string;
-        full_name: string;
-        email: string;
-        phone: string;
-      };
-    };
-    vehicle?: {
-      id: string;
-      plate_number: string;
-      make: string;
-      model: string;
-    };
+    plate_number: string;
+    make: string;
+    model: string;
+    year?: number;
+    capacity_kg: number;
+    capacity_volume?: number;
+    status: string;
   };
 }
 
@@ -767,8 +670,8 @@ export function CargoDetailModal({
     }
   };
 
-  const isDriverCargo = cargo.client && !cargo.driver;
-  const isClientCargo = cargo.driver && !cargo.client;
+  const isDriverCargo = cargo.clientCompany && !cargo.driver;
+  const isClientCargo = cargo.driver && !cargo.clientCompany;
 
   return (
     <ModernModel
@@ -896,7 +799,7 @@ export function CargoDetailModal({
         </div>
 
         {/* Client Information */}
-        {cargo.client && (
+        {cargo.clientCompany && (
           <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-blue-50/30">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-3">
@@ -907,7 +810,7 @@ export function CargoDetailModal({
               </div>
               <div className="space-y-3">
                 {/* Company Name (if available) */}
-                {(cargo.clientCompany || cargo.client?.company_name) && (
+                {cargo.clientCompany && (
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <div className="flex items-center gap-2 mb-1">
                       <Building className="h-4 w-4 text-blue-600" />
@@ -916,7 +819,7 @@ export function CargoDetailModal({
                       </span>
                     </div>
                     <p className="text-sm font-semibold text-gray-900">
-                      {cargo.clientCompany || cargo.client?.company_name}
+                      {cargo.clientCompany}
                     </p>
                   </div>
                 )}
@@ -927,64 +830,29 @@ export function CargoDetailModal({
                     Client Name
                   </p>
                   <p className="text-sm font-semibold text-gray-900">
-                    {typeof cargo.client === "string"
-                      ? cargo.client
-                      : cargo.client?.user?.full_name ||
-                        cargo.client?.contact_person ||
-                        "N/A"}
+                    {cargo.clientCompany || "N/A"}
                   </p>
                 </div>
 
                 {/* Contact Person (if different from client name) */}
-                {typeof cargo.client === "object" &&
-                  cargo.client?.contact_person &&
-                  cargo.client?.contact_person !==
-                    cargo.client?.user?.full_name && (
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">
-                        Contact Person
-                      </p>
-                      <p className="text-sm text-gray-900">
-                        {cargo.client.contact_person}
-                      </p>
-                    </div>
-                  )}
+                {cargo.clientContactPerson && (
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">
+                      Contact Person
+                    </p>
+                    <p className="text-sm text-gray-900">
+                      {cargo.clientContactPerson}
+                    </p>
+                  </div>
+                )}
 
                 {/* Phone Number */}
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-500" />
                   <span className="text-sm text-gray-900">
-                    {typeof cargo.client === "object"
-                      ? cargo.client?.user?.phone ||
-                        cargo.clientPhone ||
-                        cargo.phone
-                      : cargo.clientPhone || cargo.phone}
+                    {cargo.clientPhone || cargo.phone}
                   </span>
                 </div>
-
-                {/* Email */}
-                {typeof cargo.client === "object" &&
-                  cargo.client?.user?.email && (
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">Email</p>
-                      <p className="text-sm text-gray-900">
-                        {cargo.client.user.email}
-                      </p>
-                    </div>
-                  )}
-
-                {/* Business Type */}
-                {typeof cargo.client === "object" &&
-                  cargo.client?.business_type && (
-                    <div>
-                      <p className="text-xs text-gray-500 font-medium">
-                        Business Type
-                      </p>
-                      <p className="text-sm text-gray-900 capitalize">
-                        {cargo.client.business_type}
-                      </p>
-                    </div>
-                  )}
               </div>
             </CardContent>
           </Card>
@@ -1008,7 +876,8 @@ export function CargoDetailModal({
                       Driver Name
                     </p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {cargo.delivery_assignment?.driver?.user?.full_name ||
+                      {(cargo as any).delivery_assignment?.driver?.user
+                        ?.full_name ||
                         cargo.driverName ||
                         cargo.driver ||
                         "N/A"}
@@ -1017,11 +886,11 @@ export function CargoDetailModal({
 
                   {/* Driver Rating */}
                   {(cargo.driverRating ||
-                    cargo.delivery_assignment?.driver?.rating) && (
+                    (cargo as any).delivery_assignment?.driver?.rating) && (
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 text-yellow-500 fill-current" />
                       <span className="text-sm text-gray-900">
-                        {cargo.delivery_assignment?.driver?.rating ||
+                        {(cargo as any).delivery_assignment?.driver?.rating ||
                           cargo.driverRating}
                         ★
                       </span>
@@ -1030,48 +899,50 @@ export function CargoDetailModal({
 
                   {/* Driver License */}
                   {(cargo.driverLicense ||
-                    cargo.delivery_assignment?.driver?.license_number) && (
+                    (cargo as any).delivery_assignment?.driver
+                      ?.license_number) && (
                     <div>
                       <p className="text-xs text-gray-500 font-medium">
                         License Number
                       </p>
                       <p className="text-sm text-gray-900">
-                        {cargo.delivery_assignment?.driver?.license_number ||
-                          cargo.driverLicense}
+                        {(cargo as any).delivery_assignment?.driver
+                          ?.license_number || cargo.driverLicense}
                       </p>
                     </div>
                   )}
 
                   {/* Driver Phone */}
                   {(cargo.driverPhone ||
-                    cargo.delivery_assignment?.driver?.user?.phone) && (
+                    (cargo as any).delivery_assignment?.driver?.user
+                      ?.phone) && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-gray-500" />
                       <span className="text-sm text-gray-900">
-                        {cargo.delivery_assignment?.driver?.user?.phone ||
-                          cargo.driverPhone}
+                        {(cargo as any).delivery_assignment?.driver?.user
+                          ?.phone || cargo.driverPhone}
                       </span>
                     </div>
                   )}
 
                   {/* Driver Status */}
-                  {cargo.delivery_assignment?.driver?.status && (
+                  {(cargo as any).delivery_assignment?.driver?.status && (
                     <div>
                       <p className="text-xs text-gray-500 font-medium">
                         Status
                       </p>
                       <Badge
                         className={
-                          cargo.delivery_assignment.driver.status ===
+                          (cargo as any).delivery_assignment.driver.status ===
                           "available"
                             ? "bg-green-100 text-green-700 border-green-200 text-xs"
-                            : cargo.delivery_assignment.driver.status ===
-                              "on_duty"
+                            : (cargo as any).delivery_assignment.driver
+                                .status === "on_duty"
                             ? "bg-blue-100 text-blue-700 border-blue-200 text-xs"
                             : "bg-gray-100 text-gray-700 border-gray-200 text-xs"
                         }
                       >
-                        {cargo.delivery_assignment.driver.status
+                        {(cargo as any).delivery_assignment.driver.status
                           .replace("_", " ")
                           .toUpperCase()}
                       </Badge>
@@ -1079,13 +950,17 @@ export function CargoDetailModal({
                   )}
 
                   {/* Total Deliveries */}
-                  {cargo.delivery_assignment?.driver?.total_deliveries && (
+                  {(cargo as any).delivery_assignment?.driver
+                    ?.total_deliveries && (
                     <div>
                       <p className="text-xs text-gray-500 font-medium">
                         Total Deliveries
                       </p>
                       <p className="text-sm text-gray-900">
-                        {cargo.delivery_assignment.driver.total_deliveries}
+                        {
+                          (cargo as any).delivery_assignment.driver
+                            .total_deliveries
+                        }
                       </p>
                     </div>
                   )}
@@ -1098,7 +973,7 @@ export function CargoDetailModal({
         {(cargo.vehiclePlate ||
           cargo.vehicleMake ||
           cargo.vehicleModel ||
-          cargo.delivery_assignment?.vehicle) && (
+          (cargo as any).delivery_assignment?.vehicle) && (
           <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50/30">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-3">
@@ -1109,27 +984,28 @@ export function CargoDetailModal({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {(cargo.vehiclePlate ||
-                  cargo.delivery_assignment?.vehicle?.plate_number) && (
+                  (cargo as any).delivery_assignment?.vehicle
+                    ?.plate_number) && (
                   <div>
                     <p className="text-xs text-gray-500 font-medium">
                       Plate Number
                     </p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {cargo.delivery_assignment?.vehicle?.plate_number ||
-                        cargo.vehiclePlate}
+                      {(cargo as any).delivery_assignment?.vehicle
+                        ?.plate_number || cargo.vehiclePlate}
                     </p>
                   </div>
                 )}
                 {(cargo.vehicleMake ||
                   cargo.vehicleModel ||
-                  cargo.delivery_assignment?.vehicle?.make ||
-                  cargo.delivery_assignment?.vehicle?.model) && (
+                  (cargo as any).delivery_assignment?.vehicle?.make ||
+                  (cargo as any).delivery_assignment?.vehicle?.model) && (
                   <div>
                     <p className="text-xs text-gray-500 font-medium">Vehicle</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {cargo.delivery_assignment?.vehicle?.make ||
+                      {(cargo as any).delivery_assignment?.vehicle?.make ||
                         cargo.vehicleMake}{" "}
-                      {cargo.delivery_assignment?.vehicle?.model ||
+                      {(cargo as any).delivery_assignment?.vehicle?.model ||
                         cargo.vehicleModel}
                     </p>
                   </div>
