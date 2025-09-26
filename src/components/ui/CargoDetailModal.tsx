@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ModernModel from "@/components/modal/ModernModel";
 import { RejectAssignmentModal } from "@/components/modals/RejectAssignmentModal";
+import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types/shared";
+import { UserRole, CargoImageType } from "@/types/shared";
+import { useBulkUploadImages } from "@/lib/api/hooks/cargoImageHooks";
 import {
   MapPin,
   Phone,
@@ -248,6 +250,13 @@ export function CargoDetailModal({
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
+  // State for pickup image upload modal
+  const [isPickupImageModalOpen, setIsPickupImageModalOpen] = useState(false);
+  const [isUploadingPickupImages, setIsUploadingPickupImages] = useState(false);
+
+  // API hooks
+  const bulkUploadImages = useBulkUploadImages();
+
   // Real-time countdown timer effect
   useEffect(() => {
     if (!cargo) {
@@ -359,6 +368,52 @@ export function CargoDetailModal({
     } finally {
       setIsRejecting(false);
     }
+  };
+
+  const handlePickupImageUpload = async (data: {
+    photos: File[];
+    notes: string;
+    type: string;
+    cargoId: string;
+  }) => {
+    setIsUploadingPickupImages(true);
+    try {
+      // Step 1: Upload pickup images using the API
+      const images = data.photos.map((file, index) => ({
+        file,
+        image_type: CargoImageType.PICKUP,
+        description: data.notes || `Pickup image ${index + 1}`,
+        is_primary: index === 0, // First image as primary
+      }));
+
+      await bulkUploadImages.mutateAsync({
+        cargoId: data.cargoId,
+        images,
+      });
+
+      // Step 2: Update cargo status to picked_up after successful image upload
+      await onStartDelivery?.(data.cargoId);
+
+      setIsPickupImageModalOpen(false);
+    } catch (error: any) {
+      console.error("Failed to upload pickup images or update status:", error);
+
+      // Show user-friendly error message
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to upload images or update cargo status";
+
+      // You can use a toast notification here
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsUploadingPickupImages(false);
+    }
+  };
+
+  const handleMarkPickedUp = () => {
+    setIsPickupImageModalOpen(true);
   };
 
   const handleGenerateInvoice = () => {
@@ -1644,7 +1699,7 @@ export function CargoDetailModal({
               {cargo.status === "assigned" && (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={() => onStartDelivery?.(cargo.id)}
+                  onClick={handleMarkPickedUp}
                 >
                   <Package className="h-4 w-4 mr-2" />
                   Mark Picked Up
@@ -1769,6 +1824,17 @@ export function CargoDetailModal({
         onClose={() => setIsRejectModalOpen(false)}
         onConfirm={handleRejectAssignment}
         isLoading={isRejecting}
+      />
+
+      {/* Pickup Image Upload Modal */}
+      <PhotoUploadModal
+        isOpen={isPickupImageModalOpen}
+        onClose={() => setIsPickupImageModalOpen(false)}
+        cargoId={cargo.id}
+        cargoNumber={cargo.cargo_number}
+        uploadType="loading"
+        onUpload={handlePickupImageUpload}
+        submitButtonText="Confirm Pickup"
       />
     </ModernModel>
   );

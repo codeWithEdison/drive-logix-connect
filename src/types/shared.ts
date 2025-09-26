@@ -1622,7 +1622,7 @@ export interface CargoImage {
 }
 
 export interface CreateCargoImageRequest {
-  image: globalThis.File;
+  image_url: globalThis.File;
   image_type: CargoImageType;
   description?: string;
   is_primary?: boolean;

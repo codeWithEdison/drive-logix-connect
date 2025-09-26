@@ -22,7 +22,7 @@ export class CargoImageService {
     data: CreateCargoImageRequest
   ): Promise<CargoImage> {
     const formData = new FormData();
-    formData.append("image", data.image as any);
+    formData.append("image_url", data.image_url as any);
     formData.append("image_type", data.image_type);
 
     if (data.description) {
@@ -192,7 +192,7 @@ export class CargoImageService {
   ): Promise<CargoImage[]> {
     const uploadPromises = images.map((imageData) =>
       this.uploadCargoImage(cargoId, {
-        image: imageData.file,
+        image_url: imageData.file,
         image_type: imageData.image_type,
         description: imageData.description,
         is_primary: imageData.is_primary,
