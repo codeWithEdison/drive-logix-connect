@@ -69,6 +69,19 @@ export interface CreateAssignmentRequest {
   notes?: string;
 }
 
+export interface DriverAssignment {
+  driver_id: string;
+  vehicle_id: string;
+  weight_kg: number;
+  volume?: number;
+}
+
+export interface CreateSplitAssignmentRequest {
+  cargo_id: string;
+  driver_assignments: DriverAssignment[];
+  notes?: string;
+}
+
 export interface UpdateAssignmentRequest {
   driver_id?: string;
   vehicle_id?: string;
@@ -142,6 +155,19 @@ export interface AssignmentError {
   };
 }
 
+export interface SplitAssignmentResponse {
+  success: boolean;
+  message: string;
+  data: {
+    split_assignment_id: string;
+    assignments: DeliveryAssignment[];
+  };
+  meta: {
+    timestamp: string;
+    requestId: string;
+  };
+}
+
 class DeliveryAssignmentService {
   private baseUrl = "/delivery-assignments";
   private driverBaseUrl = "/delivery-assignments";
@@ -154,6 +180,20 @@ class DeliveryAssignmentService {
   ): Promise<AssignmentResponse> {
     try {
       const response = await axiosInstance.post(this.baseUrl, data);
+      return response.data;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Create a split assignment with multiple drivers (Admin only)
+   */
+  async createSplitAssignment(
+    data: CreateSplitAssignmentRequest
+  ): Promise<SplitAssignmentResponse> {
+    try {
+      const response = await axiosInstance.post(`${this.baseUrl}/split`, data);
       return response.data;
     } catch (error: any) {
       throw this.handleError(error);

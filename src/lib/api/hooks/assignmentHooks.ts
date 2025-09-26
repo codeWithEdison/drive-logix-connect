@@ -7,6 +7,7 @@ import {
 import type {
   DeliveryAssignment,
   CreateAssignmentRequest,
+  CreateSplitAssignmentRequest,
   UpdateAssignmentRequest,
   AcceptAssignmentRequest,
   RejectAssignmentRequest,
@@ -84,6 +85,24 @@ export function useCreateAssignment() {
   return useMutation({
     mutationFn: (data: CreateAssignmentRequest) =>
       deliveryAssignmentService.createAssignment(data),
+    onSuccess: () => {
+      // Invalidate all assignment lists to refresh data
+      queryClient.invalidateQueries({ queryKey: assignmentKeys.lists() });
+      // Invalidate driver assignments
+      queryClient.invalidateQueries({ queryKey: assignmentKeys.all });
+    },
+  });
+}
+
+/**
+ * Create split assignment with multiple drivers (Admin only)
+ */
+export function useCreateSplitAssignment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateSplitAssignmentRequest) =>
+      deliveryAssignmentService.createSplitAssignment(data),
     onSuccess: () => {
       // Invalidate all assignment lists to refresh data
       queryClient.invalidateQueries({ queryKey: assignmentKeys.lists() });

@@ -179,8 +179,8 @@ export default function DriverDeliveries() {
   };
 
   // Handle opening cargo detail modal
-  const handleOpenCargoModal = (cargoId: string) => {
-    setSelectedCargoId(cargoId);
+  const handleOpenCargoModal = (cargo: CargoDetail) => {
+    setSelectedCargoId(cargo.id);
     setIsCargoModalOpen(true);
   };
 
@@ -597,7 +597,7 @@ export default function DriverDeliveries() {
               showFilters={true}
               showPagination={true}
               itemsPerPage={5}
-              onViewDetails={(cargo) => handleOpenCargoModal(cargo.id)}
+              onViewDetails={handleOpenCargoModal}
               onStartDelivery={handleStartDelivery}
               onCallClient={handleCallClient}
               onUploadPhoto={handleUploadPhoto}
@@ -655,7 +655,7 @@ export default function DriverDeliveries() {
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      onClick={() => handleOpenCargoModal(cargo.id)}
+                      onClick={() => handleOpenCargoModal(cargo)}
                     >
                       View Details
                     </Button>

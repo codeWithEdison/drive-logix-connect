@@ -3,8 +3,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ModernModel from "@/components/modal/ModernModel";
+import { RejectAssignmentModal } from "@/components/modals/RejectAssignmentModal";
+import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/types/shared";
+import { UserRole, CargoImageType, CargoStatus } from "@/types/shared";
+import {
+  useBulkUploadImages,
+  useCargoImages,
+} from "@/lib/api/hooks/cargoImageHooks";
+import { useUpdateCargoStatus } from "@/lib/api/hooks/cargoHooks";
+import { useToast } from "@/hooks/use-toast";
 import {
   MapPin,
   Phone,
@@ -21,6 +29,9 @@ import {
   Building,
   X,
   Download,
+  Image as ImageIcon,
+  Eye,
+  ExternalLink,
 } from "lucide-react";
 
 export interface CargoDetail {
@@ -75,6 +86,11 @@ export interface CargoDetail {
   vehiclePlate?: string;
   vehicleMake?: string;
   vehicleModel?: string;
+  vehicleInfo?: {
+    plate_number?: string;
+    make?: string;
+    model?: string;
+  };
   // Multi-assignment support
   assignments?: AssignmentDetail[];
   totalAssignedWeight?: number;
@@ -238,6 +254,25 @@ export function CargoDetailModal({
   // State for countdown timer
   const [countdown, setCountdown] = useState<string>("");
 
+  // State for rejection modal
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  // State for pickup image upload modal
+  const [isPickupImageModalOpen, setIsPickupImageModalOpen] = useState(false);
+  const [isUploadingPickupImages, setIsUploadingPickupImages] = useState(false);
+
+  // API hooks
+  const bulkUploadImages = useBulkUploadImages();
+  const updateCargoStatus = useUpdateCargoStatus();
+  const { toast } = useToast();
+
+  // Fetch cargo images
+  const { data: cargoImages, isLoading: isLoadingImages } = useCargoImages(
+    cargo?.id || "",
+    { limit: 20 } // Limit to 20 images for performance
+  );
+
   // Real-time countdown timer effect
   useEffect(() => {
     if (!cargo) {
@@ -334,6 +369,75 @@ export function CargoDetailModal({
       // Fallback to tel: link
       window.open(`tel:${phone}`, "_self");
     }
+  };
+
+  const handleRejectAssignment = async (reason: string) => {
+    setIsRejecting(true);
+    try {
+      await onRejectAssignment?.(
+        cargo.delivery_assignment?.id || cargo.assignmentId || cargo.id,
+        reason
+      );
+      setIsRejectModalOpen(false);
+    } catch (error) {
+      console.error("Failed to reject assignment:", error);
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  const handlePickupImageUpload = async (data: {
+    photos: File[];
+    notes: string;
+    type: string;
+    cargoId: string;
+  }) => {
+    setIsUploadingPickupImages(true);
+    try {
+      // Step 1: Upload pickup images using the API
+      const images = data.photos.map((file, index) => ({
+        file,
+        image_type: CargoImageType.PICKUP,
+        description: data.notes || `Pickup image ${index + 1}`,
+        is_primary: index === 0, // First image as primary
+      }));
+
+      await bulkUploadImages.mutateAsync({
+        cargoId: data.cargoId,
+        images,
+      });
+
+      // Step 2: Update cargo status to picked_up after successful image upload
+      await updateCargoStatus.mutateAsync({
+        id: data.cargoId,
+        status: CargoStatus.PICKED_UP,
+        notes: "Cargo picked up successfully",
+      });
+
+      setIsPickupImageModalOpen(false);
+    } catch (error: any) {
+      console.error("Failed to upload pickup images or update status:", error);
+
+      // Show user-friendly error message
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to upload images or update cargo status";
+
+      // Show user-friendly error message using toast
+      toast({
+        title: "Upload Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingPickupImages(false);
+    }
+  };
+
+  const handleMarkPickedUp = () => {
+    setIsPickupImageModalOpen(true);
   };
 
   const handleGenerateInvoice = () => {
@@ -517,12 +621,21 @@ export function CargoDetailModal({
   };
 
   const canDriverRespond = () => {
+    // Only drivers can respond to assignments
+    if (effectiveRole !== UserRole.DRIVER) return false;
+
     const assignmentStatus =
       cargo.delivery_assignment?.assignment_status || cargo.assignmentStatus;
     return assignmentStatus === "pending" && !isAssignmentExpired();
   };
 
   const canAdminManage = () => {
+    // Only admins and super admins can manage assignments
+    const isAdmin =
+      effectiveRole === UserRole.ADMIN ||
+      effectiveRole === UserRole.SUPER_ADMIN;
+    if (!isAdmin) return false;
+
     const assignmentStatus =
       cargo.delivery_assignment?.assignment_status || cargo.assignmentStatus;
     return ["pending", "accepted"].includes(assignmentStatus || "");
@@ -1236,6 +1349,90 @@ export function CargoDetailModal({
           </CardContent>
         </Card>
 
+        {/* Cargo Images Section */}
+        {cargoImages?.images && cargoImages.images.length > 0 && (
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-indigo-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <ImageIcon className="h-5 w-5 text-indigo-600" />
+                <h4 className="font-semibold text-gray-900">
+                  Cargo Images ({cargoImages.images.length})
+                </h4>
+              </div>
+
+              {isLoadingImages ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <span className="ml-2 text-sm text-gray-600">
+                    Loading images...
+                  </span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {cargoImages.images.map((image: any) => (
+                    <div
+                      key={image.id}
+                      className="relative group bg-gray-100 rounded-lg overflow-hidden aspect-square"
+                    >
+                      <img
+                        src={image.image_url}
+                        alt={image.description || "Cargo image"}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        loading="lazy"
+                      />
+
+                      {/* Image overlay with info */}
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-end">
+                        <div className="w-full p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                          <div className="text-white text-xs">
+                            <p className="font-medium truncate">
+                              {image.image_type
+                                ?.replace("_", " ")
+                                .toUpperCase() || "IMAGE"}
+                            </p>
+                            {image.description && (
+                              <p className="text-gray-200 truncate text-xs">
+                                {image.description}
+                              </p>
+                            )}
+                            {image.is_primary && (
+                              <Badge className="bg-blue-500 text-white text-xs mt-1">
+                                Primary
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* View button */}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-6 w-6 p-0 bg-white/90 hover:bg-white"
+                          onClick={() => window.open(image.image_url, "_blank")}
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Show more images indicator */}
+              {cargoImages.total > cargoImages.images.length && (
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-500">
+                    Showing {cargoImages.images.length} of {cargoImages.total}{" "}
+                    images
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Cargo Details and Additional Info - 2 cards per row on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Cargo Details */}
@@ -1485,19 +1682,7 @@ export function CargoDetailModal({
                   <Button
                     variant="outline"
                     className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
-                    onClick={() => {
-                      const reason = prompt(
-                        "Please provide a reason for rejection:"
-                      );
-                      if (reason) {
-                        onRejectAssignment?.(
-                          cargo.delivery_assignment?.id ||
-                            cargo.assignmentId ||
-                            cargo.id,
-                          reason
-                        );
-                      }
-                    }}
+                    onClick={() => setIsRejectModalOpen(true)}
                   >
                     <X className="h-4 w-4 mr-2" />
                     Reject Assignment
@@ -1604,20 +1789,25 @@ export function CargoDetailModal({
           {/* Driver Actions */}
           {effectiveRole === UserRole.DRIVER && (
             <>
-              {cargo.status === "pending" && (
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => onAccept?.(cargo.id)}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Accept Cargo
-                </Button>
-              )}
+              {cargo.status === "pending" &&
+                !(
+                  (cargo.delivery_assignment?.assignment_status === "pending" ||
+                    cargo.assignmentStatus === "pending") &&
+                  canDriverRespond()
+                ) && (
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={() => onAccept?.(cargo.id)}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Accept Cargo
+                  </Button>
+                )}
 
               {cargo.status === "assigned" && (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={() => onStartDelivery?.(cargo.id)}
+                  onClick={handleMarkPickedUp}
                 >
                   <Package className="h-4 w-4 mr-2" />
                   Mark Picked Up
@@ -1735,6 +1925,25 @@ export function CargoDetailModal({
           </Button> */}
         </div>
       </div>
+
+      {/* Reject Assignment Modal */}
+      <RejectAssignmentModal
+        isOpen={isRejectModalOpen}
+        onClose={() => setIsRejectModalOpen(false)}
+        onConfirm={handleRejectAssignment}
+        isLoading={isRejecting}
+      />
+
+      {/* Pickup Image Upload Modal */}
+      <PhotoUploadModal
+        isOpen={isPickupImageModalOpen}
+        onClose={() => setIsPickupImageModalOpen(false)}
+        cargoId={cargo.id}
+        cargoNumber={cargo.cargo_number}
+        uploadType="loading"
+        onUpload={handlePickupImageUpload}
+        submitButtonText="Confirm Pickup"
+      />
     </ModernModel>
   );
 }

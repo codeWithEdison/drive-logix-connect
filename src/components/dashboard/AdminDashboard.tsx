@@ -340,7 +340,7 @@ export function AdminDashboard() {
 
               {/* Admin Info */}
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 leading-tight">
+                <h1 className="text-md sm:text-xl lg:text-2xl font-bold mb-1 sm:mb-2 leading-tight">
                   {t("adminDashboard.header.welcomeBack")}{" "}
                   <span className="break-words">
                     {user?.full_name || t("common.admin")}
