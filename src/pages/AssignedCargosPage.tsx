@@ -12,15 +12,11 @@ import {
   useUpdateDeliveryAssignment,
   useCreateAssignment,
 } from "@/lib/api/hooks/assignmentHooks";
-import { useCargoById } from "@/lib/api/hooks/cargoHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
-import {
-  mapDeliveryAssignmentsToCargoDetails,
-  mapCargoToCargoDetail,
-} from "@/lib/utils/cargoMapper";
+import { mapDeliveryAssignmentsToCargoDetails } from "@/lib/utils/cargoMapper";
 import {
   RefreshCw,
   AlertCircle,
@@ -39,15 +35,8 @@ export function AssignedCargosPage() {
   const { user } = useAuth();
 
   // Modal state management
-  const [selectedCargoId, setSelectedCargoId] = useState<string | null>(null);
+  const [selectedCargo, setSelectedCargo] = useState<CargoDetail | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Fetch full cargo details when a cargo is selected
-  const {
-    data: selectedCargo,
-    isLoading: isLoadingCargo,
-    error: cargoError,
-  } = useCargoById(selectedCargoId || "");
 
   // API hooks - Using new assignment service for driver assignments
   const {
@@ -83,6 +72,7 @@ export function AssignedCargosPage() {
         data: { notes },
       });
       customToast.success("Assignment accepted successfully");
+      refetch(); // Refresh the assignments list
     } catch (error: any) {
       customToast.error(error.message || "Failed to accept assignment");
     }
@@ -99,6 +89,7 @@ export function AssignedCargosPage() {
         data: { reason, notes },
       });
       customToast.success("Assignment rejected");
+      refetch(); // Refresh the assignments list
     } catch (error: any) {
       customToast.error(error.message || "Failed to reject assignment");
     }
@@ -108,6 +99,7 @@ export function AssignedCargosPage() {
     try {
       await cancelAssignmentMutation.mutateAsync(assignmentId);
       customToast.success("Assignment cancelled");
+      refetch(); // Refresh the assignments list
     } catch (error: any) {
       customToast.error(error.message || "Failed to cancel assignment");
     }
@@ -212,15 +204,15 @@ export function AssignedCargosPage() {
   };
 
   // Handle opening cargo detail modal
-  const handleOpenCargoModal = (cargoId: string) => {
-    setSelectedCargoId(cargoId);
+  const handleOpenCargoModal = (cargo: CargoDetail) => {
+    setSelectedCargo(cargo);
     setIsModalOpen(true);
   };
 
   // Handle closing cargo detail modal
   const handleCloseCargoModal = () => {
     setIsModalOpen(false);
-    setSelectedCargoId(null);
+    setSelectedCargo(null);
   };
 
   // Handle calling contacts
@@ -508,7 +500,13 @@ export function AssignedCargosPage() {
         showFilters={true}
         showPagination={true}
         itemsPerPage={10}
-        onAcceptCargo={handleAcceptAssignment}
+        onAcceptCargo={(cargoId) => {
+          // Find the assignment for this cargo and accept it
+          const cargo = transformedCargos.find((c) => c.id === cargoId);
+          if (cargo && (cargo as any).assignmentId) {
+            handleAcceptAssignment((cargo as any).assignmentId);
+          }
+        }}
         onStartDelivery={handleStartDelivery}
         onCallClient={handleCallClient}
         onUploadPhoto={handleUploadPhoto}
@@ -519,18 +517,15 @@ export function AssignedCargosPage() {
         onChangeVehicle={handleChangeVehicle}
         onChangeDriver={handleChangeDriver}
         onCreateAssignment={handleCreateAssignment}
-        onViewDetails={(cargo) => handleOpenCargoModal(cargo.id)}
+        onViewDetails={handleOpenCargoModal}
       />
 
       {/* Cargo Detail Modal */}
       <CargoDetailModal
         isOpen={isModalOpen}
         onClose={handleCloseCargoModal}
-        cargo={selectedCargo ? mapCargoToCargoDetail(selectedCargo) : null}
-        userRole={
-          (user?.role as "admin" | "superadmin" | "driver" | "client") ||
-          "driver"
-        }
+        cargo={selectedCargo}
+        userRole={(user?.role as any) || "driver"}
         onAcceptAssignment={handleAcceptAssignment}
         onRejectAssignment={handleRejectAssignment}
         onCancelAssignment={handleCancelAssignment}
@@ -543,6 +538,13 @@ export function AssignedCargosPage() {
         onUploadPhoto={handleUploadPhoto}
         onReportIssue={handleReportIssue}
         onCallContact={handleCallContact}
+        onAccept={(cargoId) => {
+          // Find the assignment for this cargo and accept it
+          const cargo = transformedCargos.find((c) => c.id === cargoId);
+          if (cargo && (cargo as any).assignmentId) {
+            handleAcceptAssignment((cargo as any).assignmentId);
+          }
+        }}
       />
     </div>
   );

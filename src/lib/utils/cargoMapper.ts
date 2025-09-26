@@ -51,10 +51,31 @@ export const mapDeliveryAssignmentToCargoDetail = (
   const user = client.user || {};
   const vehicle = assignment.vehicle || {};
 
+  // Map assignment status to cargo status for proper UI display
+  let status = "assigned" as any; // Default fallback
+  if (assignment.assignment_status) {
+    switch (assignment.assignment_status) {
+      case "pending":
+        status = "pending";
+        break;
+      case "accepted":
+        status = "assigned";
+        break;
+      case "rejected":
+        status = "cancelled";
+        break;
+      case "cancelled":
+        status = "cancelled";
+        break;
+      default:
+        status = "assigned";
+    }
+  }
+
   return {
     id: cargo.id || assignment.cargo_id || assignment.id,
     cargo_number: cargo.cargo_number || "",
-    status: "assigned" as any, // Default status since these are assignments
+    status: status,
     from: cargo.pickup_address || "Pickup Location",
     to: cargo.destination_address || "Delivery Location",
     clientCompany: user.full_name || "Client Name",
@@ -79,6 +100,26 @@ export const mapDeliveryAssignmentToCargoDetail = (
     driverPhone: assignment.driver_phone,
     cost: cargo.cost,
     estimatedTime: cargo.estimated_time,
+    // Vehicle information from assignment
+    vehicleType: vehicle.plate_number
+      ? `${vehicle.make || "Unknown"} ${vehicle.model || "Model"} (${
+          vehicle.plate_number
+        })`
+      : "N/A",
+    vehiclePlate: vehicle.plate_number || "N/A",
+    vehicleMake: vehicle.make || "N/A",
+    vehicleModel: vehicle.model || "N/A",
+    // Vehicle info object for CargoTable compatibility
+    vehicleInfo: {
+      plate_number: vehicle.plate_number || "N/A",
+      make: vehicle.make || "N/A",
+      model: vehicle.model || "N/A",
+    } as any,
+    // Assignment-specific fields for driver actions
+    assignmentId: assignment.id,
+    assignmentStatus: assignment.assignment_status,
+    assignmentExpiresAt: assignment.expires_at,
+    assignmentNotes: assignment.notes,
     // Add new fields for enhanced display
   };
 };

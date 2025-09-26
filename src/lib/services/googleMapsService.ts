@@ -90,6 +90,11 @@ class GoogleMapsService {
     return this.initializationPromise;
   }
 
+  // Check if services are already initialized (for startup optimization)
+  isServicesInitialized(): boolean {
+    return this.isInitialized;
+  }
+
   private async performInitialization(): Promise<void> {
     this.isInitializing = true;
 
@@ -228,9 +233,16 @@ class GoogleMapsService {
     }
 
     try {
-      console.log("🚀 Initializing Google Maps services...");
-      await this.initializeServices();
-      console.log("✅ Google Maps services initialized");
+      // Check if already initialized to avoid redundant logging
+      if (!this.isInitialized) {
+        console.log("🚀 Initializing Google Maps services...");
+        await this.initializeServices();
+        console.log("✅ Google Maps services initialized");
+      } else {
+        console.log(
+          "✅ Google Maps services already initialized (startup optimization)"
+        );
+      }
 
       return new Promise((resolve, reject) => {
         if (!this.autocompleteService) {
@@ -329,7 +341,10 @@ class GoogleMapsService {
     }
 
     try {
-      await this.initializeServices();
+      // Check if already initialized to avoid redundant initialization
+      if (!this.isInitialized) {
+        await this.initializeServices();
+      }
 
       return new Promise((resolve, reject) => {
         if (!this.placesService) {
@@ -397,7 +412,10 @@ class GoogleMapsService {
     }
 
     try {
-      await this.initializeServices();
+      // Check if already initialized to avoid redundant initialization
+      if (!this.isInitialized) {
+        await this.initializeServices();
+      }
 
       return new Promise((resolve, reject) => {
         if (!this.distanceMatrixService) {
@@ -487,7 +505,10 @@ class GoogleMapsService {
     destinationAddress: string
   ): Promise<{ distance: number; duration: number } | null> {
     try {
-      await this.initializeServices();
+      // Check if already initialized to avoid redundant initialization
+      if (!this.isInitialized) {
+        await this.initializeServices();
+      }
 
       return new Promise((resolve, reject) => {
         if (!this.distanceMatrixService) {

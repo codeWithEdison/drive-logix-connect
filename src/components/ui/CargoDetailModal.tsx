@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ModernModel from "@/components/modal/ModernModel";
+import { RejectAssignmentModal } from "@/components/modals/RejectAssignmentModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/shared";
 import {
@@ -75,6 +76,11 @@ export interface CargoDetail {
   vehiclePlate?: string;
   vehicleMake?: string;
   vehicleModel?: string;
+  vehicleInfo?: {
+    plate_number?: string;
+    make?: string;
+    model?: string;
+  };
   // Multi-assignment support
   assignments?: AssignmentDetail[];
   totalAssignedWeight?: number;
@@ -238,6 +244,10 @@ export function CargoDetailModal({
   // State for countdown timer
   const [countdown, setCountdown] = useState<string>("");
 
+  // State for rejection modal
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+
   // Real-time countdown timer effect
   useEffect(() => {
     if (!cargo) {
@@ -333,6 +343,21 @@ export function CargoDetailModal({
     } else {
       // Fallback to tel: link
       window.open(`tel:${phone}`, "_self");
+    }
+  };
+
+  const handleRejectAssignment = async (reason: string) => {
+    setIsRejecting(true);
+    try {
+      await onRejectAssignment?.(
+        cargo.delivery_assignment?.id || cargo.assignmentId || cargo.id,
+        reason
+      );
+      setIsRejectModalOpen(false);
+    } catch (error) {
+      console.error("Failed to reject assignment:", error);
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -517,12 +542,21 @@ export function CargoDetailModal({
   };
 
   const canDriverRespond = () => {
+    // Only drivers can respond to assignments
+    if (effectiveRole !== UserRole.DRIVER) return false;
+
     const assignmentStatus =
       cargo.delivery_assignment?.assignment_status || cargo.assignmentStatus;
     return assignmentStatus === "pending" && !isAssignmentExpired();
   };
 
   const canAdminManage = () => {
+    // Only admins and super admins can manage assignments
+    const isAdmin =
+      effectiveRole === UserRole.ADMIN ||
+      effectiveRole === UserRole.SUPER_ADMIN;
+    if (!isAdmin) return false;
+
     const assignmentStatus =
       cargo.delivery_assignment?.assignment_status || cargo.assignmentStatus;
     return ["pending", "accepted"].includes(assignmentStatus || "");
@@ -1485,19 +1519,7 @@ export function CargoDetailModal({
                   <Button
                     variant="outline"
                     className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
-                    onClick={() => {
-                      const reason = prompt(
-                        "Please provide a reason for rejection:"
-                      );
-                      if (reason) {
-                        onRejectAssignment?.(
-                          cargo.delivery_assignment?.id ||
-                            cargo.assignmentId ||
-                            cargo.id,
-                          reason
-                        );
-                      }
-                    }}
+                    onClick={() => setIsRejectModalOpen(true)}
                   >
                     <X className="h-4 w-4 mr-2" />
                     Reject Assignment
@@ -1604,15 +1626,20 @@ export function CargoDetailModal({
           {/* Driver Actions */}
           {effectiveRole === UserRole.DRIVER && (
             <>
-              {cargo.status === "pending" && (
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => onAccept?.(cargo.id)}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Accept Cargo
-                </Button>
-              )}
+              {cargo.status === "pending" &&
+                !(
+                  (cargo.delivery_assignment?.assignment_status === "pending" ||
+                    cargo.assignmentStatus === "pending") &&
+                  canDriverRespond()
+                ) && (
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={() => onAccept?.(cargo.id)}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Accept Cargo
+                  </Button>
+                )}
 
               {cargo.status === "assigned" && (
                 <Button
@@ -1735,6 +1762,14 @@ export function CargoDetailModal({
           </Button> */}
         </div>
       </div>
+
+      {/* Reject Assignment Modal */}
+      <RejectAssignmentModal
+        isOpen={isRejectModalOpen}
+        onClose={() => setIsRejectModalOpen(false)}
+        onConfirm={handleRejectAssignment}
+        isLoading={isRejecting}
+      />
     </ModernModel>
   );
 }
