@@ -1622,7 +1622,7 @@ export interface CargoImage {
 }
 
 export interface CreateCargoImageRequest {
-  image_url: globalThis.File;
+  image_url: globalThis.File; // File to upload to Cloudinary
   image_type: CargoImageType;
   description?: string;
   is_primary?: boolean;

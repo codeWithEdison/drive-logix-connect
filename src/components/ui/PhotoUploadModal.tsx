@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import {
   Camera,
   Upload,
@@ -43,6 +44,7 @@ export function PhotoUploadModal({
 }: PhotoUploadModalProps) {
   const [photos, setPhotos] = useState<File[]>([]);
   const [notes, setNotes] = useState("");
+  const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,7 +104,11 @@ export function PhotoUploadModal({
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
-      alert("Unable to access camera. Please use file upload instead.");
+      toast({
+        title: "Camera Access Failed",
+        description: "Unable to access camera. Please use file upload instead.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -150,7 +156,11 @@ export function PhotoUploadModal({
 
   const handleUpload = async () => {
     if (photos.length === 0 && config.required) {
-      alert(`Please add at least one ${uploadType} photo`);
+      toast({
+        title: "No Photos Selected",
+        description: `Please add at least one ${uploadType} photo`,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -181,7 +191,11 @@ export function PhotoUploadModal({
         error?.message ||
         "Upload failed. Please try again.";
 
-      alert(`Upload Error: ${errorMessage}`);
+      toast({
+        title: "Upload Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }

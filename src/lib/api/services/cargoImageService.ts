@@ -3,6 +3,7 @@
 // ===========================================
 
 import axiosInstance from "../axios";
+import { FileService } from "./utilityService";
 import {
   CargoImage,
   CreateCargoImageRequest,
@@ -15,32 +16,32 @@ import {
 
 export class CargoImageService {
   /**
-   * Upload a new cargo image
+   * Upload a new cargo image (two-step process: upload to Cloudinary, then link to cargo)
    */
   static async uploadCargoImage(
     cargoId: string,
     data: CreateCargoImageRequest
   ): Promise<CargoImage> {
-    const formData = new FormData();
-    formData.append("image_url", data.image_url as any);
-    formData.append("image_type", data.image_type);
+    // Step 1: Upload file to Cloudinary using FileService
+    const uploadResponse = await FileService.uploadFile(
+      data.image_url as any,
+      "image",
+      data.image_type
+    );
 
-    if (data.description) {
-      formData.append("description", data.description);
-    }
+    const fileUrl = uploadResponse.data!.file_url;
 
-    if (data.is_primary !== undefined) {
-      formData.append("is_primary", data.is_primary.toString());
-    }
+    // Step 2: Link image to cargo
+    const linkData = {
+      image_url: fileUrl,
+      image_type: data.image_type,
+      description: data.description,
+      is_primary: data.is_primary,
+    };
 
     const response = await axiosInstance.post<ApiResponse<CargoImage>>(
       `/cargo-images/${cargoId}/images`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      linkData
     );
     return response.data.data!;
   }

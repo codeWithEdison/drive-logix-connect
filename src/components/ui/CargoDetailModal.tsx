@@ -6,8 +6,13 @@ import ModernModel from "@/components/modal/ModernModel";
 import { RejectAssignmentModal } from "@/components/modals/RejectAssignmentModal";
 import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole, CargoImageType } from "@/types/shared";
-import { useBulkUploadImages } from "@/lib/api/hooks/cargoImageHooks";
+import { UserRole, CargoImageType, CargoStatus } from "@/types/shared";
+import {
+  useBulkUploadImages,
+  useCargoImages,
+} from "@/lib/api/hooks/cargoImageHooks";
+import { useUpdateCargoStatus } from "@/lib/api/hooks/cargoHooks";
+import { useToast } from "@/hooks/use-toast";
 import {
   MapPin,
   Phone,
@@ -24,6 +29,9 @@ import {
   Building,
   X,
   Download,
+  Image as ImageIcon,
+  Eye,
+  ExternalLink,
 } from "lucide-react";
 
 export interface CargoDetail {
@@ -256,6 +264,14 @@ export function CargoDetailModal({
 
   // API hooks
   const bulkUploadImages = useBulkUploadImages();
+  const updateCargoStatus = useUpdateCargoStatus();
+  const { toast } = useToast();
+
+  // Fetch cargo images
+  const { data: cargoImages, isLoading: isLoadingImages } = useCargoImages(
+    cargo?.id || "",
+    { limit: 20 } // Limit to 20 images for performance
+  );
 
   // Real-time countdown timer effect
   useEffect(() => {
@@ -392,7 +408,11 @@ export function CargoDetailModal({
       });
 
       // Step 2: Update cargo status to picked_up after successful image upload
-      await onStartDelivery?.(data.cargoId);
+      await updateCargoStatus.mutateAsync({
+        id: data.cargoId,
+        status: CargoStatus.PICKED_UP,
+        notes: "Cargo picked up successfully",
+      });
 
       setIsPickupImageModalOpen(false);
     } catch (error: any) {
@@ -405,8 +425,12 @@ export function CargoDetailModal({
         error?.message ||
         "Failed to upload images or update cargo status";
 
-      // You can use a toast notification here
-      alert(`Error: ${errorMessage}`);
+      // Show user-friendly error message using toast
+      toast({
+        title: "Upload Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsUploadingPickupImages(false);
     }
@@ -1324,6 +1348,90 @@ export function CargoDetailModal({
             </div>
           </CardContent>
         </Card>
+
+        {/* Cargo Images Section */}
+        {cargoImages?.images && cargoImages.images.length > 0 && (
+          <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-indigo-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <ImageIcon className="h-5 w-5 text-indigo-600" />
+                <h4 className="font-semibold text-gray-900">
+                  Cargo Images ({cargoImages.images.length})
+                </h4>
+              </div>
+
+              {isLoadingImages ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <span className="ml-2 text-sm text-gray-600">
+                    Loading images...
+                  </span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {cargoImages.images.map((image: any) => (
+                    <div
+                      key={image.id}
+                      className="relative group bg-gray-100 rounded-lg overflow-hidden aspect-square"
+                    >
+                      <img
+                        src={image.image_url}
+                        alt={image.description || "Cargo image"}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        loading="lazy"
+                      />
+
+                      {/* Image overlay with info */}
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-end">
+                        <div className="w-full p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+                          <div className="text-white text-xs">
+                            <p className="font-medium truncate">
+                              {image.image_type
+                                ?.replace("_", " ")
+                                .toUpperCase() || "IMAGE"}
+                            </p>
+                            {image.description && (
+                              <p className="text-gray-200 truncate text-xs">
+                                {image.description}
+                              </p>
+                            )}
+                            {image.is_primary && (
+                              <Badge className="bg-blue-500 text-white text-xs mt-1">
+                                Primary
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* View button */}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-6 w-6 p-0 bg-white/90 hover:bg-white"
+                          onClick={() => window.open(image.image_url, "_blank")}
+                        >
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Show more images indicator */}
+              {cargoImages.total > cargoImages.images.length && (
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-500">
+                    Showing {cargoImages.images.length} of {cargoImages.total}{" "}
+                    images
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Cargo Details and Additional Info - 2 cards per row on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
