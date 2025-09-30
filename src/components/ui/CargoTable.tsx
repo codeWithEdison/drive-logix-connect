@@ -991,7 +991,13 @@ export function CargoTable({
                       Distance
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 w-32">
+                      Driver
+                    </TableHead>
+                    <TableHead className="text-xs font-medium text-gray-600 w-32">
                       Vehicle
+                    </TableHead>
+                    <TableHead className="text-xs font-medium text-gray-600 w-20">
+                      Rating
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600 w-24">
                       Status
@@ -1033,16 +1039,17 @@ export function CargoTable({
                         <TableCell>
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {String(data.client || "N/A")}
+                              {cargo.client || cargo.clientCompany || "N/A"}
                             </p>
-                            {cargo.clientCompany && (
-                              <p className="text-xs text-gray-500 truncate">
-                                {cargo.clientCompany}
-                              </p>
-                            )}
-                            {data.phone && (
+                            {cargo.clientCompany &&
+                              cargo.client !== cargo.clientCompany && (
+                                <p className="text-xs text-gray-500 truncate">
+                                  {cargo.clientCompany}
+                                </p>
+                              )}
+                            {cargo.clientPhone && (
                               <p className="text-xs text-gray-400">
-                                {data.phone}
+                                {cargo.clientPhone}
                               </p>
                             )}
                           </div>
@@ -1083,13 +1090,43 @@ export function CargoTable({
                         <TableCell>
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {(cargo as any).vehicleInfo?.plate_number ||
-                                "N/A"}
+                              {cargo.driverName || "N/A"}
+                            </p>
+                            {cargo.driverRating && (
+                              <p className="text-xs text-yellow-600">
+                                ⭐ {cargo.driverRating}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {cargo.vehiclePlate || "N/A"}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {(cargo as any).vehicleInfo?.make}{" "}
-                              {(cargo as any).vehicleInfo?.model}
+                              {cargo.vehicleMake} {cargo.vehicleModel}
                             </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-center">
+                            {cargo.status === "delivered" && cargo.rating ? (
+                              <div>
+                                <p className="text-sm font-medium text-yellow-600">
+                                  ⭐ {cargo.rating}/5
+                                </p>
+                                {cargo.review && (
+                                  <p className="text-xs text-gray-500 truncate max-w-16">
+                                    "{cargo.review}"
+                                  </p>
+                                )}
+                              </div>
+                            ) : cargo.status === "delivered" ? (
+                              <p className="text-xs text-gray-400">Not rated</p>
+                            ) : (
+                              <p className="text-xs text-gray-400">-</p>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(data.status)}</TableCell>

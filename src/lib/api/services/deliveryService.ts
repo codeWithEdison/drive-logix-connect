@@ -92,7 +92,7 @@ export class DeliveryService {
     }
   ): Promise<ApiResponse<Delivery>> {
     const response = await axiosInstance.post(
-      `/v1/deliveries/${cargoId}/confirm-image`,
+      `/deliveries/${cargoId}/confirm-image`,
       data
     );
     return response.data;
@@ -107,7 +107,7 @@ export class DeliveryService {
     }
   ): Promise<ApiResponse<Delivery>> {
     const response = await axiosInstance.post(
-      `/v1/deliveries/${cargoId}/rate`,
+      `/deliveries/${cargoId}/rating`,
       data
     );
     return response.data;
@@ -146,19 +146,6 @@ export class DeliveryService {
       `/deliveries/${cargoId}/complete`,
       data
     );
-    return response.data;
-  }
-
-  // Rate delivery and driver
-  static async rateDelivery(
-    cargoId: string,
-    rating: number,
-    review?: string
-  ): Promise<ApiResponse<Delivery>> {
-    const response = await axiosInstance.post(`/deliveries/${cargoId}/rating`, {
-      rating,
-      review,
-    });
     return response.data;
   }
 

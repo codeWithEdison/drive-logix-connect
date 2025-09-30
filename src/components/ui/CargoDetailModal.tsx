@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import ModernModel from "@/components/modal/ModernModel";
 import { RejectAssignmentModal } from "@/components/modals/RejectAssignmentModal";
 import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
+import { RatingModal } from "@/components/ui/RatingModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole, CargoImageType, CargoStatus } from "@/types/shared";
 import {
@@ -12,6 +13,7 @@ import {
   useCargoImages,
 } from "@/lib/api/hooks/cargoImageHooks";
 import { useUpdateCargoStatus } from "@/lib/api/hooks/cargoHooks";
+import { useRateDelivery } from "@/lib/api/hooks/deliveryHooks";
 import { useToast } from "@/hooks/use-toast";
 import {
   MapPin,
@@ -130,6 +132,10 @@ export interface CargoDetail {
   insurance_amount?: number;
   fragile?: boolean;
   temperature_controlled?: boolean;
+  // Rating fields
+  rating?: number;
+  review?: string;
+  isRated?: boolean;
 }
 
 export interface AssignmentDetail {
@@ -271,9 +277,13 @@ export function CargoDetailModal({
   const [isUploadingDeliveryImages, setIsUploadingDeliveryImages] =
     useState(false);
 
+  // State for rating modal
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+
   // API hooks
   const bulkUploadImages = useBulkUploadImages();
   const updateCargoStatus = useUpdateCargoStatus();
+  const rateDelivery = useRateDelivery();
   const { toast } = useToast();
 
   // Fetch cargo images
@@ -466,6 +476,62 @@ export function CargoDetailModal({
 
   const handleMarkDelivered = () => {
     setIsDeliveryImageModalOpen(true);
+  };
+
+  const handleRateDelivery = () => {
+    setIsRatingModalOpen(true);
+  };
+
+  const handleSubmitRating = async (data: {
+    rating: number;
+    review?: string;
+  }) => {
+    // Check permissions before submitting
+    if (
+      effectiveRole !== UserRole.CLIENT &&
+      effectiveRole !== UserRole.ADMIN &&
+      effectiveRole !== UserRole.SUPER_ADMIN
+    ) {
+      toast({
+        title: "Permission Denied",
+        description:
+          "Only clients, admins, and super admins can rate deliveries.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await rateDelivery.mutateAsync({
+        cargoId: cargo.id,
+        data,
+      });
+
+      toast({
+        title: "Rating Submitted",
+        description: "Thank you for your feedback!",
+        variant: "default",
+      });
+
+      setIsRatingModalOpen(false);
+
+      // Refresh the page to show updated rating
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Failed to submit rating:", error);
+
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to submit rating";
+
+      toast({
+        title: "Rating Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeliveryImageUpload = async (data: {
@@ -2004,14 +2070,53 @@ export function CargoDetailModal({
               )}
 
               {cargo.status === "delivered" && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => onDownloadReceipt?.(cargo.id)}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Receipt
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => onDownloadReceipt?.(cargo.id)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Receipt
+                  </Button>
+
+                  {/* Rating Button - Show if not rated yet and user has permission */}
+                  {!cargo.isRated &&
+                    !cargo.rating &&
+                    (effectiveRole === UserRole.CLIENT ||
+                      effectiveRole === UserRole.ADMIN ||
+                      effectiveRole === UserRole.SUPER_ADMIN) && (
+                      <Button
+                        className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-semibold shadow-lg"
+                        onClick={handleRateDelivery}
+                      >
+                        <Star className="h-4 w-4 mr-2 fill-current" />
+                        Rate Delivery
+                      </Button>
+                    )}
+
+                  {/* Show existing rating if rated */}
+                  {cargo.isRated && cargo.rating && (
+                    <div className="w-full p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                          <span className="text-sm font-medium text-gray-800">
+                            Your Rating: {cargo.rating}/5
+                          </span>
+                        </div>
+                        <Badge className="bg-green-100 text-green-700">
+                          Rated
+                        </Badge>
+                      </div>
+                      {cargo.review && (
+                        <p className="text-xs text-gray-600 mt-2 italic">
+                          "{cargo.review}"
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
@@ -2055,6 +2160,16 @@ export function CargoDetailModal({
         uploadType="delivery"
         onUpload={handleDeliveryImageUpload}
         submitButtonText="Confirm Delivery"
+      />
+
+      {/* Rating Modal */}
+      <RatingModal
+        isOpen={isRatingModalOpen}
+        onClose={() => setIsRatingModalOpen(false)}
+        cargoId={cargo.id}
+        cargoNumber={cargo.cargo_number}
+        onRate={handleSubmitRating}
+        isLoading={rateDelivery.isPending}
       />
     </ModernModel>
   );

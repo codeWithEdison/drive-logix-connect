@@ -217,27 +217,6 @@ export const useCompleteDelivery = () => {
   });
 };
 
-export const useRateDelivery = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({
-      cargoId,
-      rating,
-      review,
-    }: {
-      cargoId: string;
-      rating: number;
-      review?: string;
-    }) => DeliveryService.rateDelivery(cargoId, rating, review),
-    onSuccess: (_, { cargoId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.deliveries.detail(cargoId),
-      });
-    },
-  });
-};
-
 export const useDeliveryDetails = (cargoId: string) => {
   return useQuery({
     queryKey: queryKeys.deliveries.detail(cargoId),

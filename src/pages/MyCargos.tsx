@@ -463,37 +463,38 @@ const MyCargos = () => {
 
   // Transform API data to CargoDetail format
   const transformedCargos: CargoDetail[] =
-    (Array.isArray(actualCargos) ? actualCargos : []).map((cargo) => {
+    (Array.isArray(actualCargos) ? actualCargos : []).map((cargo: any) => {
       // Map API status to CargoDetail status format
       // Keep original API status values for proper display
       const mappedStatus = cargo.status as CargoDetail["status"];
 
+      // Extract driver information from delivery_assignment
+      const driverInfo = cargo.delivery_assignment?.driver;
+      const vehicleInfo = cargo.delivery_assignment?.vehicle;
+      const deliveryInfo = cargo.delivery;
+
       return {
         id: cargo.id,
-        cargo_number: cargo.cargo_number, // Add cargo number
+        cargo_number: cargo.cargo_number,
         status: mappedStatus,
         from: cargo.pickup_address || "Unknown Location",
         to: cargo.destination_address || "Unknown Location",
-        client:
-          (cargo as any).client?.user?.full_name ||
-          (cargo as any).client?.contact_person ||
-          "Unknown Client",
+        client: cargo.client?.user?.full_name || "Unknown Client",
         driver:
-          (cargo as any).delivery_assignment?.driver?.user?.full_name ||
+          driverInfo?.user?.full_name ||
           (cargo.status === "assigned" ||
           cargo.status === "picked_up" ||
           cargo.status === "in_transit" ||
           cargo.status === "delivered"
             ? t("myCargos.driverAssigned")
             : t("myCargos.noDriverAssigned")),
-        phone:
-          (cargo as any).delivery_assignment?.driver?.emergency_phone || "",
+        phone: driverInfo?.emergency_phone || "",
         estimatedTime: cargo.delivery_date
           ? new Date(cargo.delivery_date).toLocaleDateString()
           : t("myCargos.estimatedTime"),
         weight: `${cargo.weight_kg || 0} kg`,
-        type: cargo.type || t("myCargos.unknownType"),
-        priority: cargo.priority || "normal", // Add priority
+        type: cargo.category?.name || cargo.type || t("myCargos.unknownType"),
+        priority: cargo.priority || "normal",
         createdDate: cargo.created_at?.split("T")[0] || "",
         cost: parseFloat(
           String(cargo.estimated_cost || cargo.final_cost || "0")
@@ -504,32 +505,48 @@ const MyCargos = () => {
           : "",
         description: cargo.special_requirements || "",
         specialInstructions: cargo.special_requirements || "",
-        vehicleType: (cargo as any).delivery_assignment?.vehicle
-          ? `${(cargo as any).delivery_assignment.vehicle.make} ${
-              (cargo as any).delivery_assignment.vehicle.model
-            }`
+        vehicleType: vehicleInfo
+          ? `${vehicleInfo.make} ${vehicleInfo.model}`
           : t("myCargos.unknownVehicle"),
         distance: cargo.distance_km ? `${cargo.distance_km} km` : "Unknown",
+        distance_km: String(cargo.distance_km || ""),
         pickupContact: cargo.pickup_contact || "",
         pickupContactPhone: cargo.pickup_phone || "",
         deliveryContact: cargo.destination_contact || "",
         deliveryContactPhone: cargo.destination_phone || "",
         // Enhanced fields for better data display
-        clientPhone:
-          (cargo as any).client?.user?.phone || cargo.pickup_phone || "",
-        clientCompany: (cargo as any).client?.company_name || "",
-        clientContactPerson: (cargo as any).client?.contact_person || "",
-        driverName:
-          (cargo as any).delivery_assignment?.driver?.user?.full_name || "",
-        driverPhone:
-          (cargo as any).delivery_assignment?.driver?.emergency_phone || "",
-        driverRating: (cargo as any).delivery_assignment?.driver?.rating || "",
-        driverLicense:
-          (cargo as any).delivery_assignment?.driver?.license_number || "",
-        vehiclePlate:
-          (cargo as any).delivery_assignment?.vehicle?.plate_number || "",
-        vehicleMake: (cargo as any).delivery_assignment?.vehicle?.make || "",
-        vehicleModel: (cargo as any).delivery_assignment?.vehicle?.model || "",
+        clientPhone: cargo.client?.user?.phone || cargo.pickup_phone || "",
+        clientCompany: cargo.client?.company_name || "",
+        clientContactPerson: cargo.client?.contact_person || "",
+        driverName: driverInfo?.user?.full_name || "",
+        driverPhone: driverInfo?.emergency_phone || "",
+        driverRating: driverInfo?.rating || "",
+        driverLicense: driverInfo?.license_number || "",
+        vehiclePlate: vehicleInfo?.plate_number || "",
+        vehicleMake: vehicleInfo?.make || "",
+        vehicleModel: vehicleInfo?.model || "",
+        // Rating fields from delivery object
+        rating: deliveryInfo?.rating || undefined,
+        review: deliveryInfo?.review || undefined,
+        isRated: !!deliveryInfo?.rating,
+        // Additional cargo details
+        weight_kg: cargo.weight_kg,
+        volume: cargo.volume,
+        dimensions: cargo.dimensions,
+        insurance_required: cargo.insurance_required,
+        insurance_amount: cargo.insurance_amount,
+        fragile: cargo.fragile,
+        temperature_controlled: cargo.temperature_controlled,
+        pickup_instructions: cargo.pickup_instructions,
+        delivery_instructions: cargo.delivery_instructions,
+        // Assignment information
+        assignmentStatus: cargo.delivery_assignment?.assignment_status,
+        assignmentExpiresAt: cargo.delivery_assignment?.expires_at,
+        assignmentNotes: cargo.delivery_assignment?.notes,
+        assignmentId: cargo.delivery_assignment?.id,
+        // Final cost information
+        final_cost: cargo.final_cost,
+        estimated_cost: String(cargo.estimated_cost || ""),
       };
     }) || [];
 
