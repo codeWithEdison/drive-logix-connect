@@ -96,6 +96,82 @@ export const useUpdateDeliveryStatus = () => {
   });
 };
 
+export const useConfirmDeliveryWithImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      cargoId,
+      data,
+    }: {
+      cargoId: string;
+      data: {
+        delivery_proof_url: string;
+        notes?: string;
+      };
+    }) => DeliveryService.confirmDeliveryWithImage(cargoId, data),
+    onSuccess: (_, { cargoId }) => {
+      // Invalidate delivery detail
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.deliveries.detail(cargoId),
+      });
+
+      // Invalidate cargo detail
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.cargos.detail(cargoId),
+      });
+
+      // Invalidate driver cargos list to refresh the main page
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.cargos.driverCargos(),
+      });
+
+      // Invalidate all cargos list
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.cargos.all(),
+      });
+    },
+  });
+};
+
+export const useRateDelivery = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      cargoId,
+      data,
+    }: {
+      cargoId: string;
+      data: {
+        rating: number;
+        review?: string;
+      };
+    }) => DeliveryService.rateDelivery(cargoId, data),
+    onSuccess: (_, { cargoId }) => {
+      // Invalidate delivery detail
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.deliveries.detail(cargoId),
+      });
+
+      // Invalidate cargo detail
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.cargos.detail(cargoId),
+      });
+
+      // Invalidate driver cargos list to refresh the main page
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.cargos.driverCargos(),
+      });
+
+      // Invalidate all cargos list
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.cargos.all(),
+      });
+    },
+  });
+};
+
 export const useConfirmDeliveryOTP = () => {
   const queryClient = useQueryClient();
 

@@ -18,7 +18,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useDriverCargos, useCargoById } from "@/lib/api/hooks";
-import { useUpdateDeliveryStatus } from "@/lib/api/hooks/deliveryHooks";
+import {
+  useUpdateDeliveryStatus,
+  useConfirmDeliveryWithImage,
+} from "@/lib/api/hooks/deliveryHooks";
+import { useBulkUploadImages } from "@/lib/api/hooks/cargoImageHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { customToast } from "@/lib/utils/toast";
@@ -57,6 +61,8 @@ export default function DriverDeliveries() {
   const [isCargoModalOpen, setIsCargoModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
+  const [isDeliveryImageModalOpen, setIsDeliveryImageModalOpen] =
+    useState(false);
   const [photoUploadType, setPhotoUploadType] = useState<
     "loading" | "delivery" | "receipt" | "signature"
   >("loading");
@@ -207,12 +213,23 @@ export default function DriverDeliveries() {
     setSelectedCargoId(null);
   };
 
-  // API hook for updating delivery status
+  // API hooks for delivery operations
   const updateDeliveryStatus = useUpdateDeliveryStatus();
+  const confirmDeliveryWithImage = useConfirmDeliveryWithImage();
+  const bulkUploadImages = useBulkUploadImages();
 
   const handleStartDelivery = async (cargoId: string) => {
     try {
-      console.log("Starting transit for cargo:", cargoId);
+      // Find the cargo to determine current status
+      const cargo = allCargos.find((c) => c.id === cargoId);
+      const currentStatus = cargo?.status;
+
+      console.log(
+        "Handling delivery action for cargo:",
+        cargoId,
+        "Current status:",
+        currentStatus
+      );
 
       // Get current GPS location
       let locationData = null;
@@ -235,28 +252,45 @@ export default function DriverDeliveries() {
         }
       }
 
-      // Call the API to update delivery status to "in_transit"
-      await updateDeliveryStatus.mutateAsync({
-        cargoId,
-        data: {
-          status: "in_transit",
-          ...locationData,
-          notes: "Cargo is now in transit",
-        },
-      });
+      let newStatus: string;
+      let successMessage: string;
+      let notes: string;
 
-      customToast.success(
-        t("delivery.transitStarted") || "Transit started successfully"
-      );
+      // Determine action based on current status
+      if (currentStatus === "picked_up") {
+        // Start Transit
+        newStatus = "in_transit";
+        successMessage =
+          t("delivery.transitStarted") || "Transit started successfully";
+        notes = "Cargo is now in transit";
+
+        // Call the API to update delivery status
+        await updateDeliveryStatus.mutateAsync({
+          cargoId,
+          data: {
+            status: newStatus,
+            ...locationData,
+            notes,
+          },
+        });
+      } else if (currentStatus === "in_transit") {
+        // Mark Delivered - Open image upload modal
+        setIsDeliveryImageModalOpen(true);
+        return; // Don't show success message yet, wait for image upload
+      } else {
+        throw new Error(`Invalid status transition from ${currentStatus}`);
+      }
+
+      customToast.success(successMessage);
     } catch (error: any) {
-      console.error("Failed to start transit:", error);
+      console.error("Failed to update delivery status:", error);
 
       // Show user-friendly error message
       const errorMessage =
         error?.response?.data?.error?.message ||
         error?.response?.data?.message ||
         error?.message ||
-        "Failed to start transit";
+        "Failed to update delivery status";
 
       customToast.error(errorMessage);
     }
@@ -383,6 +417,62 @@ export default function DriverDeliveries() {
     } catch (error) {
       console.error("Signature save failed:", error);
       customToast.error(t("errors.signatureFailed"));
+    }
+  };
+
+  const handleDeliveryImageUpload = async (data: {
+    photos: File[];
+    notes: string;
+    type: string;
+    cargoId: string;
+  }) => {
+    try {
+      console.log("Uploading delivery images:", data);
+
+      // Step 1: Upload images to get URLs
+      const images = data.photos.map((file, index) => ({
+        file,
+        image_type: "delivery" as any,
+        description: data.notes || `Delivery image ${index + 1}`,
+        is_primary: index === 0,
+      }));
+
+      // Upload images first to get URLs
+      const uploadResult = await bulkUploadImages.mutateAsync({
+        cargoId: data.cargoId,
+        images,
+      });
+
+      // Step 2: Use the first image URL for delivery confirmation
+      const deliveryProofUrl = uploadResult?.[0]?.image_url;
+
+      if (!deliveryProofUrl) {
+        throw new Error("Failed to get delivery proof image URL");
+      }
+
+      // Step 3: Confirm delivery with image
+      await confirmDeliveryWithImage.mutateAsync({
+        cargoId: data.cargoId,
+        data: {
+          delivery_proof_url: deliveryProofUrl,
+          notes: data.notes || "Delivery completed successfully",
+        },
+      });
+
+      customToast.success(
+        t("delivery.deliveryCompleted") || "Delivery completed successfully"
+      );
+      setIsDeliveryImageModalOpen(false);
+    } catch (error: any) {
+      console.error("Delivery image upload failed:", error);
+
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to confirm delivery";
+
+      customToast.error(errorMessage);
     }
   };
 
@@ -869,6 +959,19 @@ export default function DriverDeliveries() {
             },
           ]}
           onCall={(contact) => handleCallClient(contact.phone)}
+        />
+      )}
+
+      {/* Delivery Image Upload Modal */}
+      {selectedCargoId && (
+        <PhotoUploadModal
+          isOpen={isDeliveryImageModalOpen}
+          onClose={() => setIsDeliveryImageModalOpen(false)}
+          cargoId={selectedCargoId}
+          cargoNumber={selectedCargo?.cargo_number}
+          uploadType="delivery"
+          onUpload={handleDeliveryImageUpload}
+          submitButtonText={t("driver.confirmDelivery") || "Confirm Delivery"}
         />
       )}
     </div>

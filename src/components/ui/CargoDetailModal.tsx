@@ -265,6 +265,12 @@ export function CargoDetailModal({
   const [isPickupImageModalOpen, setIsPickupImageModalOpen] = useState(false);
   const [isUploadingPickupImages, setIsUploadingPickupImages] = useState(false);
 
+  // State for delivery image upload modal
+  const [isDeliveryImageModalOpen, setIsDeliveryImageModalOpen] =
+    useState(false);
+  const [isUploadingDeliveryImages, setIsUploadingDeliveryImages] =
+    useState(false);
+
   // API hooks
   const bulkUploadImages = useBulkUploadImages();
   const updateCargoStatus = useUpdateCargoStatus();
@@ -456,6 +462,63 @@ export function CargoDetailModal({
 
   const handleMarkPickedUp = () => {
     setIsPickupImageModalOpen(true);
+  };
+
+  const handleMarkDelivered = () => {
+    setIsDeliveryImageModalOpen(true);
+  };
+
+  const handleDeliveryImageUpload = async (data: {
+    photos: File[];
+    notes: string;
+    type: string;
+    cargoId: string;
+  }) => {
+    setIsUploadingDeliveryImages(true);
+    try {
+      // Step 1: Upload delivery images using the API
+      const images = data.photos.map((file, index) => ({
+        file,
+        image_type: CargoImageType.DELIVERY,
+        description: data.notes || `Delivery image ${index + 1}`,
+        is_primary: index === 0, // First image as primary
+      }));
+
+      await bulkUploadImages.mutateAsync({
+        cargoId: data.cargoId,
+        images,
+      });
+
+      // Step 2: Update cargo status to delivered after successful image upload
+      await updateCargoStatus.mutateAsync({
+        id: data.cargoId,
+        status: CargoStatus.DELIVERED,
+        notes: "Cargo delivered successfully",
+      });
+
+      setIsDeliveryImageModalOpen(false);
+    } catch (error: any) {
+      console.error(
+        "Failed to upload delivery images or update status:",
+        error
+      );
+
+      // Show user-friendly error message
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to upload images or update cargo status";
+
+      // Show user-friendly error message using toast
+      toast({
+        title: "Upload Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingDeliveryImages(false);
+    }
   };
 
   const handleGenerateInvoice = () => {
@@ -1855,10 +1918,10 @@ export function CargoDetailModal({
               {cargo.status === "in_transit" && (
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => onStartDelivery?.(cargo.id)}
-                  disabled={isStartingDelivery}
+                  onClick={handleMarkDelivered}
+                  disabled={isUploadingDeliveryImages}
                 >
-                  {isStartingDelivery ? (
+                  {isUploadingDeliveryImages ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Marking Delivered...
@@ -1981,6 +2044,17 @@ export function CargoDetailModal({
         uploadType="loading"
         onUpload={handlePickupImageUpload}
         submitButtonText="Confirm Pickup"
+      />
+
+      {/* Delivery Image Upload Modal */}
+      <PhotoUploadModal
+        isOpen={isDeliveryImageModalOpen}
+        onClose={() => setIsDeliveryImageModalOpen(false)}
+        cargoId={cargo.id}
+        cargoNumber={cargo.cargo_number}
+        uploadType="delivery"
+        onUpload={handleDeliveryImageUpload}
+        submitButtonText="Confirm Delivery"
       />
     </ModernModel>
   );

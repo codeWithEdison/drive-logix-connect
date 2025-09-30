@@ -83,6 +83,36 @@ export class DeliveryService {
     return response.data;
   }
 
+  // Confirm delivery with image proof
+  static async confirmDeliveryWithImage(
+    cargoId: string,
+    data: {
+      delivery_proof_url: string;
+      notes?: string;
+    }
+  ): Promise<ApiResponse<Delivery>> {
+    const response = await axiosInstance.post(
+      `/v1/deliveries/${cargoId}/confirm-image`,
+      data
+    );
+    return response.data;
+  }
+
+  // Rate delivery service
+  static async rateDelivery(
+    cargoId: string,
+    data: {
+      rating: number;
+      review?: string;
+    }
+  ): Promise<ApiResponse<Delivery>> {
+    const response = await axiosInstance.post(
+      `/v1/deliveries/${cargoId}/rate`,
+      data
+    );
+    return response.data;
+  }
+
   // Confirm delivery via OTP
   static async confirmDeliveryOTP(
     cargoId: string,
