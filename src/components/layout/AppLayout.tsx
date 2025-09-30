@@ -63,8 +63,10 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Mobile Language Selector */}
-              <LanguageSwitcher />
+              {/* Mobile Language Selector - Hide for admin and superadmin */}
+              {user.role !== "admin" && user.role !== "super_admin" && (
+                <LanguageSwitcher />
+              )}
 
               {/* Mobile Notifications - Only show for drivers */}
               {user.role === "driver" && (
@@ -105,8 +107,10 @@ export function AppLayout({ children }: AppLayoutProps) {
               <div className="flex-1 flex items-center gap-4"></div>
 
               <div className="flex items-center gap-3">
-                {/* Language Selector */}
-                <LanguageSwitcher />
+                {/* Language Selector - Hide for admin and superadmin */}
+                {user.role !== "admin" && user.role !== "super_admin" && (
+                  <LanguageSwitcher />
+                )}
 
                 {/* Desktop Notifications - Only show for drivers */}
                 {user.role === "driver" ? (
