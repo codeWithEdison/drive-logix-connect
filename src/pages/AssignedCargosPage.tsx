@@ -389,8 +389,7 @@ export function AssignedCargosPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             {t("navigation.assignedCargos")}
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
-            {t("navigation.assignedCargos")} {t("dashboard.subtitle")}
+          <p className="text-sm sm:text-base text-gray-600 mt-1"> {t("dashboard.subtitle")}
           </p>
         </div>
         <Button

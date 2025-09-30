@@ -217,7 +217,7 @@ export function DriverDashboard() {
     try {
       await acceptAssignmentMutation.mutateAsync({
         assignmentId,
-        data: { notes: "Accepted from dashboard" },
+        data: { notes: t("assignment.acceptedFromDashboard") },
       });
       customToast.success(t("assignment.acceptedSuccessfully"));
       refetchDashboard();
@@ -262,10 +262,10 @@ export function DriverDashboard() {
         assignmentId: selectedAssignmentId,
         data: {
           reason: rejectionReason,
-          notes: rejectionNotes || "Rejected from dashboard",
+          notes: rejectionNotes || t("assignment.rejectedFromDashboard"),
         },
       });
-      customToast.success("Assignment rejected");
+      customToast.success(t("assignment.assignmentRejected"));
       setShowRejectModal(false);
       refetchDashboard();
     } catch (error: any) {
@@ -410,7 +410,7 @@ export function DriverDashboard() {
               {/* Driver Info */}
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 leading-tight">
-                  Welcome back,{" "}
+                  {t("dashboard.welcomeBack")},{" "}
                   <span className="break-words">
                     {dashboard?.driver_info?.name ||
                       user?.full_name ||
@@ -1110,7 +1110,7 @@ export function DriverDashboard() {
                           {dashboard.vehicle_info.plate_number}
                         </p>
                         <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">
-                          {dashboard.vehicle_info.status}
+                          {t(`status.${dashboard.vehicle_info.status}`)}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600">

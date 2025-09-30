@@ -10,7 +10,7 @@ import {
   differenceInHours,
   differenceInMinutes,
 } from "date-fns";
-import { enUS, fr, rw } from "date-fns/locale";
+import { enUS, fr } from "date-fns/locale";
 import { Language } from "../../types/shared";
 
 // ===========================================
@@ -20,7 +20,7 @@ import { Language } from "../../types/shared";
 const dateLocales = {
   en: enUS,
   fr: fr,
-  rw: rw,
+  rw: enUS, // Fallback to English for Kinyarwanda since date-fns doesn't support it
 };
 
 export const formatDate = (
@@ -174,7 +174,7 @@ export const validateEmail = (email: string): boolean => {
 };
 
 export const validatePhone = (phone: string): boolean => {
-  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+  const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
   return phoneRegex.test(phone.replace(/\s/g, ""));
 };
 

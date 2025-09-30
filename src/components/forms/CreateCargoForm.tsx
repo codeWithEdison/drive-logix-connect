@@ -881,7 +881,8 @@ export function CreateCargoForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="cargoCategoryId">
-                  Cargo Category <span className="text-red-500">*</span>
+                  {t("cargo.cargoCategory")}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.cargoCategoryId}
@@ -890,7 +891,11 @@ export function CreateCargoForm() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select cargo category" />
+                    <SelectValue
+                      placeholder={t(
+                        "createCargo.steps.cargoDetails.selectCargoCategory"
+                      )}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {cargoCategories?.map((category) => (
@@ -1007,10 +1012,14 @@ export function CreateCargoForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">
+                {t("createCargo.steps.cargoDetails.description")}
+              </Label>
               <Textarea
                 id="description"
-                placeholder="Describe your cargo (optional)"
+                placeholder={t(
+                  "createCargo.steps.cargoDetails.descriptionPlaceholder"
+                )}
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -1041,7 +1050,7 @@ export function CreateCargoForm() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-primary" />
-              Pickup & Delivery Locations
+              {t("createCargo.steps.pickupDelivery.title")}
             </CardTitle>
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
               <div className="flex items-center gap-2">
@@ -1058,14 +1067,14 @@ export function CreateCargoForm() {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-green-600" />
-                  Pickup Location
+                  {t("createCargo.steps.pickupDelivery.pickupLocation")}
                 </h3>
                 <div className="flex items-center gap-2">
                   <Label
                     htmlFor="useExistingPickupLocation"
                     className="text-sm"
                   >
-                    Use existing location
+                    {t("createCargo.steps.pickupDelivery.useExistingLocation")}
                   </Label>
                   <Switch
                     id="useExistingPickupLocation"
@@ -1086,13 +1095,19 @@ export function CreateCargoForm() {
               {/* Existing Location Selection */}
               {formData.useExistingPickupLocation && (
                 <div className="space-y-2">
-                  <Label>Select Existing Pickup Location</Label>
+                  <Label>
+                    {t(
+                      "createCargo.steps.pickupDelivery.selectExistingPickupLocation"
+                    )}
+                  </Label>
 
                   {/* Search Input */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search locations..."
+                      placeholder={t(
+                        "createCargo.steps.pickupDelivery.searchLocation"
+                      )}
                       value={pickupLocationSearch}
                       onChange={(e) => setPickupLocationSearch(e.target.value)}
                       className="pl-10"
@@ -1107,7 +1122,11 @@ export function CreateCargoForm() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose a pickup location..." />
+                      <SelectValue
+                        placeholder={t(
+                          "createCargo.steps.pickupDelivery.choosePickupLocation"
+                        )}
+                      />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
                       {filterLocations(
@@ -1138,7 +1157,9 @@ export function CreateCargoForm() {
                         ))
                       ) : (
                         <div className="p-2 text-sm text-muted-foreground text-center">
-                          No locations found
+                          {t(
+                            "createCargo.steps.pickupDelivery.noLocationsFound"
+                          )}
                         </div>
                       )}
                     </SelectContent>
@@ -1150,34 +1171,52 @@ export function CreateCargoForm() {
                       <div className="flex items-center gap-2 mb-2">
                         <MapPin className="h-4 w-4 text-blue-600" />
                         <span className="font-medium text-blue-900">
-                          Selected Location
+                          {t(
+                            "createCargo.steps.pickupDelivery.selectedLocation"
+                          )}
                         </span>
                       </div>
                       <div className="text-sm space-y-1">
                         <p>
-                          <span className="font-medium">Name:</span>{" "}
+                          <span className="font-medium">
+                            {t("common.name")}:
+                          </span>{" "}
                           {formData.newPickupLocationName}
                         </p>
                         <p>
-                          <span className="font-medium">Address:</span>{" "}
+                          <span className="font-medium">
+                            {t("common.address")}:
+                          </span>{" "}
                           {formData.pickupAddress}
                         </p>
                         {formData.pickupContactName && (
                           <p>
-                            <span className="font-medium">Contact:</span>{" "}
+                            <span className="font-medium">
+                              {t(
+                                "createCargo.steps.pickupDelivery.contactName"
+                              )}
+                              :
+                            </span>{" "}
                             {formData.pickupContactName}
                           </p>
                         )}
                         {formData.pickupContactPhone && (
                           <p>
-                            <span className="font-medium">Phone:</span>{" "}
+                            <span className="font-medium">
+                              {t(
+                                "createCargo.steps.pickupDelivery.contactPhone"
+                              )}
+                              :
+                            </span>{" "}
                             {formData.pickupContactPhone}
                           </p>
                         )}
                       </div>
                       <p className="text-xs text-blue-700 mt-2">
-                        💡 You can edit contact details below for this specific
-                        cargo
+                        💡{" "}
+                        {t(
+                          "createCargo.steps.pickupDelivery.editContactDetails"
+                        )}
                       </p>
                     </div>
                   )}
@@ -1189,10 +1228,14 @@ export function CreateCargoForm() {
                 <>
                   {/* Location Name */}
                   <div className="space-y-2">
-                    <Label htmlFor="newPickupLocationName">Location Name</Label>
+                    <Label htmlFor="newPickupLocationName">
+                      {t("createCargo.steps.pickupDelivery.locationName")}
+                    </Label>
                     <Input
                       id="newPickupLocationName"
-                      placeholder="e.g., My Office, Home Address"
+                      placeholder={t(
+                        "createCargo.steps.pickupDelivery.locationNamePlaceholder"
+                      )}
                       value={formData.newPickupLocationName}
                       onChange={(e) =>
                         setFormData({
@@ -1206,7 +1249,8 @@ export function CreateCargoForm() {
                   {/* District Selection */}
                   <div className="space-y-2">
                     <Label htmlFor="pickupDistrictId">
-                      District <span className="text-red-500">*</span>
+                      {t("createCargo.steps.pickupDelivery.district")}{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <Select
                       value={formData.pickupDistrictId}
@@ -1219,7 +1263,11 @@ export function CreateCargoForm() {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select pickup district" />
+                        <SelectValue
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.selectPickupDistrict"
+                          )}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {districts?.map((district) => (
@@ -1234,14 +1282,17 @@ export function CreateCargoForm() {
                   {/* Address Search */}
                   <div className="space-y-2">
                     <Label>
-                      Pickup Address <span className="text-red-500">*</span>
+                      {t("createCargo.steps.pickupDelivery.pickupAddress")}{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <div className="relative">
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <Input
-                            placeholder="Search pickup location..."
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.searchPickupLocation"
+                            )}
                             value={pickupSearchQuery}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -1272,12 +1323,12 @@ export function CreateCargoForm() {
                           {isSearchingPickup ? (
                             <>
                               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                              Searching...
+                              {t("common.searching")}
                             </>
                           ) : (
                             <>
                               <Search className="h-4 w-4 mr-2" />
-                              Search
+                              {t("common.search")}
                             </>
                           )}
                         </Button>
@@ -1305,7 +1356,9 @@ export function CreateCargoForm() {
                     </div>
 
                     <Textarea
-                      placeholder="Enter complete pickup address..."
+                      placeholder={t(
+                        "createCargo.steps.pickupDelivery.enterPickupAddress"
+                      )}
                       value={formData.pickupAddress}
                       onChange={(e) => {
                         const newFormData = {
@@ -1336,12 +1389,16 @@ export function CreateCargoForm() {
                   {/* Pickup Contact Details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="pickupContactName">Contact Person</Label>
+                      <Label htmlFor="pickupContactName">
+                        {t("createCargo.steps.pickupDelivery.contactName")}
+                      </Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
                           id="pickupContactName"
-                          placeholder="Contact name"
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.contactNamePlaceholder"
+                          )}
                           value={formData.pickupContactName}
                           onChange={(e) =>
                             setFormData({
@@ -1355,12 +1412,16 @@ export function CreateCargoForm() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="pickupContactPhone">Phone Number</Label>
+                      <Label htmlFor="pickupContactPhone">
+                        {t("createCargo.steps.pickupDelivery.contactPhone")}
+                      </Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
                           id="pickupContactPhone"
-                          placeholder="+250 123 456 789"
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.contactPhonePlaceholder"
+                          )}
                           value={formData.pickupContactPhone}
                           onChange={(e) =>
                             setFormData({
@@ -1375,12 +1436,16 @@ export function CreateCargoForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="pickupOpeningHours">Opening Hours</Label>
+                    <Label htmlFor="pickupOpeningHours">
+                      {t("createCargo.steps.pickupDelivery.openingHours")}
+                    </Label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="pickupOpeningHours"
-                        placeholder="e.g., Mon-Fri 8AM-6PM, Sat 9AM-3PM"
+                        placeholder={t(
+                          "createCargo.steps.pickupDelivery.openingHoursPlaceholder"
+                        )}
                         value={formData.pickupOpeningHours}
                         onChange={(e) =>
                           setFormData({
@@ -1411,7 +1476,7 @@ export function CreateCargoForm() {
                       className="text-sm flex items-center gap-1"
                     >
                       <Save className="h-4 w-4" />
-                      Save pickup details for future use
+                      {t("createCargo.steps.pickupDelivery.savePickupData")}
                     </Label>
                   </div>
                 </>
@@ -1423,14 +1488,14 @@ export function CreateCargoForm() {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-red-600" />
-                  Delivery Location
+                  {t("createCargo.steps.pickupDelivery.deliveryLocation")}
                 </h3>
                 <div className="flex items-center gap-2">
                   <Label
                     htmlFor="useExistingDestinationLocation"
                     className="text-sm"
                   >
-                    Use existing location
+                    {t("createCargo.steps.pickupDelivery.useExistingLocation")}
                   </Label>
                   <Switch
                     id="useExistingDestinationLocation"
@@ -1451,13 +1516,19 @@ export function CreateCargoForm() {
               {/* Existing Location Selection */}
               {formData.useExistingDestinationLocation && (
                 <div className="space-y-2">
-                  <Label>Select Existing Delivery Location</Label>
+                  <Label>
+                    {t(
+                      "createCargo.steps.pickupDelivery.selectExistingDeliveryLocation"
+                    )}
+                  </Label>
 
                   {/* Search Input */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search locations..."
+                      placeholder={t(
+                        "createCargo.steps.pickupDelivery.searchLocation"
+                      )}
                       value={destinationLocationSearch}
                       onChange={(e) =>
                         setDestinationLocationSearch(e.target.value)
@@ -1474,7 +1545,11 @@ export function CreateCargoForm() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose a delivery location..." />
+                      <SelectValue
+                        placeholder={t(
+                          "createCargo.steps.pickupDelivery.chooseDeliveryLocation"
+                        )}
+                      />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
                       {filterLocations(
@@ -1505,7 +1580,9 @@ export function CreateCargoForm() {
                         ))
                       ) : (
                         <div className="p-2 text-sm text-muted-foreground text-center">
-                          No locations found
+                          {t(
+                            "createCargo.steps.pickupDelivery.noLocationsFound"
+                          )}
                         </div>
                       )}
                     </SelectContent>
@@ -1517,34 +1594,52 @@ export function CreateCargoForm() {
                       <div className="flex items-center gap-2 mb-2">
                         <MapPin className="h-4 w-4 text-red-600" />
                         <span className="font-medium text-red-900">
-                          Selected Location
+                          {t(
+                            "createCargo.steps.pickupDelivery.selectedLocation"
+                          )}
                         </span>
                       </div>
                       <div className="text-sm space-y-1">
                         <p>
-                          <span className="font-medium">Name:</span>{" "}
+                          <span className="font-medium">
+                            {t("common.name")}:
+                          </span>{" "}
                           {formData.newDestinationLocationName}
                         </p>
                         <p>
-                          <span className="font-medium">Address:</span>{" "}
+                          <span className="font-medium">
+                            {t("common.address")}:
+                          </span>{" "}
                           {formData.destinationAddress}
                         </p>
                         {formData.destinationContactName && (
                           <p>
-                            <span className="font-medium">Contact:</span>{" "}
+                            <span className="font-medium">
+                              {t(
+                                "createCargo.steps.pickupDelivery.contactName"
+                              )}
+                              :
+                            </span>{" "}
                             {formData.destinationContactName}
                           </p>
                         )}
                         {formData.destinationContactPhone && (
                           <p>
-                            <span className="font-medium">Phone:</span>{" "}
+                            <span className="font-medium">
+                              {t(
+                                "createCargo.steps.pickupDelivery.contactPhone"
+                              )}
+                              :
+                            </span>{" "}
                             {formData.destinationContactPhone}
                           </p>
                         )}
                       </div>
                       <p className="text-xs text-red-700 mt-2">
-                        💡 You can edit contact details below for this specific
-                        cargo
+                        💡{" "}
+                        {t(
+                          "createCargo.steps.pickupDelivery.editContactDetails"
+                        )}
                       </p>
                     </div>
                   )}
@@ -1557,11 +1652,13 @@ export function CreateCargoForm() {
                   {/* Location Name */}
                   <div className="space-y-2">
                     <Label htmlFor="newDestinationLocationName">
-                      Location Name
+                      {t("createCargo.steps.pickupDelivery.locationName")}
                     </Label>
                     <Input
                       id="newDestinationLocationName"
-                      placeholder="e.g., Customer Office, Home Address"
+                      placeholder={t(
+                        "createCargo.steps.pickupDelivery.locationNamePlaceholder"
+                      )}
                       value={formData.newDestinationLocationName}
                       onChange={(e) =>
                         setFormData({
@@ -1575,7 +1672,8 @@ export function CreateCargoForm() {
                   {/* District Selection */}
                   <div className="space-y-2">
                     <Label htmlFor="destinationDistrictId">
-                      District <span className="text-red-500">*</span>
+                      {t("createCargo.steps.pickupDelivery.district")}{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <Select
                       value={formData.destinationDistrictId}
@@ -1588,7 +1686,11 @@ export function CreateCargoForm() {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select delivery district" />
+                        <SelectValue
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.selectDeliveryDistrict"
+                          )}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {districts?.map((district) => (
@@ -1603,14 +1705,17 @@ export function CreateCargoForm() {
                   {/* Address Search */}
                   <div className="space-y-2">
                     <Label>
-                      Delivery Address <span className="text-red-500">*</span>
+                      {t("createCargo.steps.pickupDelivery.deliveryAddress")}{" "}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <div className="relative">
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                           <Input
-                            placeholder="Search delivery location..."
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.searchDeliveryLocation"
+                            )}
                             value={destinationSearchQuery}
                             onChange={(e) => {
                               const value = e.target.value;
@@ -1642,12 +1747,12 @@ export function CreateCargoForm() {
                           {isSearchingDestination ? (
                             <>
                               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                              Searching...
+                              {t("common.searching")}
                             </>
                           ) : (
                             <>
                               <Search className="h-4 w-4 mr-2" />
-                              Search
+                              {t("common.search")}
                             </>
                           )}
                         </Button>
@@ -1675,7 +1780,9 @@ export function CreateCargoForm() {
                     </div>
 
                     <Textarea
-                      placeholder="Enter complete delivery address..."
+                      placeholder={t(
+                        "createCargo.steps.pickupDelivery.enterDeliveryAddress"
+                      )}
                       value={formData.destinationAddress}
                       onChange={(e) => {
                         const newFormData = {
@@ -1707,13 +1814,15 @@ export function CreateCargoForm() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="destinationContactName">
-                        Contact Person
+                        {t("createCargo.steps.pickupDelivery.contactName")}
                       </Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
                           id="destinationContactName"
-                          placeholder="Contact name"
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.contactNamePlaceholder"
+                          )}
                           value={formData.destinationContactName}
                           onChange={(e) =>
                             setFormData({
@@ -1728,13 +1837,15 @@ export function CreateCargoForm() {
 
                     <div className="space-y-2">
                       <Label htmlFor="destinationContactPhone">
-                        Phone Number
+                        {t("createCargo.steps.pickupDelivery.contactPhone")}
                       </Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <Input
                           id="destinationContactPhone"
-                          placeholder="+250 123 456 789"
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.contactPhonePlaceholder"
+                          )}
                           value={formData.destinationContactPhone}
                           onChange={(e) =>
                             setFormData({
@@ -1750,13 +1861,15 @@ export function CreateCargoForm() {
 
                   <div className="space-y-2">
                     <Label htmlFor="destinationOpeningHours">
-                      Opening Hours
+                      {t("createCargo.steps.pickupDelivery.openingHours")}
                     </Label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="destinationOpeningHours"
-                        placeholder="e.g., Mon-Fri 8AM-6PM, Sat 9AM-3PM"
+                        placeholder={t(
+                          "createCargo.steps.pickupDelivery.openingHoursPlaceholder"
+                        )}
                         value={formData.destinationOpeningHours}
                         onChange={(e) =>
                           setFormData({
@@ -1787,7 +1900,7 @@ export function CreateCargoForm() {
                       className="text-sm flex items-center gap-1"
                     >
                       <Save className="h-4 w-4" />
-                      Save delivery details for future use
+                      {t("createCargo.steps.pickupDelivery.saveDeliveryData")}
                     </Label>
                   </div>
                 </>
@@ -1798,7 +1911,8 @@ export function CreateCargoForm() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="pickupDate">
-                  Preferred Pickup Date <span className="text-red-500">*</span>
+                  {t("createCargo.steps.pickupDelivery.preferredPickupDate")}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
                   <div className="relative">
@@ -1813,7 +1927,9 @@ export function CreateCargoForm() {
 
                         if (selectedDate < today) {
                           toast.error(
-                            "Please select a date from today onwards"
+                            t(
+                              "createCargo.steps.pickupDelivery.selectDateFromToday"
+                            )
                           );
                           return;
                         }
@@ -1832,7 +1948,10 @@ export function CreateCargoForm() {
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs text-gray-500">
-                      📅 Select a date from today onwards
+                      📅{" "}
+                      {t(
+                        "createCargo.steps.pickupDelivery.selectDateFromToday"
+                      )}
                     </p>
                     {formData.pickupDate && (
                       <p className="text-xs text-green-600 font-medium">
@@ -1852,18 +1971,21 @@ export function CreateCargoForm() {
                 </div>
                 {formData.pickupDate && (
                   <p className="text-sm text-green-600">
-                    ✓ Pickup date selected
+                    ✓ {t("createCargo.steps.pickupDelivery.pickupDateSelected")}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="specialInstructions">
-                  Special Instructions (Optional)
+                  {t("createCargo.steps.pickupDelivery.specialInstructions")} (
+                  {t("auth.optional")})
                 </Label>
                 <Textarea
                   id="specialInstructions"
-                  placeholder="Any special handling requirements, delivery instructions, or additional notes..."
+                  placeholder={t(
+                    "createCargo.steps.pickupDelivery.specialInstructionsPlaceholder"
+                  )}
                   value={formData.specialInstructions}
                   onChange={(e) =>
                     setFormData({
@@ -1884,10 +2006,16 @@ export function CreateCargoForm() {
                     <MapPin className="h-4 w-4" />
                     <span className="font-medium">
                       {formData.distance > 0
-                        ? `Estimated Distance: ${formData.distance} km`
+                        ? `${t(
+                            "createCargo.steps.pickupDelivery.estimatedDistance"
+                          )}: ${formData.distance} km`
                         : isCalculatingDistance
-                        ? "Calculating distance..."
-                        : "Distance will be calculated automatically"}
+                        ? t(
+                            "createCargo.steps.pickupDelivery.calculatingDistance"
+                          )
+                        : t(
+                            "createCargo.steps.pickupDelivery.distanceWillBeCalculated"
+                          )}
                     </span>
                   </div>
                   {(formData.distance === 0 || isCalculatingDistance) && (
@@ -1908,7 +2036,9 @@ export function CreateCargoForm() {
                           isCalculatingDistance ? "animate-spin" : ""
                         }`}
                       />
-                      Recalculate Distance
+                      {t(
+                        "createCargo.steps.pickupDelivery.recalculateDistance"
+                      )}
                     </Button>
                   </div>
                 )}
@@ -1921,14 +2051,14 @@ export function CreateCargoForm() {
                 onClick={() => setStep(1)}
                 className="flex-1"
               >
-                Back
+                {t("common.back")}
               </Button>
               <Button
                 onClick={handleNext}
                 disabled={!validateStep(2)}
                 className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
               >
-                Review & Create Cargo
+                {t("createCargo.steps.pickupDelivery.reviewCreateCargo")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>

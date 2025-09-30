@@ -26,6 +26,7 @@ export default function VerifyEmail() {
   const [resendTimer, setResendTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
   const [redirectTimer, setRedirectTimer] = useState(2);
+  const [hasAutoVerified, setHasAutoVerified] = useState(false);
 
   // Get token and email from URL parameters
   const token = searchParams.get("token");
@@ -59,7 +60,7 @@ export default function VerifyEmail() {
       interval = setInterval(() => {
         setRedirectTimer((prev) => {
           if (prev <= 1) {
-            window.location.href = "/login";
+            navigate("/login");
             return 0;
           }
           return prev - 1;
@@ -67,11 +68,16 @@ export default function VerifyEmail() {
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isSuccess, redirectTimer]);
+  }, [isSuccess, redirectTimer, navigate]);
 
   const handleAutoVerification = useCallback(
     async (token: string) => {
+      if (hasAutoVerified || isLoading) {
+        return; // Prevent duplicate requests
+      }
+
       setIsLoading(true);
+      setHasAutoVerified(true);
 
       try {
         const result = await verifyEmailMutation.mutateAsync(token);
@@ -96,15 +102,15 @@ export default function VerifyEmail() {
         setIsLoading(false);
       }
     },
-    [verifyEmailMutation, t]
+    [verifyEmailMutation, t, hasAutoVerified, isLoading]
   );
 
   // Auto-verify if token is present in URL
   useEffect(() => {
-    if (token) {
+    if (token && !hasAutoVerified && !isLoading) {
       handleAutoVerification(token);
     }
-  }, [token, handleAutoVerification]);
+  }, [token, handleAutoVerification, hasAutoVerified, isLoading]);
 
   // Check if we have either email or token
   useEffect(() => {

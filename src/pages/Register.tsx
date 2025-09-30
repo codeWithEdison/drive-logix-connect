@@ -32,6 +32,7 @@ import { customToast } from "@/lib/utils/toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
+import { validatePhone } from "@/lib/utils/frontend";
 import {
   CreateUserRequest,
   BusinessType,
@@ -61,6 +62,15 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate phone number format
+    if (formData.phone && !validatePhone(formData.phone)) {
+      customToast.error(
+        "Invalid Phone Number",
+        "Phone number must be a valid format (e.g., +250788240301, 250788240301, or 0788240399)"
+      );
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       customToast.validation.passwordsNotMatch();
       return;
@@ -74,18 +84,40 @@ export default function Register() {
     const registrationData: CreateUserRequest = {
       full_name: formData.fullName,
       email: formData.email,
-      phone: formData.phone,
+      phone: formData.phone.replace(/\s/g, ""), // Remove all spaces from phone number
       password: formData.password,
       role: "client" as UserRole, // Default role for registration
       preferred_language: formData.preferredLanguage,
     };
 
-    const success = await register(registrationData);
-    if (success) {
-      customToast.success(t("auth.registerSuccess"));
-      // Show success message instead of redirecting
-      setUserEmail(formData.email);
-      setIsSubmitted(true);
+    try {
+      const success = await register(registrationData);
+      if (success) {
+        customToast.success(t("auth.registerSuccess"));
+        // Show success message instead of redirecting
+        setUserEmail(formData.email);
+        setIsSubmitted(true);
+      }
+    } catch (error: any) {
+      // Handle specific validation errors from backend
+      if (error?.error?.details && Array.isArray(error.error.details)) {
+        // Show specific field validation errors
+        error.error.details.forEach((detail: any) => {
+          customToast.error(
+            `${detail.field}: ${detail.message}`,
+            `Invalid value: ${detail.value}`
+          );
+        });
+      } else if (error?.error?.message) {
+        // Show general error message
+        customToast.error("Registration Failed", error.error.message);
+      } else {
+        // Fallback error message
+        customToast.error(
+          "Registration Failed",
+          "Please check your information and try again"
+        );
+      }
     }
   };
 
@@ -214,13 +246,16 @@ export default function Register() {
                     <Label htmlFor="phone">{t("auth.phone")} *</Label>
                     <Input
                       id="phone"
-                      placeholder={t("auth.phone")}
+                      placeholder="e.g., +250788240301 or 0788240399"
                       value={formData.phone}
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
                       required
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Format: +250788240301, 250788240301, or 0788240399
+                    </p>
                   </div>
 
                   <div className="space-y-2">
