@@ -224,7 +224,14 @@
     "lastLogin": "Last Login",
     "preferredLanguage": "Preferred Language",
     "password": "Password",
-    "cargo": "Cargo"
+    "cargo": "Cargo",
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} minute ago",
+    "minutesAgo_other": "{{count}} minutes ago",
+    "hoursAgo": "{{count}} hour ago",
+    "hoursAgo_other": "{{count}} hours ago",
+    "daysAgo": "{{count}} day ago",
+    "daysAgo_other": "{{count}} days ago"
   },
   "auth": {
     "login": "Login",
@@ -539,6 +546,7 @@
   },
   "driver": {
     "driverDetails": "Driver Details",
+    "driverNumber": "Driver Number",
     "licenseNumber": "License Number",
     "licenseExpiry": "License Expiry",
     "licenseType": "License Type",
@@ -2024,5 +2032,25 @@
         "dimensions": "2m x 0.8m x 1.2m"
       }
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "all": "All",
+    "unread": "Unread",
+    "markAllRead": "Mark All Read",
+    "markRead": "Mark as Read",
+    "noNotifications": "No notifications",
+    "errorLoading": "Error loading notifications",
+    "assignmentCreated": "New Assignment",
+    "assignmentAccepted": "Assignment Accepted",
+    "assignmentRejected": "Assignment Rejected",
+    "assignmentCancelled": "Assignment Cancelled",
+    "deliveryUpdate": "Delivery Update",
+    "payment": "Payment",
+    "system": "System",
+    "promotional": "Promotional",
+    "notification": "Notification",
+    "refresh": "Refresh",
+    "refreshed": "Notifications refreshed"
   }
 }

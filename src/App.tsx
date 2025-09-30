@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -359,9 +360,11 @@ function App() {
           <TooltipProvider>
             <AuthProvider>
               <LanguageProvider>
-                <AppContent />
-                <Toaster />
-                <Sonner />
+                <NotificationProvider>
+                  <AppContent />
+                  <Toaster />
+                  <Sonner />
+                </NotificationProvider>
               </LanguageProvider>
             </AuthProvider>
           </TooltipProvider>

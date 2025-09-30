@@ -50,7 +50,8 @@ export const queryKeys = {
   // Drivers
   drivers: {
     profile: ["drivers", "profile"] as const,
-    documents: ["drivers", "documents"] as const,
+    documents: (driverId?: string) =>
+      ["drivers", "documents", driverId] as const,
     assignments: (params?: Record<string, any>) =>
       ["drivers", "assignments", params] as const,
     performance: ["drivers", "performance"] as const,
@@ -203,9 +204,11 @@ export const queryKeys = {
 
   // Notifications
   notifications: {
-    all: (params?: Record<string, any>) =>
-      ["notifications", "all", params] as const,
-    settings: ["notifications", "settings"] as const,
+    all: ["notifications"] as const,
+    list: (filters?: Record<string, any>) =>
+      ["notifications", "list", filters] as const,
+    stats: () => ["notifications", "stats"] as const,
+    settings: () => ["notifications", "settings"] as const,
   },
 
   // Admin

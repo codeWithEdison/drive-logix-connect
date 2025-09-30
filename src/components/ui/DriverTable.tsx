@@ -55,7 +55,7 @@ export interface Driver {
   rating: number;
   total_deliveries: number;
   total_distance_km: number;
-  location: string;
+  driver_number: string;
   registeredDate: string;
   lastActive: string;
   avatar_url?: string;
@@ -395,7 +395,7 @@ export function DriverTable({
                     {t("driver.deliveries")}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
-                    {t("common.location")}
+                    {t("driver.driverNumber")}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
                     {t("common.actions")}
@@ -446,7 +446,7 @@ export function DriverTable({
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <span className="text-sm text-gray-700">
-                          {driver.location}
+                          {driver.driver_number}
                         </span>
                       </div>
                     </TableCell>

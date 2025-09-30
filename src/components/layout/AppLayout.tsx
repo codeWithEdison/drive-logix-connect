@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DriverNotifications } from "@/components/ui/DriverNotifications";
+import { NotificationCenter } from "@/components/ui/NotificationCenter";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
 import { useToast } from "@/hooks/use-toast";
 
@@ -68,13 +69,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <LanguageSwitcher />
               )}
 
-              {/* Mobile Notifications - Only show for drivers */}
-              {user.role === "driver" && (
-                <DriverNotifications
-                  onAction={handleNotificationAction}
-                  className="ml-2"
-                />
-              )}
+              {/* Mobile Notifications - Show for all users */}
+              <NotificationCenter className="ml-2" />
 
               <ProfileDropdown />
             </div>
@@ -112,22 +108,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                   <LanguageSwitcher />
                 )}
 
-                {/* Desktop Notifications - Only show for drivers */}
-                {user.role === "driver" ? (
-                  <DriverNotifications
-                    onAction={handleNotificationAction}
-                    className="ml-2"
-                  />
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9 w-9 p-0 relative text-gray-600 hover:text-gray-900"
-                  >
-                    <Bell className="h-4 w-4" />
-                    <span className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full text-xs"></span>
-                  </Button>
-                )}
+                {/* Desktop Notifications - Show for all users */}
+                <NotificationCenter />
 
                 <ProfileDropdown />
               </div>

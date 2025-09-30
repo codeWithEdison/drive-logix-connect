@@ -1,18 +1,13 @@
 import React, { useState } from "react";
-import { CustomTabs } from "@/components/ui/CustomTabs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus, UserPlus, RefreshCw, AlertCircle } from "lucide-react";
+import { Plus, RefreshCw, AlertCircle } from "lucide-react";
 import { DriverTable, Driver } from "@/components/ui/DriverTable";
-import { ClientTable, Client } from "@/components/ui/ClientTable";
 import { DriverDetailModal } from "@/components/ui/DriverDetailModal";
-import { ClientDetailModal } from "@/components/ui/ClientDetailModal";
-import { UserDetailModal } from "@/components/ui/UserDetailModal";
+import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
 import { UserForm } from "@/components/forms/UserForm";
 import ModernModel from "@/components/modal/ModernModel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -21,33 +16,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUserManagement, useUpdateUserStatus } from "@/lib/api/hooks";
-import {
-  useCreateAdminClient,
-  useCreateAdminDriver,
-} from "@/lib/api/hooks/adminHooks";
+import { useCreateAdminDriver } from "@/lib/api/hooks/adminHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
-import { UserRole, BusinessType, LicenseType, Language } from "@/types/shared";
 
 const AdminUsers = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("drivers");
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isDriverDetailModalOpen, setIsDriverDetailModalOpen] = useState(false);
-  const [isClientDetailModalOpen, setIsClientDetailModalOpen] = useState(false);
-  const [isUserDetailModalOpen, setIsUserDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Driver | Client | null>(null);
-  const [editingType, setEditingType] = useState<"driver" | "client">("driver");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [editingItem, setEditingItem] = useState<Driver | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isDocumentPreviewOpen, setIsDocumentPreviewOpen] = useState(false);
+  const [previewDocument, setPreviewDocument] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
 
   // API hooks
   const {
@@ -56,13 +45,12 @@ const AdminUsers = () => {
     error,
     refetch,
   } = useUserManagement({
-    role: roleFilter === "all" ? undefined : roleFilter,
+    role: "driver",
     status: statusFilter === "all" ? undefined : statusFilter,
     limit: 100,
   });
 
   const updateUserStatusMutation = useUpdateUserStatus();
-  const createClientMutation = useCreateAdminClient();
   const createDriverMutation = useCreateAdminDriver();
 
   // Transform API data
@@ -76,63 +64,33 @@ const AdminUsers = () => {
   // });
 
   const drivers: Driver[] =
-    usersData
-      ?.filter((user: any) => user.role === "driver")
-      .map((user: any) => ({
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        phone: user.phone,
-        license_number: user.driver?.license_number || "N/A",
-        license_expiry: user.driver?.license_expiry || "N/A",
-        license_type: user.driver?.license_type || "B",
-        date_of_birth: user.driver?.date_of_birth || "N/A",
-        emergency_contact: user.driver?.emergency_contact || "N/A",
-        emergency_phone: user.driver?.emergency_phone || "N/A",
-        blood_type: user.driver?.blood_type || "N/A",
-        medical_certificate_expiry:
-          user.driver?.medical_certificate_expiry || "N/A",
-        status: user.driver?.status || "available",
-        rating: user.driver?.rating || 0,
-        total_deliveries: user.driver?.total_deliveries || 0,
-        total_distance_km: user.driver?.total_distance_km || 0,
-        location: user.driver?.location || "Unknown",
-        registeredDate: user.created_at,
-        lastActive: user.last_login || "Never",
-        avatar_url: user.avatar_url,
-        is_active: user.is_active,
-        is_verified: user.is_verified,
-      })) || [];
-  const clients: Client[] =
-    usersData
-      ?.filter((user: any) => user.role === "client")
-      .map((user: any) => ({
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        phone: user.phone,
-        company_name: user.client?.company_name || "N/A",
-        business_type: user.client?.business_type || "individual",
-        tax_id: user.client?.tax_id || "N/A",
-        address: user.client?.address || "N/A",
-        city: user.client?.city || "N/A",
-        country: user.client?.country || "N/A",
-        postal_code: user.client?.postal_code || "N/A",
-        contact_person: user.client?.contact_person || "N/A",
-        credit_limit: user.client?.credit_limit || 0,
-        payment_terms: user.client?.payment_terms || 30,
-        status: user.is_active ? "active" : "inactive",
-        location: user.client?.city || "Unknown",
-        registeredDate: user.created_at,
-        lastActive: user.last_login || "Never",
-        totalCargos: user.client?.total_cargos || 0,
-        avatar_url: user.avatar_url,
-        is_active: user.is_active,
-        is_verified: user.is_verified,
-      })) || [];
+    usersData?.map((user: any) => ({
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      phone: user.phone,
+      license_number: user.driver?.license_number || "N/A",
+      license_expiry: user.driver?.license_expiry || "N/A",
+      license_type: user.driver?.license_type || "B",
+      date_of_birth: user.driver?.date_of_birth || "N/A",
+      emergency_contact: user.driver?.emergency_contact || "N/A",
+      emergency_phone: user.driver?.emergency_phone || "N/A",
+      blood_type: user.driver?.blood_type || "N/A",
+      medical_certificate_expiry:
+        user.driver?.medical_certificate_expiry || "N/A",
+      status: user.driver?.status || "available",
+      rating: user.driver?.rating || 0,
+      total_deliveries: user.driver?.total_deliveries || 0,
+      total_distance_km: user.driver?.total_distance_km || 0,
+      driver_number: user.driver?.code_number || "N/A",
+      registeredDate: user.created_at,
+      lastActive: user.last_login || "Never",
+      avatar_url: user.avatar_url,
+      is_active: user.is_active,
+      is_verified: user.is_verified,
+    })) || [];
 
   console.log("🔍 AdminUsers Debug - drivers:", drivers);
-  console.log("🔍 AdminUsers Debug - clients:", clients);
 
   // Driver handlers
   const handleViewDriverDetails = (driver: Driver) => {
@@ -142,7 +100,6 @@ const AdminUsers = () => {
 
   const handleEditDriver = (driver: Driver) => {
     setEditingItem(driver);
-    setEditingType("driver");
     setIsEditModalOpen(true);
   };
 
@@ -172,44 +129,6 @@ const AdminUsers = () => {
     }
   };
 
-  // Client handlers
-  const handleViewClientDetails = (client: Client) => {
-    setSelectedClient(client);
-    setIsClientDetailModalOpen(true);
-  };
-
-  const handleEditClient = (client: Client) => {
-    setEditingItem(client);
-    setEditingType("client");
-    setIsEditModalOpen(true);
-  };
-
-  const handleDeleteClient = async (clientId: string) => {
-    try {
-      await updateUserStatusMutation.mutateAsync({
-        id: clientId,
-        data: { is_active: false, reason: "Deleted by admin" },
-      });
-      customToast.success(t("adminUsers.clientDeleted"));
-      refetch();
-    } catch (error) {
-      customToast.error(t("errors.deleteFailed"));
-    }
-  };
-
-  const handleApproveClient = async (clientId: string) => {
-    try {
-      await updateUserStatusMutation.mutateAsync({
-        id: clientId,
-        data: { is_active: true, reason: "Approved by admin" },
-      });
-      customToast.success(t("adminUsers.clientApproved"));
-      refetch();
-    } catch (error) {
-      customToast.error(t("errors.approvalFailed"));
-    }
-  };
-
   // General handlers
   const handleCreateNew = () => {
     setIsCreateModalOpen(true);
@@ -224,22 +143,10 @@ const AdminUsers = () => {
     window.open(`tel:${phone}`, "_self");
   };
 
-  const handleViewUserDetails = (user: any) => {
-    setSelectedUser(user);
-    setIsUserDetailModalOpen(true);
-  };
-
   const handleCreateUser = async (userData: any) => {
     try {
-      if (userData.role === "client") {
-        await createClientMutation.mutateAsync(userData);
-        customToast.success(t("adminUsers.userCreated"));
-      } else if (userData.role === "driver") {
-        await createDriverMutation.mutateAsync(userData);
-        customToast.success(t("adminUsers.userCreated"));
-      } else {
-        throw new Error("Invalid user role");
-      }
+      await createDriverMutation.mutateAsync(userData);
+      customToast.success(t("adminUsers.userCreated"));
       setIsCreateModalOpen(false);
       refetch();
     } catch (error) {
@@ -247,10 +154,9 @@ const AdminUsers = () => {
     }
   };
 
-  const handleEditUser = (user: any) => {
-    setEditingItem(user);
-    setEditingType(user.role);
-    setIsEditModalOpen(true);
+  const handlePreviewDocument = (documentUrl: string, documentName: string) => {
+    setPreviewDocument({ url: documentUrl, name: documentName });
+    setIsDocumentPreviewOpen(true);
   };
 
   // Loading state
@@ -334,19 +240,6 @@ const AdminUsers = () => {
     );
   }
 
-  const tabs = [
-    {
-      value: "drivers",
-      label: t("common.drivers"),
-      count: drivers.length,
-    },
-    {
-      value: "clients",
-      label: t("common.clients"),
-      count: clients.length,
-    },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -378,20 +271,6 @@ const AdminUsers = () => {
       {/* Filters and Search */}
       <div className="flex flex-wrap gap-4 items-center">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">{t("common.role")}:</label>
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("common.all")}</SelectItem>
-              <SelectItem value="driver">{t("common.driver")}</SelectItem>
-              <SelectItem value="client">{t("common.client")}</SelectItem>
-              <SelectItem value="admin">{t("common.admin")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
           <label className="text-sm font-medium">{t("common.status")}:</label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-32">
@@ -415,37 +294,18 @@ const AdminUsers = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <CustomTabs tabs={tabs} value={activeTab} onValueChange={setActiveTab} />
-
-      {/* Tab Content */}
-      {activeTab === "drivers" && (
-        <DriverTable
-          drivers={drivers}
-          title=""
-          showSearch={false}
-          showFilters={false}
-          showPagination={false}
-          onViewDetails={handleViewDriverDetails}
-          onDeleteDriver={handleDeleteDriver}
-          onActivateDriver={handleApproveDriver}
-          onCallDriver={handleCallUser}
-        />
-      )}
-
-      {activeTab === "clients" && (
-        <ClientTable
-          clients={clients}
-          title=""
-          showSearch={false}
-          showFilters={false}
-          showPagination={false}
-          onViewDetails={handleViewClientDetails}
-          onDeleteClient={handleDeleteClient}
-          onActivateClient={handleApproveClient}
-          onCallClient={handleCallUser}
-        />
-      )}
+      {/* Driver Table */}
+      <DriverTable
+        drivers={drivers}
+        title=""
+        showSearch={false}
+        showFilters={false}
+        showPagination={false}
+        onViewDetails={handleViewDriverDetails}
+        onDeleteDriver={handleDeleteDriver}
+        onActivateDriver={handleApproveDriver}
+        onCallDriver={handleCallUser}
+      />
 
       {/* Modals */}
       {selectedDriver && (
@@ -456,28 +316,20 @@ const AdminUsers = () => {
             setIsDriverDetailModalOpen(false);
             setSelectedDriver(null);
           }}
+          onPreviewDocument={handlePreviewDocument}
         />
       )}
 
-      {selectedClient && (
-        <ClientDetailModal
-          client={selectedClient}
-          isOpen={isClientDetailModalOpen}
+      {/* Document Preview Modal */}
+      {previewDocument && (
+        <DocumentPreviewModal
+          isOpen={isDocumentPreviewOpen}
           onClose={() => {
-            setIsClientDetailModalOpen(false);
-            setSelectedClient(null);
+            setIsDocumentPreviewOpen(false);
+            setPreviewDocument(null);
           }}
-        />
-      )}
-
-      {selectedUser && (
-        <UserDetailModal
-          user={selectedUser}
-          isOpen={isUserDetailModalOpen}
-          onClose={() => {
-            setIsUserDetailModalOpen(false);
-            setSelectedUser(null);
-          }}
+          documentUrl={previewDocument.url}
+          documentName={previewDocument.name}
         />
       )}
 
@@ -490,9 +342,7 @@ const AdminUsers = () => {
         <UserForm
           onSubmit={handleCreateUser}
           onCancel={() => setIsCreateModalOpen(false)}
-          isLoading={
-            createClientMutation.isPending || createDriverMutation.isPending
-          }
+          isLoading={createDriverMutation.isPending}
           mode="create"
         />
       </ModernModel>
@@ -507,9 +357,7 @@ const AdminUsers = () => {
           initialData={editingItem as any}
           onSubmit={handleCreateUser}
           onCancel={() => setIsEditModalOpen(false)}
-          isLoading={
-            createClientMutation.isPending || createDriverMutation.isPending
-          }
+          isLoading={createDriverMutation.isPending}
           mode="edit"
         />
       </ModernModel>

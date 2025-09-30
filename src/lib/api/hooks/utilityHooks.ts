@@ -149,44 +149,44 @@ export const useNotifications = (params?: {
   limit?: number;
 }) => {
   return useQuery({
-    queryKey: queryKeys.notifications.all(params),
+    queryKey: [...queryKeys.notifications.all, params],
     queryFn: () => NotificationService.getNotifications(params),
     select: (data) => data.data,
   });
 };
 
-export const useMarkNotificationAsRead = () => {
+export const useLegacyMarkNotificationAsRead = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => NotificationService.markAsRead(id),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.notifications.all(),
+        queryKey: queryKeys.notifications.all,
       });
     },
   });
 };
 
-export const useMarkAllNotificationsAsRead = () => {
+export const useLegacyMarkAllNotificationsAsRead = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: () => NotificationService.markAllAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.notifications.all(),
+        queryKey: queryKeys.notifications.all,
       });
     },
   });
 };
 
-export const useNotificationSettings = () => {
+export const useLegacyNotificationSettings = () => {
   return useQuery({
-    queryKey: queryKeys.notifications.settings,
+    queryKey: queryKeys.notifications.settings(),
     queryFn: () => NotificationService.getSettings(),
     select: (data) => {
-      console.log("🔍 useNotificationSettings hook - raw data:", data);
+      console.log("🔍 useLegacyNotificationSettings hook - raw data:", data);
       // The API returns data directly in the data property
       if (data?.data) {
         return data.data;
@@ -197,20 +197,20 @@ export const useNotificationSettings = () => {
   });
 };
 
-export const useUpdateNotificationSettings = () => {
+export const useLegacyUpdateNotificationSettings = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (data: any) => NotificationService.updateSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.notifications.settings,
+        queryKey: queryKeys.notifications.settings(),
       });
     },
   });
 };
 
-export const useSendNotification = () => {
+export const useLegacySendNotification = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -224,7 +224,7 @@ export const useSendNotification = () => {
     }) => NotificationService.sendNotification(data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.notifications.all(),
+        queryKey: queryKeys.notifications.all,
       });
     },
   });
@@ -365,7 +365,6 @@ export const useCreateClient = () => {
     },
   });
 };
-
 
 export const useFinancialReports = (params?: {
   start_date?: string;
