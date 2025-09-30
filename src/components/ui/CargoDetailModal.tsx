@@ -179,6 +179,8 @@ interface CargoDetailModalProps {
   onReportIssue?: (cargoId: string) => void;
   onCancelCargo?: (cargoId: string) => void;
   onDownloadReceipt?: (cargoId: string) => void;
+  // Loading states
+  isStartingDelivery?: boolean;
   // Assignment system actions
   onAcceptAssignment?: (assignmentId: string, notes?: string) => void;
   onRejectAssignment?: (
@@ -215,6 +217,7 @@ export function CargoDetailModal({
   onCallDriver,
   onCancelCargo,
   onDownloadReceipt,
+  isStartingDelivery = false,
   onAcceptAssignment,
   onRejectAssignment,
   onCancelAssignment,
@@ -320,7 +323,22 @@ export function CargoDetailModal({
     return () => clearInterval(interval);
   }, [cargo]);
 
-  if (!cargo) return null;
+  if (!cargo) {
+    return (
+      <ModernModel
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Loading Cargo Details..."
+      >
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-sm text-gray-600">
+            Loading cargo details...
+          </span>
+        </div>
+      </ModernModel>
+    );
+  }
 
   // Debug logging for user role and cargo status
   console.log("CargoDetailModal Debug Info:", {
@@ -1818,9 +1836,19 @@ export function CargoDetailModal({
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   onClick={() => onStartDelivery?.(cargo.id)}
+                  disabled={isStartingDelivery}
                 >
-                  <Navigation className="h-4 w-4 mr-2" />
-                  Start Transit
+                  {isStartingDelivery ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Starting Transit...
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="h-4 w-4 mr-2" />
+                      Start Transit
+                    </>
+                  )}
                 </Button>
               )}
 
@@ -1828,9 +1856,19 @@ export function CargoDetailModal({
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700"
                   onClick={() => onStartDelivery?.(cargo.id)}
+                  disabled={isStartingDelivery}
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Mark Delivered
+                  {isStartingDelivery ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Marking Delivered...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Mark Delivered
+                    </>
+                  )}
                 </Button>
               )}
 

@@ -634,7 +634,7 @@
       "in_progress": "In Progress",
       "completed": "Completed",
       "failed": "Failed",
-      "available": "Available", 
+      "available": "Available",
       "on_duty": "On Duty",
       "unavailable": "Unavailable",
       "active": "Active"

@@ -18,9 +18,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useDriverCargos, useCargoById } from "@/lib/api/hooks";
+import { useUpdateDeliveryStatus } from "@/lib/api/hooks/deliveryHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { customToast } from "@/lib/utils/toast";
+import { UserRole } from "@/types/shared";
 import {
   mapCargosToCargoDetails,
   mapCargoToCargoDetail,
@@ -40,6 +42,7 @@ import {
   Truck,
   Clock,
   RefreshCw,
+  Eye,
 } from "lucide-react";
 
 export default function DriverDeliveries() {
@@ -78,6 +81,11 @@ export default function DriverDeliveries() {
     isLoading: isLoadingCargo,
     error: cargoError,
   } = useCargoById(selectedCargoId || "");
+
+  // Debug logging for selected cargo
+  console.log("🔍 selectedCargoId:", selectedCargoId);
+  console.log("🔍 selectedCargo:", selectedCargo);
+  console.log("🔍 isCargoModalOpen:", isCargoModalOpen);
 
   // Debug logging for API response
   console.log("🔍 DriverDeliveries - API Response:", allCargosData);
@@ -180,8 +188,17 @@ export default function DriverDeliveries() {
 
   // Handle opening cargo detail modal
   const handleOpenCargoModal = (cargo: CargoDetail) => {
+    console.log("🔍 Opening cargo modal for:", cargo.id, cargo);
+    console.log("🔍 Modal state before:", {
+      isCargoModalOpen,
+      selectedCargoId,
+    });
     setSelectedCargoId(cargo.id);
     setIsCargoModalOpen(true);
+    console.log("🔍 Modal state after:", {
+      isCargoModalOpen: true,
+      selectedCargoId: cargo.id,
+    });
   };
 
   // Handle closing cargo detail modal
@@ -190,13 +207,58 @@ export default function DriverDeliveries() {
     setSelectedCargoId(null);
   };
 
+  // API hook for updating delivery status
+  const updateDeliveryStatus = useUpdateDeliveryStatus();
+
   const handleStartDelivery = async (cargoId: string) => {
     try {
-      // TODO: Implement start delivery API call
-      console.log("Starting delivery for cargo:", cargoId);
-      customToast.success(t("delivery.deliveryStarted"));
-    } catch (error) {
-      customToast.error(t("errors.serverError"));
+      console.log("Starting transit for cargo:", cargoId);
+
+      // Get current GPS location
+      let locationData = null;
+      if (currentLocation) {
+        locationData = {
+          location_latitude: currentLocation.latitude,
+          location_longitude: currentLocation.longitude,
+        };
+      } else {
+        // Try to get current location if not available
+        try {
+          const location = await gpsTrackingService.getCurrentPosition();
+          locationData = {
+            location_latitude: location.latitude,
+            location_longitude: location.longitude,
+          };
+        } catch (locationError) {
+          console.warn("Could not get GPS location:", locationError);
+          // Continue without location data
+        }
+      }
+
+      // Call the API to update delivery status to "in_transit"
+      await updateDeliveryStatus.mutateAsync({
+        cargoId,
+        data: {
+          status: "in_transit",
+          ...locationData,
+          notes: "Cargo is now in transit",
+        },
+      });
+
+      customToast.success(
+        t("delivery.transitStarted") || "Transit started successfully"
+      );
+    } catch (error: any) {
+      console.error("Failed to start transit:", error);
+
+      // Show user-friendly error message
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to start transit";
+
+      customToast.error(errorMessage);
     }
   };
 
@@ -602,6 +664,41 @@ export default function DriverDeliveries() {
               onCallClient={handleCallClient}
               onUploadPhoto={handleUploadPhoto}
               onReportIssue={handleReportIssue}
+              getCustomActions={(cargo) => {
+                const actions = [
+                  {
+                    key: "view-details",
+                    label: "View Details",
+                    icon: <Eye className="h-3 w-3 mr-1" />,
+                    onClick: () => handleOpenCargoModal(cargo),
+                    variant: "outline" as const,
+                  },
+                ];
+
+                // Add other actions based on cargo status for drivers
+                if (cargo.status === "assigned") {
+                  actions.push({
+                    key: "start-delivery",
+                    label: "Start Delivery",
+                    icon: <Navigation className="h-3 w-3 mr-1" />,
+                    onClick: () => handleStartDelivery(cargo.id),
+                    variant: "outline" as const,
+                  });
+                }
+
+                if (cargo.clientPhone || cargo.phone) {
+                  actions.push({
+                    key: "call-client",
+                    label: "Call Client",
+                    icon: <Phone className="h-3 w-3 mr-1" />,
+                    onClick: () =>
+                      handleCallClient(cargo.clientPhone || cargo.phone),
+                    variant: "outline" as const,
+                  });
+                }
+
+                return actions;
+              }}
             />
           </CardContent>
         </Card>
@@ -712,15 +809,22 @@ export default function DriverDeliveries() {
         isOpen={isCargoModalOpen}
         onClose={handleCloseCargoModal}
         cargo={selectedCargo ? mapCargoToCargoDetail(selectedCargo) : null}
-        userRole={
-          (user?.role as "admin" | "superadmin" | "driver" | "client") ||
-          "driver"
-        }
+        userRole={user?.role || UserRole.DRIVER}
         onStartDelivery={handleStartDelivery}
         onCallClient={handleCallClient}
         onUploadPhoto={handleUploadPhoto}
         onReportIssue={handleReportIssue}
+        isStartingDelivery={updateDeliveryStatus.isPending}
       />
+
+      {/* Debug info */}
+      {/* {process.env.NODE_ENV === "development" && (
+        <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs rounded">
+          <div>Modal Open: {isCargoModalOpen ? "Yes" : "No"}</div>
+          <div>Selected ID: {selectedCargoId || "None"}</div>
+          <div>Cargo Data: {selectedCargo ? "Loaded" : "Loading..."}</div>
+        </div>
+      )} */}
 
       {/* Photo Upload Modal */}
       <PhotoUploadModal
