@@ -1355,5 +1355,250 @@
     "passwordChangeSuccessMessage": "Votre mot de passe a été modifié avec succès",
     "passwordChangeError": "Échec de la modification du mot de passe",
     "preferredLanguage": "Langue préférée"
+  },
+  "landing": {
+    "hero": {
+      "title": "Expédiez avec",
+      "titleHighlight": "Confiance",
+      "subtitle": "Suivez Chaque Kilomètre",
+      "description": "Plateforme logistique professionnelle connectant clients, chauffeurs et gestion de flotte avec suivi en temps réel. Nous livrons exactement où vous vous trouvez - peu importe où vous êtes. Rationalisez vos opérations de fret avec notre système avancé de gestion des transports.",
+      "ctaPrimary": "Expédier Maintenant",
+      "ctaSecondary": "Suivre Votre Expédition"
+    },
+    "steps": {
+      "book": {
+        "title": "Réserver Votre Expédition",
+        "description": "Remplissez les détails de collecte et de livraison, obtenez un prix instantané et choisissez votre heure de livraison préférée"
+      },
+      "track": {
+        "title": "Suivre Votre Cargo",
+        "description": "Recevez un lien de suivi, regardez les mises à jour de localisation en temps réel et obtenez des notifications de statut"
+      },
+      "receive": {
+        "title": "Recevoir Votre Cargo",
+        "description": "Le chauffeur arrive à votre emplacement exact, vérifiez la livraison avec une confirmation photo et évaluez votre expérience"
+      }
+    },
+    "payment": {
+      "mobile": {
+        "title": "Argent Mobile",
+        "description": "Payer avec MTN, Airtel ou d'autres services d'argent mobile"
+      },
+      "bank": {
+        "title": "Virement Bancaire",
+        "description": "Virements directs vers notre compte"
+      },
+      "online": {
+        "title": "Paiement en Ligne",
+        "description": "Traitement sécurisé des paiements en ligne"
+      }
+    },
+    "pricing": {
+      "perKm": "Par Kilomètre",
+      "perKg": "Par Kilogramme",
+      "sameDay": "Livraison le Même Jour"
+    },
+    "navigation": {
+      "services": "Services",
+      "tracking": "Suivi",
+      "pricing": "Tarifs",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "getStarted": "Commencer"
+    },
+    "benefits": {
+      "title": "Pourquoi Choisir Loveway Logistics?",
+      "subtitle": "Nous fournissons des solutions logistiques complètes avec une technologie de pointe et un service exceptionnel.",
+      "realTimeTracking": {
+        "title": "Suivi en Temps Réel",
+        "description": "Mises à jour GPS en direct pour savoir où se trouve votre cargaison à tout moment"
+      },
+      "securePayments": {
+        "title": "Paiements Sécurisés",
+        "description": "Plusieurs options de paiement incluant l'argent mobile et les virements bancaires"
+      },
+      "reliableDrivers": {
+        "title": "Chauffeurs Fiables",
+        "description": "Chauffeurs vérifiés et professionnels avec assurance"
+      },
+      "fastDelivery": {
+        "title": "Livraison Rapide",
+        "description": "Itinéraires optimisés pour une livraison rapide et efficace"
+      },
+      "support": {
+        "title": "Support 24/7",
+        "description": "Service client disponible quand vous en avez besoin"
+      },
+      "transparentPricing": {
+        "title": "Tarification Transparente",
+        "description": "Pas de frais cachés, tarifs clairs par distance et poids"
+      }
+    },
+    "howItWorks": {
+      "title": "Comment Ça Marche",
+      "subtitle": "Simple, rapide et fiable - faites livrer votre cargaison en trois étapes faciles."
+    },
+    "services": {
+      "title": "Services Que Nous Offrons",
+      "subtitle": "Solutions de livraison complètes adaptées à vos besoins spécifiques.",
+      "sameDay": {
+        "title": "Livraison le Même Jour",
+        "description": "Service express pour les envois urgents"
+      },
+      "scheduled": {
+        "title": "Livraison Programmée",
+        "description": "Planifiez vos envois à l'avance"
+      },
+      "fragile": {
+        "title": "Articles Fragiles",
+        "description": "Manutention spéciale pour les cargaisons délicates"
+      },
+      "large": {
+        "title": "Articles Volumineux",
+        "description": "Transport de cargaisons lourdes et surdimensionnées"
+      },
+      "documents": {
+        "title": "Livraison de Documents",
+        "description": "Livraison sécurisée de documents et colis"
+      },
+      "business": {
+        "title": "Expédition d'Entreprise",
+        "description": "Solutions de livraison régulières pour entreprises"
+      }
+    },
+    "paymentOptions": {
+      "title": "Options de Paiement Flexibles",
+      "subtitle": "Choisissez la méthode de paiement qui vous convient le mieux."
+    },
+    "trackingFeatures": {
+      "title": "Fonctionnalités de Suivi Avancées",
+      "subtitle": "Restez connecté avec votre cargaison à chaque étape.",
+      "liveGps": {
+        "title": "Suivi GPS en Direct",
+        "description": "Voir l'emplacement exact de votre cargaison"
+      },
+      "route": {
+        "title": "Visualisation d'Itinéraire",
+        "description": "Voir l'itinéraire de livraison prévu"
+      },
+      "eta": {
+        "title": "Mises à Jour ETA",
+        "description": "Obtenez des estimations de temps de livraison précises"
+      },
+      "notifications": {
+        "title": "Notifications de Statut",
+        "description": "Mises à jour par SMS et email"
+      },
+      "photos": {
+        "title": "Photos de Livraison",
+        "description": "Confirmation photo lors de la livraison"
+      }
+    },
+    "testimonials": {
+      "title": "Ce Que Disent Nos Clients",
+      "subtitle": "Ne nous croyez pas sur parole - écoutez nos clients satisfaits.",
+      "sarah": {
+        "name": "Sarah Johnson",
+        "role": "Propriétaire d'Entreprise",
+        "content": "Loveway Logistics a révolutionné notre entreprise. Livraison fiable à chaque fois!"
+      },
+      "michael": {
+        "name": "Michael Chen",
+        "role": "Boutique E-commerce",
+        "content": "Parfait pour les livraisons de notre boutique en ligne. Les clients adorent la fonctionnalité de suivi!"
+      },
+      "emily": {
+        "name": "Emily Rodriguez",
+        "role": "Client Individuel",
+        "content": "Excellent service, toujours à l'heure. Le suivi en temps réel me donne la tranquillité d'esprit."
+      }
+    },
+    "pricingSection": {
+      "title": "Tarification Transparente",
+      "subtitle": "Tarifs clairs et transparents sans frais cachés.",
+      "standardRates": "Tarifs Standard",
+      "getQuote": "Obtenir un Devis Instantané",
+      "getQuoteDescription": "Entrez les détails de votre envoi pour obtenir une estimation de prix précise.",
+      "getQuoteButton": "Obtenir un Devis Maintenant"
+    },
+    "faq": {
+      "title": "Questions Fréquemment Posées",
+      "subtitle": "Trouvez des réponses aux questions courantes sur nos services.",
+      "tracking": {
+        "question": "Comment puis-je suivre mon envoi?",
+        "answer": "Une fois que vous avez réservé un envoi, vous recevrez un lien de suivi par SMS et email. Vous pouvez également suivre votre cargaison en temps réel via notre site web ou application mobile."
+      },
+      "payment": {
+        "question": "Quelles méthodes de paiement acceptez-vous?",
+        "answer": "Nous acceptons l'argent mobile (MTN, Airtel), les virements bancaires, les paiements en ligne, et le paiement à la livraison là où disponible."
+      },
+      "delivery": {
+        "question": "Combien de temps prend la livraison?",
+        "answer": "Les temps de livraison varient selon la distance et le type de service. La livraison le même jour est disponible pour les envois urgents, tandis que la livraison standard prend généralement 1-3 jours ouvrables."
+      },
+      "damage": {
+        "question": "Que faire si ma cargaison est endommagée?",
+        "answer": "Tous nos chauffeurs sont assurés et nous avons une politique de dommages complète. Contactez immédiatement notre équipe de support si vous remarquez des dommages à votre cargaison."
+      },
+      "address": {
+        "question": "Puis-je changer l'adresse de livraison?",
+        "answer": "Oui, vous pouvez changer l'adresse de livraison jusqu'à 2 heures avant l'heure de livraison prévue via notre application ou en contactant le support client."
+      },
+      "weekend": {
+        "question": "Livrez-vous le week-end?",
+        "answer": "Oui, nous offrons des services de livraison le week-end moyennant des frais supplémentaires. Vous pouvez sélectionner la livraison le week-end lors de la réservation de votre envoi."
+      }
+    },
+    "contact": {
+      "title": "Contactez-Nous",
+      "subtitle": "Contactez notre équipe pour toute question ou support dont vous avez besoin.",
+      "phone": "Téléphone",
+      "email": "Email",
+      "address": "Adresse",
+      "phoneNumbers": {
+        "primary": "+250 788 123 456",
+        "secondary": "+250 789 123 456"
+      },
+      "emails": {
+        "info": "info@lovewaylogistics.com",
+        "support": "support@lovewaylogistics.com"
+      },
+      "addressInfo": {
+        "street": "KG 123 St, Kigali",
+        "country": "Rwanda"
+      }
+    },
+    "getStarted": {
+      "title": "Prêt à Commencer?",
+      "subtitle": "Rejoignez des milliers de clients satisfaits qui font confiance à Loveway Logistics pour leurs besoins de livraison.",
+      "bookNow": "Réserver Maintenant",
+      "getQuote": "Obtenir un Devis",
+      "downloadApp": "Télécharger l'App",
+      "contactUs": "Contactez-Nous"
+    },
+    "footer": {
+      "description": "Plateforme logistique professionnelle connectant clients, chauffeurs et gestion de flotte avec suivi en temps réel et paiements sécurisés.",
+      "services": "Services",
+      "support": "Support",
+      "contactInfo": "Informations de Contact",
+      "copyright": "© 2024 Loveway Logistics Platform. Tous droits réservés.",
+      "links": {
+        "sameDay": "Livraison le Même Jour",
+        "scheduled": "Livraison Programmée",
+        "fragile": "Articles Fragiles",
+        "business": "Expédition d'Entreprise",
+        "faq": "FAQ",
+        "contact": "Contactez-Nous",
+        "track": "Suivre l'Expédition",
+        "help": "Centre d'Aide"
+      }
+    },
+    "trackingDemo": {
+      "title": "Suivi en Direct",
+      "active": "Actif",
+      "eta": "ETA",
+      "status": "Statut",
+      "inTransit": "En Transit"
+    }
   }
 }

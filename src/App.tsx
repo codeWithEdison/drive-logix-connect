@@ -52,6 +52,7 @@ import DistrictManagement from "@/pages/superadmin/DistrictManagement";
 import NotFound from "@/pages/NotFound";
 import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
 import { ProfilePage } from "@/pages/Profile";
+import LandingPage from "@/pages/LandingPage";
 
 function AppContent() {
   const { isAuthenticated, user, getDefaultRoute, isInitialized } = useAuth();
@@ -74,13 +75,14 @@ function AppContent() {
   if (!isAuthenticated) {
     return (
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
   }

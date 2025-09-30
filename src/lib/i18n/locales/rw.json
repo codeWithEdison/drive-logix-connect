@@ -1314,5 +1314,250 @@
     "updateUserErrorDesc": "Ikosa muguhindura imiterere y'umukoresha. Nyamuneka gerageza nanone.",
     "editUser": "Guhindura Umukoresha",
     "updateUser": "Kuvugurura Umukoresha"
+  },
+  "landing": {
+    "hero": {
+      "title": "Kohereza",
+      "titleHighlight": "Uwizera",
+      "subtitle": "Kurikirana Buri Kilometa",
+      "description": "Urubuga rw'ubucuruzi rw'ubucuruzi ruhuza abakiriya, abashoferi, n'ubuyobozi bw'ibikoresho hamwe n'ukurikirana mu gihe cy'ukuri. Turakohereza aho uri - nta na rimwe aho uri. Koresha neza ibikoresho byawe by'ubucuruzi hamwe n'urubuga rwacu rw'ubuyobozi bw'ubwoba.",
+      "ctaPrimary": "Kohereza Ubu",
+      "ctaSecondary": "Kurikirana Kohereza Ryawe"
+    },
+    "steps": {
+      "book": {
+        "title": "Kwiyandikisha Kohereza",
+        "description": "Uzuza amakuru y'ahantu hakurwa n'ahantu hagereranywa, ubone igiciro cy'ukuri, kandi uhitamo igihe cyawe cyo kohereza"
+      },
+      "track": {
+        "title": "Kurikirana Ibikoresho Byawe",
+        "description": "Uhabwe ihuza ry'ukurikirana, urebe amakuru y'ahantu mu gihe cy'ukuri, kandi ubone amakuru y'umiterere"
+      },
+      "receive": {
+        "title": "Kwakira Ibikoresho Byawe",
+        "description": "Umushoferi agera aho uri, uhamagare kohereza hamwe n'ifoto yemeza, kandi ugerageze ibyerekeye"
+      }
+    },
+    "payment": {
+      "mobile": {
+        "title": "Amafaranga ya Telefone",
+        "description": "Kwishyura hamwe na MTN, Airtel, cyangwa serivisi zindi za telefone"
+      },
+      "bank": {
+        "title": "Kohereza mu Banki",
+        "description": "Kohereza mu banki zacu"
+      },
+      "online": {
+        "title": "Kwishyura ku Muturanyi",
+        "description": "Gutunganya kwishyura ku muturanyi mu buryo bwo kwizera"
+      }
+    },
+    "pricing": {
+      "perKm": "Burigihe Kilometa",
+      "perKg": "Burigihe Kilogramu",
+      "sameDay": "Kohereza mu Munsi Umwe"
+    },
+    "navigation": {
+      "services": "Serivisi",
+      "tracking": "Kurikirana",
+      "pricing": "Amafaranga",
+      "faq": "Ibibazo",
+      "contact": "Tuvugane",
+      "getStarted": "Tangira"
+    },
+    "benefits": {
+      "title": "Kuki Twihitamo Loveway Logistics?",
+      "subtitle": "Tanga ibisubizo byuzuye by'ubucuruzi hamwe n'ikoranabuhanga ryihariye n'umurimo mwiza.",
+      "realTimeTracking": {
+        "title": "Kurikirana mu Gihe cy'ukuri",
+        "description": "Amakuru ya GPS mu gihe cy'ukuri kugira ngo umenye aho ibikoresho byawe biri buri gihe"
+      },
+      "securePayments": {
+        "title": "Kwishyura mu Buryo bwo Kwizera",
+        "description": "Amahitamo menshi yo kwishyura harimo amafaranga ya telefone na kohereza mu banki"
+      },
+      "reliableDrivers": {
+        "title": "Abashoferi Bizeye",
+        "description": "Abashoferi bavuguruwe, b'umwuga bafite ubwishingizi"
+      },
+      "fastDelivery": {
+        "title": "Kohereza Vuba",
+        "description": "Inzira zikoreshwa neza kugira ngo kohereze vuba kandi neza"
+      },
+      "support": {
+        "title": "Gufasha 24/7",
+        "description": "Serivisi y'abakiriya iriho igihe cyose ukeneye"
+      },
+      "transparentPricing": {
+        "title": "Amafaranga Asa n'ukuri",
+        "description": "Nta mafaranga yihishe, amafaranga asa n'ukuri buri metero na kilogramu"
+      }
+    },
+    "howItWorks": {
+      "title": "Biteganywa",
+      "subtitle": "Byoroshye, vuba, kandi bizewe - kohereza ibikoresho byawe mu nzira eshatu zoroshye."
+    },
+    "services": {
+      "title": "Serivisi Dutanga",
+      "subtitle": "Ibisubizo byuzuye byo kohereza byateguwe kugira ngo bihuye n'ibyo ukeneye.",
+      "sameDay": {
+        "title": "Kohereza mu Munsi Umwe",
+        "description": "Serivisi yihutirwa y'ibikoresho byihutirwa"
+      },
+      "scheduled": {
+        "title": "Kohereza Ryateguwe",
+        "description": "Gahunda y'ibikoresho byawe mbere"
+      },
+      "fragile": {
+        "title": "Ibintu Bikomereka",
+        "description": "Gutunganya ibikoresho bikomereka"
+      },
+      "large": {
+        "title": "Ibintu Binini",
+        "description": "Kohereza ibikoresho binini n'ibiremereye"
+      },
+      "documents": {
+        "title": "Kohereza Inyandiko",
+        "description": "Kohereza inyandiko n'ibikoresho mu buryo bwo kwizera"
+      },
+      "business": {
+        "title": "Kohereza ry'Ubucuruzi",
+        "description": "Ibisubizo byo kohereza ry'ubucuruzi"
+      }
+    },
+    "paymentOptions": {
+      "title": "Amahitamo yo Kwishyura",
+      "subtitle": "Hitamo uburyo bwo kwishyura bukora neza kuri wowe."
+    },
+    "trackingFeatures": {
+      "title": "Ibiranga Kurikirana",
+      "subtitle": "Komeza uhuza n'ibikoresho byawe buri nzira.",
+      "liveGps": {
+        "title": "Kurikirana GPS mu Gihe cy'ukuri",
+        "description": "Reba aho ibikoresho byawe biri"
+      },
+      "route": {
+        "title": "Kwerekana Inzira",
+        "description": "Reba inzira yateguwe yo kohereza"
+      },
+      "eta": {
+        "title": "Amakuru y'Igihe",
+        "description": "Bona amakuru y'igihe cyo kohereza"
+      },
+      "notifications": {
+        "title": "Amakuru y'Umiterere",
+        "description": "Amakuru ya SMS na email"
+      },
+      "photos": {
+        "title": "Amashusho yo Kohereza",
+        "description": "Kwemeza kohereza hamwe n'amashusho"
+      }
+    },
+    "testimonials": {
+      "title": "Ibyo Abakiriya Bacu Bavuga",
+      "subtitle": "Ntukareke dutangire - umve abakiriya bacu bishimye.",
+      "sarah": {
+        "name": "Sarah Johnson",
+        "role": "Umwe mu Banyamubucuruzi",
+        "content": "Loveway Logistics yahinduye ubucuruzi bwacu. Kohereza bizewe buri gihe!"
+      },
+      "michael": {
+        "name": "Michael Chen",
+        "role": "Ububiko bwa E-commerce",
+        "content": "Bikunze ububiko bwacu bwo ku muturanyi. Abakiriya bakunda kurikirana!"
+      },
+      "emily": {
+        "name": "Emily Rodriguez",
+        "role": "Umukiriya w'umuntu",
+        "content": "Serivisi nziza, buri gihe mu gihe. Kurikirana mu gihe cy'ukuri bantanga umutekano."
+      }
+    },
+    "pricingSection": {
+      "title": "Amafaranga Asa n'ukuri",
+      "subtitle": "Amafaranga asa n'ukuri, nta mafaranga yihishe.",
+      "standardRates": "Amafaranga Rusange",
+      "getQuote": "Bona Igiciro cy'ukuri",
+      "getQuoteDescription": "Injiza amakuru y'ibikoresho byawe kugira ngo ubone igiciro cy'ukuri.",
+      "getQuoteButton": "Bona Igiciro Ubu"
+    },
+    "faq": {
+      "title": "Ibibazo Byibuze",
+      "subtitle": "Bona ibisubizo by'ibibazo byakunze kubazwa ku serivisi zacu.",
+      "tracking": {
+        "question": "Nkurikirana ikihe kohereza?",
+        "answer": "Maze wiyandikisha kohereza, uzahabwa ihuza ry'ukurikirana binyuze muri SMS na email. Urashobora kandi kurikirana ibikoresho byawe mu gihe cy'ukuri binyuze ku rubuga rwacu cyangwa porogaramu ya telefone."
+      },
+      "payment": {
+        "question": "Ni ubuhe buryo bwo kwishyura mwemera?",
+        "answer": "Twemera amafaranga ya telefone (MTN, Airtel), kohereza mu banki, kwishyura ku muturanyi, na kwishyura igihe kohereza iriho (aho biraboneka)."
+      },
+      "delivery": {
+        "question": "Kohereza biragira ikihe gihe?",
+        "answer": "Igihe cyo kohereza cyihinduka bitewe n'umugabane n'ubwoko bw'umurimo. Kohereza mu munsi umwe biraboneka k'ibikoresho byihutirwa, mugihe kohereza rusange biragira iminsi 1-3 y'akazi."
+      },
+      "damage": {
+        "question": "Niba ibikoresho byanjye byononekaye?",
+        "answer": "Abashoferi bacu bose bafite ubwishingizi kandi dufite politiki yuzuye y'ubwononeke. Vugana n'itsinda ryacu ry'ubufasha vuba niba ubona ubwononeke bw'ibikoresho byawe."
+      },
+      "address": {
+        "question": "Nshobora guhindura ahandi hantu hagereranywa?",
+        "answer": "Yego, urashobora guhindura ahandi hantu hagereranywa imbere y'amasaha 2 y'igihe cyo kohereza binyuze ku porogaramu cyangwa binyuze mu guvugana n'ubufasha bw'abakiriya."
+      },
+      "weekend": {
+        "question": "Murakohereza ku mperuka z'icyumweru?",
+        "answer": "Yego, tanga serivisi zo kohereza ku mperuka z'icyumweru ku mafaranga yongeye. Urashobora guhitamo kohereza ku mperuka z'icyumweru igihe wiyandikisha kohereza."
+      }
+    },
+    "contact": {
+      "title": "Tuvugane",
+      "subtitle": "Vugana n'itsinda ryacu k'ibibazo cyangwa ubufasha ukeneye.",
+      "phone": "Telefone",
+      "email": "Email",
+      "address": "Ahandi",
+      "phoneNumbers": {
+        "primary": "+250 788 123 456",
+        "secondary": "+250 789 123 456"
+      },
+      "emails": {
+        "info": "info@lovewaylogistics.com",
+        "support": "support@lovewaylogistics.com"
+      },
+      "addressInfo": {
+        "street": "KG 123 St, Kigali",
+        "country": "Rwanda"
+      }
+    },
+    "getStarted": {
+      "title": "Witeguye Gutangira?",
+      "subtitle": "Jya mu bakiriya ibihumbi bishimye bizeye Loveway Logistics k'ubufasha bw'ubwoba.",
+      "bookNow": "Kwiyandikisha Ubu",
+      "getQuote": "Bona Igiciro",
+      "downloadApp": "Kuramo Porogaramu",
+      "contactUs": "Tuvugane"
+    },
+    "footer": {
+      "description": "Urubuga rw'ubucuruzi rw'ubucuruzi ruhuza abakiriya, abashoferi, n'ubuyobozi bw'ibikoresho hamwe n'ukurikirana mu gihe cy'ukuri n'ubwoba bw'ubwoba.",
+      "services": "Serivisi",
+      "support": "Ubufasha",
+      "contactInfo": "Amakuru yo Tuvugane",
+      "copyright": "© 2024 Loveway Logistics Platform. Uburenganzira bwose burabitswe.",
+      "links": {
+        "sameDay": "Kohereza mu Munsi Umwe",
+        "scheduled": "Kohereza Ryateguwe",
+        "fragile": "Ibintu Bikomereka",
+        "business": "Kohereza ry'Ubucuruzi",
+        "faq": "Ibibazo",
+        "contact": "Tuvugane",
+        "track": "Kurikirana Kohereza",
+        "help": "Ikigo cy'Ubufasha"
+      }
+    },
+    "trackingDemo": {
+      "title": "Kurikirana mu Gihe cy'ukuri",
+      "active": "Gikora",
+      "eta": "Igihe",
+      "status": "Umiterere",
+      "inTransit": "Mu Nzira"
+    }
   }
 }

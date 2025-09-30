@@ -1742,5 +1742,250 @@
     "emergencyPhone": "Emergency Phone",
     "rating": "Rating",
     "preferredLanguage": "Preferred Language"
+  },
+  "landing": {
+    "hero": {
+      "title": "Ship with",
+      "titleHighlight": "Confidence",
+      "subtitle": "Track Every Mile",
+      "description": "Professional logistics platform connecting clients, drivers, and fleet management with real-time tracking. We deliver to exactly where you are located - no matter where you are. Streamline your cargo operations with our advanced transportation management system.",
+      "ctaPrimary": "Ship Now",
+      "ctaSecondary": "Track Your Shipment"
+    },
+    "steps": {
+      "book": {
+        "title": "Book Your Shipment",
+        "description": "Fill out pickup and delivery details, get instant pricing, and choose your preferred delivery time"
+      },
+      "track": {
+        "title": "Track Your Cargo",
+        "description": "Receive tracking link, watch real-time location updates, and get status notifications"
+      },
+      "receive": {
+        "title": "Receive Your Cargo",
+        "description": "Driver arrives at your exact location, verify delivery with photo confirmation, and rate your experience"
+      }
+    },
+    "payment": {
+      "mobile": {
+        "title": "Mobile Money",
+        "description": "Pay with MTN, Airtel, or other mobile money services"
+      },
+      "bank": {
+        "title": "Bank Transfer",
+        "description": "Direct bank transfers to our account"
+      },
+      "online": {
+        "title": "Online Payment",
+        "description": "Secure online payment processing"
+      }
+    },
+    "pricing": {
+      "perKm": "Per Kilometer",
+      "perKg": "Per Kilogram",
+      "sameDay": "Same-Day Delivery"
+    },
+    "navigation": {
+      "services": "Services",
+      "tracking": "Tracking",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "getStarted": "Get Started"
+    },
+    "benefits": {
+      "title": "Why Choose Loveway Logistics?",
+      "subtitle": "We provide comprehensive logistics solutions with cutting-edge technology and exceptional service.",
+      "realTimeTracking": {
+        "title": "Real-Time Tracking",
+        "description": "Live GPS updates so you know where your cargo is at all times"
+      },
+      "securePayments": {
+        "title": "Secure Payments",
+        "description": "Multiple payment options including mobile money and bank transfers"
+      },
+      "reliableDrivers": {
+        "title": "Reliable Drivers",
+        "description": "Verified, professional drivers with insurance coverage"
+      },
+      "fastDelivery": {
+        "title": "Fast Delivery",
+        "description": "Optimized routes for quick and efficient delivery"
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Customer service available when you need it most"
+      },
+      "transparentPricing": {
+        "title": "Transparent Pricing",
+        "description": "No hidden fees, clear rates per distance and weight"
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "subtitle": "Simple, fast, and reliable - get your cargo delivered in just three easy steps."
+    },
+    "services": {
+      "title": "Services We Offer",
+      "subtitle": "Comprehensive delivery solutions tailored to meet your specific needs.",
+      "sameDay": {
+        "title": "Same-Day Delivery",
+        "description": "Express service for urgent shipments"
+      },
+      "scheduled": {
+        "title": "Scheduled Delivery",
+        "description": "Plan your shipments in advance"
+      },
+      "fragile": {
+        "title": "Fragile Items",
+        "description": "Special handling for delicate cargo"
+      },
+      "large": {
+        "title": "Large Items",
+        "description": "Heavy and oversized cargo transport"
+      },
+      "documents": {
+        "title": "Document Delivery",
+        "description": "Secure document and package delivery"
+      },
+      "business": {
+        "title": "Business Shipping",
+        "description": "Regular business delivery solutions"
+      }
+    },
+    "paymentOptions": {
+      "title": "Flexible Payment Options",
+      "subtitle": "Choose the payment method that works best for you."
+    },
+    "trackingFeatures": {
+      "title": "Advanced Tracking Features",
+      "subtitle": "Stay connected with your cargo every step of the way.",
+      "liveGps": {
+        "title": "Live GPS Tracking",
+        "description": "See your cargo's exact location"
+      },
+      "route": {
+        "title": "Route Visualization",
+        "description": "View the planned delivery route"
+      },
+      "eta": {
+        "title": "ETA Updates",
+        "description": "Get accurate delivery time estimates"
+      },
+      "notifications": {
+        "title": "Status Notifications",
+        "description": "SMS and email updates"
+      },
+      "photos": {
+        "title": "Delivery Photos",
+        "description": "Photo confirmation upon delivery"
+      }
+    },
+    "testimonials": {
+      "title": "What Our Customers Say",
+      "subtitle": "Don't just take our word for it - hear from our satisfied customers.",
+      "sarah": {
+        "name": "Sarah Johnson",
+        "role": "Business Owner",
+        "content": "Loveway Logistics has been a game-changer for our business. Reliable delivery every time!"
+      },
+      "michael": {
+        "name": "Michael Chen",
+        "role": "E-commerce Store",
+        "content": "Perfect for our online store deliveries. Customers love the tracking feature!"
+      },
+      "emily": {
+        "name": "Emily Rodriguez",
+        "role": "Individual Customer",
+        "content": "Great service, always on time. The real-time tracking gives me peace of mind."
+      }
+    },
+    "pricingSection": {
+      "title": "Transparent Pricing",
+      "subtitle": "Clear, upfront pricing with no hidden fees.",
+      "standardRates": "Standard Rates",
+      "getQuote": "Get Instant Quote",
+      "getQuoteDescription": "Enter your shipment details to get an accurate price estimate.",
+      "getQuoteButton": "Get Quote Now"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Find answers to common questions about our services.",
+      "tracking": {
+        "question": "How do I track my shipment?",
+        "answer": "Once you book a shipment, you'll receive a tracking link via SMS and email. You can also track your cargo in real-time through our website or mobile app."
+      },
+      "payment": {
+        "question": "What payment methods do you accept?",
+        "answer": "We accept mobile money (MTN, Airtel), bank transfers, online payments, and cash on delivery where available."
+      },
+      "delivery": {
+        "question": "How long does delivery take?",
+        "answer": "Delivery times vary based on distance and service type. Same-day delivery is available for urgent shipments, while standard delivery typically takes 1-3 business days."
+      },
+      "damage": {
+        "question": "What if my cargo is damaged?",
+        "answer": "All our drivers are insured and we have a comprehensive damage policy. Contact our support team immediately if you notice any damage to your cargo."
+      },
+      "address": {
+        "question": "Can I change the delivery address?",
+        "answer": "Yes, you can change the delivery address up to 2 hours before the scheduled delivery time through our app or by contacting customer support."
+      },
+      "weekend": {
+        "question": "Do you deliver on weekends?",
+        "answer": "Yes, we offer weekend delivery services for an additional fee. You can select weekend delivery when booking your shipment."
+      }
+    },
+    "contact": {
+      "title": "Contact Us",
+      "subtitle": "Get in touch with our team for any questions or support you need.",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "phoneNumbers": {
+        "primary": "+250 788 123 456",
+        "secondary": "+250 789 123 456"
+      },
+      "emails": {
+        "info": "info@lovewaylogistics.com",
+        "support": "support@lovewaylogistics.com"
+      },
+      "addressInfo": {
+        "street": "KG 123 St, Kigali",
+        "country": "Rwanda"
+      }
+    },
+    "getStarted": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join thousands of satisfied customers who trust Loveway Logistics for their delivery needs.",
+      "bookNow": "Book Now",
+      "getQuote": "Get Quote",
+      "downloadApp": "Download App",
+      "contactUs": "Contact Us"
+    },
+    "footer": {
+      "description": "Professional logistics platform connecting clients, drivers, and fleet management with real-time tracking and secure payments.",
+      "services": "Services",
+      "support": "Support",
+      "contactInfo": "Contact Info",
+      "copyright": "© 2024 Loveway Logistics Platform. All rights reserved.",
+      "links": {
+        "sameDay": "Same-Day Delivery",
+        "scheduled": "Scheduled Delivery",
+        "fragile": "Fragile Items",
+        "business": "Business Shipping",
+        "faq": "FAQ",
+        "contact": "Contact Us",
+        "track": "Track Shipment",
+        "help": "Help Center"
+      }
+    },
+    "trackingDemo": {
+      "title": "Live Tracking",
+      "active": "Active",
+      "eta": "ETA",
+      "status": "Status",
+      "inTransit": "In Transit"
+    }
   }
 }
