@@ -1986,6 +1986,43 @@
       "eta": "ETA",
       "status": "Status",
       "inTransit": "In Transit"
+    },
+    "downloadApp": {
+      "title": "Download Our App",
+      "subtitle": "Get the full Loveway Logistics experience on your mobile device",
+      "downloadButton": "Download App",
+      "available": "Available on iOS and Android",
+      "androidOnly": "Available on Android",
+      "features": {
+        "details": "Cargo Details",
+        "client": "Client Dashboard",
+        "tracking": "Real-time Tracking"
+      }
+    },
+    "vehicles": {
+      "title": "Our Vehicle Fleet",
+      "subtitle": "Choose the right vehicle for your cargo needs. We have a diverse fleet to handle any shipment size.",
+      "truck": {
+        "name": "Heavy Truck",
+        "capacity": "Up to 25 tons",
+        "description": "Perfect for large shipments, construction materials, and heavy equipment. Our heavy trucks are equipped with advanced tracking and safety features.",
+        "weight": "Max: 25,000 kg",
+        "dimensions": "12m x 2.5m x 3m"
+      },
+      "van": {
+        "name": "Delivery Van",
+        "capacity": "Up to 2 tons",
+        "description": "Ideal for medium-sized packages, documents, and small business deliveries. Fast and efficient for urban deliveries.",
+        "weight": "Max: 2,000 kg",
+        "dimensions": "4m x 2m x 2m"
+      },
+      "motorcycle": {
+        "name": "Delivery Motorcycle",
+        "capacity": "Up to 50 kg",
+        "description": "Perfect for urgent deliveries, documents, and small packages. Navigates through traffic quickly for same-day delivery.",
+        "weight": "Max: 50 kg",
+        "dimensions": "2m x 0.8m x 1.2m"
+      }
     }
   }
 }

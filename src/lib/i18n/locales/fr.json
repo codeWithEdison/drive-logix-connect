@@ -1599,6 +1599,43 @@
       "eta": "ETA",
       "status": "Statut",
       "inTransit": "En Transit"
+    },
+    "downloadApp": {
+      "title": "Télécharger Notre App",
+      "subtitle": "Obtenez l'expérience complète Loveway Logistics sur votre appareil mobile",
+      "downloadButton": "Télécharger l'App",
+      "available": "Disponible sur iOS et Android",
+      "androidOnly": "Disponible sur Android",
+      "features": {
+        "details": "Détails du Cargo",
+        "client": "Tableau de Bord Client",
+        "tracking": "Suivi en Temps Réel"
+      }
+    },
+    "vehicles": {
+      "title": "Notre Flotte de Véhicules",
+      "subtitle": "Choisissez le bon véhicule pour vos besoins de cargaison. Nous avons une flotte diversifiée pour gérer toute taille d'expédition.",
+      "truck": {
+        "name": "Camion Lourd",
+        "capacity": "Jusqu'à 25 tonnes",
+        "description": "Parfait pour les gros envois, matériaux de construction et équipements lourds. Nos camions lourds sont équipés de fonctionnalités de suivi et de sécurité avancées.",
+        "weight": "Max: 25,000 kg",
+        "dimensions": "12m x 2.5m x 3m"
+      },
+      "van": {
+        "name": "Fourgon de Livraison",
+        "capacity": "Jusqu'à 2 tonnes",
+        "description": "Idéal pour les colis de taille moyenne, documents et livraisons de petites entreprises. Rapide et efficace pour les livraisons urbaines.",
+        "weight": "Max: 2,000 kg",
+        "dimensions": "4m x 2m x 2m"
+      },
+      "motorcycle": {
+        "name": "Moto de Livraison",
+        "capacity": "Jusqu'à 50 kg",
+        "description": "Parfait pour les livraisons urgentes, documents et petits colis. Navigue rapidement dans le trafic pour la livraison le même jour.",
+        "weight": "Max: 50 kg",
+        "dimensions": "2m x 0.8m x 1.2m"
+      }
     }
   }
 }

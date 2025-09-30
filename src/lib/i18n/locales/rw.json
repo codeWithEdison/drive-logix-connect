@@ -1558,6 +1558,43 @@
       "eta": "Igihe",
       "status": "Umiterere",
       "inTransit": "Mu Nzira"
+    },
+    "downloadApp": {
+      "title": "Kuramo Porogaramu yacu",
+      "subtitle": "Bona ubwoba bwose bwa Loveway Logistics ku telefone yawe",
+      "downloadButton": "Kuramo Porogaramu",
+      "available": "Biraboneka ku iOS na Android",
+      "androidOnly": "Biraboneka ku Android",
+      "features": {
+        "details": "Amakuru y'Ibikoresho",
+        "client": "Urubuga rw'Umukiriya",
+        "tracking": "Kurikirana mu Gihe cy'ukuri"
+      }
+    },
+    "vehicles": {
+      "title": "Ibikoresho byacu byo Gutwara",
+      "subtitle": "Hitamo ikoresho cy'ukuri k'ibikoresho byawe. Dufite ibikoresho byinshi byo gutwara ibikoresho byose.",
+      "truck": {
+        "name": "Imodoka Nini",
+        "capacity": "Kugeza ku toni 25",
+        "description": "Bikunze k'ibikoresho binini, ibikoresho by'ubwubatsi, n'ibikoresho byinshi. Imodoka zacu zinini zifite ibiranga byo kurikirana n'ubwoba.",
+        "weight": "Max: 25,000 kg",
+        "dimensions": "12m x 2.5m x 3m"
+      },
+      "van": {
+        "name": "Imodoka yo Kohereza",
+        "capacity": "Kugeza ku toni 2",
+        "description": "Bikunze k'amapaketi y'ubunini, inyandiko, n'ibikoresho by'ubucuruzi buto. Vuba kandi bikora neza k'ibikoresho byo mu mujyi.",
+        "weight": "Max: 2,000 kg",
+        "dimensions": "4m x 2m x 2m"
+      },
+      "motorcycle": {
+        "name": "Imashini yo Kohereza",
+        "capacity": "Kugeza ku kg 50",
+        "description": "Bikunze k'ibikoresho byihutirwa, inyandiko, n'amapaketi mato. Inyura mu nzira z'umuduga vuba k'ibikoresho byo mu munsi umwe.",
+        "weight": "Max: 50 kg",
+        "dimensions": "2m x 0.8m x 1.2m"
+      }
     }
   }
 }
