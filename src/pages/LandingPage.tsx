@@ -42,9 +42,67 @@ const LandingPage: React.FC = () => {
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
   const [currentVehicleIndex, setCurrentVehicleIndex] = useState(0);
   const [currentAppImageIndex, setCurrentAppImageIndex] = useState(0);
+  const [calculatorInputs, setCalculatorInputs] = useState({
+    distance: "",
+    weight: "",
+    category: "standard",
+  });
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
+  };
+
+  // Price Calculator Functions
+  const calculatePrice = () => {
+    const { distance, weight, category } = calculatorInputs;
+
+    // Convert string inputs to numbers, default to 0 if empty
+    const distanceNum = parseFloat(distance) || 0;
+    const weightNum = parseFloat(weight) || 0;
+
+    // If both inputs are empty, return 0
+    if (distanceNum === 0 && weightNum === 0) {
+      return 0;
+    }
+
+    // Base rates
+    const ratePerKm = 500;
+    const ratePerKg = 250;
+
+    // Category multipliers
+    const categoryMultipliers = {
+      standard: 1.0,
+      fragile: 1.5,
+      electronics: 1.3,
+      documents: 0.8,
+      furniture: 1.2,
+      food: 1.1,
+    };
+
+    // Calculate base price
+    let totalPrice = distanceNum * ratePerKm + weightNum * ratePerKg;
+
+    // Apply category multiplier
+    const multiplier =
+      categoryMultipliers[category as keyof typeof categoryMultipliers] || 1.0;
+    totalPrice *= multiplier;
+
+    return Math.max(totalPrice, 2000); // Minimum price of RWF 2,000
+  };
+
+  const handleCalculatorInputChange = (field: string, value: any) => {
+    setCalculatorInputs((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const resetCalculator = () => {
+    setCalculatorInputs({
+      distance: "",
+      weight: "",
+      category: "standard",
+    });
   };
 
   const vehicles = [
@@ -833,46 +891,137 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="bg-blue-50 rounded-2xl p-8 max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  {t("landing.pricingSection.standardRates")}
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">
-                      {t("landing.pricing.perKm")}
-                    </span>
-                    <span className="font-semibold">RWF 500</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">
-                      {t("landing.pricing.perKg")}
-                    </span>
-                    <span className="font-semibold">RWF 250</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">
-                      {t("landing.pricing.sameDay")}
-                    </span>
-                    <span className="font-semibold">+RWF 5,000</span>
-                  </div>
+          <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {/* Standard Rates */}
+            <div className="bg-blue-50 rounded-2xl p-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                {t("landing.pricingSection.standardRates")}
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-gray-600">
+                    {t("landing.pricing.perKm")}
+                  </span>
+                  <span className="font-semibold text-blue-600">RWF 500</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-gray-600">
+                    {t("landing.pricing.perKg")}
+                  </span>
+                  <span className="font-semibold text-blue-600">RWF 250</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-gray-600">Standard Items</span>
+                  <span className="font-semibold text-blue-600">1.0x</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-gray-600">Fragile Items</span>
+                  <span className="font-semibold text-blue-600">1.5x</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-gray-600">Electronics</span>
+                  <span className="font-semibold text-blue-600">1.3x</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-gray-600">Documents</span>
+                  <span className="font-semibold text-green-600">0.8x</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-gray-600">Furniture</span>
+                  <span className="font-semibold text-blue-600">1.2x</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
+                  <span className="text-gray-600">Food Items</span>
+                  <span className="font-semibold text-blue-600">1.1x</span>
                 </div>
               </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  {t("landing.pricingSection.getQuote")}
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  {t("landing.pricingSection.getQuoteDescription")}
-                </p>
-                <Link
-                  to="/create-cargo"
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-block"
-                >
-                  {t("landing.pricingSection.getQuoteButton")}
-                </Link>
+            </div>
+
+            {/* Interactive Price Calculator */}
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
+              <h3 className="text-2xl font-bold mb-6">Price Calculator</h3>
+
+              <div className="space-y-6">
+                {/* Distance Input */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Distance (km)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={calculatorInputs.distance}
+                    onChange={(e) =>
+                      handleCalculatorInputChange("distance", e.target.value)
+                    }
+                    className="w-full px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    placeholder="Enter distance"
+                  />
+                </div>
+
+                {/* Weight Input */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Weight (kg)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={calculatorInputs.weight}
+                    onChange={(e) =>
+                      handleCalculatorInputChange("weight", e.target.value)
+                    }
+                    className="w-full px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    placeholder="Enter weight"
+                  />
+                </div>
+
+                {/* Category Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Item Category
+                  </label>
+                  <select
+                    value={calculatorInputs.category}
+                    onChange={(e) =>
+                      handleCalculatorInputChange("category", e.target.value)
+                    }
+                    className="w-full px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  >
+                    <option value="standard">Standard Items (1.0x)</option>
+                    <option value="fragile">Fragile Items (1.5x)</option>
+                    <option value="electronics">Electronics (1.3x)</option>
+                    <option value="documents">Documents (0.8x)</option>
+                    <option value="furniture">Furniture (1.2x)</option>
+                    <option value="food">Food Items (1.1x)</option>
+                  </select>
+                </div>
+
+                {/* Price Display */}
+                <div className="bg-white/20 rounded-lg p-4 text-center">
+                  <div className="text-sm text-blue-100 mb-1">
+                    Estimated Price
+                  </div>
+                  <div className="text-3xl font-bold">
+                    RWF {calculatePrice().toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={resetCalculator}
+                    className="flex-1 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Reset
+                  </button>
+                  <Link
+                    to="/create-cargo"
+                    className="flex-1 bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-center"
+                  >
+                    Book Now
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
