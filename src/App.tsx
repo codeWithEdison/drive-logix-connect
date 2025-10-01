@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -36,7 +37,7 @@ import DriverDeliveries from "@/pages/driver/DriverDeliveries";
 import DriverHistory from "@/pages/driver/DriverHistory";
 import { AssignedCargosPage } from "@/pages/AssignedCargosPage";
 import AdminCargos from "@/pages/admin/AdminCargos";
-import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminDrivers from "@/pages/admin/AdminDrivers";
 import AdminTrucks from "@/pages/admin/AdminTrucks";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminReports from "@/pages/admin/AdminReports";
@@ -225,10 +226,10 @@ function AppContent() {
           }
         />
         <Route
-          path="/admin/users"
+          path="/admin/drivers"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminUsers />
+              <AdminDrivers />
             </ProtectedRoute>
           }
         />
@@ -359,9 +360,11 @@ function App() {
           <TooltipProvider>
             <AuthProvider>
               <LanguageProvider>
-                <AppContent />
-                <Toaster />
-                <Sonner />
+                <NotificationProvider>
+                  <AppContent />
+                  <Toaster />
+                  <Sonner />
+                </NotificationProvider>
               </LanguageProvider>
             </AuthProvider>
           </TooltipProvider>

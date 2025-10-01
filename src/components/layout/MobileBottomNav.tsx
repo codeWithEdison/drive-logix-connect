@@ -58,7 +58,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       url: "/admin/assignments",
       icon: AiOutlineAppstore,
     },
-    { title: t("navigation.users"), url: "/admin/users", icon: AiOutlineTeam },
+    {
+      title: t("navigation.drivers"),
+      url: "/admin/drivers",
+      icon: AiOutlineTeam,
+    },
     { title: t("navigation.trucks"), url: "/admin/trucks", icon: AiOutlineCar },
     {
       title: t("navigation.settings"),

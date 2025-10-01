@@ -70,11 +70,10 @@ export class AdminService {
   > {
     const response = await axiosInstance.post("/admin/users", {
       ...data,
-      role: "admin"
+      role: "admin",
     });
     return response.data;
   }
-
 
   // Get financial reports
   static async getFinancialReports(params?: {
@@ -161,6 +160,7 @@ export class AdminService {
     license_number: string;
     license_expiry?: string;
     license_type: "A" | "B" | "C" | "D" | "E";
+    code_number: string;
     date_of_birth?: string;
     emergency_contact?: string;
     emergency_phone?: string;

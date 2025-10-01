@@ -44,6 +44,9 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
+import { toast } from "@/hooks/use-toast";
+import ModernModel from "@/components/modal/ModernModel";
+import { DriverAnalytics } from "@/types/shared";
 
 const AdminReports = () => {
   const { t } = useLanguage();
@@ -52,6 +55,9 @@ const AdminReports = () => {
   const [dateRange, setDateRange] = useState("30");
   const [reportType, setReportType] = useState("day"); // Changed from "summary" to "day"
   const [exportFormat, setExportFormat] = useState("pdf");
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [selectedDownloadType, setSelectedDownloadType] = useState("all");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // API hooks
   const {
@@ -118,6 +124,9 @@ const AdminReports = () => {
 
   const exportAnalyticsMutation = useExportAnalyticsData();
 
+  // Type assertion to help TypeScript understand the data structure
+  const driverData = driverAnalyticsData as DriverAnalytics | undefined;
+
   // Event handlers
   const handleRefresh = () => {
     refetchFinancial();
@@ -147,6 +156,291 @@ const AdminReports = () => {
     } catch (error) {
       customToast.error(t("errors.exportFailed"));
     }
+  };
+
+  const handleDownloadReport = async () => {
+    setIsDownloading(true);
+
+    try {
+      let dataToExport: any[] = [];
+      let filename = "";
+
+      // Prepare data based on selected type
+      if (selectedDownloadType === "financial") {
+        dataToExport = financialReportsData?.data || [];
+        filename = "financial_report";
+      } else if (selectedDownloadType === "performance") {
+        // Group performance data by driver
+        const driverStats = new Map();
+        performanceReportsData?.data?.forEach((cargo: any) => {
+          const driverName = cargo.driver
+            ? cargo.driver.full_name
+            : "Unassigned";
+          const isDelivered = cargo.status === "delivered";
+          const price = cargo.price || 0;
+
+          if (!driverStats.has(driverName)) {
+            driverStats.set(driverName, {
+              driver: driverName,
+              deliveries: 0,
+              totalValue: 0,
+            });
+          }
+
+          const stats = driverStats.get(driverName);
+          if (isDelivered) {
+            stats.deliveries += 1;
+            stats.totalValue += price;
+          }
+        });
+
+        dataToExport = Array.from(driverStats.values())
+          .filter((driver) => driver.driver !== "Unassigned")
+          .sort((a, b) => b.deliveries - a.deliveries);
+        filename = "performance_report";
+      } else if (selectedDownloadType === "all") {
+        // Combine all data
+        const allData = {
+          financial: financialReportsData?.data || [],
+          performance: performanceReportsData?.data || [],
+          summary: {
+            financial: financialReportsData?.summary || {},
+            performance: performanceReportsData?.summary || {},
+          },
+        };
+        dataToExport = [allData];
+        filename = "all_reports";
+      }
+
+      // Generate and download file
+      if (exportFormat === "csv") {
+        downloadCSV(dataToExport, filename);
+      } else if (exportFormat === "excel") {
+        downloadExcel(dataToExport, filename);
+      } else if (exportFormat === "pdf") {
+        downloadPDF(dataToExport, filename);
+      }
+
+      toast({
+        title: "Download Complete",
+        description: `${
+          selectedDownloadType === "all"
+            ? "All reports"
+            : selectedDownloadType.charAt(0).toUpperCase() +
+              selectedDownloadType.slice(1) +
+              " report"
+        } downloaded successfully as ${exportFormat.toUpperCase()}`,
+      });
+
+      setShowDownloadModal(false);
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to download report";
+      toast({
+        title: "Download Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // CSV Download Function
+  const downloadCSV = (data: any[], filename: string) => {
+    if (selectedDownloadType === "all") {
+      // Handle combined data
+      const csvContent = generateAllReportsCSV(data[0]);
+      downloadFile(csvContent, `${filename}.csv`, "text/csv");
+    } else {
+      // Handle single report type
+      const csvContent = generateCSV(data);
+      downloadFile(csvContent, `${filename}.csv`, "text/csv");
+    }
+  };
+
+  // Excel Download Function
+  const downloadExcel = (data: any[], filename: string) => {
+    if (selectedDownloadType === "all") {
+      // For all reports, create a simple CSV (Excel can open CSV)
+      const csvContent = generateAllReportsCSV(data[0]);
+      downloadFile(
+        csvContent,
+        `${filename}.xlsx`,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+    } else {
+      const csvContent = generateCSV(data);
+      downloadFile(
+        csvContent,
+        `${filename}.xlsx`,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+    }
+  };
+
+  // PDF Download Function
+  const downloadPDF = (data: any[], filename: string) => {
+    // Create a simple text-based report for PDF
+    let reportContent = "";
+
+    if (selectedDownloadType === "all") {
+      reportContent = generateAllReportsText(data[0]);
+    } else {
+      reportContent = generateTextReport(data);
+    }
+
+    downloadFile(reportContent, `${filename}.txt`, "text/plain");
+  };
+
+  // Generate CSV content
+  const generateCSV = (data: any[]) => {
+    if (data.length === 0) return "";
+
+    const headers = Object.keys(data[0]);
+    const csvHeaders = headers.join(",");
+    const csvRows = data.map((row) =>
+      headers
+        .map((header) => {
+          const value = row[header];
+          return typeof value === "string" && value.includes(",")
+            ? `"${value}"`
+            : value;
+        })
+        .join(",")
+    );
+
+    return [csvHeaders, ...csvRows].join("\n");
+  };
+
+  // Generate combined reports CSV
+  const generateAllReportsCSV = (data: any) => {
+    let content = "=== FINANCIAL REPORTS ===\n";
+    if (data.financial && data.financial.length > 0) {
+      content += generateCSV(data.financial) + "\n\n";
+    }
+
+    content += "=== PERFORMANCE REPORTS ===\n";
+    if (data.performance && data.performance.length > 0) {
+      // Group performance data
+      const driverStats = new Map();
+      data.performance.forEach((cargo: any) => {
+        const driverName = cargo.driver ? cargo.driver.full_name : "Unassigned";
+        const isDelivered = cargo.status === "delivered";
+        const price = cargo.price || 0;
+
+        if (!driverStats.has(driverName)) {
+          driverStats.set(driverName, {
+            driver: driverName,
+            deliveries: 0,
+            totalValue: 0,
+          });
+        }
+
+        const stats = driverStats.get(driverName);
+        if (isDelivered) {
+          stats.deliveries += 1;
+          stats.totalValue += price;
+        }
+      });
+
+      const performanceData = Array.from(driverStats.values())
+        .filter((driver) => driver.driver !== "Unassigned")
+        .sort((a, b) => b.deliveries - a.deliveries);
+
+      content += generateCSV(performanceData) + "\n\n";
+    }
+
+    content += "=== SUMMARY ===\n";
+
+    // Financial Summary
+    if (data.summary.financial) {
+      content += "Financial Summary:\n";
+      content += `- Total Revenue: RWF ${
+        data.summary.financial.total_revenue || 0
+      }\n`;
+      content += `- Total Deliveries: ${
+        data.summary.financial.total_deliveries || 0
+      }\n`;
+      content += `- Average Revenue per Delivery: RWF ${
+        data.summary.financial.average_revenue_per_delivery || 0
+      }\n`;
+    }
+
+    // Performance Summary
+    if (data.summary.performance) {
+      content += "\nPerformance Summary:\n";
+      content += `- Total Deliveries: ${
+        data.summary.performance.total_deliveries || 0
+      }\n`;
+      content += `- Completed Deliveries: ${
+        data.summary.performance.completed_deliveries || 0
+      }\n`;
+      content += `- Total Revenue: RWF ${
+        data.summary.performance.total_revenue || 0
+      }\n`;
+      content += `- Average Delivery Time: ${
+        data.summary.performance.average_delivery_time_hours || 0
+      } hours\n`;
+      content += `- Completion Rate: ${
+        data.summary.performance.completion_rate || 0
+      }%\n`;
+    }
+
+    return content;
+  };
+
+  // Generate text report
+  const generateTextReport = (data: any[]) => {
+    let content = `Report Generated: ${new Date().toLocaleString()}\n`;
+    content += `Date Range: Last ${dateRange} days\n`;
+    content += `Group By: ${reportType}\n\n`;
+
+    if (selectedDownloadType === "financial") {
+      content += "=== FINANCIAL REPORTS ===\n";
+      data.forEach((item, index) => {
+        content += `${index + 1}. Date: ${item.date || "N/A"}, Revenue: RWF ${
+          item.revenue || 0
+        }, Orders: ${item.orders || 0}, Status: ${item.status || "N/A"}\n`;
+      });
+    } else if (selectedDownloadType === "performance") {
+      content += "=== PERFORMANCE REPORTS ===\n";
+      data.forEach((item, index) => {
+        content += `${index + 1}. Driver: ${item.driver}, Deliveries: ${
+          item.deliveries
+        }, Total Value: RWF ${item.totalValue}\n`;
+      });
+    }
+
+    return content;
+  };
+
+  // Generate combined text report
+  const generateAllReportsText = (data: any) => {
+    let content = `Comprehensive Report Generated: ${new Date().toLocaleString()}\n`;
+    content += `Date Range: Last ${dateRange} days\n`;
+    content += `Group By: ${reportType}\n\n`;
+
+    content += generateTextReport(data.financial || []);
+    content += "\n" + generateTextReport(data.performance || []);
+
+    return content;
+  };
+
+  // Generic file download function
+  const downloadFile = (
+    content: string,
+    filename: string,
+    mimeType: string
+  ) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   const handlePrintReport = () => {
@@ -304,7 +598,7 @@ const AdminReports = () => {
             />
             {t("common.refresh")}
           </Button>
-          <Button onClick={() => handleExportReport("summary")}>
+          <Button onClick={() => setShowDownloadModal(true)}>
             <Download className="h-4 w-4 mr-2" />
             {t("adminReports.export")}
           </Button>
@@ -404,9 +698,29 @@ const AdminReports = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  {t("adminReports.averageOrderValue")}
+                  {t("adminReports.completionRate")}
                 </CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {performanceReportsData?.summary?.completion_rate?.toFixed(
+                    1
+                  ) || "0"}
+                  %
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("adminReports.deliverySuccess")}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {t("adminReports.averageOrderValue")}
+                </CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -417,26 +731,6 @@ const AdminReports = () => {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t("adminReports.perDelivery")}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {t("adminReports.profitMargin")}
-                </CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {(
-                    (financialReportsData?.summary?.total_revenue || 0) * 0.15
-                  ).toFixed(0)}
-                  %
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {t("adminReports.netProfit")}
                 </p>
               </CardContent>
             </Card>
@@ -454,7 +748,6 @@ const AdminReports = () => {
                     <TableHead>{t("adminReports.date")}</TableHead>
                     <TableHead>{t("adminReports.revenue")}</TableHead>
                     <TableHead>{t("adminReports.orders")}</TableHead>
-                    <TableHead>{t("adminReports.profit")}</TableHead>
                     <TableHead>{t("adminReports.status")}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -469,9 +762,6 @@ const AdminReports = () => {
                         </TableCell>
                         <TableCell>{item.count}</TableCell>
                         <TableCell>
-                          RWF {((item.revenue || 0) * 0.15).toFixed(0)}
-                        </TableCell>
-                        <TableCell>
                           <Badge variant="outline">
                             {t("status.completed")}
                           </Badge>
@@ -480,7 +770,7 @@ const AdminReports = () => {
                     )) || (
                     <TableRow>
                       <TableCell
-                        colSpan={5}
+                        colSpan={4}
                         className="text-center text-muted-foreground"
                       >
                         {t("adminReports.noData")}
@@ -564,7 +854,7 @@ const AdminReports = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {driverAnalyticsData?.length || "0"}
+                  {driverData?.active_drivers || "0"}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t("adminReports.currentlyActive")}
@@ -584,36 +874,55 @@ const AdminReports = () => {
                   <TableRow>
                     <TableHead>{t("adminReports.driver")}</TableHead>
                     <TableHead>{t("adminReports.deliveries")}</TableHead>
-                    <TableHead>{t("adminReports.avgTime")}</TableHead>
-                    <TableHead>{t("adminReports.rating")}</TableHead>
-                    <TableHead>{t("adminReports.status")}</TableHead>
+                    <TableHead>{t("adminReports.deliveryValue")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {driverAnalyticsData
-                    ?.slice(0, 10)
-                    .map((driver: any, index: number) => (
+                  {(() => {
+                    // Group cargos by driver and calculate totals
+                    const driverStats = new Map();
+
+                    performanceReportsData?.data?.forEach((cargo: any) => {
+                      const driverName = cargo.driver
+                        ? cargo.driver.full_name
+                        : "Unassigned";
+                      const isDelivered = cargo.status === "delivered";
+                      const price = cargo.price || 0;
+
+                      if (!driverStats.has(driverName)) {
+                        driverStats.set(driverName, {
+                          name: driverName,
+                          deliveries: 0,
+                          totalValue: 0,
+                        });
+                      }
+
+                      const stats = driverStats.get(driverName);
+                      if (isDelivered) {
+                        stats.deliveries += 1;
+                        stats.totalValue += price;
+                      }
+                    });
+
+                    // Convert to array, filter out unassigned, and sort by deliveries (descending)
+                    const sortedDrivers = Array.from(driverStats.values())
+                      .filter((driver) => driver.name !== "Unassigned")
+                      .sort((a, b) => b.deliveries - a.deliveries)
+                      .slice(0, 10);
+
+                    return sortedDrivers.map((driver, index) => (
                       <TableRow key={index}>
-                        <TableCell>{driver.driver_name}</TableCell>
-                        <TableCell>{driver.total_deliveries}</TableCell>
+                        <TableCell>{driver.name}</TableCell>
+                        <TableCell>{driver.deliveries}</TableCell>
                         <TableCell>
-                          {driver.average_rating?.toFixed(1)}h
-                        </TableCell>
-                        <TableCell>
-                          {driver.average_rating?.toFixed(1)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {driver.completion_rate > 90
-                              ? t("status.active")
-                              : t("status.inactive")}
-                          </Badge>
+                          RWF {driver.totalValue.toLocaleString()}
                         </TableCell>
                       </TableRow>
-                    )) || (
+                    ));
+                  })() || (
                     <TableRow>
                       <TableCell
-                        colSpan={5}
+                        colSpan={3}
                         className="text-center text-muted-foreground"
                       >
                         {t("adminReports.noData")}
@@ -672,28 +981,19 @@ const AdminReports = () => {
                   <div className="flex justify-between">
                     <span>{t("adminReports.totalDrivers")}</span>
                     <span className="font-semibold">
-                      {driverAnalyticsData?.length || "0"}
+                      {driverData?.total_drivers || "0"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t("adminReports.activeDrivers")}</span>
                     <span className="font-semibold">
-                      {driverAnalyticsData?.filter(
-                        (d: any) => d.completion_rate > 90
-                      ).length || "0"}
+                      {driverData?.active_drivers || "0"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t("adminReports.avgRating")}</span>
                     <span className="font-semibold">
-                      {driverAnalyticsData?.length
-                        ? (
-                            driverAnalyticsData.reduce(
-                              (sum: number, d: any) => sum + d.average_rating,
-                              0
-                            ) / driverAnalyticsData.length
-                          ).toFixed(1)
-                        : "0"}
+                      {driverData?.average_rating?.toFixed(1) || "0"}
                     </span>
                   </div>
                 </div>
@@ -739,6 +1039,239 @@ const AdminReports = () => {
           </div>
         </div>
       )}
+
+      {/* Download Modal */}
+      <ModernModel
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        title="Download Report"
+      >
+        <div className="space-y-6">
+          {/* Report Type Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Select Report Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-3">
+                  <div
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedDownloadType === "all"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() => setSelectedDownloadType("all")}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 ${
+                          selectedDownloadType === "all"
+                            ? "border-blue-500 bg-blue-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {selectedDownloadType === "all" && (
+                          <div className="w-2 h-2 bg-white rounded-full m-0.5" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium">All Reports</h4>
+                        <p className="text-sm text-gray-600">
+                          Download financial, performance, and analytics reports
+                          in one file
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedDownloadType === "financial"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() => setSelectedDownloadType("financial")}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 ${
+                          selectedDownloadType === "financial"
+                            ? "border-blue-500 bg-blue-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {selectedDownloadType === "financial" && (
+                          <div className="w-2 h-2 bg-white rounded-full m-0.5" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Financial Report</h4>
+                        <p className="text-sm text-gray-600">
+                          Revenue, orders, and financial metrics
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedDownloadType === "performance"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() => setSelectedDownloadType("performance")}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 ${
+                          selectedDownloadType === "performance"
+                            ? "border-blue-500 bg-blue-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {selectedDownloadType === "performance" && (
+                          <div className="w-2 h-2 bg-white rounded-full m-0.5" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Performance Report</h4>
+                        <p className="text-sm text-gray-600">
+                          Delivery metrics, driver performance, and completion
+                          rates
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Download Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Download Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="downloadFormat">File Format</Label>
+                  <Select value={exportFormat} onValueChange={setExportFormat}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pdf">PDF Document</SelectItem>
+                      <SelectItem value="excel">Excel Spreadsheet</SelectItem>
+                      <SelectItem value="csv">CSV File</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="downloadDateRange">Date Range</Label>
+                  <Select value={dateRange} onValueChange={setDateRange}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">Last 7 Days</SelectItem>
+                      <SelectItem value="30">Last 30 Days</SelectItem>
+                      <SelectItem value="90">Last 90 Days</SelectItem>
+                      <SelectItem value="365">Last Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="downloadGroupBy">Group By</Label>
+                  <Select value={reportType} onValueChange={setReportType}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="day">Daily</SelectItem>
+                      <SelectItem value="week">Weekly</SelectItem>
+                      <SelectItem value="month">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Download Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Download Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Report Type:</span>
+                  <span className="font-medium">
+                    {selectedDownloadType === "all"
+                      ? "All Reports"
+                      : selectedDownloadType === "financial"
+                      ? "Financial Report"
+                      : "Performance Report"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">File Format:</span>
+                  <span className="font-medium">
+                    {exportFormat.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Date Range:</span>
+                  <span className="font-medium">Last {dateRange} days</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Grouping:</span>
+                  <span className="font-medium">
+                    {reportType === "day"
+                      ? "Daily"
+                      : reportType === "week"
+                      ? "Weekly"
+                      : "Monthly"}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowDownloadModal(false)}
+              disabled={isDownloading}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleDownloadReport}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Report
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </ModernModel>
     </div>
   );
 };

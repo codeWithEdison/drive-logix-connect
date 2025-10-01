@@ -41,14 +41,16 @@ export const useUploadDriverDocument = () => {
   return useMutation({
     mutationFn: (data: FormData) => DriverService.uploadDocument(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.drivers.documents });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.drivers.documents(),
+      });
     },
   });
 };
 
 export const useDriverDocuments = () => {
   return useQuery({
-    queryKey: queryKeys.drivers.documents,
+    queryKey: queryKeys.drivers.documents(),
     queryFn: () => DriverService.getDocuments(),
     select: (data) => data.data,
   });
@@ -115,5 +117,42 @@ export const useDriverById = (id: string) => {
     queryFn: () => DriverService.getDriverById(id),
     select: (data) => data.data,
     enabled: !!id,
+  });
+};
+
+export const useDeleteDriverDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (documentId: string) =>
+      DriverService.deleteDocument(documentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.drivers.documents(),
+      });
+    },
+  });
+};
+
+export const useUpdateDriverDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      documentId,
+      data,
+    }: {
+      documentId: string;
+      data: {
+        document_type?: string;
+        document_number?: string;
+        expiry_date?: string;
+      };
+    }) => DriverService.updateDocument(documentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.drivers.documents(),
+      });
+    },
   });
 };

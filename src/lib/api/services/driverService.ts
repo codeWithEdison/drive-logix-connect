@@ -123,4 +123,28 @@ export class DriverService {
     const response = await axiosInstance.get(`/drivers/${id}`);
     return response.data;
   }
+
+  // Delete driver document
+  static async deleteDocument(documentId: string): Promise<ApiResponse<void>> {
+    const response = await axiosInstance.delete(
+      `/drivers/documents/${documentId}`
+    );
+    return response.data;
+  }
+
+  // Update driver document
+  static async updateDocument(
+    documentId: string,
+    data: {
+      document_type?: string;
+      document_number?: string;
+      expiry_date?: string;
+    }
+  ): Promise<ApiResponse<DriverDocument>> {
+    const response = await axiosInstance.put(
+      `/drivers/documents/${documentId}`,
+      data
+    );
+    return response.data;
+  }
 }

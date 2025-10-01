@@ -162,7 +162,7 @@ export function AdminDashboard() {
         window.location.href = "/admin/cargos";
         break;
       case "approvals":
-        window.location.href = "/admin/users";
+        window.location.href = "/admin/drivers";
         break;
       case "alerts":
         window.location.href = "/admin/alerts";

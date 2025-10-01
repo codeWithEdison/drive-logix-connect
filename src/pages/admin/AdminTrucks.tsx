@@ -37,6 +37,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
+import { CreateVehicleRequest, VehicleType, FuelType } from "@/types/shared";
+import { toast } from "@/hooks/use-toast";
 
 const AdminTrucks = () => {
   const { t } = useLanguage();
@@ -52,6 +54,24 @@ const AdminTrucks = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+
+  // Form state for creating vehicles
+  const [createFormData, setCreateFormData] = useState<CreateVehicleRequest>({
+    plate_number: "",
+    make: "",
+    model: "",
+    year: new Date().getFullYear(),
+    color: "",
+    capacity_kg: 0,
+    capacity_volume: 0,
+    fuel_type: FuelType.DIESEL,
+    fuel_efficiency: 0,
+    type: VehicleType.TRUCK,
+    insurance_expiry: "",
+    registration_expiry: "",
+    branch_id: user?.role === "super_admin" ? user?.branch_id : undefined,
+  });
+  const [isCreatingVehicle, setIsCreatingVehicle] = useState(false);
 
   // API hooks
   const {
@@ -183,7 +203,79 @@ const AdminTrucks = () => {
   };
 
   const handleCreateNew = () => {
+    // Reset form data
+    setCreateFormData({
+      plate_number: "",
+      make: "",
+      model: "",
+      year: new Date().getFullYear(),
+      color: "",
+      capacity_kg: 0,
+      capacity_volume: 0,
+      fuel_type: FuelType.DIESEL,
+      fuel_efficiency: 0,
+      type: VehicleType.TRUCK,
+      insurance_expiry: "",
+      registration_expiry: "",
+      branch_id: user?.role === "super_admin" ? user?.branch_id : undefined,
+    });
     setIsCreateModalOpen(true);
+  };
+
+  const handleCreateVehicle = async () => {
+    // Validate required fields
+    if (!createFormData.plate_number.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "License plate number is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!createFormData.make?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Vehicle make is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!createFormData.model?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Vehicle model is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingVehicle(true);
+
+    try {
+      await createVehicleMutation.mutateAsync(createFormData);
+
+      toast({
+        title: "Success",
+        description: "Vehicle created successfully!",
+      });
+
+      setIsCreateModalOpen(false);
+      refetch();
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to create vehicle";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingVehicle(false);
+    }
   };
 
   const handleRefresh = () => {
@@ -535,17 +627,31 @@ const AdminTrucks = () => {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="make">Make</Label>
+                  <Label htmlFor="make">Make *</Label>
                   <Input
                     id="make"
+                    value={createFormData.make}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        make: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., Toyota, Ford, Honda"
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="model">Model</Label>
+                  <Label htmlFor="model">Model *</Label>
                   <Input
                     id="model"
+                    value={createFormData.model}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        model: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., Hiace, Transit, CG125"
                     className="mt-1"
                   />
@@ -555,6 +661,14 @@ const AdminTrucks = () => {
                   <Input
                     id="year"
                     type="number"
+                    value={createFormData.year}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        year:
+                          parseInt(e.target.value) || new Date().getFullYear(),
+                      }))
+                    }
                     placeholder="2024"
                     min="1990"
                     max="2025"
@@ -565,29 +679,50 @@ const AdminTrucks = () => {
                   <Label htmlFor="color">Color</Label>
                   <Input
                     id="color"
+                    value={createFormData.color}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        color: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., Silver, Black, Red"
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="plateNumber">License Plate</Label>
+                  <Label htmlFor="plateNumber">License Plate *</Label>
                   <Input
                     id="plateNumber"
+                    value={createFormData.plate_number}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        plate_number: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., RAB789C"
                     className="mt-1"
                   />
                 </div>
                 <div>
                   <Label htmlFor="vehicleType">Vehicle Type</Label>
-                  <Select>
+                  <Select
+                    value={createFormData.type}
+                    onValueChange={(value: VehicleType) =>
+                      setCreateFormData((prev) => ({ ...prev, type: value }))
+                    }
+                  >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select type..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="truck">Truck</SelectItem>
-                      <SelectItem value="van">Van</SelectItem>
-                      <SelectItem value="pickup">Pickup</SelectItem>
-                      <SelectItem value="moto">Motorcycle</SelectItem>
+                      <SelectItem value={VehicleType.TRUCK}>Truck</SelectItem>
+                      <SelectItem value={VehicleType.VAN}>Van</SelectItem>
+                      <SelectItem value={VehicleType.PICKUP}>Pickup</SelectItem>
+                      <SelectItem value={VehicleType.MOTO}>
+                        Motorcycle
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -607,6 +742,13 @@ const AdminTrucks = () => {
                   <Input
                     id="capacityKg"
                     type="number"
+                    value={createFormData.capacity_kg || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        capacity_kg: parseInt(e.target.value) || 0,
+                      }))
+                    }
                     placeholder="1500"
                     min="0"
                     className="mt-1"
@@ -618,6 +760,13 @@ const AdminTrucks = () => {
                     id="capacityVolume"
                     type="number"
                     step="0.1"
+                    value={createFormData.capacity_volume || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        capacity_volume: parseFloat(e.target.value) || 0,
+                      }))
+                    }
                     placeholder="4.0"
                     min="0"
                     className="mt-1"
@@ -625,15 +774,25 @@ const AdminTrucks = () => {
                 </div>
                 <div>
                   <Label htmlFor="fuelType">Fuel Type</Label>
-                  <Select>
+                  <Select
+                    value={createFormData.fuel_type}
+                    onValueChange={(value: FuelType) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        fuel_type: value,
+                      }))
+                    }
+                  >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select fuel type..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="petrol">Petrol</SelectItem>
-                      <SelectItem value="diesel">Diesel</SelectItem>
-                      <SelectItem value="electric">Electric</SelectItem>
-                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                      <SelectItem value={FuelType.PETROL}>Petrol</SelectItem>
+                      <SelectItem value={FuelType.DIESEL}>Diesel</SelectItem>
+                      <SelectItem value={FuelType.ELECTRIC}>
+                        Electric
+                      </SelectItem>
+                      <SelectItem value={FuelType.HYBRID}>Hybrid</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -645,8 +804,58 @@ const AdminTrucks = () => {
                     id="fuelEfficiency"
                     type="number"
                     step="0.1"
+                    value={createFormData.fuel_efficiency || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        fuel_efficiency: parseFloat(e.target.value) || 0,
+                      }))
+                    }
                     placeholder="10.5"
                     min="0"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Insurance and Registration */}
+          <Card>
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-gray-900 mb-4">
+                Insurance & Registration
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="insuranceExpiry">Insurance Expiry</Label>
+                  <Input
+                    id="insuranceExpiry"
+                    type="date"
+                    value={createFormData.insurance_expiry || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        insurance_expiry: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="registrationExpiry">
+                    Registration Expiry
+                  </Label>
+                  <Input
+                    id="registrationExpiry"
+                    type="date"
+                    value={createFormData.registration_expiry || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        registration_expiry: e.target.value,
+                      }))
+                    }
                     className="mt-1"
                   />
                 </div>
@@ -660,20 +869,26 @@ const AdminTrucks = () => {
               variant="outline"
               className="flex-1"
               onClick={() => setIsCreateModalOpen(false)}
+              disabled={isCreatingVehicle}
             >
               {t("common.cancel")}
             </Button>
             <Button
               className="flex-1"
-              onClick={() => {
-                // TODO: Implement create truck functionality
-                customToast.success("Truck created successfully");
-                setIsCreateModalOpen(false);
-                refetch();
-              }}
+              onClick={handleCreateVehicle}
+              disabled={isCreatingVehicle}
             >
-              <TruckIcon className="h-4 w-4 mr-2" />
-              {t("adminTrucks.createTruck")}
+              {isCreatingVehicle ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <TruckIcon className="h-4 w-4 mr-2" />
+                  {t("adminTrucks.createTruck")}
+                </>
+              )}
             </Button>
           </div>
         </div>

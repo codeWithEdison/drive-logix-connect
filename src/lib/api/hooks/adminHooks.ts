@@ -24,11 +24,11 @@ export const useCreateAdminClient = () => {
     mutationFn: (data: {
       full_name: string;
       email: string;
+      phone: string;
       password: string;
+      preferred_language: "en" | "rw" | "fr";
       company_name: string;
       business_type: "individual" | "corporate" | "government";
-      phone?: string;
-      preferred_language?: "en" | "rw" | "fr";
       tax_id?: string;
       address?: string;
       city?: string;
@@ -75,6 +75,7 @@ export const useCreateAdminDriver = () => {
       preferred_language: "en" | "rw" | "fr";
       license_number: string;
       license_type: "A" | "B" | "C" | "D" | "E";
+      code_number: string;
       license_expiry?: string;
       date_of_birth?: string;
       emergency_contact?: string;

@@ -24,7 +24,7 @@ import {
 import {
   useNotificationSettings,
   useUpdateNotificationSettings,
-} from "@/lib/api/hooks";
+} from "@/lib/api/hooks/notificationHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
