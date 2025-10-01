@@ -71,10 +71,9 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: Activity,
     },
     { title: t("navigation.drivers"), url: "/admin/drivers", icon: Users },
-    { title: t("navigation.trucks"), url: "/admin/trucks", icon: Truck },
+    { title: t("navigation.vehicles"), url: "/admin/trucks", icon: Truck },
     { title: t("navigation.invoices"), url: "/admin/invoices", icon: Receipt },
     { title: t("navigation.reports"), url: "/admin/reports", icon: BarChart3 },
-    { title: t("navigation.settings"), url: "/admin/settings", icon: Settings },
   ],
   super_admin: [
     { title: t("navigation.dashboard"), url: "/super-admin", icon: Home },
