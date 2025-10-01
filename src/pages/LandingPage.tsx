@@ -66,7 +66,7 @@ const LandingPage: React.FC = () => {
       weight: t("landing.vehicles.van.weight"),
       dimensions: t("landing.vehicles.van.dimensions"),
       image:
-        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+        "https://i.pinimg.com/736x/a0/ae/63/a0ae635420788e800d0c56a36f8fd74b.jpg",
     },
     {
       id: "motorcycle",
@@ -76,7 +76,7 @@ const LandingPage: React.FC = () => {
       weight: t("landing.vehicles.motorcycle.weight"),
       dimensions: t("landing.vehicles.motorcycle.dimensions"),
       image:
-        "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+        "https://i.pinimg.com/736x/56/49/2a/56492aaa174dedfb01bb30aa50ca78ef.jpg",
     },
   ];
 
@@ -284,7 +284,7 @@ const LandingPage: React.FC = () => {
       content: t("landing.testimonials.sarah.content"),
       rating: 5,
       avatar:
-        "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
+        "https://lh3.googleusercontent.com/a/ACg8ocKUYbuOxTvG1g0oKt1KnzS-cgBl6t-lmb74LYeMtDwt2BiJXV1g=s96-c",
     },
     {
       name: t("landing.testimonials.michael.name"),
@@ -292,7 +292,7 @@ const LandingPage: React.FC = () => {
       content: t("landing.testimonials.michael.content"),
       rating: 5,
       avatar:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+        "https://lh3.googleusercontent.com/a/ACg8ocKUYbuOxTvG1g0oKt1KnzS-cgBl6t-lmb74LYeMtDwt2BiJXV1g=s96-c",
     },
     {
       name: t("landing.testimonials.emily.name"),
@@ -300,7 +300,7 @@ const LandingPage: React.FC = () => {
       content: t("landing.testimonials.emily.content"),
       rating: 5,
       avatar:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+        "https://lh3.googleusercontent.com/a/ACg8ocKUYbuOxTvG1g0oKt1KnzS-cgBl6t-lmb74LYeMtDwt2BiJXV1g=s96-c",
     },
   ];
 
