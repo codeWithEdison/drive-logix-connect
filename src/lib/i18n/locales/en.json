@@ -805,11 +805,13 @@
     "completed": "Completed",
     "fromPickupToDelivery": "From pickup to delivery",
     "onTimeRate": "On-time rate",
+    "deliverySuccess": "Delivery success rate",
     "currentlyActive": "Currently active",
     "performanceDetails": "Performance Details",
     "driver": "Driver",
     "deliveries": "Deliveries",
     "avgTime": "Avg Time",
+    "deliveryValue": "Delivery Value",
     "rating": "Rating",
     "cargoAnalytics": "Cargo Analytics",
     "driverAnalytics": "Driver Analytics",
@@ -826,7 +828,10 @@
     "printingReport": "Printing report...",
     "emailReport": "Email report feature coming soon",
     "noData": "No data available",
-    "loadError": "Failed to load reports data"
+    "loadError": "Failed to load reports data",
+    "totalRevenue": "Total Revenue",
+    "status": "Status",
+    "completionRate": "Completion Rate"
   },
   "adminAssignments": {
     "title": "Cargo Assignments",
