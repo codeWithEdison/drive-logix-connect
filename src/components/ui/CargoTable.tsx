@@ -902,7 +902,7 @@ export function CargoTable({
                 </div>
               )}
               {showFilters && (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Select
                     value={statusFilter}
                     onValueChange={(
@@ -916,7 +916,7 @@ export function CargoTable({
                         | "cancelled"
                     ) => setStatusFilter(value)}
                   >
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full md:w-[180px]">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -942,7 +942,7 @@ export function CargoTable({
                       value={priorityFilter}
                       onValueChange={onPriorityFilterChange}
                     >
-                      <SelectTrigger className="w-[140px]">
+                      <SelectTrigger className="w-full md:w-[140px]">
                         <SelectValue placeholder="Priority" />
                       </SelectTrigger>
                       <SelectContent>
@@ -972,37 +972,28 @@ export function CargoTable({
               <Table className="w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs font-medium text-gray-600 w-16">
+                    <TableHead className="text-xs font-medium text-gray-600">
                       #
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-32">
+                    <TableHead className="text-xs font-medium text-gray-600">
                       Cargo Info
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-40">
+                    <TableHead className="text-xs font-medium text-gray-600">
                       Client
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-48">
-                      Pickup Address
+                    <TableHead className="text-xs font-medium text-gray-600">
+                      Route
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-48">
-                      Destination Address
-                    </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-20">
-                      Distance
-                    </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-32">
+                    <TableHead className="text-xs font-medium text-gray-600">
                       Driver
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-32">
+                    <TableHead className="text-xs font-medium text-gray-600">
                       Vehicle
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-20">
-                      Rating
-                    </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-24">
+                    <TableHead className="text-xs font-medium text-gray-600">
                       Status
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 w-20">
+                    <TableHead className="text-xs font-medium text-gray-600">
                       Actions
                     </TableHead>
                   </TableRow>
@@ -1056,35 +1047,38 @@ export function CargoTable({
                         </TableCell>
                         <TableCell>
                           <div className="max-w-xs">
-                            <div className="flex items-start gap-2">
+                            <div className="flex items-start gap-2 mb-2">
                               <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{data.from}</span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">
+                                  From
+                                </p>
+                                <p className="text-sm text-gray-900 truncate">
+                                  {data.from}
+                                </p>
+                                {(cargo as any).pickupLocation?.name && (
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {(cargo as any).pickupLocation.name}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            {(cargo as any).pickupLocation?.name && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {(cargo as any).pickupLocation.name}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-xs">
                             <div className="flex items-start gap-2">
                               <MapPin className="h-3 w-3 text-blue-500 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{data.to}</span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                                  To
+                                </p>
+                                <p className="text-sm text-gray-900 truncate">
+                                  {data.to}
+                                </p>
+                                {(cargo as any).destinationLocation?.name && (
+                                  <p className="text-xs text-gray-500 truncate">
+                                    {(cargo as any).destinationLocation.name}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            {(cargo as any).destinationLocation?.name && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {(cargo as any).destinationLocation.name}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-center">
-                            <p className="text-sm font-medium text-gray-900">
-                              {data.distance}
-                            </p>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -1107,26 +1101,6 @@ export function CargoTable({
                             <p className="text-xs text-gray-500">
                               {cargo.vehicleMake} {cargo.vehicleModel}
                             </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-center">
-                            {cargo.status === "delivered" && cargo.rating ? (
-                              <div>
-                                <p className="text-sm font-medium text-yellow-600">
-                                  ⭐ {cargo.rating}/5
-                                </p>
-                                {cargo.review && (
-                                  <p className="text-xs text-gray-500 truncate max-w-16">
-                                    "{cargo.review}"
-                                  </p>
-                                )}
-                              </div>
-                            ) : cargo.status === "delivered" ? (
-                              <p className="text-xs text-gray-400">Not rated</p>
-                            ) : (
-                              <p className="text-xs text-gray-400">-</p>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(data.status)}</TableCell>
