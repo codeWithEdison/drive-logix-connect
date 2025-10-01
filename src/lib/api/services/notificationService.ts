@@ -1,38 +1,25 @@
 import axiosInstance from "../axios";
 
 // Types for notification system
-export interface AssignmentNotification {
+export interface Notification {
   id: string;
-  assignment_id: string;
-  notification_type:
-    | "assignment_created"
-    | "assignment_accepted"
-    | "assignment_rejected"
-    | "assignment_cancelled";
+  assignment_id?: string;
+  driver_id?: string;
+  notification_type: "sms" | "email" | "push" | "in_app";
   message: string;
+  title?: string;
+  category?: "delivery_update" | "payment" | "system" | "promotional";
+  metadata?: any;
   is_read: boolean;
   sent_at: string;
   read_at?: string;
   created_at: string;
-  assignment?: {
-    id: string;
-    assignment_status: string;
-    expires_at: string;
-    cargo?: {
-      cargo_number: string;
-      pickup_address: string;
-      destination_address: string;
-    };
-  };
 }
 
 export interface NotificationFilters {
   unread_only?: boolean;
-  notification_type?:
-    | "assignment_created"
-    | "assignment_accepted"
-    | "assignment_rejected"
-    | "assignment_cancelled";
+  notification_type?: "sms" | "email" | "push" | "in_app";
+  category?: "delivery_update" | "payment" | "system" | "promotional";
   page?: number;
   limit?: number;
 }
@@ -41,7 +28,7 @@ export interface NotificationListResponse {
   success: boolean;
   message: string;
   data: {
-    notifications: AssignmentNotification[];
+    notifications: Notification[];
     pagination: {
       page: number;
       limit: number;
@@ -62,10 +49,10 @@ export interface NotificationStatsResponse {
     total: number;
     unread: number;
     by_type: {
-      assignment_created: number;
-      assignment_accepted: number;
-      assignment_rejected: number;
-      assignment_cancelled: number;
+      in_app: number;
+      push: number;
+      email: number;
+      sms: number;
     };
   };
   meta: {
@@ -109,10 +96,10 @@ export interface NotificationSettingsResponse {
 }
 
 class NotificationService {
-  private static baseUrl = "/drivers/notifications";
+  private static baseUrl = "/notifications";
 
   /**
-   * Get driver notifications
+   * Get user notifications
    */
   static async getNotifications(
     filters: NotificationFilters = {}
@@ -124,6 +111,8 @@ class NotificationService {
         params.append("unread_only", filters.unread_only.toString());
       if (filters.notification_type)
         params.append("notification_type", filters.notification_type);
+      if (filters.category)
+        params.append("category", filters.category);
       if (filters.page) params.append("page", filters.page.toString());
       if (filters.limit) params.append("limit", filters.limit.toString());
 
@@ -179,7 +168,7 @@ class NotificationService {
   }
 
   /**
-   * Get notification settings
+   * Get notification settings (admin only)
    */
   static async getSettings(): Promise<NotificationSettingsResponse> {
     try {
@@ -191,7 +180,7 @@ class NotificationService {
   }
 
   /**
-   * Update notification settings
+   * Update notification settings (admin only)
    */
   static async updateSettings(
     settings: NotificationSettings
@@ -208,15 +197,15 @@ class NotificationService {
   }
 
   /**
-   * Send notification
+   * Send notification (admin only)
    */
   static async sendNotification(data: {
     user_id: string;
-    type: string;
+    type: "sms" | "email" | "push" | "in_app";
     title?: string;
     message: string;
-    category?: string;
-    data?: any;
+    category?: "delivery_update" | "payment" | "system" | "promotional";
+    metadata?: any;
   }): Promise<any> {
     try {
       const response = await axiosInstance.post(

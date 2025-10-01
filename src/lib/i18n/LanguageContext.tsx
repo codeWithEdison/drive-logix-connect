@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Language } from "../../types/shared";
 import { changeLanguage, getCurrentLanguage } from "../i18n";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface LanguageContextType {
   currentLanguage: Language;
@@ -22,8 +23,18 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
   const { t, ready } = useTranslation();
+  const { user } = useAuth();
+
+  // Force English for admin and superadmin users
+  const getInitialLanguage = (): Language => {
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
+      return Language.EN;
+    }
+    return getCurrentLanguage();
+  };
+
   const [currentLanguage, setCurrentLanguage] = useState<Language>(
-    getCurrentLanguage()
+    getInitialLanguage()
   );
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,7 +44,21 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     }
   }, [ready, currentLanguage]);
 
+  // Force English for admin and superadmin users
+  useEffect(() => {
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
+      if (currentLanguage !== Language.EN) {
+        setCurrentLanguage(Language.EN);
+        changeLanguage(Language.EN);
+      }
+    }
+  }, [user, currentLanguage]);
+
   const handleSetLanguage = (language: Language) => {
+    // Prevent language change for admin and superadmin users
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
+      return;
+    }
     setCurrentLanguage(language);
     changeLanguage(language);
   };
@@ -72,9 +97,15 @@ export const useAvailableLanguages = () => {
 // Hook for language switching with API integration
 export const useLanguageSwitcher = () => {
   const { setLanguage, currentLanguage } = useLanguage();
+  const { user } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
 
   const switchLanguage = async (language: Language) => {
+    // Prevent language change for admin and superadmin users
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
+      return;
+    }
+
     if (language === currentLanguage) return;
 
     setIsUpdating(true);
