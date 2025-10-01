@@ -37,7 +37,7 @@ import DriverDeliveries from "@/pages/driver/DriverDeliveries";
 import DriverHistory from "@/pages/driver/DriverHistory";
 import { AssignedCargosPage } from "@/pages/AssignedCargosPage";
 import AdminCargos from "@/pages/admin/AdminCargos";
-import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminDrivers from "@/pages/admin/AdminDrivers";
 import AdminTrucks from "@/pages/admin/AdminTrucks";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminReports from "@/pages/admin/AdminReports";
@@ -226,10 +226,10 @@ function AppContent() {
           }
         />
         <Route
-          path="/admin/users"
+          path="/admin/drivers"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminUsers />
+              <AdminDrivers />
             </ProtectedRoute>
           }
         />

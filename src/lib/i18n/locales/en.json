@@ -347,7 +347,7 @@
 
     "deliveryHistory": "Delivery History",
     "allCargos": "All Cargos",
-    "users": "Users",
+    "drivers": "Drivers",
     "trucks": "Trucks",
     "userManagement": "User Management",
     "systemSettings": "System Settings",
@@ -356,7 +356,6 @@
     "deliveries": "Deliveries",
     "admins": "Admins",
     "vehicles": "Vehicles",
-    "drivers": "Drivers",
     "clients": "Clients",
     "payments": "Payments",
     "reports": "Reports",
