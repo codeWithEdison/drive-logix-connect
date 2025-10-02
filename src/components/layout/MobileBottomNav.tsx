@@ -14,6 +14,7 @@ import {
   AiOutlineBarChart,
   AiOutlineSafety,
   AiOutlineAppstore,
+  AiOutlineSchedule,
 } from "react-icons/ai";
 import { Home, Package, Truck } from "lucide-react";
 
@@ -77,24 +78,24 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: AiOutlineHome,
     },
     {
+      title: t("navigation.allCargos"),
+      url: "/super-admin/cargos",
+      icon: AiOutlineInbox,
+    },
+    {
+      title: t("navigation.assignments"),
+      url: "/super-admin/assignments",
+      icon: AiOutlineSchedule,
+    },
+    {
+      title: t("navigation.vehicles"),
+      url: "/super-admin/trucks",
+      icon: AiOutlineCar,
+    },
+    {
       title: t("navigation.users"),
       url: "/super-admin/users",
       icon: AiOutlineTeam,
-    },
-    {
-      title: t("navigation.admins"),
-      url: "/super-admin/admins",
-      icon: AiOutlineSafety,
-    },
-    {
-      title: t("navigation.analytics"),
-      url: "/super-admin/analytics",
-      icon: AiOutlineBarChart,
-    },
-    {
-      title: t("navigation.settings"),
-      url: "/super-admin/settings",
-      icon: AiOutlineSetting,
     },
   ],
 });

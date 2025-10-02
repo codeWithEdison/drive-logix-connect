@@ -309,60 +309,62 @@ export default function SuperAdminSettings() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Role Name</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Permissions</TableHead>
-                                        <TableHead>Users</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {rbacRoles.map((role) => (
-                                        <TableRow key={role.id}>
-                                            <TableCell className="font-medium">{role.name}</TableCell>
-                                            <TableCell>{role.description}</TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {role.permissions.map((permission, index) => (
-                                                        <Badge key={index} variant="outline" className="text-xs">
-                                                            {permission}
-                                                        </Badge>
-                                                    ))}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{role.userCount}</TableCell>
-                                            <TableCell>
-                                                <Switch
-                                                    checked={role.isActive}
-                                                    onCheckedChange={() => handleRoleToggle(role.id)}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openRoleModal(role)}
-                                                    >
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDeleteRole(role.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
+                            <div className="overflow-x-auto">
+                                <Table className="min-w-[900px]">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Role Name</TableHead>
+                                            <TableHead>Description</TableHead>
+                                            <TableHead>Permissions</TableHead>
+                                            <TableHead>Users</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {rbacRoles.map((role) => (
+                                            <TableRow key={role.id}>
+                                                <TableCell className="font-medium">{role.name}</TableCell>
+                                                <TableCell>{role.description}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {role.permissions.map((permission, index) => (
+                                                            <Badge key={index} variant="outline" className="text-xs">
+                                                                {permission}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{role.userCount}</TableCell>
+                                                <TableCell>
+                                                    <Switch
+                                                        checked={role.isActive}
+                                                        onCheckedChange={() => handleRoleToggle(role.id)}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => openRoleModal(role)}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleDeleteRole(role.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -383,64 +385,66 @@ export default function SuperAdminSettings() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Description</TableHead>
-                                        <TableHead>Recipients</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {notifications.map((notification) => (
-                                        <TableRow key={notification.id}>
-                                            <TableCell>
-                                                <Badge variant="outline" className="capitalize">
-                                                    {notification.type}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="font-medium">{notification.name}</TableCell>
-                                            <TableCell>{notification.description}</TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {notification.recipients.map((recipient, index) => (
-                                                        <Badge key={index} variant="outline" className="text-xs">
-                                                            {recipient}
-                                                        </Badge>
-                                                    ))}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Switch
-                                                    checked={notification.isActive}
-                                                    onCheckedChange={() => handleNotificationToggle(notification.id)}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openNotificationModal(notification)}
-                                                    >
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDeleteNotification(notification.id)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
+                            <div className="overflow-x-auto">
+                                <Table className="min-w-[900px]">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Description</TableHead>
+                                            <TableHead>Recipients</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {notifications.map((notification) => (
+                                            <TableRow key={notification.id}>
+                                                <TableCell>
+                                                    <Badge variant="outline" className="capitalize">
+                                                        {notification.type}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="font-medium">{notification.name}</TableCell>
+                                                <TableCell>{notification.description}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {notification.recipients.map((recipient, index) => (
+                                                            <Badge key={index} variant="outline" className="text-xs">
+                                                                {recipient}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Switch
+                                                        checked={notification.isActive}
+                                                        onCheckedChange={() => handleNotificationToggle(notification.id)}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => openNotificationModal(notification)}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleDeleteNotification(notification.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
