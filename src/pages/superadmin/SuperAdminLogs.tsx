@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ModernModel from "@/components/modal/ModernModel";
 import { CustomTabs } from "@/components/ui/CustomTabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ export default function SuperAdminLogs() {
   });
   // Log files state
   const [selectedLogFile, setSelectedLogFile] = useState<string>("");
+  const [logModalOpen, setLogModalOpen] = useState(false);
   const [logLinesCount, setLogLinesCount] = useState<number>(100);
   const [logLevel, setLogLevel] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -283,246 +285,294 @@ export default function SuperAdminLogs() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 flex flex-wrap gap-2">
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {logFilesLoading ? (
                   <span>Loading log files...</span>
                 ) : logFilesData?.length ? (
-                  logFilesData.map((file) => (
-                    <Button
-                      key={file.name}
-                      variant={
-                        selectedLogFile === file.name ? "default" : "outline"
-                      }
-                      onClick={() => setSelectedLogFile(file.name)}
-                      className="flex items-center gap-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      {file.name}
-                      <span className="text-xs text-gray-400 ml-2">
-                        ({file.size} bytes)
-                      </span>
-                    </Button>
-                  ))
+                  logFilesData.map((file) => {
+                    const isActive = selectedLogFile === file.name && logModalOpen;
+                    return (
+                      <Card
+                        key={file.name}
+                        onClick={() => {
+                          setSelectedLogFile(file.name);
+                          setLogModalOpen(true);
+                        }}
+                        className={`cursor-pointer group transition-all duration-200 border-2 ${isActive ? "border-primary shadow-lg bg-primary/10" : "border-gray-200 hover:border-primary/60 hover:shadow-md bg-white"}`}
+                      >
+                        <CardContent className="flex flex-col items-start gap-2 p-4">
+                          <div className="flex items-center gap-3 w-full">
+                            <div className={`rounded-full p-2 ${isActive ? "bg-primary/20" : "bg-gray-100 group-hover:bg-primary/10"}`}>
+                              <FileText className={`h-7 w-7 ${isActive ? "text-primary" : "text-gray-500 group-hover:text-primary"}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className={`truncate font-semibold text-base ${isActive ? "text-primary" : "text-gray-900 group-hover:text-primary"}`}>{file.name}</div>
+                              <div className="text-xs text-gray-400 truncate">{file.size} bytes</div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-2 w-full">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setSelectedLogFile(file.name);
+                                setLogModalOpen(true);
+                              }}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="flex-1"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleDownload(file.name);
+                              }}
+                            >
+                              <Download className="h-4 w-4 mr-1" /> Download
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
                 ) : (
                   <span>No log files found.</span>
                 )}
               </div>
-              {selectedLogFile && (
-                <>
-                  <div className="mb-2 flex gap-2 items-center">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setLogLinesCount(100);
-                        setLogLevel("");
-                        setSearchTerm("");
-                        setLogPage(1);
-                      }}
+              <ModernModel
+                isOpen={logModalOpen}
+                onClose={() => {
+                  setLogModalOpen(false);
+                  setSelectedLogFile("");
+                  setLogLinesCount(100);
+                  setLogLevel("");
+                  setSearchTerm("");
+                  setLogPage(1);
+                }}
+                title={selectedLogFile ? `Log File: ${selectedLogFile}` : "Log File"}
+                loading={viewLogLoading}
+              >
+                {selectedLogFile && (
+                  <>
+                    <div className="mb-2 flex gap-2 items-center">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setLogLinesCount(100);
+                          setLogLevel("");
+                          setSearchTerm("");
+                          setLogPage(1);
+                        }}
+                      >
+                        Clear Filters
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownload(selectedLogFile)}
+                      >
+                        <Download className="h-4 w-4 mr-1" /> Download
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleClear(selectedLogFile)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Clear
+                      </Button>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={logLinesCount}
+                        onChange={(e) => setLogLinesCount(Number(e.target.value))}
+                        className="w-24"
+                        placeholder="Lines"
+                      />
+                      <Select value={logLevel} onValueChange={setLogLevel}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue placeholder="Level (optional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="error">error</SelectItem>
+                          <SelectItem value="warn">warn</SelectItem>
+                          <SelectItem value="info">info</SelectItem>
+                          <SelectItem value="debug">debug</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-64"
+                        placeholder="Search in file..."
+                      />
+                    </div>
+                    <div
+                      className="border rounded bg-gray-50 p-2 mt-2 overflow-x-auto"
+                      style={{ maxWidth: "100%", minHeight: 120 }}
                     >
-                      Clear Filters
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDownload(selectedLogFile)}
-                    >
-                      <Download className="h-4 w-4 mr-1" /> Download
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleClear(selectedLogFile)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" /> Clear
-                    </Button>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={logLinesCount}
-                      onChange={(e) => setLogLinesCount(Number(e.target.value))}
-                      className="w-24"
-                      placeholder="Lines"
-                    />
-                    <Select value={logLevel} onValueChange={setLogLevel}>
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Level (optional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="error">error</SelectItem>
-                        <SelectItem value="warn">warn</SelectItem>
-                        <SelectItem value="info">info</SelectItem>
-                        <SelectItem value="debug">debug</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-64"
-                      placeholder="Search in file..."
-                    />
-                  </div>
-                  <div
-                    className="border rounded bg-gray-50 p-2 mt-2 overflow-x-auto"
-                    style={{ maxWidth: "100%", minHeight: 120 }}
-                  >
-                    {viewLogLoading ? (
-                      <span>Loading log file...</span>
-                    ) : (
-                      (() => {
-                        // Support both object (with .data.lines) and array (raw lines) responses
-                        let lines: any[] = [];
-                        if (Array.isArray(viewLogData)) {
-                          lines = viewLogData;
-                        } else if (
-                          viewLogData &&
-                          typeof viewLogData === "object" &&
-                          "data" in viewLogData &&
-                          Array.isArray((viewLogData as any).data?.lines)
-                        ) {
-                          lines = (viewLogData as any).data.lines;
-                        }
-                        if (!lines.length) return <span>No log data.</span>;
-                        // Try to parse all lines as JSON
-                        let parsedLines = lines.map((line: any) => {
-                          try {
-                            return typeof line === "string"
-                              ? JSON.parse(line)
-                              : line;
-                          } catch {
-                            return null;
+                      {viewLogLoading ? (
+                        <span>Loading log file...</span>
+                      ) : (
+                        (() => {
+                          // Support both object (with .data.lines) and array (raw lines) responses
+                          let lines: any[] = [];
+                          if (Array.isArray(viewLogData)) {
+                            lines = viewLogData;
+                          } else if (
+                            viewLogData &&
+                            typeof viewLogData === "object" &&
+                            "data" in viewLogData &&
+                            Array.isArray((viewLogData as any).data?.lines)
+                          ) {
+                            lines = (viewLogData as any).data.lines;
                           }
-                        });
-                        // Filter by search term if present
-                        if (searchTerm) {
-                          const lower = searchTerm.toLowerCase();
-                          parsedLines = parsedLines.filter((l) =>
-                            l && typeof l === "object"
-                              ? Object.values(l).some((v) =>
-                                  String(v).toLowerCase().includes(lower)
-                                )
-                              : l && String(l).toLowerCase().includes(lower)
+                          if (!lines.length) return <span>No log data.</span>;
+                          // Try to parse all lines as JSON
+                          let parsedLines = lines.map((line: any) => {
+                            try {
+                              return typeof line === "string"
+                                ? JSON.parse(line)
+                                : line;
+                            } catch {
+                              return null;
+                            }
+                          });
+                          // Filter by search term if present
+                          if (searchTerm) {
+                            const lower = searchTerm.toLowerCase();
+                            parsedLines = parsedLines.filter((l) =>
+                              l && typeof l === "object"
+                                ? Object.values(l).some((v) =>
+                                    String(v).toLowerCase().includes(lower)
+                                  )
+                                : l && String(l).toLowerCase().includes(lower)
+                            );
+                          }
+                          // Pagination logic
+                          const totalLines = parsedLines.length;
+                          const totalPages =
+                            Math.ceil(totalLines / LOGS_PER_PAGE) || 1;
+                          const currentPage = Math.min(logPage, totalPages);
+                          const startIdx = (currentPage - 1) * LOGS_PER_PAGE;
+                          const endIdx = startIdx + LOGS_PER_PAGE;
+                          const pagedLines = parsedLines.slice(startIdx, endIdx);
+                          const validLines = pagedLines.filter(
+                            (l) => l && typeof l === "object"
                           );
-                        }
-                        // Pagination logic
-                        const totalLines = parsedLines.length;
-                        const totalPages =
-                          Math.ceil(totalLines / LOGS_PER_PAGE) || 1;
-                        const currentPage = Math.min(logPage, totalPages);
-                        const startIdx = (currentPage - 1) * LOGS_PER_PAGE;
-                        const endIdx = startIdx + LOGS_PER_PAGE;
-                        const pagedLines = parsedLines.slice(startIdx, endIdx);
-                        const validLines = pagedLines.filter(
-                          (l) => l && typeof l === "object"
-                        );
-                        if (validLines.length > 0) {
-                          // Collect all unique keys for columns
-                          const allKeys = Array.from(
-                            new Set(validLines.flatMap((l) => Object.keys(l)))
-                          ).filter((k) => typeof k === "string");
-                          return (
-                            <>
-                              <Table className="min-w-[900px]">
-                                <TableHeader>
-                                  <TableRow>
-                                    {allKeys.map((key: string) => (
-                                      <TableHead key={key}>{key}</TableHead>
-                                    ))}
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {validLines.map((log, idx) => (
-                                    <TableRow key={idx}>
+                          if (validLines.length > 0) {
+                            // Collect all unique keys for columns
+                            const allKeys = Array.from(
+                              new Set(validLines.flatMap((l) => Object.keys(l)))
+                            ).filter((k) => typeof k === "string");
+                            return (
+                              <>
+                                <Table className="min-w-[900px]">
+                                  <TableHeader>
+                                    <TableRow>
                                       {allKeys.map((key: string) => (
-                                        <TableCell key={key}>
-                                          {typeof log[key] === "object"
-                                            ? JSON.stringify(log[key])
-                                            : String(log[key])}
-                                        </TableCell>
+                                        <TableHead key={key}>{key}</TableHead>
                                       ))}
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                              <div className="flex justify-end items-center gap-2 mt-2">
-                                <span className="text-xs text-muted-foreground">
-                                  Page {currentPage} of {totalPages}
-                                </span>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={currentPage === 1}
-                                  onClick={() =>
-                                    setLogPage((p) => Math.max(1, p - 1))
-                                  }
-                                >
-                                  Prev
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={currentPage === totalPages}
-                                  onClick={() =>
-                                    setLogPage((p) =>
-                                      Math.min(totalPages, p + 1)
+                                  </TableHeader>
+                                  <TableBody>
+                                    {validLines.map((log, idx) => (
+                                      <TableRow key={idx}>
+                                        {allKeys.map((key: string) => (
+                                          <TableCell key={key}>
+                                            {typeof log[key] === "object"
+                                              ? JSON.stringify(log[key])
+                                              : String(log[key])}
+                                          </TableCell>
+                                        ))}
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                                <div className="flex justify-end items-center gap-2 mt-2">
+                                  <span className="text-xs text-muted-foreground">
+                                    Page {currentPage} of {totalPages}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={currentPage === 1}
+                                    onClick={() =>
+                                      setLogPage((p) => Math.max(1, p - 1))
+                                    }
+                                  >
+                                    Prev
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={currentPage === totalPages}
+                                    onClick={() =>
+                                      setLogPage((p) =>
+                                        Math.min(totalPages, p + 1)
+                                      )
+                                    }
+                                  >
+                                    Next
+                                  </Button>
+                                </div>
+                              </>
+                            );
+                          } else {
+                            // Fallback: show as plain text
+                            const pagedRawLines = parsedLines.slice(
+                              startIdx,
+                              endIdx
+                            );
+                            return (
+                              <>
+                                <pre className="text-xs whitespace-pre-wrap">
+                                  {pagedRawLines
+                                    .map((line: any) =>
+                                      typeof line === "string" ? line : line?.line
                                     )
-                                  }
-                                >
-                                  Next
-                                </Button>
-                              </div>
-                            </>
-                          );
-                        } else {
-                          // Fallback: show as plain text
-                          const pagedRawLines = parsedLines.slice(
-                            startIdx,
-                            endIdx
-                          );
-                          return (
-                            <>
-                              <pre className="text-xs whitespace-pre-wrap">
-                                {pagedRawLines
-                                  .map((line: any) =>
-                                    typeof line === "string" ? line : line?.line
-                                  )
-                                  .join("\n")}
-                              </pre>
-                              <div className="flex justify-end items-center gap-2 mt-2">
-                                <span className="text-xs text-muted-foreground">
-                                  Page {currentPage} of {totalPages}
-                                </span>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={currentPage === 1}
-                                  onClick={() =>
-                                    setLogPage((p) => Math.max(1, p - 1))
-                                  }
-                                >
-                                  Prev
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={currentPage === totalPages}
-                                  onClick={() =>
-                                    setLogPage((p) =>
-                                      Math.min(totalPages, p + 1)
-                                    )
-                                  }
-                                >
-                                  Next
-                                </Button>
-                              </div>
-                            </>
-                          );
-                        }
-                      })()
-                    )}
-                  </div>
-                </>
-              )}
+                                    .join("\n")}
+                                </pre>
+                                <div className="flex justify-end items-center gap-2 mt-2">
+                                  <span className="text-xs text-muted-foreground">
+                                    Page {currentPage} of {totalPages}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={currentPage === 1}
+                                    onClick={() =>
+                                      setLogPage((p) => Math.max(1, p - 1))
+                                    }
+                                  >
+                                    Prev
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={currentPage === totalPages}
+                                    onClick={() =>
+                                      setLogPage((p) =>
+                                        Math.min(totalPages, p + 1)
+                                      )
+                                    }
+                                  >
+                                    Next
+                                  </Button>
+                                </div>
+                              </>
+                            );
+                          }
+                        })()
+                      )}
+                    </div>
+                  </>
+                )}
+              </ModernModel>
             </CardContent>
           </Card>
         </div>
