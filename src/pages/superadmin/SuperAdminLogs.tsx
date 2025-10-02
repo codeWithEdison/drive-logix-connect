@@ -183,7 +183,6 @@ export default function SuperAdminLogs() {
     }
   };
 
-
   // Render
   return (
     <div className="space-y-6">
@@ -290,7 +289,8 @@ export default function SuperAdminLogs() {
                   <span>Loading log files...</span>
                 ) : logFilesData?.length ? (
                   logFilesData.map((file) => {
-                    const isActive = selectedLogFile === file.name && logModalOpen;
+                    const isActive =
+                      selectedLogFile === file.name && logModalOpen;
                     return (
                       <Card
                         key={file.name}
@@ -298,16 +298,42 @@ export default function SuperAdminLogs() {
                           setSelectedLogFile(file.name);
                           setLogModalOpen(true);
                         }}
-                        className={`cursor-pointer group transition-all duration-200 border-2 ${isActive ? "border-primary shadow-lg bg-primary/10" : "border-gray-200 hover:border-primary/60 hover:shadow-md bg-white"}`}
+                        className={`cursor-pointer group transition-all duration-200 border-2 ${
+                          isActive
+                            ? "border-primary shadow-lg bg-primary/10"
+                            : "border-gray-200 hover:border-primary/60 hover:shadow-md bg-white"
+                        }`}
                       >
                         <CardContent className="flex flex-col items-start gap-2 p-4">
                           <div className="flex items-center gap-3 w-full">
-                            <div className={`rounded-full p-2 ${isActive ? "bg-primary/20" : "bg-gray-100 group-hover:bg-primary/10"}`}>
-                              <FileText className={`h-7 w-7 ${isActive ? "text-primary" : "text-gray-500 group-hover:text-primary"}`} />
+                            <div
+                              className={`rounded-full p-2 ${
+                                isActive
+                                  ? "bg-primary/20"
+                                  : "bg-gray-100 group-hover:bg-primary/10"
+                              }`}
+                            >
+                              <FileText
+                                className={`h-7 w-7 ${
+                                  isActive
+                                    ? "text-primary"
+                                    : "text-gray-500 group-hover:text-primary"
+                                }`}
+                              />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className={`truncate font-semibold text-base ${isActive ? "text-primary" : "text-gray-900 group-hover:text-primary"}`}>{file.name}</div>
-                              <div className="text-xs text-gray-400 truncate">{file.size} bytes</div>
+                              <div
+                                className={`truncate font-semibold text-base ${
+                                  isActive
+                                    ? "text-primary"
+                                    : "text-gray-900 group-hover:text-primary"
+                                }`}
+                              >
+                                {file.name}
+                              </div>
+                              <div className="text-xs text-gray-400 truncate">
+                                {file.size} bytes
+                              </div>
                             </div>
                           </div>
                           <div className="flex gap-2 mt-2 w-full">
@@ -315,7 +341,7 @@ export default function SuperAdminLogs() {
                               size="sm"
                               variant="outline"
                               className="flex-1"
-                              onClick={e => {
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedLogFile(file.name);
                                 setLogModalOpen(true);
@@ -327,7 +353,7 @@ export default function SuperAdminLogs() {
                               size="sm"
                               variant="ghost"
                               className="flex-1"
-                              onClick={e => {
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 handleDownload(file.name);
                               }}
@@ -353,7 +379,9 @@ export default function SuperAdminLogs() {
                   setSearchTerm("");
                   setLogPage(1);
                 }}
-                title={selectedLogFile ? `Log File: ${selectedLogFile}` : "Log File"}
+                title={
+                  selectedLogFile ? `Log File: ${selectedLogFile}` : "Log File"
+                }
                 loading={viewLogLoading}
               >
                 {selectedLogFile && (
@@ -389,7 +417,9 @@ export default function SuperAdminLogs() {
                         type="number"
                         min={1}
                         value={logLinesCount}
-                        onChange={(e) => setLogLinesCount(Number(e.target.value))}
+                        onChange={(e) =>
+                          setLogLinesCount(Number(e.target.value))
+                        }
                         className="w-24"
                         placeholder="Lines"
                       />
@@ -460,7 +490,10 @@ export default function SuperAdminLogs() {
                           const currentPage = Math.min(logPage, totalPages);
                           const startIdx = (currentPage - 1) * LOGS_PER_PAGE;
                           const endIdx = startIdx + LOGS_PER_PAGE;
-                          const pagedLines = parsedLines.slice(startIdx, endIdx);
+                          const pagedLines = parsedLines.slice(
+                            startIdx,
+                            endIdx
+                          );
                           const validLines = pagedLines.filter(
                             (l) => l && typeof l === "object"
                           );
@@ -533,7 +566,9 @@ export default function SuperAdminLogs() {
                                 <pre className="text-xs whitespace-pre-wrap">
                                   {pagedRawLines
                                     .map((line: any) =>
-                                      typeof line === "string" ? line : line?.line
+                                      typeof line === "string"
+                                        ? line
+                                        : line?.line
                                     )
                                     .join("\n")}
                                 </pre>
