@@ -340,6 +340,32 @@ function AppContent() {
           }
         />
 
+        {/* Super Admin access to Admin pages */}
+        <Route
+          path="/super-admin/cargos"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <AdminCargos />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/super-admin/assignments"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <AdminAssignments />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/super-admin/trucks"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <AdminTrucks />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>

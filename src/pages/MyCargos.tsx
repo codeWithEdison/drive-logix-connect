@@ -291,7 +291,7 @@ const MyCargos = () => {
         !error &&
         transformedCargos &&
         transformedCargos.length > 0 && (
-          <div className="bg-white rounded-lg border p-6">
+          <div className="bg-white rounded-lg border p-4 sm:p-6">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
               <div className="flex-1">
@@ -307,12 +307,12 @@ const MyCargos = () => {
               </div>
 
               {/* Status Filter */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Select
                   value={statusFilter}
                   onValueChange={handleStatusFilterChange}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -333,7 +333,7 @@ const MyCargos = () => {
                   value={priorityFilter}
                   onValueChange={handlePriorityFilterChange}
                 >
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue placeholder="Priority" />
                   </SelectTrigger>
                   <SelectContent>
@@ -348,7 +348,7 @@ const MyCargos = () => {
             </div>
 
             {/* Filter Results Summary */}
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="text-sm text-gray-600">
                 {hasActiveFilters
                   ? `Filtered results (${pagination?.total || 0} total cargos)`
@@ -359,7 +359,7 @@ const MyCargos = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleTotalCargosClick}
-                  className="text-gray-600 hover:text-gray-800"
+                  className="text-gray-600 hover:text-gray-800 w-full sm:w-auto"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Clear Filters
@@ -604,35 +604,41 @@ const MyCargos = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 sm:space-y-8">
       {renderHeader()}
 
-      <CargoTable
-        cargos={filteredCargos}
-        showStats={false} // Hide stats since we have them in header
-        showSearch={false} // Hide search since we have it in header
-        showFilters={false} // Hide filters since we have them in header
-        showPagination={false} // Disable internal pagination - we handle it externally
-        onCallDriver={handleCallDriver}
-        onTrackCargo={handleTrackCargo}
-        onCancelCargo={handleCancelCargo}
-        onDownloadReceipt={handleDownloadReceipt}
-        onUploadPhoto={handleUploadPhoto}
-        onReportIssue={handleReportIssue}
-      />
+      {/* CargoTable with proper responsive container */}
+      <div className="w-full">
+        <CargoTable
+          cargos={filteredCargos}
+          showStats={false} // Hide stats since we have them in header
+          showSearch={false} // Hide search since we have it in header
+          showFilters={false} // Hide filters since we have them in header
+          showPagination={false} // Disable internal pagination - we handle it externally
+          onCallDriver={handleCallDriver}
+          onTrackCargo={handleTrackCargo}
+          onCancelCargo={handleCancelCargo}
+          onDownloadReceipt={handleDownloadReceipt}
+          onUploadPhoto={handleUploadPhoto}
+          onReportIssue={handleReportIssue}
+        />
+      </div>
 
       {/* Pagination Controls */}
       {pagination && (
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-white rounded-lg border p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Page Size Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Show per page:</span>
+              <span className="text-sm text-gray-600 hidden sm:inline">
+                Show per page:
+              </span>
+              <span className="text-sm text-gray-600 sm:hidden">Per page:</span>
               <Select
                 value={pageSize.toString()}
                 onValueChange={handlePageSizeChange}
               >
-                <SelectTrigger className="w-20">
+                <SelectTrigger className="w-16 sm:w-20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -645,28 +651,45 @@ const MyCargos = () => {
             </div>
 
             {/* Pagination Info */}
-            <div className="text-sm text-gray-600">
-              Showing {(currentPage - 1) * pageSize + 1} -{" "}
-              {Math.min(currentPage * pageSize, pagination.total || 0)} of{" "}
-              {pagination.total || 0} results
+            <div className="text-sm text-gray-600 text-center sm:text-left">
+              <span className="hidden sm:inline">
+                Showing {(currentPage - 1) * pageSize + 1} -{" "}
+                {Math.min(currentPage * pageSize, pagination.total || 0)} of{" "}
+                {pagination.total || 0} results
+              </span>
+              <span className="sm:hidden">
+                {(currentPage - 1) * pageSize + 1}-
+                {Math.min(currentPage * pageSize, pagination.total || 0)} of{" "}
+                {pagination.total || 0}
+              </span>
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage <= 1}
+                className="hidden sm:flex"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+                className="sm:hidden"
+              >
+                <ChevronLeft className="h-4 w-4" />
               </Button>
 
               {/* Page Numbers */}
               <div className="flex items-center gap-1">
                 {Array.from(
-                  { length: Math.min(5, pagination.totalPages || 1) },
+                  { length: Math.min(3, pagination.totalPages || 1) },
                   (_, i) => {
                     const pageNum = i + 1;
                     return (
@@ -677,7 +700,7 @@ const MyCargos = () => {
                         }
                         size="sm"
                         onClick={() => handlePageChange(pageNum)}
-                        className="w-8 h-8 p-0"
+                        className="w-6 h-6 sm:w-8 sm:h-8 p-0 text-xs sm:text-sm"
                       >
                         {pageNum}
                       </Button>
@@ -691,8 +714,18 @@ const MyCargos = () => {
                 size="sm"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage >= (pagination.totalPages || 1)}
+                className="hidden sm:flex"
               >
                 Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= (pagination.totalPages || 1)}
+                className="sm:hidden"
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
