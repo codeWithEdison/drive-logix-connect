@@ -18,6 +18,7 @@ import { PendingApprovalsTable } from "./tables/PendingApprovalsTable";
 import { SystemAlertsTable } from "./tables/SystemAlertsTable";
 import { FinancialTransactionsTable } from "./tables/FinancialTransactionsTable";
 import { useSuperAdminDashboard } from "@/lib/api/hooks/dashboardHooks";
+import { useApplyDashboardFilters } from "@/lib/api/hooks/dashboardHooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { customToast } from "@/lib/utils/toast";
 import {
@@ -51,6 +52,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip as ReTooltip,
+  Legend as ReLegend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 // No mock data - using real API data only
 
@@ -62,7 +76,7 @@ export function SuperAdminDashboard() {
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
   };
   const { user } = useAuth();
-  const [selectedPeriod, setSelectedPeriod] = React.useState("monthly");
+  const [selectedPeriod, setSelectedPeriod] = React.useState("yearly");
 
   // API hooks
   const {
@@ -70,7 +84,15 @@ export function SuperAdminDashboard() {
     isLoading: dashboardLoading,
     error: dashboardError,
     refetch: refetchDashboard,
-  } = useSuperAdminDashboard();
+  } = useSuperAdminDashboard({
+    period: selectedPeriod === "yearly" ? "year" : selectedPeriod,
+  });
+  const applyFilters = useApplyDashboardFilters();
+
+  React.useEffect(() => {
+    applyFilters.mutate({ period: selectedPeriod });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPeriod]);
 
   // Super Admin statistics data from API
   const superAdminStats = [
@@ -110,6 +132,37 @@ export function SuperAdminDashboard() {
       description: "Last 30 days",
       icon: Activity,
       iconColor: "text-green-600",
+    },
+    {
+      title: "Total Cargo",
+      value:
+        (dashboardData?.data as any)?.stats?.total_cargo?.toLocaleString() ||
+        "0",
+      description: "All cargos",
+      icon: Package,
+      iconColor: "text-indigo-600",
+    },
+    {
+      title: "Total Vehicles",
+      value:
+        dashboardData?.data?.stats?.total_vehicles?.toLocaleString() || "0",
+      description: "Fleet size",
+      icon: HardDrive,
+      iconColor: "text-sky-600",
+    },
+    {
+      title: "Total Drivers",
+      value: dashboardData?.data?.stats?.total_drivers?.toLocaleString() || "0",
+      description: "Active drivers",
+      icon: Users,
+      iconColor: "text-teal-600",
+    },
+    {
+      title: "Total Clients",
+      value: dashboardData?.data?.stats?.total_clients?.toLocaleString() || "0",
+      description: "Registered clients",
+      icon: Users,
+      iconColor: "text-rose-600",
     },
   ];
 
@@ -151,15 +204,15 @@ export function SuperAdminDashboard() {
   const getPeriodLabel = (period: string) => {
     switch (period) {
       case "daily":
-        return t("common.daily");
+        return "Daily";
       case "weekly":
-        return t("common.weekly");
+        return "Weekly";
       case "monthly":
-        return t("common.monthly");
+        return "Monthly";
       case "yearly":
-        return t("common.yearly");
+        return "Yearly";
       default:
-        return t("common.monthly");
+        return "Monthly";
     }
   };
 
@@ -305,7 +358,7 @@ export function SuperAdminDashboard() {
             <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-red-800 text-sm sm:text-base">
-                {t("common.error")}
+                Error
               </h3>
               <p className="text-red-600 text-xs sm:text-sm mt-1 break-words">
                 {dashboardError?.message ||
@@ -434,113 +487,310 @@ export function SuperAdminDashboard() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        {superAdminStats.map((stat, index) => (
-          <StatsCard
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            description={stat.description}
-            icon={stat.icon}
-            iconColor={stat.iconColor}
-          />
-        ))}
+        {superAdminStats.map((stat, index) => {
+          const Icon = stat.icon;
+          const tone = stat.iconColor.includes("blue")
+            ? "blue"
+            : stat.iconColor.includes("green")
+            ? "green"
+            : stat.iconColor.includes("purple")
+            ? "purple"
+            : stat.iconColor.includes("sky")
+            ? "sky"
+            : stat.iconColor.includes("teal")
+            ? "teal"
+            : stat.iconColor.includes("rose")
+            ? "rose"
+            : "indigo";
+
+          const gradient =
+            tone === "blue"
+              ? "from-blue-50 to-blue-100 border-blue-200"
+              : tone === "green"
+              ? "from-green-50 to-green-100 border-green-200"
+              : tone === "purple"
+              ? "from-purple-50 to-purple-100 border-purple-200"
+              : tone === "sky"
+              ? "from-sky-50 to-sky-100 border-sky-200"
+              : tone === "teal"
+              ? "from-teal-50 to-teal-100 border-teal-200"
+              : tone === "rose"
+              ? "from-rose-50 to-rose-100 border-rose-200"
+              : "from-indigo-50 to-indigo-100 border-indigo-200";
+
+          const dot =
+            tone === "blue"
+              ? "bg-blue-500"
+              : tone === "green"
+              ? "bg-green-500"
+              : tone === "purple"
+              ? "bg-purple-500"
+              : tone === "sky"
+              ? "bg-sky-500"
+              : tone === "teal"
+              ? "bg-teal-500"
+              : tone === "rose"
+              ? "bg-rose-500"
+              : "bg-indigo-500";
+
+          const iconBg = "bg-white/60";
+
+          return (
+            <div
+              key={index}
+              className={`bg-gradient-to-br ${gradient} border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group`}
+            >
+              <div className="p-4 sm:p-5 lg:p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2.5 h-2.5 ${dot} rounded-full`}></div>
+                      <p className="text-xs sm:text-sm font-medium text-gray-700 truncate">
+                        {stat.title}
+                      </p>
+                    </div>
+                    <div className="flex items-end gap-3">
+                      <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
+                        {stat.value}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1 truncate">
+                      {stat.description}
+                    </p>
+                  </div>
+                  {/* <div
+                    className={`p-3 sm:p-3.5 rounded-lg sm:rounded-xl ${iconBg} group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <Icon className={`h-5 w-5 ${stat.iconColor}`} />
+                  </div> */}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Charts Section */}
+      {/* Charts Section - prioritized */}
       <div className="space-y-6 sm:space-y-8">
-        {/* Revenue Trends Chart - Full Width */}
-        <RevenueChart data={dashboardData?.data?.charts?.revenue_trends} />
-
-        {/* Charts Grid - 2x2 */}
+        {/* Highest priority: Cargo status and distribution across branches */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* These charts are not available in super admin API response */}
-          <Card className="card-elevated">
+          {/* Cargo by Branch - Donut */}
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-600" />
-                System Metrics
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  Cargo by Branch
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Package className="h-12 w-12 mx-auto mb-4" />
-                <p>No data available</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-green-600" />
-                {t("superAdminDashboard.performanceOverview")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <Activity className="h-12 w-12 mx-auto mb-4" />
-                <p>{t("superAdminDashboard.noData")}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Super Admin Specific Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <UsageTrendsChart />
-          <AdminPerformanceChart />
-          <UsersDistributionChart />
-
-          {/* System Health Monitor */}
-          <Card className="card-elevated">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-success" />
-                {t("superAdminDashboard.systemHealth")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {dashboardData?.data?.system_health ? (
-                Object.entries(dashboardData.data.system_health).map(
-                  ([service, data]: [string, any]) => (
-                    <div
-                      key={service}
-                      className="flex items-center justify-between p-4 bg-muted rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-3 h-3 rounded-full ${
-                            data.status === "healthy"
-                              ? "bg-green-500"
-                              : data.status === "warning"
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
-                          }`}
-                        ></div>
-                        <div>
-                          <p className="font-semibold capitalize">
-                            {service.replace(/([A-Z])/g, " $1")}
-                          </p>
-                          <p className="text-sm text-muted-foreground capitalize">
-                            {data.status}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold">{data.load}%</p>
-                        <Progress value={data.load} className="w-24 mt-1" />
-                      </div>
-                    </div>
-                  )
-                )
+              {(dashboardData?.data as any)?.charts?.cargo_by_branch?.length ? (
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={
+                          (dashboardData?.data as any).charts.cargo_by_branch
+                        }
+                        dataKey="cargo_count"
+                        nameKey="branch_name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={3}
+                      >
+                        {(
+                          (dashboardData?.data as any).charts
+                            .cargo_by_branch as any[]
+                        ).map((_: any, index: number) => (
+                          <Cell
+                            key={`cell-branch-${index}`}
+                            fill={
+                              [
+                                "#4F46E5",
+                                "#06B6D4",
+                                "#10B981",
+                                "#F59E0B",
+                                "#EF4444",
+                                "#8B5CF6",
+                              ][index % 6]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <ReTooltip
+                        formatter={(v: any) => Number(v).toLocaleString()}
+                      />
+                      <ReLegend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Server className="h-12 w-12 mx-auto mb-4" />
-                  <p>{t("superAdminDashboard.noSystemHealthData")}</p>
+                  No data available
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Cargo Status Distribution - Pie */}
+          <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  Cargo Status Distribution
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {(dashboardData?.data as any)?.charts
+                ?.cargo_status_distribution ? (
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={Object.entries(
+                          (dashboardData?.data as any).charts
+                            .cargo_status_distribution
+                        ).map(([name, value]) => ({
+                          name: (name as string).replace(/_/g, " "),
+                          value: Number(value),
+                        }))}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        paddingAngle={3}
+                      >
+                        {Object.entries(
+                          (dashboardData?.data as any).charts
+                            .cargo_status_distribution
+                        ).map(([_, __], index) => (
+                          <Cell
+                            key={`cell-status-${index}`}
+                            fill={
+                              [
+                                "#10B981",
+                                "#3B82F6",
+                                "#F59E0B",
+                                "#EF4444",
+                                "#8B5CF6",
+                              ][index % 5]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <ReTooltip
+                        formatter={(v: any) => Number(v).toLocaleString()}
+                      />
+                      <ReLegend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Revenue Trends - Full Width */}
+        <RevenueChart data={dashboardData?.data?.charts?.revenue_trends} />
+
+        {/* Super Admin Specific Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Next priority: Regional performance and user mix */}
+          <UsersDistributionChart />
+
+          {/* Top Districts - Bar */}
+          <Card className="bg-white/80 backdrop-blur-sm border-teal-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  Top Districts
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {(dashboardData?.data as any)?.charts?.top_districts?.length ? (
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={(dashboardData?.data as any).charts.top_districts}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis
+                        dataKey="district_name"
+                        stroke="#6B7280"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis
+                        stroke="#6B7280"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) => Number(v).toLocaleString()}
+                      />
+                      <ReTooltip
+                        contentStyle={{
+                          backgroundColor: "white",
+                          border: "1px solid #E5E7EB",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        }}
+                        formatter={(v: any) => Number(v).toLocaleString()}
+                        labelStyle={{ color: "#374151", fontWeight: 600 }}
+                      />
+                      <Bar
+                        dataKey="cargo_count"
+                        radius={[4, 4, 0, 0]}
+                        name="Cargo Count"
+                      >
+                        {(
+                          (dashboardData?.data as any).charts
+                            .top_districts as any[]
+                        ).map((entry: any, index: number) => (
+                          <Cell
+                            key={`cell-district-${index}`}
+                            fill={
+                              entry.cargo_count >= 500
+                                ? "#10B981"
+                                : entry.cargo_count >= 300
+                                ? "#F59E0B"
+                                : "#EF4444"
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Trends and Admin performance */}
+          <UsageTrendsChart />
+          <AdminPerformanceChart />
+
+          {/* System Health removed as requested */}
         </div>
       </div>
 
@@ -650,94 +900,7 @@ export function SuperAdminDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-purple-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {t("superAdminDashboard.quickActions")}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-900">
-                {t("navigation.userManagement")}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600">
-              {t("superAdminDashboard.manageSystemUsers")}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => handleViewAll("users")}
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              {t("common.viewAll")}
-            </Button>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <Building2 className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-gray-900">
-                {t("superAdminDashboard.branchManagement")}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600">
-              {t("superAdminDashboard.branchesActive")}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => handleViewAll("branches")}
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              {t("common.manage")}
-            </Button>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <Package className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium text-gray-900">
-                {t("navigation.allCargos")}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600">
-              {t("superAdminDashboard.systemWideCargos")}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => handleViewAll("cargos")}
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              {t("common.viewAll")}
-            </Button>
-          </div>
-          <div className="bg-white rounded-lg p-4 shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="h-4 w-4 text-orange-600" />
-              <span className="text-sm font-medium text-gray-900">
-                {t("superAdminDashboard.systemSecurity")}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600">
-              {t("superAdminDashboard.monitorSecurity")}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => handleViewAll("alerts")}
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              {t("common.viewLogs")}
-            </Button>
-          </div>
-        </div>
-      </div>
+      {/* Quick Actions removed as requested */}
     </div>
   );
 }

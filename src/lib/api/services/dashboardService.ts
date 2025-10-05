@@ -336,10 +336,14 @@ export class DashboardService {
   }
 
   // Super Admin Dashboard
-  static async getSuperAdminDashboard(): Promise<
-    ApiResponse<DashboardResponse>
-  > {
-    const response = await axiosInstance.get("/dashboard/super-admin");
+  static async getSuperAdminDashboard(params?: {
+    period?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<DashboardResponse>> {
+    const response = await axiosInstance.get("/dashboard/super-admin", {
+      params,
+    });
     return response.data;
   }
 

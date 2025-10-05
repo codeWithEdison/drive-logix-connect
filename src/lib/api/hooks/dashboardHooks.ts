@@ -41,10 +41,14 @@ export const useAdminDashboard = () => {
 };
 
 // Super Admin Dashboard Hook
-export const useSuperAdminDashboard = () => {
+export const useSuperAdminDashboard = (params?: {
+  period?: string;
+  start_date?: string;
+  end_date?: string;
+}) => {
   return useQuery({
-    queryKey: queryKeys.dashboard.superAdmin(),
-    queryFn: () => DashboardService.getSuperAdminDashboard(),
+    queryKey: [...queryKeys.dashboard.superAdmin(), params] as any,
+    queryFn: () => DashboardService.getSuperAdminDashboard(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 60 * 1000, // 1 minute for super admin updates
   });

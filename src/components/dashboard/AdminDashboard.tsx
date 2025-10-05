@@ -461,16 +461,75 @@ export function AdminDashboard() {
 
       {/* Statistics Cards - Individual components */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        {adminStats.map((stat, index) => (
-          <StatsCard
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            description={stat.description}
-            icon={stat.icon}
-            iconColor={stat.iconColor}
-          />
-        ))}
+        {adminStats.map((stat, index) => {
+          const Icon = stat.icon as any;
+          const tone = stat.iconColor.includes("blue")
+            ? "blue"
+            : stat.iconColor.includes("green")
+            ? "green"
+            : stat.iconColor.includes("purple")
+            ? "purple"
+            : stat.iconColor.includes("orange")
+            ? "orange"
+            : "indigo";
+
+          const gradient =
+            tone === "blue"
+              ? "from-blue-50 to-blue-100 border-blue-200"
+              : tone === "green"
+              ? "from-green-50 to-green-100 border-green-200"
+              : tone === "purple"
+              ? "from-purple-50 to-purple-100 border-purple-200"
+              : tone === "orange"
+              ? "from-orange-50 to-orange-100 border-orange-200"
+              : "from-indigo-50 to-indigo-100 border-indigo-200";
+
+          const dot =
+            tone === "blue"
+              ? "bg-blue-500"
+              : tone === "green"
+              ? "bg-green-500"
+              : tone === "purple"
+              ? "bg-purple-500"
+              : tone === "orange"
+              ? "bg-orange-500"
+              : "bg-indigo-500";
+
+          const iconBg = "bg-white/60";
+
+          return (
+            <div
+              key={index}
+              className={`bg-gradient-to-br ${gradient} border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group`}
+            >
+              <div className="p-4 sm:p-5 lg:p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2.5 h-2.5 ${dot} rounded-full`}></div>
+                      <p className="text-xs sm:text-sm font-medium text-gray-700 truncate">
+                        {stat.title}
+                      </p>
+                    </div>
+                    <div className="flex items-end gap-3">
+                      <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
+                        {stat.value}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1 truncate">
+                      {stat.description}
+                    </p>
+                  </div>
+                  <div
+                    className={`p-3 sm:p-3.5 rounded-lg sm:rounded-xl ${iconBg} group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <Icon className={`h-5 w-5 ${stat.iconColor}`} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Charts Section */}
