@@ -46,7 +46,6 @@ import AdminInvoices from "@/pages/admin/AdminInvoices";
 import SuperAdminUsers from "@/pages/superadmin/SuperAdminUsers";
 import SuperAdminSettings from "@/pages/superadmin/SuperAdminSettings";
 import SuperAdminLogs from "@/pages/superadmin/SuperAdminLogs";
-import SuperAdminInvoices from "@/pages/superadmin/SuperAdminInvoices";
 import BranchManagement from "@/pages/superadmin/BranchManagement";
 import BranchDetails from "@/pages/superadmin/BranchDetails";
 import DistrictManagement from "@/pages/superadmin/DistrictManagement";
@@ -311,7 +310,7 @@ function AppContent() {
           path="/super-admin/invoices"
           element={
             <ProtectedRoute allowedRoles={["super_admin"]}>
-              <SuperAdminInvoices />
+              <AdminInvoices />
             </ProtectedRoute>
           }
         />
