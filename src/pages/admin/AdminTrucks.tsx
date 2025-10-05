@@ -33,6 +33,7 @@ import {
   useUpdateVehicle,
   useApproveVehicle,
 } from "@/lib/api/hooks";
+import { useBranches } from "@/lib/api/hooks/branchHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -91,6 +92,19 @@ const AdminTrucks = () => {
   const updateVehicleMutation = useUpdateVehicle();
   const approveVehicleMutation = useApproveVehicle();
 
+  // Fetch branches for branch name mapping
+  const { data: branchesResponse } = useBranches({ limit: 100 });
+
+  // Create branch ID to name mapping
+  const branchMap = useMemo(() => {
+    const branches = branchesResponse?.branches || [];
+    const map = new Map();
+    branches.forEach((branch: any) => {
+      map.set(branch.id, branch.name);
+    });
+    return map;
+  }, [branchesResponse]);
+
   // Extract data and pagination info from API response
   const vehiclesData = useMemo(
     () => (vehiclesResponse as any)?.data?.vehicles || [],
@@ -133,7 +147,7 @@ const AdminTrucks = () => {
       year: vehicle.year?.toString() || "N/A",
       manufacturer: vehicle.make || "Unknown",
       engineType: vehicle.fuel_type || "Diesel",
-      mileage: vehicle.total_distance_km || 0,
+      mileage: parseFloat(vehicle.total_distance_km) || 0,
       insuranceExpiry: vehicle.insurance_expiry
         ? new Date(vehicle.insurance_expiry).toLocaleDateString()
         : "N/A",
@@ -147,6 +161,12 @@ const AdminTrucks = () => {
       nextMaintenance: vehicle.next_maintenance_date
         ? new Date(vehicle.next_maintenance_date).toLocaleDateString()
         : "N/A",
+      // Additional fields from API response
+      vehicleType: vehicle.type || "truck",
+      branchId: vehicle.branch_id,
+      branchName: branchMap.get(vehicle.branch_id) || "Unknown Branch",
+      createdAt: vehicle.created_at,
+      updatedAt: vehicle.updated_at,
     })) || [];
 
   console.log("🚛 AdminTrucks - vehiclesResponse:", vehiclesResponse);
@@ -519,7 +539,6 @@ const AdminTrucks = () => {
       <TruckTable
         trucks={trucks}
         title=""
-        showStats={false}
         showSearch={false} // Disable internal search since we use backend search
         showFilters={false} // Disable internal filters since we use backend filters
         showPagination={false} // We handle pagination manually

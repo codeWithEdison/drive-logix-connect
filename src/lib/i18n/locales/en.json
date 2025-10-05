@@ -697,7 +697,8 @@
     "update": "Update",
     "delete": "Delete",
     "cancel": "Cancel",
-    "totalRevenue": "Total Revenue"
+    "totalRevenue": "Total Revenue",
+    "creation": "Creation"
   },
   "adminCargos": {
     "title": "Cargo Management",
