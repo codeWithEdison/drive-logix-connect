@@ -61,6 +61,7 @@ export interface Driver {
   avatar_url?: string;
   is_active: boolean;
   is_verified: boolean;
+  branch_name?: string;
 }
 
 export interface DriverTableProps {
@@ -398,6 +399,9 @@ export function DriverTable({
                     {t("driver.driverNumber")}
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
+                    {t("common.branch")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">
                     {t("common.actions")}
                   </TableHead>
                 </TableRow>
@@ -449,6 +453,11 @@ export function DriverTable({
                           {driver.driver_number}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-700">
+                        {driver.branch_name || "-"}
+                      </span>
                     </TableCell>
                     <TableCell>{renderActions(driver)}</TableCell>
                   </TableRow>

@@ -172,7 +172,15 @@
     "users": "Abakoresha",
     "preferredLanguage": "Ururimi Rwifuza",
     "password": "Ijambo banga",
-    "cargo": "Umuzigo"
+    "cargo": "Umuzigo", 
+    "branch": "Iryo",
+    "avatar": "Iryo",
+    "allBranches": "Iryo yose",
+    "allStatuses": "Imiterere yose",
+    "applyFilters": "Gukoresha Ibyegeranyo",
+    "clearFilters": "Hanagura Ibyegeranyo",
+    "pending": "Iteganyijwe",
+    "verified": "Emeza"
   },
   "auth": {
     "login": "Injira",

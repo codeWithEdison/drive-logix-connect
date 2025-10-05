@@ -95,11 +95,36 @@ export default function BranchDetailsPage() {
   });
   const { data: branchesData } = useBranches({ limit: 100 });
 
-  const drivers = Array.isArray(driversData) ? driversData : [];
+  // Normalize drivers: support responses that are either an array or { data: [] }
+  const rawDrivers: any[] = Array.isArray((driversData as any)?.data)
+    ? (driversData as any).data
+    : Array.isArray(driversData)
+    ? (driversData as any)
+    : [];
+  const drivers = rawDrivers.map((d: any) => {
+    const hasNested = !!d.user && !!d.driver;
+    const user = hasNested ? d.user : d;
+    const driver = hasNested ? d.driver : d.driver || {};
+    return {
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      phone: user.phone,
+      license_type: driver.license_type || "-",
+      license_number: driver.license_number || "-",
+      status: driver.status || (user.is_active ? "available" : "unavailable"),
+      avatar_url: user.avatar_url,
+    };
+  });
   const vehicles = Array.isArray(vehiclesData?.data?.vehicles)
     ? vehiclesData.data.vehicles
     : [];
-  const admins = Array.isArray(usersData?.data) ? usersData.data : [];
+  // Normalize admins from either top-level array or { data: [] }
+  const admins: any[] = Array.isArray((usersData as any)?.data)
+    ? (usersData as any).data
+    : Array.isArray(usersData)
+    ? (usersData as any)
+    : [];
 
   // Debug logging
   console.log("🔍 BranchDetails Debug:");
@@ -236,17 +261,34 @@ export default function BranchDetailsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Avatar</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>License</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {drivers.map((driver) => (
+                  {drivers.map((driver, idx) => (
                     <TableRow key={driver.id}>
+                      <TableCell className="text-sm text-gray-600">
+                        {idx + 1}
+                      </TableCell>
+                      <TableCell>
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xs text-gray-600">
+                          {driver.avatar_url ? (
+                            <img
+                              src={driver.avatar_url}
+                              alt={driver.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            driver.full_name?.charAt(0) || "?"
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {driver.full_name}
                       </TableCell>
@@ -267,31 +309,6 @@ export default function BranchDetailsPage() {
                         >
                           {driver.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                openReassignDialog(
-                                  "driver",
-                                  driver.id,
-                                  driver.full_name,
-                                  driver.branch_id || ""
-                                )
-                              }
-                            >
-                              <ArrowRightLeft className="mr-2 h-4 w-4" />
-                              Reassign Branch
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -392,17 +409,34 @@ export default function BranchDetailsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Avatar</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {admins.map((admin) => (
+                  {admins.map((admin, idx) => (
                     <TableRow key={admin.id}>
+                      <TableCell className="text-sm text-gray-600">
+                        {idx + 1}
+                      </TableCell>
+                      <TableCell>
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xs text-gray-600">
+                          {admin.avatar_url ? (
+                            <img
+                              src={admin.avatar_url}
+                              alt={admin.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            admin.full_name?.charAt(0) || "?"
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {admin.full_name}
                       </TableCell>
@@ -417,31 +451,6 @@ export default function BranchDetailsPage() {
                         >
                           {admin.is_active ? "Active" : "Inactive"}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                openReassignDialog(
-                                  "admin",
-                                  admin.id,
-                                  admin.full_name,
-                                  admin.branch_id || ""
-                                )
-                              }
-                            >
-                              <ArrowRightLeft className="mr-2 h-4 w-4" />
-                              Reassign Branch
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}

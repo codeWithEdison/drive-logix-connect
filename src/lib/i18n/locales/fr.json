@@ -178,7 +178,15 @@
     "lastLogin": "Dernière connexion",
     "preferredLanguage": "Langue préférée",
     "password": "Mot de passe",
-    "cargo": "Cargaison"
+    "cargo": "Cargaison",
+    "branch": "Branche",
+    "avatar": "Avatar",
+    "allBranches": "Toutes les branches",
+    "allStatuses": "Tous les statuts",
+    "applyFilters": "Appliquer les filtres",
+    "clearFilters": "Effacer les filtres",
+    "pending": "En attente",
+    "verified": "Vérifié"
   },
   "auth": {
     "login": "Connexion",

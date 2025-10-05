@@ -98,12 +98,12 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: Users,
     },
     {
-      title: "Branch Management",
+      title: "Branchs",
       url: "/superadmin/branches",
       icon: Building2,
     },
     {
-      title: "District Management",
+      title: "Districts",
       url: "/superadmin/districts",
       icon: Map,
     },
