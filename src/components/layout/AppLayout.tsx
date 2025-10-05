@@ -91,10 +91,10 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full bg-[#F9FAFE] ">
+      <div className="flex min-h-screen w-full bg-[#F9FAFE]  ">
         <DynamicSidebar />
 
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col  min-w-0">
           {/* Desktop Header */}
           <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group">
             <div className="flex h-16 items-center gap-4 px-6">
@@ -118,8 +118,8 @@ export function AppLayout({ children }: AppLayoutProps) {
           </header>
 
           {/* Desktop Content */}
-          <main className="flex-1 overflow-auto bg-[#F9FAFE] min-h-screen">
-            <div className="container mx-auto p-6">{children}</div>
+          <main className="flex-1 bg-[#F9FAFE] min-h-screen overflow-y-auto overflow-x-hidden min-w-0">
+            <div className="w-full max-w-full px-6 min-w-0">{children}</div>
           </main>
         </div>
       </div>
