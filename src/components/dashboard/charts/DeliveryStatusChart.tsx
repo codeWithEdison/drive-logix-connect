@@ -9,8 +9,8 @@ import {
   Legend,
 } from "recharts";
 import { Package, AlertCircle } from "lucide-react";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { t } from "i18next";
 
 interface DeliveryStatusData {
   status_distribution: Record<string, number>;
@@ -35,27 +35,21 @@ export function DeliveryStatusChart({
   error = null,
   className,
 }: DeliveryStatusChartProps) {
-  const { t } = useLanguage();
-
   // Data comes from props now
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       if (!data || !data.status) return null;
-      
+
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-semibold text-gray-900">
-            {t(`status.${data.status.toLowerCase()}`)}
+          <p className="font-semibold text-gray-900">{data.status}</p>
+          <p className="text-gray-600">
+            Percentage: <span className="font-medium">{data.percentage}%</span>
           </p>
           <p className="text-gray-600">
-            {t("common.percentage")}:{" "}
-            <span className="font-medium">{data.percentage}%</span>
-          </p>
-          <p className="text-gray-600">
-            {t("common.count")}:{" "}
-            <span className="font-medium">{data.count}</span>
+            Count: <span className="font-medium">{data.count}</span>
           </p>
         </div>
       );
@@ -65,14 +59,14 @@ export function DeliveryStatusChart({
 
   const CustomLegend = ({ payload }: any) => {
     if (!payload || !Array.isArray(payload)) return null;
-    
+
     return (
       <div className="mt-6">
         <div className="overflow-x-auto">
           <div className="flex gap-3 pb-2 min-w-max">
             {payload.map((entry: any, index: number) => {
               if (!entry) return null;
-              
+
               const statusData = data?.status_distribution;
               const statusKey = String(
                 entry.payload?.status || entry.value || ""
@@ -83,7 +77,9 @@ export function DeliveryStatusChart({
                 0
               );
               const percentage =
-                total > 0 ? (((count as number) / total) * 100).toFixed(1) : "0";
+                total > 0
+                  ? (((count as number) / total) * 100).toFixed(1)
+                  : "0";
 
               return (
                 <div

@@ -18,7 +18,6 @@ import { PendingApprovalsTable } from "./tables/PendingApprovalsTable";
 import { SystemAlertsTable } from "./tables/SystemAlertsTable";
 import { FinancialTransactionsTable } from "./tables/FinancialTransactionsTable";
 import { useSuperAdminDashboard } from "@/lib/api/hooks/dashboardHooks";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { customToast } from "@/lib/utils/toast";
 import {
@@ -56,7 +55,12 @@ import {
 // No mock data - using real API data only
 
 export function SuperAdminDashboard() {
-  const { t } = useLanguage();
+  // English-only: lightweight label formatter for legacy keys
+  const t = (key: string) => {
+    const last = key.includes(".") ? key.split(".").pop() || key : key;
+    const spaced = last.replace(/([A-Z])/g, " $1").trim();
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+  };
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = React.useState("monthly");
 
@@ -71,39 +75,39 @@ export function SuperAdminDashboard() {
   // Super Admin statistics data from API
   const superAdminStats = [
     {
-      title: t("superAdminDashboard.totalUsers"),
+      title: "Total Users",
       value: dashboardData?.data?.stats?.total_users?.toLocaleString() || "0",
-      description: t("superAdminDashboard.acrossAllBranches"),
+      description: "Across all branches",
       icon: Users,
       iconColor: "text-blue-600",
       // No trend data available in current API response
     },
     {
-      title: t("superAdminDashboard.totalRevenue"),
+      title: "Total Revenue",
       value: dashboardData?.data?.stats?.total_revenue
         ? `RWF ${(dashboardData.data.stats.total_revenue / 1000000).toFixed(
             1
           )}M`
         : "RWF 0M",
-      description: t("superAdminDashboard.allBranches"),
+      description: "All branches",
       icon: DollarSign,
       iconColor: "text-green-600",
       // No trend data available in current API response
     },
     {
-      title: t("superAdminDashboard.activeAdmins"),
+      title: "Active Admins",
       value: dashboardData?.data?.stats?.active_admins?.toString() || "0",
-      description: t("superAdminDashboard.systemWide"),
+      description: "System-wide",
       icon: Package,
       iconColor: "text-purple-600",
       // No trend data available in current API response
     },
     {
-      title: t("superAdminDashboard.systemUptime"),
+      title: "System Uptime",
       value: dashboardData?.data?.stats?.system_uptime
         ? `${dashboardData.data.stats.system_uptime}%`
         : "99.9%",
-      description: t("superAdminDashboard.last30Days"),
+      description: "Last 30 days",
       icon: Activity,
       iconColor: "text-green-600",
     },
@@ -454,13 +458,13 @@ export function SuperAdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-blue-600" />
-                {t("superAdminDashboard.systemMetrics")}
+                System Metrics
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8 text-muted-foreground">
                 <Package className="h-12 w-12 mx-auto mb-4" />
-                <p>{t("superAdminDashboard.noData")}</p>
+                <p>No data available</p>
               </div>
             </CardContent>
           </Card>

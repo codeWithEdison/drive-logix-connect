@@ -10,8 +10,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Truck, AlertCircle } from "lucide-react";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { t } from "i18next";
 
 interface FleetPerformanceData {
   vehicle_utilization: Array<{
@@ -54,8 +54,6 @@ export function FleetPerformanceChart({
   error = null,
   className,
 }: FleetPerformanceChartProps) {
-  const { t } = useLanguage();
-
   // Data comes from props now
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -65,28 +63,26 @@ export function FleetPerformanceChart({
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-semibold text-gray-900">{label}</p>
           <p className="text-blue-600 font-medium">
-            {t("dashboard.totalDeliveries")}: {chartData.deliveries}
+            Total Deliveries: {chartData.deliveries}
           </p>
           <p className="text-green-600 text-sm">
-            {t("dashboard.completedDeliveries")}:{" "}
-            {chartData.completedDeliveries}
+            Completed Deliveries: {chartData.completedDeliveries}
           </p>
           <p className="text-purple-600 text-sm">
-            {t("dashboard.successRate")}: {chartData.successRate}%
+            Success Rate: {chartData.successRate}%
           </p>
           <p className="text-orange-600 text-sm">
-            {t("dashboard.utilization")}: {chartData.utilization}%
+            Utilization: {chartData.utilization}%
           </p>
           <p className="text-cyan-600 text-sm">
-            {t("dashboard.fuelEfficiency")}: {chartData.fuelLevel} km/L
+            Fuel Efficiency: {chartData.fuelLevel} km/L
           </p>
           <p className="text-gray-600 text-sm">
-            {t("dashboard.totalRevenue")}: RWF{" "}
-            {chartData.totalRevenue?.toLocaleString()}
+            Total Revenue: RWF {chartData.totalRevenue?.toLocaleString()}
           </p>
           {chartData.totalDistance > 0 && (
             <p className="text-gray-600 text-sm">
-              {t("dashboard.totalDistance")}: {chartData.totalDistance} km
+              Total Distance: {chartData.totalDistance} km
             </p>
           )}
         </div>

@@ -11,7 +11,6 @@ import { PendingApprovalsTable } from "./tables/PendingApprovalsTable";
 import { SystemAlertsTable } from "./tables/SystemAlertsTable";
 import { FinancialTransactionsTable } from "./tables/FinancialTransactionsTable";
 import { useAdminDashboard, useDashboardStats } from "@/lib/api/hooks";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
@@ -45,7 +44,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export function AdminDashboard() {
-  const { t } = useLanguage();
+  // English-only: lightweight label formatter for legacy keys
+  const t = (key: string, _params?: any) => {
+    const last = key.includes(".") ? key.split(".").pop() || key : key;
+    const words = last
+      .replace(/([A-Z])/g, " $1")
+      .replace(/_/g, " ")
+      .trim();
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  };
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = React.useState("monthly");
 
@@ -60,34 +67,34 @@ export function AdminDashboard() {
   // Admin statistics data derived from unified API response
   const adminStats = [
     {
-      title: t("adminDashboard.totalRevenue"),
+      title: "Total Revenue",
       value: dashboardData?.data?.stats?.monthly_revenue
         ? `RWF ${(dashboardData.data.stats.monthly_revenue / 1000000).toFixed(
             1
           )}M`
         : "RWF 0M",
-      description: t("common.total"),
+      description: "Total",
       icon: DollarSign,
       iconColor: "text-green-600",
     },
     {
-      title: t("adminDashboard.activeDeliveries"),
+      title: "Active Deliveries",
       value: dashboardData?.data?.stats?.active_deliveries?.toString() || "0",
-      description: t("status.active"),
+      description: "Active",
       icon: Package,
       iconColor: "text-blue-600",
     },
     {
-      title: t("adminDashboard.totalUsers"),
+      title: "Total Users",
       value: dashboardData?.data?.stats?.total_drivers?.toString() || "0",
-      description: t("common.total"),
+      description: "Total",
       icon: Users,
       iconColor: "text-purple-600",
     },
     {
-      title: t("adminDashboard.pendingApprovals"),
+      title: "Pending Approvals",
       value: dashboardData?.data?.stats?.pending_approvals?.toString() || "0",
-      description: t("status.pending"),
+      description: "Pending",
       icon: Clock,
       iconColor: "text-orange-600",
     },
@@ -100,7 +107,7 @@ export function AdminDashboard() {
         stats: adminStats,
         dashboardData: dashboardData,
         generatedBy: user?.full_name || "Admin",
-        language: t("common.language"),
+        language: "English",
       };
 
       const blob = new Blob([JSON.stringify(reportData, null, 2)], {
@@ -129,9 +136,7 @@ export function AdminDashboard() {
 
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
-    customToast.success(
-      t("adminDashboard.filterApplied", { period: t(`common.${period}`) })
-    );
+    customToast.success(`Filter applied: ${t(`common.${period}`)}`);
     // Here you would typically refetch data with the new period filter
     // refetchDashboard({ period });
   };
@@ -153,7 +158,7 @@ export function AdminDashboard() {
 
   const handleRefresh = () => {
     refetchDashboard();
-    customToast.success(t("common.refreshed"));
+    customToast.success("Refreshed");
   };
 
   const handleViewAll = (type: string) => {
@@ -284,7 +289,7 @@ export function AdminDashboard() {
                   className="bg-white/10 border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  {t("common.retry")}
+                  Retry
                 </Button>
               </div>
             </div>
@@ -414,25 +419,25 @@ export function AdminDashboard() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => handlePeriodChange("daily")}>
                     <Calendar className="h-4 w-4 mr-2" />
-                    {t("common.daily")}
+                    Daily
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handlePeriodChange("weekly")}
                   >
                     <Calendar className="h-4 w-4 mr-2" />
-                    {t("common.weekly")}
+                    Weekly
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handlePeriodChange("monthly")}
                   >
                     <Calendar className="h-4 w-4 mr-2" />
-                    {t("common.monthly")}
+                    Monthly
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handlePeriodChange("yearly")}
                   >
                     <Calendar className="h-4 w-4 mr-2" />
-                    {t("common.yearly")}
+                    Yearly
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -442,7 +447,7 @@ export function AdminDashboard() {
                 className="bg-white/20 border-white/30 text-white hover:bg-white/30 w-full sm:w-auto"
               >
                 <Download className="w-4 h-4 mr-2" />
-                {t("adminDashboard.exportReport")}
+                Export Report
               </Button>
             </div>
           </div>
@@ -532,7 +537,7 @@ export function AdminDashboard() {
       {/* Recent Activities Messages - Dynamic from API */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          {t("adminDashboard.recentActivities")}
+          Recent Activities
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {dashboardData?.data?.recent_activities
@@ -579,7 +584,7 @@ export function AdminDashboard() {
                   <div className="flex items-center gap-2 mb-2">
                     <IconComponent className={`h-4 w-4 ${iconColor}`} />
                     <span className="text-sm font-medium text-gray-900">
-                      {t(`adminDashboard.${activity.type}`)}
+                      {activity.type}
                     </span>
                   </div>
                   <p className="text-sm text-gray-600">
@@ -592,7 +597,7 @@ export function AdminDashboard() {
               );
             }) || (
             <div className="col-span-full text-center text-gray-500 py-8">
-              {t("adminDashboard.noRecentActivities")}
+              No recent activities
             </div>
           )}
         </div>
