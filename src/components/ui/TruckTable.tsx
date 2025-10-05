@@ -43,7 +43,13 @@ export interface Truck {
   model: string;
   licensePlate: string;
   capacity: string;
-  status: "available" | "in_use" | "maintenance" | "out_of_service";
+  status:
+    | "active"
+    | "maintenance"
+    | "inactive"
+    | "available"
+    | "in_use"
+    | "out_of_service";
   driver: string;
   location: string;
   lastMaintenance: string;
@@ -54,8 +60,19 @@ export interface Truck {
   engineType: string;
   mileage: number;
   insuranceExpiry: string;
+  insuranceExpiryISO?: string | null;
   registrationExpiry: string;
+  registrationExpiryISO?: string | null;
   is_active: boolean;
+  color?: string;
+  fuelEfficiency?: string | number;
+  capacityVolume?: number;
+  nextMaintenance?: string;
+  vehicleType?: string;
+  branchId?: string;
+  branchName?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TruckTableProps {
@@ -92,16 +109,22 @@ export function TruckTable({
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "maintenance"
+    "all" | "active" | "maintenance" | "inactive"
   >("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredTrucks = trucks.filter((truck) => {
     const matchesSearch =
       truck.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      truck.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()) ||
       truck.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       truck.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      truck.driver.toLowerCase().includes(searchTerm.toLowerCase());
+      (truck.vehicleType &&
+        truck.vehicleType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (truck.color &&
+        truck.color.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (truck.branchName &&
+        truck.branchName.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesStatus =
       statusFilter === "all" || truck.status === statusFilter;
@@ -128,8 +151,14 @@ export function TruckTable({
             {t("status.maintenance")}
           </Badge>
         );
+      case "inactive":
+        return <Badge className="bg-red-100 text-red-600">Inactive</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-600">{status}</Badge>;
+        return (
+          <Badge className="bg-gray-100 text-gray-600 capitalize">
+            {status}
+          </Badge>
+        );
     }
   };
 
@@ -173,47 +202,6 @@ export function TruckTable({
         icon: <Edit className="h-3 w-3 mr-1" />,
         onClick: () => onEditTruck(truck),
         variant: "outline" as const,
-      });
-    }
-
-    if (onTrackTruck) {
-      actions.push({
-        key: "track",
-        label: t("actions.track"),
-        icon: <MapPin className="h-3 w-3 mr-1" />,
-        onClick: () => onTrackTruck(truck.id),
-        variant: "outline" as const,
-      });
-    }
-
-    if (onAssignDriver) {
-      actions.push({
-        key: "assign",
-        label: t("actions.assignDriver"),
-        icon: <User className="h-3 w-3 mr-1" />,
-        onClick: () => onAssignDriver(truck.id),
-        variant: "outline" as const,
-      });
-    }
-
-    if (onScheduleMaintenance) {
-      actions.push({
-        key: "maintenance",
-        label: t("actions.scheduleMaintenance"),
-        icon: <Gauge className="h-3 w-3 mr-1" />,
-        onClick: () => onScheduleMaintenance(truck.id),
-        variant: "outline" as const,
-      });
-    }
-
-    if (onDeleteTruck) {
-      actions.push({
-        key: "delete",
-        label: t("actions.delete"),
-        icon: <Trash2 className="h-3 w-3 mr-1" />,
-        onClick: () => onDeleteTruck(truck.id),
-        variant: "outline" as const,
-        className: "text-red-600",
       });
     }
 
@@ -309,6 +297,7 @@ export function TruckTable({
                       <SelectItem value="maintenance">
                         {t("status.maintenance")}
                       </SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -332,25 +321,34 @@ export function TruckTable({
                     #
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
-                    {t("adminTrucks.truck")}
+                    Vehicle
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
-                    {t("common.driver")}
+                    Type
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
-                    {t("common.status")}
+                    Year
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
-                    {t("adminTrucks.fuel")}
+                    Capacity
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
-                    {t("adminTrucks.deliveries")}
+                    Fuel Type
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
-                    {t("common.location")}
+                    Status
                   </TableHead>
                   <TableHead className="text-xs font-medium text-gray-600">
-                    {t("actions.title")}
+                    Insurance
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">
+                    Registration
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">
+                    Branch
+                  </TableHead>
+                  <TableHead className="text-xs font-medium text-gray-600">
+                    Actions
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -369,43 +367,80 @@ export function TruckTable({
                     <TableCell>
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {truck.model}
+                          {truck.manufacturer} {truck.model}
                         </p>
                         <p className="text-xs text-gray-500">
                           {truck.licensePlate}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500">{truck.color}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize">
+                        {truck.vehicleType || "truck"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-900">
+                        {truck.year}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
                           {truck.capacity}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {truck.capacityVolume
+                            ? `${truck.capacityVolume} m³`
+                            : "N/A"}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 capitalize">
+                          {truck.engineType}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {truck.fuelEfficiency
+                            ? `${truck.fuelEfficiency} L/100km`
+                            : "N/A"}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(truck.status)}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm text-gray-900">
+                          {truck.insuranceExpiry}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {truck.insuranceExpiry &&
+                          new Date(truck.insuranceExpiry) < new Date()
+                            ? "Expired"
+                            : "Valid"}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-sm text-gray-900">
+                          {truck.registrationExpiry}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {truck.registrationExpiry &&
+                          new Date(truck.registrationExpiry) < new Date()
+                            ? "Expired"
+                            : "Valid"}
                         </p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {truck.driver}
+                          {truck.branchName || "Unknown Branch"}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {t("adminTrucks.assigned")}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(truck.status)}</TableCell>
-                    <TableCell>{getFuelLevelBadge(truck.fuelLevel)}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {truck.totalDeliveries}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {t("common.total")}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm text-gray-700">
-                          {truck.location}
-                        </span>
                       </div>
                     </TableCell>
                     <TableCell>{renderActions(truck)}</TableCell>

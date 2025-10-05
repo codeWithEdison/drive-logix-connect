@@ -47,6 +47,20 @@ interface UserDetail {
   last_login?: string;
   created_at: string;
   updated_at: string;
+  branch_id?: string;
+  branch?: {
+    id: string;
+    name: string;
+    code: string;
+    address: string;
+    city: string;
+    country: string;
+    postal_code: string;
+    phone: string;
+    email: string;
+    manager_name: string;
+    is_active: boolean;
+  };
 
   // Client-specific data
   client?: {
@@ -425,12 +439,20 @@ export function UserDetailModal({
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarFallback
-                  style={{ backgroundColor: getRoleColor(user.role) }}
-                  className="text-white font-bold text-lg"
-                >
-                  {user.full_name.charAt(0)}
-                </AvatarFallback>
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.full_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <AvatarFallback
+                    style={{ backgroundColor: getRoleColor(user.role) }}
+                    className="text-white font-bold text-lg"
+                  >
+                    {user.full_name.charAt(0)}
+                  </AvatarFallback>
+                )}
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -523,8 +545,105 @@ export function UserDetailModal({
                     {user.is_verified ? t("common.yes") : t("common.no")}
                   </Badge>
                 </div>
+                {user.branch && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">
+                      {t("common.branch")}
+                    </span>
+                    <span className="font-medium">{user.branch.name}</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
+
+            {/* Branch Information for Admin Users */}
+            {user.role === "admin" && user.branch && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building className="h-5 w-5" />
+                    {t("common.branch")} {t("common.information")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        {t("common.branch")} {t("common.name")}
+                      </p>
+                      <p className="font-medium">{user.branch.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        {t("common.code")}
+                      </p>
+                      <p className="font-medium">{user.branch.code}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600">
+                      {t("common.address")}
+                    </p>
+                    <p className="font-medium">{user.branch.address}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        {t("common.city")}
+                      </p>
+                      <p className="font-medium">{user.branch.city}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        {t("common.country")}
+                      </p>
+                      <p className="font-medium">{user.branch.country}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        {t("common.phone")}
+                      </p>
+                      <p className="font-medium">{user.branch.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        {t("common.email")}
+                      </p>
+                      <p className="font-medium">{user.branch.email}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600">
+                      {t("common.manager")}
+                    </p>
+                    <p className="font-medium">{user.branch.manager_name}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">
+                      {t("common.status")}
+                    </span>
+                    <Badge
+                      className={
+                        user.branch.is_active
+                          ? "bg-green-100 text-green-600"
+                          : "bg-red-100 text-red-600"
+                      }
+                    >
+                      {user.branch.is_active
+                        ? t("common.active")
+                        : t("common.inactive")}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="details" className="space-y-4">
@@ -581,16 +700,6 @@ export function UserDetailModal({
         </Tabs>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
-          <Button variant="outline" className="flex-1">
-            <Settings className="h-4 w-4 mr-2" />
-            {t("actions.editUser")}
-          </Button>
-          <Button variant="outline" className="flex-1">
-            <FileText className="h-4 w-4 mr-2" />
-            {t("actions.viewReports")}
-          </Button>
-        </div>
       </div>
     </ModernModel>
   );

@@ -11,12 +11,10 @@ import {
 } from "recharts";
 import { BarChart3, Users, Shield, UserCheck, Crown } from "lucide-react";
 import { useUsersDistributionChart } from "@/lib/api/hooks";
-import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 
 export function UsersDistributionChart() {
-  const { t } = useLanguage();
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   // API hook
@@ -34,19 +32,15 @@ export function UsersDistributionChart() {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       if (!data || !data.name) return null;
-      
+
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-semibold text-gray-900">
-            {t(`common.${data.name.toLowerCase()}`)}
+          <p className="font-semibold text-gray-900">{data.name}</p>
+          <p className="text-gray-600">
+            Count: <span className="font-medium">{data.value}</span>
           </p>
           <p className="text-gray-600">
-            {t("common.count")}:{" "}
-            <span className="font-medium">{data.value}</span>
-          </p>
-          <p className="text-gray-600">
-            {t("common.percentage")}:{" "}
-            <span className="font-medium">{data.percentage}%</span>
+            Percentage: <span className="font-medium">{data.percentage}%</span>
           </p>
           <p className="text-gray-600 text-sm">{data.description}</p>
         </div>
@@ -57,12 +51,12 @@ export function UsersDistributionChart() {
 
   const CustomLegend = ({ payload }: any) => {
     if (!payload || !Array.isArray(payload)) return null;
-    
+
     return (
       <div className="flex flex-wrap gap-4 justify-center mt-4">
         {payload.map((entry: any, index: number) => {
           if (!entry || !entry.name) return null;
-          
+
           const data = chartData[index];
           const IconComponent =
             entry.name === "Clients"
@@ -80,8 +74,7 @@ export function UsersDistributionChart() {
                 style={{ color: entry.color }}
               />
               <span className="text-sm text-gray-600">
-                {t(`common.${entry.name.toLowerCase()}`)} (
-                {data?.percentage || 0}%)
+                {entry.name} ({data?.percentage || 0}%)
               </span>
             </div>
           );
@@ -112,14 +105,14 @@ export function UsersDistributionChart() {
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-red-500" />
             <CardTitle className="text-lg font-semibold text-red-800">
-              {t("common.error")}
+              Error
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="px-6 pb-6">
           <div className="h-80 flex items-center justify-center">
             <p className="text-red-600 text-sm">
-              {error.message || t("common.loadError")}
+              {error.message || "Failed to load data"}
             </p>
           </div>
         </CardContent>
@@ -157,7 +150,7 @@ export function UsersDistributionChart() {
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
           <CardTitle className="text-lg font-semibold text-gray-900">
-            {t("dashboard.usersDistribution")}
+            Users Distribution
           </CardTitle>
         </div>
         <BarChart3 className="h-5 w-5 text-indigo-500" />
@@ -203,9 +196,7 @@ export function UsersDistributionChart() {
           <div className="text-2xl font-bold text-indigo-600">
             {totalUsers.toLocaleString()}
           </div>
-          <div className="text-sm text-gray-600">
-            {t("dashboard.totalUsers")}
-          </div>
+          <div className="text-sm text-gray-600">Total Users</div>
         </div>
       </CardContent>
     </Card>

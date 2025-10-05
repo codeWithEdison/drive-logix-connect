@@ -22,5 +22,10 @@ export * from "./branchHooks";
 export * from "./districtHooks";
 export * from "./cargoImageHooks";
 export { useAdminDrivers } from "./adminHooks";
-export * from "./notificationHooks";
-export * from "./driverDocumentHooks";
+// Resolve export name conflict with utilityHooks: alias notification hook
+export { useNotifications as useNotificationSettings } from "./notificationHooks";
+// Resolve duplicate export with driverHooks: alias driver document hook
+export { useDriverDocuments as useDriverDocumentsList } from "./driverDocumentHooks";
+// Export driver document hooks needed by admin UIs
+export { useDriverDocumentsById, useDriverDetail } from "./driverDocumentHooks";
+export * from "./serviceAreaHooks";

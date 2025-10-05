@@ -62,16 +62,62 @@ export class AdminService {
     password: string;
     phone?: string;
     preferred_language?: "en" | "rw" | "fr";
+    branch_id: string;
   }): Promise<
     ApiResponse<{
       user: any;
       message: string;
     }>
   > {
-    const response = await axiosInstance.post("/admin/users", {
+    const response = await axiosInstance.post("/auth/register", {
       ...data,
       role: "admin",
     });
+    return response.data;
+  }
+
+  // Update admin user
+  static async updateAdmin(
+    adminId: string,
+    data: {
+      full_name: string;
+      email: string;
+      phone?: string;
+      role: "admin" | "super_admin";
+      branch_id: string;
+      is_active: boolean;
+      preferred_language?: "en" | "rw" | "fr";
+    }
+  ): Promise<ApiResponse<any>> {
+    const response = await axiosInstance.put(`/admin/admins/${adminId}`, data);
+    return response.data;
+  }
+
+  // Update client user
+  static async updateClient(
+    clientId: string,
+    data: {
+      full_name: string;
+      email: string;
+      phone?: string;
+      company_name: string;
+      business_type: "individual" | "corporate" | "government";
+      tax_id?: string;
+      address?: string;
+      city?: string;
+      country?: string;
+      postal_code?: string;
+      contact_person?: string;
+      credit_limit?: number;
+      payment_terms?: number;
+      is_active: boolean;
+      preferred_language?: "en" | "rw" | "fr";
+    }
+  ): Promise<ApiResponse<any>> {
+    const response = await axiosInstance.put(
+      `/admin/clients/${clientId}`,
+      data
+    );
     return response.data;
   }
 

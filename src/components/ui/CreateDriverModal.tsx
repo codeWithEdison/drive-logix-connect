@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,14 +24,18 @@ import {
 } from "lucide-react";
 import { useCreateAdminDriver } from "@/lib/api/hooks/adminHooks";
 import { useUploadDriverDocument } from "@/lib/api/hooks/driverHooks";
+import { useBranches } from "@/lib/api/hooks/branchHooks";
 import { FileService } from "@/lib/api/services/utilityService";
 import axiosInstance from "@/lib/api/axios";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Driver } from "./DriverTable";
 
 interface CreateDriverModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  editingDriver?: Driver | null;
 }
 
 interface DriverFormData {
@@ -49,6 +53,7 @@ interface DriverFormData {
   emergency_phone: string;
   blood_type: string;
   medical_certificate_expiry: string;
+  branch_id: string;
 }
 
 interface DocumentFile {
@@ -71,6 +76,7 @@ export function CreateDriverModal({
   isOpen,
   onClose,
   onSuccess,
+  editingDriver,
 }: CreateDriverModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,8 +85,10 @@ export function CreateDriverModal({
   const [uploadedDocuments, setUploadedDocuments] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const { user } = useAuth();
   const createDriverMutation = useCreateAdminDriver();
   const uploadDocumentMutation = useUploadDriverDocument();
+  const { data: branchesData } = useBranches({ limit: 100 });
 
   const [formData, setFormData] = useState<DriverFormData>({
     full_name: "",
@@ -97,9 +105,70 @@ export function CreateDriverModal({
     emergency_phone: "",
     blood_type: "",
     medical_certificate_expiry: "",
+    branch_id: user?.branch_id || "",
   });
 
   const [documents, setDocuments] = useState<DocumentFile[]>([]);
+
+  const toDateInput = (value: string | undefined | null): string => {
+    if (!value) return "";
+    if (value === "N/A") return "";
+    // Already in YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+  };
+
+  // Populate form when editing driver
+  useEffect(() => {
+    if (editingDriver) {
+      setFormData({
+        full_name: editingDriver.full_name || "",
+        email: editingDriver.email || "",
+        phone: editingDriver.phone || "",
+        password: "", // Don't populate password for security
+        preferred_language: "en", // Default value since not in Driver interface
+        license_number: editingDriver.license_number || "",
+        license_expiry: toDateInput(editingDriver.license_expiry),
+        license_type: editingDriver.license_type || "B",
+        code_number:
+          (editingDriver as any).code_number ||
+          ((editingDriver as any).driver_number &&
+            (editingDriver as any).driver_number !== "N/A")
+            ? (editingDriver as any).driver_number
+            : "",
+        date_of_birth: toDateInput(editingDriver.date_of_birth),
+        emergency_contact: editingDriver.emergency_contact || "",
+        emergency_phone: editingDriver.emergency_phone || "",
+        blood_type: editingDriver.blood_type || "",
+        medical_certificate_expiry: toDateInput(
+          editingDriver.medical_certificate_expiry
+        ),
+        branch_id: user?.branch_id || "",
+      });
+      setCreatedDriverId(editingDriver.id);
+    } else {
+      // Reset form for new driver
+      setFormData({
+        full_name: "",
+        email: "",
+        phone: "",
+        password: "",
+        preferred_language: "en",
+        license_number: "",
+        license_expiry: "",
+        license_type: "B",
+        code_number: "",
+        date_of_birth: "",
+        emergency_contact: "",
+        emergency_phone: "",
+        blood_type: "",
+        medical_certificate_expiry: "",
+        branch_id: user?.branch_id || "",
+      });
+      setCreatedDriverId(null);
+    }
+  }, [editingDriver, user?.branch_id]);
 
   const handleInputChange = (field: keyof DriverFormData, value: string) => {
     setFormData((prev) => ({
@@ -183,11 +252,20 @@ export function CreateDriverModal({
       "full_name",
       "email",
       "phone",
-      "password",
       "license_number",
       "license_type",
       "code_number",
     ];
+
+    // Only require password when creating a new driver
+    if (!editingDriver) {
+      required.push("password");
+    }
+
+    // Add branch_id validation for super_admin
+    if (user?.role === "super_admin") {
+      required.push("branch_id");
+    }
 
     for (const field of required) {
       if (!formData[field as keyof DriverFormData]) {
@@ -212,13 +290,25 @@ export function CreateDriverModal({
     }
 
     // Password validation
-    if (formData.password.length < 6) {
-      toast({
-        title: "Weak Password",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
-      return false;
+    if (!editingDriver) {
+      if (formData.password.length < 6) {
+        toast({
+          title: "Weak Password",
+          description: "Password must be at least 6 characters long",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } else if (formData.password) {
+      // If editing, only validate when a new password is provided
+      if (formData.password.length < 6) {
+        toast({
+          title: "Weak Password",
+          description: "Password must be at least 6 characters long",
+          variant: "destructive",
+        });
+        return false;
+      }
     }
 
     return true;
@@ -231,8 +321,46 @@ export function CreateDriverModal({
     setError(null);
 
     try {
-      // Step 1: Create driver first
-      const driverResponse = await createDriverMutation.mutateAsync(formData);
+      // If editing, update driver via PUT (exclude password), then proceed to documents
+      if (editingDriver) {
+        const updatePayload: any = {
+          full_name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone,
+          preferred_language: formData.preferred_language,
+          license_number: formData.license_number,
+          license_expiry: formData.license_expiry || undefined,
+          license_type: formData.license_type,
+          code_number: formData.code_number,
+          date_of_birth: formData.date_of_birth || undefined,
+          emergency_contact: formData.emergency_contact || undefined,
+          emergency_phone: formData.emergency_phone || undefined,
+          blood_type: formData.blood_type || undefined,
+          medical_certificate_expiry:
+            formData.medical_certificate_expiry || undefined,
+          branch_id: formData.branch_id || undefined,
+        };
+
+        await axiosInstance.put(
+          `/admin/drivers/${editingDriver.id}`,
+          updatePayload
+        );
+
+        setCreatedDriverId(editingDriver.id);
+        toast({
+          title: "Success",
+          description:
+            "Driver updated successfully! Now you can upload documents.",
+        });
+        setCurrentStep(2);
+        return;
+      }
+
+      // Step 1 (create): Create driver first (password included on create only)
+      const createPayload = { ...formData };
+      const driverResponse = await createDriverMutation.mutateAsync(
+        createPayload
+      );
       const driverId = driverResponse.data.driver.id;
       setCreatedDriverId(driverId);
 
@@ -246,9 +374,11 @@ export function CreateDriverModal({
       setCurrentStep(2);
     } catch (error: any) {
       const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.error ||
         error?.response?.data?.message ||
         error?.message ||
-        "Failed to create driver";
+        (editingDriver ? "Failed to update driver" : "Failed to create driver");
       setError(errorMessage);
       toast({
         title: "Error",
@@ -375,6 +505,7 @@ export function CreateDriverModal({
       emergency_phone: "",
       blood_type: "",
       medical_certificate_expiry: "",
+      branch_id: user?.branch_id || "",
     });
     setDocuments([]);
     setCreatedDriverId(null);
@@ -406,7 +537,7 @@ export function CreateDriverModal({
     <ModernModel
       isOpen={isOpen}
       onClose={handleClose}
-      title="Create New Driver"
+      title={editingDriver ? "Edit Driver" : "Create New Driver"}
       //   size="lg"
     >
       <div className="space-y-6">
@@ -498,18 +629,20 @@ export function CreateDriverModal({
                       placeholder="Enter phone number"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="password">Password *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) =>
-                        handleInputChange("password", e.target.value)
-                      }
-                      placeholder="Enter password (min 8 chars)"
-                    />
-                  </div>
+                  {!editingDriver && (
+                    <div>
+                      <Label htmlFor="password">Password *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) =>
+                          handleInputChange("password", e.target.value)
+                        }
+                        placeholder="Enter password (min 8 chars)"
+                      />
+                    </div>
+                  )}
                   <div>
                     <Label htmlFor="preferred_language">
                       Preferred Language
@@ -661,6 +794,28 @@ export function CreateDriverModal({
                       </SelectContent>
                     </Select>
                   </div>
+                  {user?.role === "super_admin" && (
+                    <div>
+                      <Label htmlFor="branch_id">Branch *</Label>
+                      <Select
+                        value={formData.branch_id}
+                        onValueChange={(value) =>
+                          handleInputChange("branch_id", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select branch" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {branchesData?.branches?.map((branch: any) => (
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -832,11 +987,13 @@ export function CreateDriverModal({
                 {isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Creating Driver...
+                    {editingDriver
+                      ? "Updating Driver..."
+                      : "Creating Driver..."}
                   </>
                 ) : (
                   <>
-                    Create Driver
+                    {editingDriver ? "Update Driver" : "Create Driver"}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 )}

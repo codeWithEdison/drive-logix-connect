@@ -39,17 +39,16 @@ import { AssignedCargosPage } from "@/pages/AssignedCargosPage";
 import AdminCargos from "@/pages/admin/AdminCargos";
 import AdminDrivers from "@/pages/admin/AdminDrivers";
 import AdminTrucks from "@/pages/admin/AdminTrucks";
-import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminReports from "@/pages/admin/AdminReports";
 import AdminAssignments from "@/pages/admin/AdminAssignments";
 import AdminInvoices from "@/pages/admin/AdminInvoices";
 import SuperAdminUsers from "@/pages/superadmin/SuperAdminUsers";
 import SuperAdminSettings from "@/pages/superadmin/SuperAdminSettings";
 import SuperAdminLogs from "@/pages/superadmin/SuperAdminLogs";
-import SuperAdminInvoices from "@/pages/superadmin/SuperAdminInvoices";
 import BranchManagement from "@/pages/superadmin/BranchManagement";
 import BranchDetails from "@/pages/superadmin/BranchDetails";
 import DistrictManagement from "@/pages/superadmin/DistrictManagement";
+import CargoCategoriesPage from "@/pages/superadmin/CargoCategories";
 import NotFound from "@/pages/NotFound";
 import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
 import { ProfilePage } from "@/pages/Profile";
@@ -242,14 +241,6 @@ function AppContent() {
           }
         />
         <Route
-          path="/admin/settings"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminSettings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/admin/reports"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
@@ -299,6 +290,11 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        {/* Redirect any old admin settings route to super-admin settings */}
+        <Route
+          path="/admin/settings"
+          element={<Navigate to="/super-admin/settings" replace />}
+        />
         <Route
           path="/super-admin/logs"
           element={
@@ -311,7 +307,7 @@ function AppContent() {
           path="/super-admin/invoices"
           element={
             <ProtectedRoute allowedRoles={["super_admin"]}>
-              <SuperAdminInvoices />
+              <AdminInvoices />
             </ProtectedRoute>
           }
         />
@@ -336,6 +332,14 @@ function AppContent() {
           element={
             <ProtectedRoute allowedRoles={["super_admin"]}>
               <DistrictManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/superadmin/cargo-categories"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <CargoCategoriesPage />
             </ProtectedRoute>
           }
         />

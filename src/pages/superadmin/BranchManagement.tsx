@@ -87,6 +87,10 @@ export default function BranchManagementPage() {
     limit: 50,
   });
 
+  // Pagination state (client-side)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -223,6 +227,18 @@ export default function BranchManagementPage() {
 
   const filteredBranches = branchesData?.branches || [];
 
+  // Client-side pagination helpers
+  const totalBranches = filteredBranches.length;
+  const totalPages = Math.max(1, Math.ceil(totalBranches / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedBranches = filteredBranches.slice(startIndex, endIndex);
+
+  // Reset to page 1 when data/search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, totalBranches]);
+
   // Debug logging
   console.log("🔍 BranchManagement Debug:");
   console.log("branchesData:", branchesData);
@@ -263,79 +279,168 @@ export default function BranchManagementPage() {
           {isLoading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>City</TableHead>
-                  <TableHead>Manager</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBranches.map((branch) => (
-                  <TableRow key={branch.id}>
-                    <TableCell className="font-medium">{branch.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{branch.code}</Badge>
-                    </TableCell>
-                    <TableCell>{branch.city}</TableCell>
-                    <TableCell>{branch.manager_name}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={branch.is_active ? "default" : "secondary"}
-                      >
-                        {branch.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              navigate(`/superadmin/branches/${branch.id}`)
-                            }
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => openEditDialog(branch)}
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleToggleStatus(branch)}
-                          >
-                            {branch.is_active ? "Deactivate" : "Activate"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteBranch(branch)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>City</TableHead>
+                    <TableHead>Country</TableHead>
+                    <TableHead>Postal</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Manager</TableHead>
+                    <TableHead>Districts</TableHead>
+                    <TableHead>Users</TableHead>
+                    <TableHead>Drivers</TableHead>
+                    <TableHead>Vehicles</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Updated</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedBranches.map((branch, idx) => (
+                    <TableRow
+                      key={branch.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() =>
+                        navigate(`/superadmin/branches/${branch.id}`)
+                      }
+                    >
+                      <TableCell className="text-sm text-gray-600">
+                        {startIndex + idx + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {branch.name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{branch.code}</Badge>
+                      </TableCell>
+                      <TableCell>{branch.address}</TableCell>
+                      <TableCell>{branch.city}</TableCell>
+                      <TableCell>{branch.country}</TableCell>
+                      <TableCell>{branch.postal_code}</TableCell>
+                      <TableCell>{branch.phone}</TableCell>
+                      <TableCell>{branch.email}</TableCell>
+                      <TableCell>{branch.manager_name}</TableCell>
+                      <TableCell>
+                        {(branch as any)?.districts_count ?? 0}
+                      </TableCell>
+                      <TableCell>{(branch as any)?.users_count ?? 0}</TableCell>
+                      <TableCell>
+                        {(branch as any)?.drivers_count ?? 0}
+                      </TableCell>
+                      <TableCell>
+                        {(branch as any)?.vehicles_count ?? 0}
+                      </TableCell>
+                      <TableCell>
+                        {branch.created_at
+                          ? new Date(branch.created_at).toLocaleDateString()
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {branch.updated_at
+                          ? new Date(branch.updated_at).toLocaleDateString()
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <label
+                          className="flex items-center cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={!!branch.is_active}
+                            onChange={() => handleToggleStatus(branch)}
+                            disabled={toggleStatusMutation.isPending}
+                          />
+                          <div
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                              branch.is_active ? "bg-green-500" : "bg-gray-300"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                branch.is_active
+                                  ? "translate-x-6"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </div>
+                          <span className="ml-2 text-sm text-gray-700">
+                            {branch.is_active ? "Active" : "Inactive"}
+                          </span>
+                        </label>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                navigate(`/superadmin/branches/${branch.id}`)
+                              }
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => openEditDialog(branch)}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="text-sm text-gray-600">
+          Showing {totalBranches === 0 ? 0 : startIndex + 1} to{" "}
+          {Math.min(endIndex, totalBranches)} of {totalBranches} branches
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
 
       {/* Create Branch Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

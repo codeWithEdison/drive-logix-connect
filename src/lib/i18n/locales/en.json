@@ -231,7 +231,15 @@
     "hoursAgo": "{{count}} hour ago",
     "hoursAgo_other": "{{count}} hours ago",
     "daysAgo": "{{count}} day ago",
-    "daysAgo_other": "{{count}} days ago"
+    "daysAgo_other": "{{count}} days ago",
+    "branch": "Branch",
+    "avatar": "Avatar",
+    "allBranches": "All Branches",
+    "allStatuses": "All Statuses",
+    "applyFilters": "Apply Filters",
+    "clearFilters": "Clear Filters",
+    "code": "Code",
+    "pending": "Pending"
   },
   "auth": {
     "login": "Login",
@@ -349,7 +357,7 @@
     "allCargos": "All Cargos",
     "drivers": "Drivers",
     "trucks": "Vehicles",
-    "userManagement": "User Management",
+    "userManagement": "Users",
     "systemSettings": "System Settings",
     "systemLogs": "System Logs",
     "cargos": "Cargos",
@@ -697,7 +705,8 @@
     "update": "Update",
     "delete": "Delete",
     "cancel": "Cancel",
-    "totalRevenue": "Total Revenue"
+    "totalRevenue": "Total Revenue",
+    "creation": "Creation"
   },
   "adminCargos": {
     "title": "Cargo Management",

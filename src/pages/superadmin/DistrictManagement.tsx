@@ -73,9 +73,11 @@ export default function DistrictManagementPage() {
   const [selectedBranchId, setSelectedBranchId] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedDistrict, setSelectedDistrict] = useState<District | null>(
     null
   );
+  const [viewDistrict, setViewDistrict] = useState<District | null>(null);
   const [formData, setFormData] = useState<CreateDistrictRequest>({
     name: "",
     code: "",
@@ -110,6 +112,10 @@ export default function DistrictManagementPage() {
   const updateDistrictMutation = useUpdateDistrict();
   const deleteDistrictMutation = useDeleteDistrict();
   const toggleStatusMutation = useToggleDistrictStatus();
+
+  // Pagination state (client-side)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const handleCreateDistrict = async () => {
     try {
@@ -223,6 +229,17 @@ export default function DistrictManagementPage() {
 
   const filteredDistricts = districtsData?.districts || [];
 
+  // Client-side pagination helpers
+  const totalDistricts = filteredDistricts.length;
+  const totalPages = Math.max(1, Math.ceil(totalDistricts / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedDistricts = filteredDistricts.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedBranchId, totalDistricts]);
+
   // Debug logging
   console.log("🔍 DistrictManagement Debug:");
   console.log("districtsData:", districtsData);
@@ -279,87 +296,133 @@ export default function DistrictManagementPage() {
           {isLoading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Branch</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDistricts.map((district) => (
-                  <TableRow key={district.id}>
-                    <TableCell className="font-medium">
-                      {district.name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{district.code}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-muted-foreground" />
-                        <span>{district.branch.name}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {district.branch.code}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={district.is_active ? "default" : "secondary"}
-                      >
-                        {district.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              navigate(`/superadmin/districts/${district.id}`)
-                            }
-                          >
-                            <MapPin className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => openEditDialog(district)}
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleToggleStatus(district)}
-                          >
-                            {district.is_active ? "Deactivate" : "Activate"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteDistrict(district)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Branch</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedDistricts.map((district, idx) => (
+                    <TableRow
+                      key={district.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => {
+                        setViewDistrict(district);
+                        setIsViewDialogOpen(true);
+                      }}
+                    >
+                      <TableCell className="text-sm text-gray-600">
+                        {startIndex + idx + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {district.name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{district.code}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-muted-foreground" />
+                          <span>{district.branch.name}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {district.branch.code}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <label
+                          className="flex items-center cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={!!district.is_active}
+                            onChange={() => handleToggleStatus(district)}
+                            disabled={toggleStatusMutation.isPending}
+                          />
+                          <div
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                              district.is_active
+                                ? "bg-green-500"
+                                : "bg-gray-300"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                district.is_active
+                                  ? "translate-x-6"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </div>
+                          <span className="ml-2 text-sm text-gray-700">
+                            {district.is_active ? "Active" : "Inactive"}
+                          </span>
+                        </label>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() => openEditDialog(district)}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="text-sm text-gray-600">
+          Showing {totalDistricts === 0 ? 0 : startIndex + 1} to{" "}
+          {Math.min(endIndex, totalDistricts)} of {totalDistricts} districts
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
 
       {/* Create District Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -498,6 +561,66 @@ export default function DistrictManagementPage() {
               {updateDistrictMutation.isPending
                 ? "Updating..."
                 : "Update District"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View District Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>District Details</DialogTitle>
+            <DialogDescription>
+              Overview of the selected district
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Name</Label>
+                <p className="mt-1 text-sm font-medium">
+                  {viewDistrict?.name || "-"}
+                </p>
+              </div>
+              <div>
+                <Label>Code</Label>
+                <p className="mt-1 text-sm">
+                  <Badge variant="outline">{viewDistrict?.code || "-"}</Badge>
+                </p>
+              </div>
+              <div className="col-span-2">
+                <Label>Branch</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {(viewDistrict as any)?.branch?.name || "-"}
+                  </span>
+                  {(viewDistrict as any)?.branch?.code && (
+                    <Badge variant="secondary" className="text-xs">
+                      {(viewDistrict as any).branch.code}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <p className="mt-1 text-sm">
+                  <Badge
+                    variant={viewDistrict?.is_active ? "default" : "secondary"}
+                  >
+                    {viewDistrict?.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsViewDialogOpen(false)}
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

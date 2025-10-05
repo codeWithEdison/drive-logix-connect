@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,351 +13,299 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import Modal, { ModalSize } from "@/components/modal/Modal";
+import { DollarSign, Edit, Plus, Save, MapPin, Loader2 } from "lucide-react";
+import axiosInstance from "@/lib/api/axios";
 import {
-  Settings,
-  DollarSign,
-  Shield,
-  Bell,
-  Database,
-  Save,
-  Plus,
-  Edit,
-  Trash2,
-  Users,
-  Lock,
-  Globe,
-  Activity,
-} from "lucide-react";
-
-// Mock data for superadmin settings - Rwanda-based
-const mockGlobalPricing = {
-  baseRatePerKm: 2500, // RWF per km
-  baseRatePerKg: 1200, // RWF per kg
-  minimumCharge: 25000, // RWF
-  fuelSurcharge: 0.15, // 15%
-  insuranceRate: 0.05, // 5%
-  platformFee: 0.1, // 10%
-  taxRate: 0.18, // 18% VAT
-};
-
-const mockRBACRoles = [
-  {
-    id: "1",
-    name: "Super Admin",
-    description: "Full system access and control",
-    permissions: ["all"],
-    userCount: 1,
-    isActive: true,
-  },
-  {
-    id: "2",
-    name: "Admin",
-    description: "Regional operations management",
-    permissions: [
-      "manage_users",
-      "manage_cargos",
-      "view_reports",
-      "manage_settings",
-    ],
-    userCount: 8,
-    isActive: true,
-  },
-  {
-    id: "3",
-    name: "Manager",
-    description: "Local operations oversight",
-    permissions: ["view_reports", "manage_cargos"],
-    userCount: 15,
-    isActive: true,
-  },
-  {
-    id: "4",
-    name: "Viewer",
-    description: "Read-only access to reports",
-    permissions: ["view_reports"],
-    userCount: 25,
-    isActive: false,
-  },
-];
-
-const mockNotifications = [
-  {
-    id: "1",
-    type: "email",
-    name: "Delivery Status Updates",
-    description: "Send email notifications for delivery status changes",
-    isActive: true,
-    recipients: ["clients", "drivers"],
-  },
-  {
-    id: "2",
-    type: "sms",
-    name: "Urgent Alerts",
-    description: "Send SMS for urgent delivery updates",
-    isActive: true,
-    recipients: ["drivers", "admins"],
-  },
-  {
-    id: "3",
-    type: "email",
-    name: "System Reports",
-    description: "Daily system performance reports",
-    isActive: false,
-    recipients: ["admins"],
-  },
-  {
-    id: "4",
-    type: "sms",
-    name: "Payment Confirmations",
-    description: "SMS confirmation for successful payments",
-    isActive: true,
-    recipients: ["clients"],
-  },
-];
-
-const mockSystemConfig = {
-  maintenanceMode: false,
-  autoBackup: true,
-  backupFrequency: "daily",
-  retentionDays: 30,
-  maxFileSize: 10, // MB
-  sessionTimeout: 30, // minutes
-  maxLoginAttempts: 5,
-  enableAuditLog: true,
-  enableLocationTracking: true,
-  enableRealTimeUpdates: true,
-};
+  useServiceAreas,
+  useCreateServiceArea,
+  useUpdateServiceArea,
+  useToggleServiceArea,
+} from "@/lib/api/hooks";
+import type {
+  CreateServiceAreaRequest,
+  UpdateServiceAreaRequest,
+  ServiceArea,
+  ServiceAreaQueryParams,
+} from "@/lib/api/services/serviceAreaService";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SuperAdminSettings() {
-  const [globalPricing, setGlobalPricing] = useState(mockGlobalPricing);
-  const [rbacRoles, setRbacRoles] = useState(mockRBACRoles);
-  const [notifications, setNotifications] = useState(mockNotifications);
-  const [systemConfig, setSystemConfig] = useState(mockSystemConfig);
+  const { toast } = useToast();
+  // Pricing policies state and CRUD
+  interface CreatePricingPolicyRequest {
+    name: string;
+    base_rate_per_km: number;
+    rate_per_kg: number;
+    minimum_fare?: number | null;
+    surcharge_type?: "fixed" | "percent" | null;
+    surcharge_amount?: number | null;
+    surcharge_description?: string | null;
+    discount_percent?: number | null;
+    is_active?: boolean;
+    valid_from?: string | Date | null;
+    valid_until?: string | Date | null;
+  }
 
-  // Modal states
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [editingRole, setEditingRole] = useState<any>(null);
-  const [editingNotification, setEditingNotification] = useState<any>(null);
+  type UpdatePricingPolicyRequest = Partial<CreatePricingPolicyRequest>;
 
-  const handlePricingChange = (field: string, value: number) => {
-    setGlobalPricing((prev) => ({ ...prev, [field]: value }));
+  const [pricingPolicies, setPricingPolicies] = useState<any[]>([]);
+  const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [editingPolicy, setEditingPolicy] = useState<any>(null);
+  const [isSavingPolicy, setIsSavingPolicy] = useState(false);
+  const [policyForm, setPolicyForm] = useState<CreatePricingPolicyRequest>({
+    name: "",
+    base_rate_per_km: 0,
+    rate_per_kg: 0,
+    minimum_fare: null,
+    surcharge_type: null,
+    surcharge_amount: null,
+    surcharge_description: "",
+    discount_percent: null,
+    is_active: true,
+    valid_from: null,
+    valid_until: null,
+  });
+
+  const fetchPricingPolicies = async () => {
+    try {
+      setIsLoadingPolicies(true);
+      const res = await axiosInstance.get("/operational/pricing-policies");
+      const payload = res?.data;
+      const items = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.data?.data)
+        ? payload.data.data
+        : [];
+      setPricingPolicies(items);
+    } catch (e) {
+      console.error("Failed to load pricing policies", e);
+    } finally {
+      setIsLoadingPolicies(false);
+    }
   };
 
-  const handleSystemConfigChange = (field: string, value: any) => {
-    setSystemConfig((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleRoleToggle = (id: string) => {
-    setRbacRoles((prev) =>
-      prev.map((role) =>
-        role.id === id ? { ...role, isActive: !role.isActive } : role
-      )
-    );
-  };
-
-  const handleNotificationToggle = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id
-          ? { ...notification, isActive: !notification.isActive }
-          : notification
-      )
-    );
-  };
-
-  const handleSaveSettings = () => {
-    console.log("Saving all settings:", {
-      globalPricing,
-      rbacRoles,
-      notifications,
-      systemConfig,
+  const openCreatePolicy = () => {
+    setEditingPolicy(null);
+    setPolicyForm({
+      name: "",
+      base_rate_per_km: 0,
+      rate_per_kg: 0,
+      minimum_fare: null,
+      surcharge_type: null,
+      surcharge_amount: null,
+      surcharge_description: "",
+      discount_percent: null,
+      is_active: true,
+      valid_from: null,
+      valid_until: null,
     });
-    // TODO: Implement API call to save settings
+    setShowPricingModal(true);
   };
 
-  const openRoleModal = (role?: any) => {
-    if (role) {
-      setEditingRole(role);
-    } else {
-      setEditingRole(null);
+  const openEditPolicy = (policy: any) => {
+    setEditingPolicy(policy);
+    setPolicyForm({
+      name: policy.name || "",
+      base_rate_per_km: Number(policy.base_rate_per_km) || 0,
+      rate_per_kg: Number(policy.rate_per_kg) || 0,
+      minimum_fare: policy.minimum_fare ?? null,
+      surcharge_type: policy.surcharge_type ?? null,
+      surcharge_amount: policy.surcharge_amount ?? null,
+      surcharge_description: policy.surcharge_description ?? "",
+      discount_percent: policy.discount_percent ?? null,
+      is_active: !!policy.is_active,
+      valid_from: policy.valid_from || null,
+      valid_until: policy.valid_until || null,
+    });
+    setShowPricingModal(true);
+  };
+
+  const savePolicy = async () => {
+    try {
+      setIsSavingPolicy(true);
+      const payload: any = { ...policyForm } as CreatePricingPolicyRequest;
+      if (!payload.minimum_fare && payload.minimum_fare !== 0)
+        payload.minimum_fare = null;
+      if (!payload.surcharge_description) payload.surcharge_description = null;
+      if (!payload.surcharge_type) payload.surcharge_type = null;
+      if (!payload.surcharge_amount && payload.surcharge_amount !== 0)
+        payload.surcharge_amount = null;
+      if (!payload.discount_percent && payload.discount_percent !== 0)
+        payload.discount_percent = null;
+      if (!payload.valid_from) payload.valid_from = null;
+      if (!payload.valid_until) payload.valid_until = null;
+
+      if (editingPolicy) {
+        await axiosInstance.put(
+          `/operational/pricing-policies/${editingPolicy.id}`,
+          payload as UpdatePricingPolicyRequest
+        );
+      } else {
+        await axiosInstance.post(
+          "/operational/pricing-policies",
+          payload as CreatePricingPolicyRequest
+        );
+      }
+      setShowPricingModal(false);
+      await fetchPricingPolicies();
+      toast({
+        title: "Pricing policy saved",
+        description: "Your changes have been saved.",
+      });
+    } catch (e: any) {
+      console.error("Failed to save pricing policy", e);
+      const description = Array.isArray(e?.error?.details)
+        ? e.error.details.map((d: any) => `${d.field}: ${d.message}`).join("; ")
+        : e?.error?.message || "Failed to save pricing policy";
+      toast({ title: "Pricing policy error", description });
+    } finally {
+      setIsSavingPolicy(false);
     }
-    setShowRoleModal(true);
   };
 
-  const openNotificationModal = (notification?: any) => {
-    if (notification) {
-      setEditingNotification(notification);
-    } else {
-      setEditingNotification(null);
+  React.useEffect(() => {
+    fetchPricingPolicies();
+  }, []);
+
+  // Service Areas state & hooks
+  const [serviceAreaModalOpen, setServiceAreaModalOpen] = useState(false);
+  const [editingServiceArea, setEditingServiceArea] =
+    useState<ServiceArea | null>(null);
+  const [serviceAreaForm, setServiceAreaForm] =
+    useState<CreateServiceAreaRequest>({
+      name: "",
+      city: "",
+      country: "",
+      coverage_radius_km: undefined,
+      is_active: true,
+    });
+  const [filters, setFilters] = useState<ServiceAreaQueryParams>({});
+
+  const { data: serviceAreas = [], isLoading: isLoadingServiceAreas } =
+    useServiceAreas(filters);
+  const createServiceArea = useCreateServiceArea();
+  const updateServiceArea = useUpdateServiceArea();
+  const toggleServiceArea = useToggleServiceArea();
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const openCreateServiceArea = () => {
+    setEditingServiceArea(null);
+    setServiceAreaForm({
+      name: "",
+      city: "",
+      country: "",
+      coverage_radius_km: undefined,
+      is_active: true,
+    });
+    setServiceAreaModalOpen(true);
+  };
+
+  const openEditServiceArea = (area: ServiceArea) => {
+    setEditingServiceArea(area);
+    setServiceAreaForm({
+      name: area.name || "",
+      city: area.city || "",
+      country: area.country || "",
+      coverage_radius_km: area.coverage_radius_km ?? undefined,
+      is_active: !!area.is_active,
+    });
+    setServiceAreaModalOpen(true);
+  };
+
+  const saveServiceArea = async () => {
+    const payload: CreateServiceAreaRequest | UpdateServiceAreaRequest = {
+      ...serviceAreaForm,
+      city: serviceAreaForm.city === "" ? undefined : serviceAreaForm.city,
+      country:
+        serviceAreaForm.country === "" ? undefined : serviceAreaForm.country,
+      coverage_radius_km:
+        serviceAreaForm.coverage_radius_km === undefined ||
+        serviceAreaForm.coverage_radius_km === null
+          ? undefined
+          : Number(serviceAreaForm.coverage_radius_km),
+    };
+
+    try {
+      if (editingServiceArea) {
+        await updateServiceArea.mutateAsync({
+          id: editingServiceArea.id,
+          data: payload as UpdateServiceAreaRequest,
+        });
+      } else {
+        await createServiceArea.mutateAsync(
+          payload as CreateServiceAreaRequest
+        );
+      }
+      setServiceAreaModalOpen(false);
+      toast({
+        title: editingServiceArea
+          ? "Service area updated"
+          : "Service area created",
+        description: "Your changes have been saved.",
+      });
+    } catch (e: any) {
+      console.error("Failed to save service area", e);
+      const description = Array.isArray(e?.error?.details)
+        ? e.error.details.map((d: any) => `${d.field}: ${d.message}`).join("; ")
+        : e?.error?.message || "Failed to save service area";
+      toast({ title: "Service area error", description });
     }
-    setShowNotificationModal(true);
   };
 
-  const handleDeleteRole = (id: string) => {
-    setRbacRoles((prev) => prev.filter((role) => role.id !== id));
-  };
-
-  const handleDeleteNotification = (id: string) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
-  };
-
-  const getStatusColor = (status: boolean) => {
-    return status ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600";
+  const toggleArea = async (id: string) => {
+    try {
+      setTogglingId(id);
+      await toggleServiceArea.mutateAsync(id);
+      toast({
+        title: "Service area status updated",
+        description: "Status toggled successfully.",
+      });
+    } catch (e: any) {
+      console.error("Failed to toggle service area", e);
+      const description = Array.isArray(e?.error?.details)
+        ? e.error.details.map((d: any) => `${d.field}: ${d.message}`).join("; ")
+        : e?.error?.message || "Failed to toggle service area";
+      toast({ title: "Toggle error", description });
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
             System Configuration
           </h1>
           <p className="text-muted-foreground">
-            Manage global settings and system policies
+            Manage pricing and service areas
           </p>
         </div>
-        <Button
-          onClick={handleSaveSettings}
-          className="bg-gradient-primary hover:bg-primary-hover"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          Save All Changes
-        </Button>
       </div>
 
-      <Tabs defaultValue="pricing" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pricing">Global Pricing</TabsTrigger>
-          <TabsTrigger value="rbac">Role Management</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="system">System Config</TabsTrigger>
+      <Tabs defaultValue="pricing" className="flex flex-col gap-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="pricing">Pricing</TabsTrigger>
+          <TabsTrigger value="service-areas">Service Areas</TabsTrigger>
         </TabsList>
 
-        {/* Global Pricing Tab */}
-        <TabsContent value="pricing" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Global Pricing Policies
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="ratePerKm">
-                    Base Rate per Kilometer (RWF)
-                  </Label>
-                  <Input
-                    id="ratePerKm"
-                    type="number"
-                    step="100"
-                    value={globalPricing.baseRatePerKm}
-                    onChange={(e) =>
-                      handlePricingChange(
-                        "baseRatePerKm",
-                        parseFloat(e.target.value)
-                      )
-                    }
-                    placeholder="2500"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ratePerKg">
-                    Base Rate per Kilogram (RWF)
-                  </Label>
-                  <Input
-                    id="ratePerKg"
-                    type="number"
-                    step="100"
-                    value={globalPricing.baseRatePerKg}
-                    onChange={(e) =>
-                      handlePricingChange(
-                        "baseRatePerKg",
-                        parseFloat(e.target.value)
-                      )
-                    }
-                    placeholder="1200"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="minimumCharge">Minimum Charge (RWF)</Label>
-                  <Input
-                    id="minimumCharge"
-                    type="number"
-                    step="1000"
-                    value={globalPricing.minimumCharge}
-                    onChange={(e) =>
-                      handlePricingChange(
-                        "minimumCharge",
-                        parseFloat(e.target.value)
-                      )
-                    }
-                    placeholder="25000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="platformFee">Platform Fee (%)</Label>
-                  <Input
-                    id="platformFee"
-                    type="number"
-                    step="0.01"
-                    value={globalPricing.platformFee * 100}
-                    onChange={(e) =>
-                      handlePricingChange(
-                        "platformFee",
-                        parseFloat(e.target.value) / 100
-                      )
-                    }
-                    placeholder="10"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="taxRate">Tax Rate (VAT %)</Label>
-                  <Input
-                    id="taxRate"
-                    type="number"
-                    step="0.01"
-                    value={globalPricing.taxRate * 100}
-                    onChange={(e) =>
-                      handlePricingChange(
-                        "taxRate",
-                        parseFloat(e.target.value) / 100
-                      )
-                    }
-                    placeholder="18"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* RBAC Management Tab */}
-        <TabsContent value="rbac" className="space-y-6">
+        {/* Global Pricing Tab - pricing policies CRUD */}
+        <TabsContent value="pricing" className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Role-Based Access Control
+                  <DollarSign className="h-5 w-5" />
+                  Pricing Policies
                 </CardTitle>
-                <Button onClick={() => openRoleModal()}>
+                <Button onClick={openCreatePolicy}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Role
+                  New Policy
                 </Button>
               </div>
             </CardHeader>
@@ -367,439 +314,538 @@ export default function SuperAdminSettings() {
                 <Table className="min-w-[900px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Role Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Permissions</TableHead>
-                      <TableHead>Users</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rbacRoles.map((role) => (
-                      <TableRow key={role.id}>
-                        <TableCell className="font-medium">
-                          {role.name}
-                        </TableCell>
-                        <TableCell>{role.description}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {role.permissions.map((permission, index) => (
-                              <Badge
-                                key={index}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {permission}
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>{role.userCount}</TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={role.isActive}
-                            onCheckedChange={() => handleRoleToggle(role.id)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openRoleModal(role)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteRole(role.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notifications Tab */}
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notification Settings
-                </CardTitle>
-                <Button onClick={() => openNotificationModal()}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Notification
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table className="min-w-[900px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Type</TableHead>
+                      <TableHead>#</TableHead>
                       <TableHead>Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Recipients</TableHead>
+                      <TableHead>Base/km</TableHead>
+                      <TableHead>Rate/kg</TableHead>
+                      <TableHead>Min Fare</TableHead>
+                      <TableHead>Surcharge</TableHead>
+                      <TableHead>Discount %</TableHead>
+                      <TableHead>Valid</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {notifications.map((notification) => (
-                      <TableRow key={notification.id}>
-                        <TableCell>
-                          <Badge variant="outline" className="capitalize">
-                            {notification.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {notification.name}
-                        </TableCell>
-                        <TableCell>{notification.description}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {notification.recipients.map((recipient, index) => (
-                              <Badge
-                                key={index}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {recipient}
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={notification.isActive}
-                            onCheckedChange={() =>
-                              handleNotificationToggle(notification.id)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                openNotificationModal(notification)
-                              }
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                handleDeleteNotification(notification.id)
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                    {isLoadingPolicies ? (
+                      <TableRow>
+                        <TableCell colSpan={11}>Loading...</TableCell>
                       </TableRow>
-                    ))}
+                    ) : pricingPolicies.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={11}>No policies found</TableCell>
+                      </TableRow>
+                    ) : (
+                      pricingPolicies.map((p, idx) => (
+                        <TableRow key={p.id} className="hover:bg-gray-50">
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            {p.name}
+                          </TableCell>
+                          <TableCell>{p.base_rate_per_km}</TableCell>
+                          <TableCell>{p.rate_per_kg}</TableCell>
+                          <TableCell>{p.minimum_fare ?? "-"}</TableCell>
+                          <TableCell>
+                            {p.surcharge_type
+                              ? `${p.surcharge_type} ${p.surcharge_amount}`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>{p.discount_percent ?? 0}</TableCell>
+                          <TableCell>
+                            {(p.valid_from || "").toString().slice(0, 10)}
+                            {p.valid_until &&
+                              ` → ${p.valid_until.toString().slice(0, 10)}`}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={p.is_active ? "default" : "secondary"}
+                            >
+                              {p.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openEditPolicy(p)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* System Configuration Tab */}
-        <TabsContent value="system" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                System Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="maintenanceMode">Maintenance Mode</Label>
-                  <Switch
-                    id="maintenanceMode"
-                    checked={systemConfig.maintenanceMode}
-                    onCheckedChange={(checked) =>
-                      handleSystemConfigChange("maintenanceMode", checked)
+          {/* Create/Edit Pricing Policy Modal */}
+          <Modal
+            isOpen={showPricingModal}
+            onClose={() => setShowPricingModal(false)}
+            title={
+              editingPolicy ? "Edit Pricing Policy" : "Create Pricing Policy"
+            }
+            widthSizeClass={ModalSize.medium}
+          >
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Name</Label>
+                  <Input
+                    value={policyForm.name}
+                    onChange={(e) =>
+                      setPolicyForm({ ...policyForm, name: e.target.value })
+                    }
+                    placeholder="Policy name"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label>Base Rate per km</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={policyForm.base_rate_per_km}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        base_rate_per_km: parseFloat(e.target.value) || 0,
+                      })
                     }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="autoBackup">Auto Backup</Label>
-                  <Switch
-                    id="autoBackup"
-                    checked={systemConfig.autoBackup}
-                    onCheckedChange={(checked) =>
-                      handleSystemConfigChange("autoBackup", checked)
+                <div className="flex flex-col gap-2">
+                  <Label>Rate per kg</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={policyForm.rate_per_kg}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        rate_per_kg: parseFloat(e.target.value) || 0,
+                      })
                     }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="backupFrequency">Backup Frequency</Label>
-                  <Select
-                    value={systemConfig.backupFrequency}
-                    onValueChange={(value) =>
-                      handleSystemConfigChange("backupFrequency", value)
+                <div className="flex flex-col gap-2">
+                  <Label>Minimum Fare</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={policyForm.minimum_fare ?? 0}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        minimum_fare:
+                          e.target.value === ""
+                            ? null
+                            : parseFloat(e.target.value),
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Surcharge Type</Label>
+                  <select
+                    className="border rounded h-10 px-3"
+                    value={policyForm.surcharge_type ?? "none"}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        surcharge_type:
+                          (e.target.value as any) === "none"
+                            ? null
+                            : (e.target.value as any),
+                      })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hourly">Hourly</SelectItem>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <option value="none">None</option>
+                    <option value="fixed">Fixed</option>
+                    <option value="percent">Percent</option>
+                  </select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="retentionDays">Retention Days</Label>
+                <div className="flex flex-col gap-2">
+                  <Label>Surcharge Amount</Label>
                   <Input
-                    id="retentionDays"
                     type="number"
-                    value={systemConfig.retentionDays}
+                    step="0.01"
+                    value={policyForm.surcharge_amount ?? 0}
                     onChange={(e) =>
-                      handleSystemConfigChange(
-                        "retentionDays",
-                        parseInt(e.target.value)
-                      )
+                      setPolicyForm({
+                        ...policyForm,
+                        surcharge_amount:
+                          e.target.value === ""
+                            ? null
+                            : parseFloat(e.target.value),
+                      })
                     }
-                    placeholder="30"
+                    placeholder="Optional"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sessionTimeout">
-                    Session Timeout (minutes)
-                  </Label>
+                <div className="flex flex-col gap-2 md:col-span-2">
+                  <Label>Surcharge Description</Label>
                   <Input
-                    id="sessionTimeout"
-                    type="number"
-                    value={systemConfig.sessionTimeout}
+                    value={policyForm.surcharge_description || ""}
                     onChange={(e) =>
-                      handleSystemConfigChange(
-                        "sessionTimeout",
-                        parseInt(e.target.value)
-                      )
+                      setPolicyForm({
+                        ...policyForm,
+                        surcharge_description: e.target.value,
+                      })
                     }
-                    placeholder="30"
+                    placeholder="Optional description"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="maxLoginAttempts">Max Login Attempts</Label>
+                <div className="flex flex-col gap-2">
+                  <Label>Discount Percent</Label>
                   <Input
-                    id="maxLoginAttempts"
                     type="number"
-                    value={systemConfig.maxLoginAttempts}
+                    step="0.01"
+                    value={policyForm.discount_percent ?? 0}
                     onChange={(e) =>
-                      handleSystemConfigChange(
-                        "maxLoginAttempts",
-                        parseInt(e.target.value)
-                      )
+                      setPolicyForm({
+                        ...policyForm,
+                        discount_percent:
+                          e.target.value === ""
+                            ? null
+                            : parseFloat(e.target.value),
+                      })
                     }
-                    placeholder="5"
+                    placeholder="Optional"
                   />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Valid From</Label>
+                  <Input
+                    type="date"
+                    value={
+                      policyForm.valid_from
+                        ? String(policyForm.valid_from).slice(0, 10)
+                        : ""
+                    }
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        valid_from: e.target.value || null,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Valid Until</Label>
+                  <Input
+                    type="date"
+                    value={
+                      policyForm.valid_until
+                        ? String(policyForm.valid_until).slice(0, 10)
+                        : ""
+                    }
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        valid_until: e.target.value || null,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Status</Label>
+                  <select
+                    className="border rounded h-10 px-3"
+                    value={policyForm.is_active ? "active" : "inactive"}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        is_active: e.target.value === "active",
+                      })
+                    }
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enableAuditLog"
-                    checked={systemConfig.enableAuditLog}
-                    onCheckedChange={(checked) =>
-                      handleSystemConfigChange("enableAuditLog", checked)
+              <div className="flex gap-2 pt-2">
+                <Button onClick={savePolicy} disabled={isSavingPolicy}>
+                  {isSavingPolicy ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      {editingPolicy ? "Update Policy" : "Create Policy"}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPricingModal(false)}
+                  disabled={isSavingPolicy}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        </TabsContent>
+
+        {/* Service Areas Tab */}
+        <TabsContent value="service-areas" className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Service Areas
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Filter by city"
+                    value={filters.city || ""}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        city: e.target.value || undefined,
+                      }))
                     }
+                    className="w-[200px]"
                   />
-                  <Label htmlFor="enableAuditLog">Enable Audit Logging</Label>
+                  <select
+                    className="border rounded h-10 px-3"
+                    value={String(filters.is_active ?? "")}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setFilters((prev) => ({
+                        ...prev,
+                        is_active: v === "" ? undefined : v === "true",
+                      }));
+                    }}
+                  >
+                    <option value="">All</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                  <Button onClick={openCreateServiceArea}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Service Area
+                  </Button>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enableLocationTracking"
-                    checked={systemConfig.enableLocationTracking}
-                    onCheckedChange={(checked) =>
-                      handleSystemConfigChange(
-                        "enableLocationTracking",
-                        checked
-                      )
-                    }
-                  />
-                  <Label htmlFor="enableLocationTracking">
-                    Enable Location Tracking
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="enableRealTimeUpdates"
-                    checked={systemConfig.enableRealTimeUpdates}
-                    onCheckedChange={(checked) =>
-                      handleSystemConfigChange("enableRealTimeUpdates", checked)
-                    }
-                  />
-                  <Label htmlFor="enableRealTimeUpdates">
-                    Enable Real-time Updates
-                  </Label>
-                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[900px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>#</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>Country</TableHead>
+                      <TableHead>Radius (km)</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingServiceAreas ? (
+                      <TableRow>
+                        <TableCell colSpan={8}>Loading...</TableCell>
+                      </TableRow>
+                    ) : serviceAreas.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8}>
+                          No service areas found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      serviceAreas.map((sa: ServiceArea, idx: number) => (
+                        <TableRow key={sa.id} className="hover:bg-gray-50">
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            {sa.name}
+                          </TableCell>
+                          <TableCell>{sa.city || "-"}</TableCell>
+                          <TableCell>{sa.country || "-"}</TableCell>
+                          <TableCell>{sa.coverage_radius_km ?? "-"}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={sa.is_active ? "default" : "secondary"}
+                            >
+                              {sa.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {(sa.created_at || "").toString().slice(0, 10)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openEditServiceArea(sa)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleArea(sa.id)}
+                                disabled={togglingId === sa.id}
+                              >
+                                {togglingId === sa.id ? (
+                                  <span className="flex items-center">
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Working...
+                                  </span>
+                                ) : sa.is_active ? (
+                                  "Disable"
+                                ) : (
+                                  "Enable"
+                                )}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
+
+          {/* Create/Edit Service Area Modal */}
+          <Modal
+            isOpen={serviceAreaModalOpen}
+            onClose={() => setServiceAreaModalOpen(false)}
+            title={
+              editingServiceArea ? "Edit Service Area" : "Create Service Area"
+            }
+            widthSizeClass={ModalSize.medium}
+          >
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Name</Label>
+                  <Input
+                    value={serviceAreaForm.name}
+                    onChange={(e) =>
+                      setServiceAreaForm({
+                        ...serviceAreaForm,
+                        name: e.target.value,
+                      })
+                    }
+                    placeholder="Area name"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>City</Label>
+                  <Input
+                    value={serviceAreaForm.city || ""}
+                    onChange={(e) =>
+                      setServiceAreaForm({
+                        ...serviceAreaForm,
+                        city: e.target.value,
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Country</Label>
+                  <Input
+                    value={serviceAreaForm.country || ""}
+                    onChange={(e) =>
+                      setServiceAreaForm({
+                        ...serviceAreaForm,
+                        country: e.target.value,
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Coverage Radius (km)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={serviceAreaForm.coverage_radius_km ?? ""}
+                    onChange={(e) =>
+                      setServiceAreaForm({
+                        ...serviceAreaForm,
+                        coverage_radius_km:
+                          e.target.value === ""
+                            ? undefined
+                            : parseFloat(e.target.value),
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Status</Label>
+                  <select
+                    className="border rounded h-10 px-3"
+                    value={serviceAreaForm.is_active ? "active" : "inactive"}
+                    onChange={(e) =>
+                      setServiceAreaForm({
+                        ...serviceAreaForm,
+                        is_active: e.target.value === "active",
+                      })
+                    }
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  onClick={saveServiceArea}
+                  disabled={
+                    createServiceArea.isPending || updateServiceArea.isPending
+                  }
+                >
+                  {createServiceArea.isPending ||
+                  updateServiceArea.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      {editingServiceArea
+                        ? "Update Service Area"
+                        : "Create Service Area"}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setServiceAreaModalOpen(false)}
+                  disabled={
+                    createServiceArea.isPending || updateServiceArea.isPending
+                  }
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </Modal>
         </TabsContent>
       </Tabs>
-
-      {/* Role Modal */}
-      <Modal
-        isOpen={showRoleModal}
-        onClose={() => setShowRoleModal(false)}
-        title={editingRole ? "Edit Role" : "Add New Role"}
-        widthSizeClass={ModalSize.medium}
-      >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Role Name</Label>
-            <Input
-              placeholder="e.g., Manager"
-              defaultValue={editingRole?.name || ""}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea
-              placeholder="Describe the role's responsibilities..."
-              defaultValue={editingRole?.description || ""}
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Permissions</Label>
-            <div className="space-y-2">
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" defaultChecked />
-                <span className="text-sm">Manage Users</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" defaultChecked />
-                <span className="text-sm">Manage Cargos</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" defaultChecked />
-                <span className="text-sm">View Reports</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" />
-                <span className="text-sm">Manage Settings</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button className="flex-1">
-              {editingRole ? "Update Role" : "Create Role"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowRoleModal(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Notification Modal */}
-      <Modal
-        isOpen={showNotificationModal}
-        onClose={() => setShowNotificationModal(false)}
-        title={
-          editingNotification ? "Edit Notification" : "Add New Notification"
-        }
-        widthSizeClass={ModalSize.medium}
-      >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Notification Type</Label>
-            <Select defaultValue={editingNotification?.type || "email"}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="sms">SMS</SelectItem>
-                <SelectItem value="push">Push Notification</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Name</Label>
-            <Input
-              placeholder="e.g., Delivery Updates"
-              defaultValue={editingNotification?.name || ""}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea
-              placeholder="Describe when this notification is sent..."
-              defaultValue={editingNotification?.description || ""}
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Recipients</Label>
-            <div className="space-y-2">
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" defaultChecked />
-                <span className="text-sm">Clients</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" defaultChecked />
-                <span className="text-sm">Drivers</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" />
-                <span className="text-sm">Admins</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button className="flex-1">
-              {editingNotification
-                ? "Update Notification"
-                : "Create Notification"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowNotificationModal(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

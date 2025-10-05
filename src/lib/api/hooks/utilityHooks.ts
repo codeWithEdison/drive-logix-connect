@@ -307,7 +307,66 @@ export const useCreateAdmin = () => {
       password: string;
       phone?: string;
       preferred_language?: "en" | "rw" | "fr";
+      branch_id: string;
     }) => AdminService.createAdmin(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+};
+
+export const useUpdateAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      adminId,
+      data,
+    }: {
+      adminId: string;
+      data: {
+        full_name: string;
+        email: string;
+        phone?: string;
+        role: "admin" | "super_admin";
+        branch_id: string;
+        is_active: boolean;
+        preferred_language?: "en" | "rw" | "fr";
+      };
+    }) => AdminService.updateAdmin(adminId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+};
+
+export const useUpdateClient = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      clientId,
+      data,
+    }: {
+      clientId: string;
+      data: {
+        full_name: string;
+        email: string;
+        phone?: string;
+        company_name: string;
+        business_type: "individual" | "corporate" | "government";
+        tax_id?: string;
+        address?: string;
+        city?: string;
+        country?: string;
+        postal_code?: string;
+        contact_person?: string;
+        credit_limit?: number;
+        payment_terms?: number;
+        is_active: boolean;
+        preferred_language?: "en" | "rw" | "fr";
+      };
+    }) => AdminService.updateClient(clientId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
@@ -327,6 +386,7 @@ export const useCreateDriver = () => {
       license_number: string;
       license_expiry?: string;
       license_type: "A" | "B" | "C" | "D" | "E";
+      code_number: string;
       date_of_birth?: string;
       emergency_contact?: string;
       emergency_phone?: string;

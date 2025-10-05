@@ -25,3 +25,4 @@ export { LocationService } from "./locationService";
 export { BranchService } from "./branchService";
 export { DistrictService } from "./districtService";
 export { CargoImageService } from "./cargoImageService";
+export { ServiceAreaService } from "./serviceAreaService";
