@@ -108,6 +108,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: Map,
     },
     {
+      title: "Cargo Categories",
+      url: "/superadmin/cargo-categories",
+      icon: Package,
+    },
+    {
       title: t("navigation.invoices"),
       url: "/super-admin/invoices",
       icon: Receipt,

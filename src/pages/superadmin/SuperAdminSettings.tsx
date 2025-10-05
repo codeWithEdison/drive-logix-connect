@@ -38,6 +38,7 @@ import {
   Globe,
   Activity,
 } from "lucide-react";
+import axiosInstance from "@/lib/api/axios";
 
 // Mock data for superadmin settings - Rwanda-based
 const mockGlobalPricing = {
@@ -139,6 +140,16 @@ const mockSystemConfig = {
 };
 
 export default function SuperAdminSettings() {
+  // General (company) settings state
+  const [generalSettings, setGeneralSettings] = useState({
+    companyName: "Loveway Logistics",
+    companyEmail: "admin@lovelycargo.rw",
+    companyPhone: "+250 123 456 789",
+    companyAddress: "KG 123 Street, Kigali, Rwanda",
+    timezone: "Africa/Kigali",
+    currency: "RWF",
+    language: "en",
+  });
   const [globalPricing, setGlobalPricing] = useState(mockGlobalPricing);
   const [rbacRoles, setRbacRoles] = useState(mockRBACRoles);
   const [notifications, setNotifications] = useState(mockNotifications);
@@ -149,6 +160,136 @@ export default function SuperAdminSettings() {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [editingRole, setEditingRole] = useState<any>(null);
   const [editingNotification, setEditingNotification] = useState<any>(null);
+
+  // Pricing policies state and CRUD
+  interface CreatePricingPolicyRequest {
+    name: string;
+    base_rate_per_km: number;
+    rate_per_kg: number;
+    minimum_fare?: number | null;
+    surcharge_type?: "fixed" | "percent" | null;
+    surcharge_amount?: number | null;
+    surcharge_description?: string | null;
+    discount_percent?: number | null;
+    is_active?: boolean;
+    valid_from?: string | Date | null;
+    valid_until?: string | Date | null;
+  }
+
+  type UpdatePricingPolicyRequest = Partial<CreatePricingPolicyRequest>;
+
+  const [pricingPolicies, setPricingPolicies] = useState<any[]>([]);
+  const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [editingPolicy, setEditingPolicy] = useState<any>(null);
+  const [policyForm, setPolicyForm] = useState<CreatePricingPolicyRequest>({
+    name: "",
+    base_rate_per_km: 0,
+    rate_per_kg: 0,
+    minimum_fare: null,
+    surcharge_type: null,
+    surcharge_amount: null,
+    surcharge_description: "",
+    discount_percent: null,
+    is_active: true,
+    valid_from: null,
+    valid_until: null,
+  });
+
+  const fetchPricingPolicies = async () => {
+    try {
+      setIsLoadingPolicies(true);
+      const res = await axiosInstance.get("/operational/pricing-policies");
+      const payload = res?.data;
+      // Accept shapes: { data: [...] } or [...] directly
+      const items = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload?.data?.data)
+        ? payload.data.data
+        : [];
+      setPricingPolicies(items);
+    } catch (e) {
+      console.error("Failed to load pricing policies", e);
+    } finally {
+      setIsLoadingPolicies(false);
+    }
+  };
+
+  const openCreatePolicy = () => {
+    setEditingPolicy(null);
+    setPolicyForm({
+      name: "",
+      base_rate_per_km: 0,
+      rate_per_kg: 0,
+      minimum_fare: null,
+      surcharge_type: null,
+      surcharge_amount: null,
+      surcharge_description: "",
+      discount_percent: null,
+      is_active: true,
+      valid_from: null,
+      valid_until: null,
+    });
+    setShowPricingModal(true);
+  };
+
+  const openEditPolicy = (policy: any) => {
+    setEditingPolicy(policy);
+    setPolicyForm({
+      name: policy.name || "",
+      base_rate_per_km: Number(policy.base_rate_per_km) || 0,
+      rate_per_kg: Number(policy.rate_per_kg) || 0,
+      minimum_fare: policy.minimum_fare ?? null,
+      surcharge_type: policy.surcharge_type ?? null,
+      surcharge_amount: policy.surcharge_amount ?? null,
+      surcharge_description: policy.surcharge_description ?? "",
+      discount_percent: policy.discount_percent ?? null,
+      is_active: !!policy.is_active,
+      valid_from: policy.valid_from || null,
+      valid_until: policy.valid_until || null,
+    });
+    setShowPricingModal(true);
+  };
+
+  const savePolicy = async () => {
+    try {
+      const payload: any = { ...policyForm } as CreatePricingPolicyRequest;
+      // Normalize empty strings/nullables
+      // vehicle_type removed from interface
+      if (!payload.minimum_fare && payload.minimum_fare !== 0)
+        payload.minimum_fare = null;
+      if (!payload.surcharge_description) payload.surcharge_description = null;
+      if (!payload.surcharge_type) payload.surcharge_type = null;
+      if (!payload.surcharge_amount && payload.surcharge_amount !== 0)
+        payload.surcharge_amount = null;
+      if (!payload.discount_percent && payload.discount_percent !== 0)
+        payload.discount_percent = null;
+      if (!payload.valid_from) payload.valid_from = null;
+      if (!payload.valid_until) payload.valid_until = null;
+
+      if (editingPolicy) {
+        await axiosInstance.put(
+          `/operational/pricing-policies/${editingPolicy.id}`,
+          payload as UpdatePricingPolicyRequest
+        );
+      } else {
+        await axiosInstance.post(
+          "/operational/pricing-policies",
+          payload as CreatePricingPolicyRequest
+        );
+      }
+      setShowPricingModal(false);
+      await fetchPricingPolicies();
+    } catch (e) {
+      console.error("Failed to save pricing policy", e);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchPricingPolicies();
+  }, []);
 
   const handlePricingChange = (field: string, value: number) => {
     setGlobalPricing((prev) => ({ ...prev, [field]: value }));
@@ -219,7 +360,7 @@ export default function SuperAdminSettings() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -239,116 +380,457 @@ export default function SuperAdminSettings() {
         </Button>
       </div>
 
-      <Tabs defaultValue="pricing" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="general" className="flex flex-col gap-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="pricing">Global Pricing</TabsTrigger>
           <TabsTrigger value="rbac">Role Management</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="system">System Config</TabsTrigger>
         </TabsList>
 
-        {/* Global Pricing Tab */}
-        <TabsContent value="pricing" className="space-y-6">
+        {/* General Settings (from Admin Settings) */}
+        <TabsContent value="general" className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Global Pricing Policies
+                <Settings className="h-5 w-5" />
+                General Settings
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="ratePerKm">
-                    Base Rate per Kilometer (RWF)
-                  </Label>
+            <CardContent className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="companyName">Company Name</Label>
                   <Input
-                    id="ratePerKm"
-                    type="number"
-                    step="100"
-                    value={globalPricing.baseRatePerKm}
+                    id="companyName"
+                    value={generalSettings.companyName}
                     onChange={(e) =>
-                      handlePricingChange(
-                        "baseRatePerKm",
-                        parseFloat(e.target.value)
-                      )
+                      setGeneralSettings({
+                        ...generalSettings,
+                        companyName: e.target.value,
+                      })
                     }
-                    placeholder="2500"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ratePerKg">
-                    Base Rate per Kilogram (RWF)
-                  </Label>
+                <div>
+                  <Label htmlFor="companyEmail">Company Email</Label>
                   <Input
-                    id="ratePerKg"
-                    type="number"
-                    step="100"
-                    value={globalPricing.baseRatePerKg}
+                    id="companyEmail"
+                    type="email"
+                    value={generalSettings.companyEmail}
                     onChange={(e) =>
-                      handlePricingChange(
-                        "baseRatePerKg",
-                        parseFloat(e.target.value)
-                      )
+                      setGeneralSettings({
+                        ...generalSettings,
+                        companyEmail: e.target.value,
+                      })
                     }
-                    placeholder="1200"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="minimumCharge">Minimum Charge (RWF)</Label>
+                <div>
+                  <Label htmlFor="companyPhone">Company Phone</Label>
                   <Input
-                    id="minimumCharge"
-                    type="number"
-                    step="1000"
-                    value={globalPricing.minimumCharge}
+                    id="companyPhone"
+                    value={generalSettings.companyPhone}
                     onChange={(e) =>
-                      handlePricingChange(
-                        "minimumCharge",
-                        parseFloat(e.target.value)
-                      )
+                      setGeneralSettings({
+                        ...generalSettings,
+                        companyPhone: e.target.value,
+                      })
                     }
-                    placeholder="25000"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="platformFee">Platform Fee (%)</Label>
-                  <Input
-                    id="platformFee"
-                    type="number"
-                    step="0.01"
-                    value={globalPricing.platformFee * 100}
-                    onChange={(e) =>
-                      handlePricingChange(
-                        "platformFee",
-                        parseFloat(e.target.value) / 100
-                      )
+                <div>
+                  <Label htmlFor="timezone">Timezone</Label>
+                  <Select
+                    value={generalSettings.timezone}
+                    onValueChange={(value) =>
+                      setGeneralSettings({
+                        ...generalSettings,
+                        timezone: value,
+                      })
                     }
-                    placeholder="10"
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Africa/Kigali">
+                        Africa/Kigali
+                      </SelectItem>
+                      <SelectItem value="UTC">UTC</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="taxRate">Tax Rate (VAT %)</Label>
-                  <Input
-                    id="taxRate"
-                    type="number"
-                    step="0.01"
-                    value={globalPricing.taxRate * 100}
-                    onChange={(e) =>
-                      handlePricingChange(
-                        "taxRate",
-                        parseFloat(e.target.value) / 100
-                      )
+                <div>
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select
+                    value={generalSettings.currency}
+                    onValueChange={(value) =>
+                      setGeneralSettings({
+                        ...generalSettings,
+                        currency: value,
+                      })
                     }
-                    placeholder="18"
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="RWF">RWF (Rwandan Franc)</SelectItem>
+                      <SelectItem value="USD">USD (US Dollar)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="language">Language</Label>
+                  <Select
+                    value={generalSettings.language}
+                    onValueChange={(value) =>
+                      setGeneralSettings({
+                        ...generalSettings,
+                        language: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="fr">Français</SelectItem>
+                      <SelectItem value="rw">Kinyarwanda</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+              <div>
+                <Label htmlFor="companyAddress">Company Address</Label>
+                <Textarea
+                  id="companyAddress"
+                  value={generalSettings.companyAddress}
+                  onChange={(e) =>
+                    setGeneralSettings({
+                      ...generalSettings,
+                      companyAddress: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <Button
+                onClick={() => {
+                  /* TODO: Save general settings API */
+                }}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Settings
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Global Pricing Tab - pricing policies CRUD */}
+        <TabsContent value="pricing" className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Pricing Policies
+                </CardTitle>
+                <Button onClick={openCreatePolicy}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Policy
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="min-w-[900px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>#</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Base/km</TableHead>
+                      <TableHead>Rate/kg</TableHead>
+                      <TableHead>Min Fare</TableHead>
+                      <TableHead>Surcharge</TableHead>
+                      <TableHead>Discount %</TableHead>
+                      <TableHead>Valid</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingPolicies ? (
+                      <TableRow>
+                        <TableCell colSpan={11}>Loading...</TableCell>
+                      </TableRow>
+                    ) : pricingPolicies.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={11}>No policies found</TableCell>
+                      </TableRow>
+                    ) : (
+                      pricingPolicies.map((p, idx) => (
+                        <TableRow key={p.id} className="hover:bg-gray-50">
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            {p.name}
+                          </TableCell>
+                          <TableCell>{p.base_rate_per_km}</TableCell>
+                          <TableCell>{p.rate_per_kg}</TableCell>
+                          <TableCell>{p.minimum_fare ?? "-"}</TableCell>
+                          <TableCell>
+                            {p.surcharge_type
+                              ? `${p.surcharge_type} ${p.surcharge_amount}`
+                              : "-"}
+                          </TableCell>
+                          <TableCell>{p.discount_percent ?? 0}</TableCell>
+                          <TableCell>
+                            {(p.valid_from || "").toString().slice(0, 10)}
+                            {p.valid_until &&
+                              ` → ${p.valid_until.toString().slice(0, 10)}`}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={p.is_active ? "default" : "secondary"}
+                            >
+                              {p.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openEditPolicy(p)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Create/Edit Pricing Policy Modal */}
+          <Modal
+            isOpen={showPricingModal}
+            onClose={() => setShowPricingModal(false)}
+            title={
+              editingPolicy ? "Edit Pricing Policy" : "Create Pricing Policy"
+            }
+            widthSizeClass={ModalSize.medium}
+          >
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Name</Label>
+                  <Input
+                    value={policyForm.name}
+                    onChange={(e) =>
+                      setPolicyForm({ ...policyForm, name: e.target.value })
+                    }
+                    placeholder="Policy name"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label>Base Rate per km</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={policyForm.base_rate_per_km}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        base_rate_per_km: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Rate per kg</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={policyForm.rate_per_kg}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        rate_per_kg: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Minimum Fare</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={policyForm.minimum_fare ?? 0}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        minimum_fare:
+                          e.target.value === ""
+                            ? null
+                            : parseFloat(e.target.value),
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Surcharge Type</Label>
+                  <Select
+                    value={policyForm.surcharge_type ?? "none"}
+                    onValueChange={(value) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        surcharge_type:
+                          (value as any) === "none" ? null : (value as any),
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="fixed">Fixed</SelectItem>
+                      <SelectItem value="percent">Percent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Surcharge Amount</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={policyForm.surcharge_amount ?? 0}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        surcharge_amount:
+                          e.target.value === ""
+                            ? null
+                            : parseFloat(e.target.value),
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="flex flex-col gap-2 md:col-span-2">
+                  <Label>Surcharge Description</Label>
+                  <Input
+                    value={policyForm.surcharge_description || ""}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        surcharge_description: e.target.value,
+                      })
+                    }
+                    placeholder="Optional description"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Discount Percent</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={policyForm.discount_percent ?? 0}
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        discount_percent:
+                          e.target.value === ""
+                            ? null
+                            : parseFloat(e.target.value),
+                      })
+                    }
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Valid From</Label>
+                  <Input
+                    type="date"
+                    value={
+                      policyForm.valid_from
+                        ? String(policyForm.valid_from).slice(0, 10)
+                        : ""
+                    }
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        valid_from: e.target.value || null,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Valid Until</Label>
+                  <Input
+                    type="date"
+                    value={
+                      policyForm.valid_until
+                        ? String(policyForm.valid_until).slice(0, 10)
+                        : ""
+                    }
+                    onChange={(e) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        valid_until: e.target.value || null,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={policyForm.is_active ? "active" : "inactive"}
+                    onValueChange={(v) =>
+                      setPolicyForm({
+                        ...policyForm,
+                        is_active: v === "active",
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button onClick={savePolicy}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {editingPolicy ? "Update Policy" : "Create Policy"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPricingModal(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        </TabsContent>
+
         {/* RBAC Management Tab */}
-        <TabsContent value="rbac" className="space-y-6">
+        <TabsContent value="rbac" className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -430,7 +912,7 @@ export default function SuperAdminSettings() {
         </TabsContent>
 
         {/* Notifications Tab */}
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="notifications" className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -522,7 +1004,7 @@ export default function SuperAdminSettings() {
         </TabsContent>
 
         {/* System Configuration Tab */}
-        <TabsContent value="system" className="space-y-6">
+        <TabsContent value="system" className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -530,7 +1012,7 @@ export default function SuperAdminSettings() {
                 System Configuration
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="flex flex-col gap-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="maintenanceMode">Maintenance Mode</Label>
