@@ -60,7 +60,9 @@ export interface Truck {
   engineType: string;
   mileage: number;
   insuranceExpiry: string;
+  insuranceExpiryISO?: string | null;
   registrationExpiry: string;
+  registrationExpiryISO?: string | null;
   is_active: boolean;
   color?: string;
   fuelEfficiency?: string | number;
@@ -200,47 +202,6 @@ export function TruckTable({
         icon: <Edit className="h-3 w-3 mr-1" />,
         onClick: () => onEditTruck(truck),
         variant: "outline" as const,
-      });
-    }
-
-    if (onTrackTruck) {
-      actions.push({
-        key: "track",
-        label: t("actions.track"),
-        icon: <MapPin className="h-3 w-3 mr-1" />,
-        onClick: () => onTrackTruck(truck.id),
-        variant: "outline" as const,
-      });
-    }
-
-    if (onAssignDriver) {
-      actions.push({
-        key: "assign",
-        label: t("actions.assignDriver"),
-        icon: <User className="h-3 w-3 mr-1" />,
-        onClick: () => onAssignDriver(truck.id),
-        variant: "outline" as const,
-      });
-    }
-
-    if (onScheduleMaintenance) {
-      actions.push({
-        key: "maintenance",
-        label: t("actions.scheduleMaintenance"),
-        icon: <Gauge className="h-3 w-3 mr-1" />,
-        onClick: () => onScheduleMaintenance(truck.id),
-        variant: "outline" as const,
-      });
-    }
-
-    if (onDeleteTruck) {
-      actions.push({
-        key: "delete",
-        label: t("actions.delete"),
-        icon: <Trash2 className="h-3 w-3 mr-1" />,
-        onClick: () => onDeleteTruck(truck.id),
-        variant: "outline" as const,
-        className: "text-red-600",
       });
     }
 

@@ -70,9 +70,27 @@ const AdminTrucks = () => {
     type: VehicleType.TRUCK,
     insurance_expiry: "",
     registration_expiry: "",
-    branch_id: user?.role === "super_admin" ? user?.branch_id : undefined,
+    branch_id: user?.branch_id, // Always use user's branch_id as default
   });
   const [isCreatingVehicle, setIsCreatingVehicle] = useState(false);
+  const [isUpdatingVehicle, setIsUpdatingVehicle] = useState(false);
+
+  // Form state for editing vehicles
+  const [editFormData, setEditFormData] = useState<CreateVehicleRequest>({
+    plate_number: "",
+    make: "",
+    model: "",
+    year: new Date().getFullYear(),
+    color: "",
+    capacity_kg: 0,
+    capacity_volume: 0,
+    fuel_type: FuelType.DIESEL,
+    fuel_efficiency: 0,
+    type: VehicleType.TRUCK,
+    insurance_expiry: "",
+    registration_expiry: "",
+    branch_id: user?.branch_id,
+  });
 
   // API hooks
   const {
@@ -151,9 +169,15 @@ const AdminTrucks = () => {
       insuranceExpiry: vehicle.insurance_expiry
         ? new Date(vehicle.insurance_expiry).toLocaleDateString()
         : "N/A",
+      insuranceExpiryISO: vehicle.insurance_expiry
+        ? new Date(vehicle.insurance_expiry).toISOString().split("T")[0]
+        : null,
       registrationExpiry: vehicle.registration_expiry
         ? new Date(vehicle.registration_expiry).toLocaleDateString()
         : "N/A",
+      registrationExpiryISO: vehicle.registration_expiry
+        ? new Date(vehicle.registration_expiry).toISOString().split("T")[0]
+        : null,
       is_active: vehicle.status === "active",
       color: vehicle.color || "Unknown",
       fuelEfficiency: vehicle.fuel_efficiency || "N/A",
@@ -194,6 +218,30 @@ const AdminTrucks = () => {
 
   const handleEditTruck = (truck: Truck) => {
     setEditingTruck(truck);
+
+    console.log("🚛 Editing truck data:", {
+      truck,
+      insuranceExpiryISO: truck.insuranceExpiryISO,
+      registrationExpiryISO: truck.registrationExpiryISO,
+    });
+
+    // Populate edit form with truck data
+    setEditFormData({
+      plate_number: truck.licensePlate || "",
+      make: truck.manufacturer || "",
+      model: truck.model || "",
+      year: parseInt(truck.year) || new Date().getFullYear(),
+      color: truck.color || "",
+      capacity_kg: parseInt(truck.capacity?.replace(" kg", "") || "0") || 0,
+      capacity_volume: truck.capacityVolume || 0,
+      fuel_type: (truck.engineType as FuelType) || FuelType.DIESEL,
+      fuel_efficiency: parseFloat(truck.fuelEfficiency?.toString() || "0") || 0,
+      type: (truck.vehicleType as VehicleType) || VehicleType.TRUCK,
+      insurance_expiry: truck.insuranceExpiryISO || "",
+      registration_expiry: truck.registrationExpiryISO || "",
+      branch_id: truck.branchId || user?.branch_id,
+    });
+
     setIsEditModalOpen(true);
   };
 
@@ -237,7 +285,7 @@ const AdminTrucks = () => {
       type: VehicleType.TRUCK,
       insurance_expiry: "",
       registration_expiry: "",
-      branch_id: user?.role === "super_admin" ? user?.branch_id : undefined,
+      branch_id: user?.branch_id, // Always use user's branch_id as default
     });
     setIsCreateModalOpen(true);
   };
@@ -271,6 +319,15 @@ const AdminTrucks = () => {
       return;
     }
 
+    if (!createFormData.branch_id) {
+      toast({
+        title: "Validation Error",
+        description: "Branch selection is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsCreatingVehicle(true);
 
     try {
@@ -284,17 +341,167 @@ const AdminTrucks = () => {
       setIsCreateModalOpen(false);
       refetch();
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to create vehicle";
+      console.error("Create vehicle error:", error);
+
+      let errorMessage = "Failed to create vehicle";
+      let errorTitle = "Error";
+
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+
+        // Handle validation errors
+        if (
+          errorData.error?.code === "VALIDATION_ERROR" &&
+          errorData.error?.details
+        ) {
+          errorTitle = "Validation Error";
+          const validationErrors = errorData.error.details
+            .map((detail: any) => `${detail.field}: ${detail.message}`)
+            .join(", ");
+          errorMessage = validationErrors;
+        }
+        // Handle other API errors
+        else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        // Handle error object with message
+        else if (errorData.error?.message) {
+          errorMessage = errorData.error.message;
+        }
+      }
+      // Handle network or other errors
+      else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       toast({
-        title: "Error",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsCreatingVehicle(false);
+    }
+  };
+
+  const handleUpdateVehicle = async () => {
+    if (!editingTruck) return;
+
+    // Validate required fields
+    if (!editFormData.plate_number.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "License plate number is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editFormData.make?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Vehicle make is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editFormData.model?.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Vehicle model is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editFormData.branch_id) {
+      toast({
+        title: "Validation Error",
+        description: "Branch selection is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdatingVehicle(true);
+
+    try {
+      console.log("🚛 Updating vehicle with data:", {
+        id: editingTruck.id,
+        data: editFormData,
+        insurance_expiry: editFormData.insurance_expiry,
+        registration_expiry: editFormData.registration_expiry,
+      });
+
+      await updateVehicleMutation.mutateAsync({
+        id: editingTruck.id,
+        data: editFormData,
+      });
+
+      toast({
+        title: "Success",
+        description: "Vehicle updated successfully!",
+      });
+
+      setIsEditModalOpen(false);
+      setEditingTruck(null);
+      refetch();
+    } catch (error: any) {
+      console.error("Update vehicle error:", error);
+      console.error("Error response:", error?.response);
+      console.error("Error response data:", error?.response?.data);
+
+      let errorMessage = "Failed to update vehicle";
+      let errorTitle = "Error";
+
+      if (error?.response?.data) {
+        const errorData = error.response.data;
+        console.error("Error data structure:", errorData);
+
+        // Handle validation errors
+        if (
+          errorData.error?.code === "VALIDATION_ERROR" &&
+          errorData.error?.details
+        ) {
+          errorTitle = "Validation Error";
+          const validationErrors = errorData.error.details
+            .map((detail: any) => `${detail.field}: ${detail.message}`)
+            .join(", ");
+          errorMessage = validationErrors;
+          console.error("Validation errors:", validationErrors);
+        }
+        // Handle other API errors
+        else if (errorData.message) {
+          errorMessage = errorData.message;
+          console.error("API error message:", errorData.message);
+        }
+        // Handle error object with message
+        else if (errorData.error?.message) {
+          errorMessage = errorData.error.message;
+          console.error("Error object message:", errorData.error.message);
+        }
+        // Fallback: show the entire error data
+        else {
+          errorMessage = JSON.stringify(errorData, null, 2);
+          console.error("Fallback error message:", errorMessage);
+        }
+      }
+      // Handle network or other errors
+      else if (error?.message) {
+        errorMessage = error.message;
+        console.error("Network error message:", error.message);
+      }
+
+      console.error("Final error message:", errorMessage);
+
+      toast({
+        title: errorTitle,
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingVehicle(false);
     }
   };
 
@@ -638,6 +845,42 @@ const AdminTrucks = () => {
         title={t("adminTrucks.createNewTruck")}
       >
         <div className="space-y-6">
+          {/* Branch Selection for Super Admin */}
+          {user?.role === "super_admin" && (
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  Branch Assignment
+                </h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label htmlFor="branch">Branch *</Label>
+                    <Select
+                      value={createFormData.branch_id || ""}
+                      onValueChange={(value) =>
+                        setCreateFormData((prev) => ({
+                          ...prev,
+                          branch_id: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select branch..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {branchesResponse?.branches?.map((branch: any) => (
+                          <SelectItem key={branch.id} value={branch.id}>
+                            {branch.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Vehicle Details */}
           <Card>
             <CardContent className="p-4">
@@ -921,6 +1164,42 @@ const AdminTrucks = () => {
       >
         {editingTruck && (
           <div className="space-y-6">
+            {/* Branch Selection for Super Admin */}
+            {user?.role === "super_admin" && (
+              <Card>
+                <CardContent className="p-4">
+                  <h4 className="font-semibold text-gray-900 mb-4">
+                    Branch Assignment
+                  </h4>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label htmlFor="editBranch">Branch *</Label>
+                      <Select
+                        value={editFormData.branch_id || ""}
+                        onValueChange={(value) =>
+                          setEditFormData((prev) => ({
+                            ...prev,
+                            branch_id: value,
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Select branch..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {branchesResponse?.branches?.map((branch: any) => (
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Vehicle Details */}
             <Card>
               <CardContent className="p-4">
@@ -929,19 +1208,31 @@ const AdminTrucks = () => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="editMake">Make</Label>
+                    <Label htmlFor="editMake">Make *</Label>
                     <Input
                       id="editMake"
-                      defaultValue={editingTruck.manufacturer || ""}
+                      value={editFormData.make}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          make: e.target.value,
+                        }))
+                      }
                       placeholder="e.g., Toyota, Ford, Honda"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="editModel">Model</Label>
+                    <Label htmlFor="editModel">Model *</Label>
                     <Input
                       id="editModel"
-                      defaultValue={editingTruck.model || ""}
+                      value={editFormData.model}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          model: e.target.value,
+                        }))
+                      }
                       placeholder="e.g., Hiace, Transit, CG125"
                       className="mt-1"
                     />
@@ -951,7 +1242,15 @@ const AdminTrucks = () => {
                     <Input
                       id="editYear"
                       type="number"
-                      defaultValue={editingTruck.year || ""}
+                      value={editFormData.year}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          year:
+                            parseInt(e.target.value) ||
+                            new Date().getFullYear(),
+                        }))
+                      }
                       placeholder="2024"
                       min="1990"
                       max="2025"
@@ -962,16 +1261,28 @@ const AdminTrucks = () => {
                     <Label htmlFor="editColor">Color</Label>
                     <Input
                       id="editColor"
-                      defaultValue={(editingTruck as any).color || ""}
+                      value={editFormData.color}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          color: e.target.value,
+                        }))
+                      }
                       placeholder="e.g., Silver, Black, Red"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="editLicensePlate">License Plate</Label>
+                    <Label htmlFor="editLicensePlate">License Plate *</Label>
                     <Input
                       id="editLicensePlate"
-                      defaultValue={editingTruck.licensePlate || ""}
+                      value={editFormData.plate_number}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          plate_number: e.target.value,
+                        }))
+                      }
                       placeholder="e.g., RAB789C"
                       className="mt-1"
                     />
@@ -1005,8 +1316,12 @@ const AdminTrucks = () => {
                     <Input
                       id="editCapacityKg"
                       type="number"
-                      defaultValue={
-                        editingTruck.capacity?.replace(" kg", "") || ""
+                      value={editFormData.capacity_kg || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          capacity_kg: parseInt(e.target.value) || 0,
+                        }))
                       }
                       placeholder="1500"
                       min="0"
@@ -1019,7 +1334,13 @@ const AdminTrucks = () => {
                       id="editCapacityVolume"
                       type="number"
                       step="0.1"
-                      defaultValue={(editingTruck as any).capacityVolume || ""}
+                      value={editFormData.capacity_volume || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          capacity_volume: parseFloat(e.target.value) || 0,
+                        }))
+                      }
                       placeholder="4.0"
                       min="0"
                       className="mt-1"
@@ -1027,15 +1348,25 @@ const AdminTrucks = () => {
                   </div>
                   <div>
                     <Label htmlFor="editFuelType">Fuel Type</Label>
-                    <Select defaultValue={editingTruck.engineType}>
+                    <Select
+                      value={editFormData.fuel_type}
+                      onValueChange={(value: FuelType) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          fuel_type: value,
+                        }))
+                      }
+                    >
                       <SelectTrigger className="mt-1">
-                        <SelectValue />
+                        <SelectValue placeholder="Select fuel type..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="petrol">Petrol</SelectItem>
-                        <SelectItem value="diesel">Diesel</SelectItem>
-                        <SelectItem value="electric">Electric</SelectItem>
-                        <SelectItem value="hybrid">Hybrid</SelectItem>
+                        <SelectItem value={FuelType.PETROL}>Petrol</SelectItem>
+                        <SelectItem value={FuelType.DIESEL}>Diesel</SelectItem>
+                        <SelectItem value={FuelType.ELECTRIC}>
+                          Electric
+                        </SelectItem>
+                        <SelectItem value={FuelType.HYBRID}>Hybrid</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1047,9 +1378,60 @@ const AdminTrucks = () => {
                       id="editFuelEfficiency"
                       type="number"
                       step="0.1"
-                      defaultValue={(editingTruck as any).fuelEfficiency || ""}
+                      value={editFormData.fuel_efficiency || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          fuel_efficiency: parseFloat(e.target.value) || 0,
+                        }))
+                      }
                       placeholder="10.5"
                       min="0"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Insurance and Registration */}
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  Insurance & Registration
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="editInsuranceExpiry">
+                      Insurance Expiry
+                    </Label>
+                    <Input
+                      id="editInsuranceExpiry"
+                      type="date"
+                      value={editFormData.insurance_expiry || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          insurance_expiry: e.target.value,
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editRegistrationExpiry">
+                      Registration Expiry
+                    </Label>
+                    <Input
+                      id="editRegistrationExpiry"
+                      type="date"
+                      value={editFormData.registration_expiry || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          registration_expiry: e.target.value,
+                        }))
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -1063,20 +1445,26 @@ const AdminTrucks = () => {
                 variant="outline"
                 className="flex-1"
                 onClick={() => setIsEditModalOpen(false)}
+                disabled={isUpdatingVehicle}
               >
                 {t("common.cancel")}
               </Button>
               <Button
                 className="flex-1"
-                onClick={() => {
-                  // TODO: Implement update truck functionality
-                  customToast.success("Truck updated successfully");
-                  setIsEditModalOpen(false);
-                  refetch();
-                }}
+                onClick={handleUpdateVehicle}
+                disabled={isUpdatingVehicle}
               >
-                <TruckIcon className="h-4 w-4 mr-2" />
-                {t("common.save")}
+                {isUpdatingVehicle ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <TruckIcon className="h-4 w-4 mr-2" />
+                    {t("common.save")}
+                  </>
+                )}
               </Button>
             </div>
           </div>
