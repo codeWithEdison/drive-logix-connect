@@ -193,7 +193,11 @@ export class DashboardService {
   }
 
   // Admin Dashboard
-  static async getAdminDashboard(): Promise<
+  static async getAdminDashboard(params?: {
+    period?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<
     ApiResponse<{
       stats: {
         monthly_revenue: number;
@@ -202,6 +206,7 @@ export class DashboardService {
         total_drivers: number;
         success_rate: number;
         total_cargos: number;
+        total_vehicles: number;
         pending_approvals: number;
         system_alerts: number;
       };
@@ -331,7 +336,9 @@ export class DashboardService {
       }>;
     }>
   > {
-    const response = await axiosInstance.get("/dashboard/admin");
+    const response = await axiosInstance.get("/dashboard/admin", {
+      params,
+    });
     return response.data;
   }
 

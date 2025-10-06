@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Toast visibility improvements */
+@layer utilities {
+  .toast-container {
+    z-index: 9999 !important;
+  }
+  
+  .toast-container [data-sonner-toast] {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    opacity: 1 !important;
+  }
+  
+  .dark .toast-container [data-sonner-toast] {
+    background: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    color: #f9fafb !important;
+  }
+}
+
 /* Loveway Logistics - Enhanced Visibility Design System */
 
 @layer base {

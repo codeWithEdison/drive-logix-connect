@@ -34,6 +34,7 @@ import {
   Plus,
   Calendar,
   ChevronDown,
+  HardDrive,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -54,15 +55,36 @@ export function AdminDashboard() {
     return words.charAt(0).toUpperCase() + words.slice(1);
   };
   const { user } = useAuth();
-  const [selectedPeriod, setSelectedPeriod] = React.useState("monthly");
+  const branchName =
+    (user as any)?.branch?.name ||
+    (user as any)?.branch_name ||
+    (user as any)?.branch?.code ||
+    "";
+  const [selectedPeriod, setSelectedPeriod] = React.useState("yearly");
 
   // API hooks
+  const apiPeriod = React.useMemo(() => {
+    switch (selectedPeriod) {
+      case "daily":
+        return "day";
+      case "weekly":
+        return "week";
+      case "monthly":
+        return "month";
+      case "yearly":
+      default:
+        return "year";
+    }
+  }, [selectedPeriod]);
+
   const {
     data: dashboardData,
     isLoading: dashboardLoading,
     error: dashboardError,
     refetch: refetchDashboard,
-  } = useAdminDashboard();
+  } = useAdminDashboard({ period: apiPeriod });
+
+  // Note: Admin dashboard API does not accept filter POST; we rely on refetch
 
   // Admin statistics data derived from unified API response
   const adminStats = [
@@ -85,7 +107,7 @@ export function AdminDashboard() {
       iconColor: "text-blue-600",
     },
     {
-      title: "Total Users",
+      title: "Total Drivers",
       value: dashboardData?.data?.stats?.total_drivers?.toString() || "0",
       description: "Total",
       icon: Users,
@@ -97,6 +119,22 @@ export function AdminDashboard() {
       description: "Pending",
       icon: Clock,
       iconColor: "text-orange-600",
+    },
+    {
+      title: "Total Cargos",
+      value:
+        (dashboardData?.data as any)?.stats?.total_cargos?.toString() || "0",
+      description: "Cargos",
+      icon: Package,
+      iconColor: "text-indigo-600",
+    },
+    {
+      title: "Total Vehicles",
+      value:
+        (dashboardData?.data as any)?.stats?.total_vehicles?.toString() || "0",
+      description: "Vehicles",
+      icon: HardDrive,
+      iconColor: "text-sky-600",
     },
   ];
   const handleExportReport = () => {
@@ -136,9 +174,8 @@ export function AdminDashboard() {
 
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
+    // React Query will refetch due to params in the query key
     customToast.success(`Filter applied: ${t(`common.${period}`)}`);
-    // Here you would typically refetch data with the new period filter
-    // refetchDashboard({ period });
   };
 
   const getPeriodLabel = (period: string) => {
@@ -158,7 +195,7 @@ export function AdminDashboard() {
 
   const handleRefresh = () => {
     refetchDashboard();
-    customToast.success("Refreshed");
+    customToast.success("Dashboard refreshed");
   };
 
   const handleViewAll = (type: string) => {
@@ -353,7 +390,10 @@ export function AdminDashboard() {
                   !
                 </h1>
                 <p className="text-blue-100 text-sm sm:text-base lg:text-lg mb-2 sm:mb-3">
-                  {t("adminDashboard.header.manageSystem")}
+                  {t("adminDashboard.header.manageSystem")}{" "}
+                  {branchName && (
+                    <span className="font-semibold">- {branchName} branch</span>
+                  )}
                 </p>
                 {/* <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
@@ -402,7 +442,7 @@ export function AdminDashboard() {
                     dashboardLoading ? "animate-spin" : ""
                   }`}
                 />
-                {t("common.refresh")}
+                {dashboardLoading ? "Refreshing..." : t("common.refresh")}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -441,14 +481,14 @@ export function AdminDashboard() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
+              {/* <Button
                 size="sm"
                 onClick={handleExportReport}
                 className="bg-white/20 border-white/30 text-white hover:bg-white/30 w-full sm:w-auto"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Export Report
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
@@ -520,11 +560,11 @@ export function AdminDashboard() {
                       {stat.description}
                     </p>
                   </div>
-                  <div
+                  {/* <div
                     className={`p-3 sm:p-3.5 rounded-lg sm:rounded-xl ${iconBg} group-hover:scale-110 transition-transform duration-300`}
                   >
                     <Icon className={`h-5 w-5 ${stat.iconColor}`} />
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>

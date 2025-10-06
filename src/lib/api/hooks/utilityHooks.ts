@@ -255,6 +255,24 @@ export const useSystemLogs = (params?: {
   });
 };
 
+// Hook specifically for user activity logs
+export const useUserActivityLogs = (userId: string) => {
+  return useQuery({
+    queryKey: queryKeys.admin.logs({ user_id: userId }),
+    queryFn: () => AdminService.getLogs({ user_id: userId, limit: 20 }),
+    select: (data) => {
+      // Handle both array and pagination response formats
+      if (Array.isArray(data.data)) {
+        return data.data;
+      } else if (data.data && Array.isArray(data.data.data)) {
+        return data.data.data;
+      }
+      return [];
+    },
+    enabled: !!userId,
+  });
+};
+
 export const useUserManagement = (params?: {
   role?: string;
   status?: string;

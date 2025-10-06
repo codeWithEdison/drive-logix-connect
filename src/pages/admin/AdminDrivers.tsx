@@ -38,6 +38,7 @@ const AdminDrivers = () => {
   const {
     data: driversData,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useUserManagement({
@@ -83,9 +84,31 @@ const AdminDrivers = () => {
       avatar_url: user.avatar_url,
       is_active: user.is_active,
       is_verified: user.is_verified,
+      branch_name: user.branch?.name || user.driver?.branch?.name || "-",
     })) || [];
 
   console.log("🔍 AdminDrivers Debug - drivers:", drivers);
+
+  // Pagination state (client-side)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  const totalItems = drivers.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const clampedPage = Math.min(currentPage, totalPages);
+  const startIndex = (clampedPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const pagedDrivers = drivers.slice(startIndex, endIndex);
+
+  const handleChangePage = (nextPage: number) => {
+    if (nextPage < 1 || nextPage > totalPages) return;
+    setCurrentPage(nextPage);
+  };
+
+  const handleChangePageSize = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   // Driver handlers
   const handleViewDriverDetails = (driver: Driver) => {
@@ -129,8 +152,8 @@ const AdminDrivers = () => {
     setIsCreateDriverModalOpen(true);
   };
 
-  const handleRefresh = () => {
-    refetch();
+  const handleRefresh = async () => {
+    await refetch();
     customToast.success("Data refreshed successfully");
   };
 
@@ -246,12 +269,14 @@ const AdminDrivers = () => {
           <Button
             variant="outline"
             onClick={handleRefresh}
-            disabled={isLoading}
+            disabled={isLoading || isFetching}
           >
             <RefreshCw
-              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              className={`h-4 w-4 mr-2 ${
+                isLoading || isFetching ? "animate-spin" : ""
+              }`}
             />
-            Refresh
+            {isLoading || isFetching ? "Refreshing..." : "Refresh"}
           </Button>
           <Button onClick={handleCreateNew}>
             <Plus className="h-4 w-4 mr-2" />
@@ -288,7 +313,7 @@ const AdminDrivers = () => {
 
       {/* Driver Table */}
       <DriverTable
-        drivers={drivers}
+        drivers={pagedDrivers}
         title=""
         showSearch={false}
         showFilters={false}
@@ -298,6 +323,35 @@ const AdminDrivers = () => {
         onActivateDriver={handleApproveDriver}
         onCallDriver={handleCallDriver}
       />
+
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between pt-2">
+        <div className="text-sm text-muted-foreground">
+          Showing {totalItems === 0 ? 0 : startIndex + 1}-{endIndex} of{" "}
+          {totalItems}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleChangePage(clampedPage - 1)}
+            disabled={clampedPage <= 1}
+          >
+            Previous
+          </Button>
+          <div className="text-sm">
+            Page {clampedPage} / {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleChangePage(clampedPage + 1)}
+            disabled={clampedPage >= totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
 
       {/* Modals */}
       {selectedDriver && (

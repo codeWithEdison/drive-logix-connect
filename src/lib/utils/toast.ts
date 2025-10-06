@@ -9,9 +9,9 @@ export const customToast = {
       duration: 4000,
       icon: "✅",
       style: {
-        background: "var(--green-50)",
-        border: "1px solid var(--green-200)",
-        color: "var(--green-800)",
+        background: "#f0fdf4", // solid green-50
+        border: "1px solid #bbf7d0", // solid green-200
+        color: "#166534", // solid green-800
       },
     });
   },
@@ -23,9 +23,9 @@ export const customToast = {
       duration: 6000, // Longer duration for errors
       icon: "❌",
       style: {
-        background: "var(--red-50)",
-        border: "1px solid var(--red-200)",
-        color: "var(--red-800)",
+        background: "#fef2f2", // solid red-50
+        border: "1px solid #fecaca", // solid red-200
+        color: "#991b1b", // solid red-800
       },
     });
   },
@@ -37,9 +37,9 @@ export const customToast = {
       duration: 5000,
       icon: "⚠️",
       style: {
-        background: "var(--yellow-50)",
-        border: "1px solid var(--yellow-200)",
-        color: "var(--yellow-800)",
+        background: "#fefce8", // solid yellow-50
+        border: "1px solid #fde047", // solid yellow-200
+        color: "#a16207", // solid yellow-800
       },
     });
   },
@@ -51,9 +51,9 @@ export const customToast = {
       duration: 4000,
       icon: "ℹ️",
       style: {
-        background: "var(--blue-50)",
-        border: "1px solid var(--blue-200)",
-        color: "var(--blue-800)",
+        background: "#eff6ff", // solid blue-50
+        border: "1px solid #bfdbfe", // solid blue-200
+        color: "#1e40af", // solid blue-800
       },
     });
   },
@@ -64,9 +64,9 @@ export const customToast = {
       description,
       icon: "⏳",
       style: {
-        background: "var(--purple-50)",
-        border: "1px solid var(--purple-200)",
-        color: "var(--purple-800)",
+        background: "#faf5ff", // solid purple-50
+        border: "1px solid #d8b4fe", // solid purple-200
+        color: "#6b21a8", // solid purple-800
       },
     });
   },

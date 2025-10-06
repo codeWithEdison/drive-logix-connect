@@ -32,6 +32,26 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { UserRole, BusinessType, DriverStatus } from "@/types/shared";
+import { useUserActivityLogs } from "@/lib/api/hooks/utilityHooks";
+
+// Log interface based on API response
+interface UserLog {
+  id: string;
+  user_id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  description: string;
+  ip_address: string;
+  user_agent: string;
+  created_at: string;
+  user: {
+    id: string;
+    full_name: string;
+    email: string;
+    role: string;
+  };
+}
 
 // User interface based on shared.ts
 interface UserDetail {
@@ -106,6 +126,13 @@ export function UserDetailModal({
 }: UserDetailModalProps) {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Fetch user activity logs
+  const {
+    data: logs = [],
+    isLoading: logsLoading,
+    error: logsError,
+  } = useUserActivityLogs(user.id);
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -187,6 +214,76 @@ export function UserDetailModal({
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatLogDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60)
+    );
+
+    if (diffInMinutes < 1) {
+      return t("common.justNow", "Just now");
+    } else if (diffInMinutes < 60) {
+      return t("common.minutesAgo", `${diffInMinutes} minutes ago`);
+    } else if (diffInMinutes < 1440) {
+      const hours = Math.floor(diffInMinutes / 60);
+      return t("common.hoursAgo", `${hours} hours ago`);
+    } else {
+      const days = Math.floor(diffInMinutes / 1440);
+      return t("common.daysAgo", `${days} days ago`);
+    }
+  };
+
+  const getLogIcon = (action: string) => {
+    switch (action.toLowerCase()) {
+      case "login":
+      case "user_logged_in":
+        return CheckCircle;
+      case "logout":
+      case "user_logged_out":
+        return XCircle;
+      case "cargo_created":
+      case "cargo_updated":
+        return Package;
+      case "profile_updated":
+      case "user_updated":
+        return User;
+      case "password_changed":
+        return Shield;
+      case "payment_made":
+        return DollarSign;
+      case "delivery_assigned":
+        return Truck;
+      case "invoice_created":
+        return FileText;
+      default:
+        return Activity;
+    }
+  };
+
+  const getLogColor = (action: string) => {
+    switch (action.toLowerCase()) {
+      case "login":
+      case "user_logged_in":
+      case "cargo_created":
+      case "payment_made":
+        return "text-green-600 bg-green-50";
+      case "logout":
+      case "user_logged_out":
+        return "text-gray-600 bg-gray-50";
+      case "profile_updated":
+      case "user_updated":
+        return "text-blue-600 bg-blue-50";
+      case "password_changed":
+        return "text-yellow-600 bg-yellow-50";
+      case "cargo_updated":
+      case "delivery_assigned":
+        return "text-purple-600 bg-purple-50";
+      default:
+        return "text-gray-600 bg-gray-50";
+    }
   };
 
   const renderClientData = () => (
@@ -659,41 +756,61 @@ export function UserDetailModal({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {t("common.user")} {t("common.loggedIn")}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {t("common.twoMinutesAgo")}
-                      </p>
-                    </div>
+                {logsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2 text-sm text-gray-500">
+                      {t("common.loading", "Loading...")}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {t("common.profile")} {t("common.updated")}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {t("common.oneHourAgo")}
-                      </p>
-                    </div>
+                ) : logsError ? (
+                  <div className="flex items-center justify-center py-8 text-red-600">
+                    <AlertCircle className="h-5 w-5 mr-2" />
+                    <span className="text-sm">
+                      {t(
+                        "common.errorLoadingActivity",
+                        "Error loading activity logs"
+                      )}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                    <AlertCircle className="h-5 w-5 text-yellow-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {t("common.password")} {t("common.changed")}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {t("common.oneDayAgo")}
-                      </p>
-                    </div>
+                ) : Array.isArray(logs) && logs.length > 0 ? (
+                  <div className="space-y-3">
+                    {logs.map((log: UserLog) => {
+                      const LogIcon = getLogIcon(log.action);
+                      const colorClass = getLogColor(log.action);
+
+                      return (
+                        <div
+                          key={log.id}
+                          className={`flex items-center gap-3 p-3 rounded-lg ${colorClass}`}
+                        >
+                          <LogIcon className="h-5 w-5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              {log.description}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span>{formatLogDate(log.created_at)}</span>
+                              {log.ip_address && (
+                                <>
+                                  <span>•</span>
+                                  <span>{log.ip_address}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-gray-500">
+                    <Activity className="h-8 w-8 mr-2" />
+                    <span className="text-sm">
+                      {t("common.noActivityFound", "No activity found")}
+                    </span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
