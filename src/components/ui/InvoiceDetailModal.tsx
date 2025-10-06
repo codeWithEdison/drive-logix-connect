@@ -24,6 +24,10 @@ import {
   Truck,
   Edit,
   X,
+  Building2,
+  Smartphone,
+  Upload,
+  Send,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -342,6 +346,126 @@ export function InvoiceDetailModal({
                     </span>
                   </div>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Direct Payment Options */}
+        {!invoice.paid && invoice.status === "sent" && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <DollarSign className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-gray-900">
+                  {t("invoices.directPaymentOptions", "Direct Payment Options")}
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                {/* Bank Transfer Option */}
+                <div className="border rounded-lg p-4 bg-blue-50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Building2 className="h-5 w-5 text-blue-600" />
+                    <h4 className="font-semibold text-gray-900">
+                      {t("invoices.bankTransfer", "Bank Transfer")}
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src="/logo.png"
+                        alt="Bank of Kigali"
+                        className="h-6 w-auto"
+                      />
+                      <span className="font-medium text-gray-700">
+                        Bank of Kigali
+                      </span>
+                    </div>
+                    <div className="bg-white p-3 rounded border">
+                      <p className="text-sm text-gray-600">
+                        {t("invoices.accountName", "Account Name")}:
+                      </p>
+                      <p className="font-mono font-semibold text-gray-900">
+                        LOVEWAY RWANDA CO LTD
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {t("invoices.accountNumber", "Account Number")}:
+                      </p>
+                      <p className="font-mono font-semibold text-gray-900">
+                        00289-06965230-80
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Money Option */}
+                <div className="border rounded-lg p-4 bg-yellow-50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Smartphone className="h-5 w-5 text-yellow-600" />
+                    <h4 className="font-semibold text-gray-900">
+                      {t("invoices.mobileMoney", "Mobile Money")}
+                    </h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-yellow-500 rounded flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">
+                          MTN
+                        </span>
+                      </div>
+                      <span className="font-medium text-gray-700">
+                        MTN Mobile Money
+                      </span>
+                    </div>
+                    <div className="bg-white p-3 rounded border">
+                      <p className="text-sm text-gray-600">
+                        {t("invoices.momoCode", "MoMo Code")}:
+                      </p>
+                      <p className="font-mono font-semibold text-gray-900">
+                        *182*6*1*{invoice.invoice_number}#
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {t("invoices.momoNumber", "MoMo Number")}:
+                      </p>
+                      <p className="font-mono font-semibold text-gray-900">
+                        +250 788 123 456
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Instructions */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-amber-800 mb-2">
+                        {t(
+                          "invoices.paymentInstructions",
+                          "Payment Instructions"
+                        )}
+                      </h4>
+                      <p className="text-sm text-amber-700">
+                        {t(
+                          "invoices.paymentInstructionsText",
+                          "If you pay directly, you must send a screenshot or receipt that clearly shows the amount and transaction ID. Our team will review it."
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Confirm Payment Button */}
+                <div className="pt-2">
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => setIsPaymentConfirmationModalOpen(true)}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {t("invoices.confirmPayment", "Confirm Payment")}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

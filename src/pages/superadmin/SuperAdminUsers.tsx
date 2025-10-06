@@ -85,6 +85,7 @@ import {
   Filter,
   MoreHorizontal,
   Eye,
+  EyeOff,
   Edit,
   Trash2,
   Mail,
@@ -94,6 +95,7 @@ import {
   Loader2,
   RefreshCw,
   X,
+  RefreshCcw,
 } from "lucide-react";
 
 // Helper function to format currency
@@ -192,6 +194,51 @@ export default function SuperAdminUsers() {
     preferred_language: "en" as "en" | "rw" | "fr",
     branch_id: "",
   });
+
+  // Password visibility state
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Generate random password function
+  const generatePassword = () => {
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let password = "";
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  // Helper function to extract error messages from API response
+  const extractErrorMessage = (error: any) => {
+    if (
+      error?.response?.data?.error?.details &&
+      Array.isArray(error.response.data.error.details)
+    ) {
+      // Handle validation errors with details
+      const details = error.response.data.error.details;
+      const fieldErrors = details
+        .map((detail: any) => `${detail.field}: ${detail.message}`)
+        .join(", ");
+      return (
+        fieldErrors || error.response.data.error.message || "Validation failed"
+      );
+    }
+
+    if (error?.response?.data?.error?.message) {
+      return error.response.data.error.message;
+    }
+
+    if (error?.response?.data?.message) {
+      return error.response.data.message;
+    }
+
+    if (error?.message) {
+      return error.message;
+    }
+
+    return "An unexpected error occurred";
+  };
 
   // Client form state
   const [clientFormData, setClientFormData] = useState({
@@ -345,14 +392,16 @@ export default function SuperAdminUsers() {
   // Admin handlers
   const handleCreateAdmin = () => {
     setEditingAdminUser(null);
+    const generatedPassword = generatePassword();
     setAdminFormData({
       full_name: "",
       email: "",
       phone: "",
-      password: "",
+      password: generatedPassword,
       preferred_language: "en",
       branch_id: "",
     });
+    setShowPassword(false); // Hide password initially
     setShowCreateAdminModal(true);
   };
 
@@ -362,10 +411,11 @@ export default function SuperAdminUsers() {
       full_name: admin.full_name || "",
       email: admin.email || "",
       phone: admin.phone || "",
-      password: "",
+      password: "", // Empty password for editing - admin will need to set new password
       preferred_language: admin.preferred_language || "en",
       branch_id: admin.branch_id || "",
     });
+    setShowPassword(false); // Hide password initially
     setShowCreateAdminModal(true);
   };
 
@@ -650,52 +700,64 @@ export default function SuperAdminUsers() {
 
   const handleCreateAdminUser = async () => {
     try {
+      // Validate password length for create mode
+      if (!editingAdminUser && adminFormData.password.length < 8) {
+        customToast.error("Password must be at least 8 characters long");
+        return;
+      }
+
+      // Validate password length for edit mode if provided
+      if (
+        editingAdminUser &&
+        adminFormData.password &&
+        adminFormData.password.length < 8
+      ) {
+        customToast.error("Password must be at least 8 characters long");
+        return;
+      }
+
       if (editingAdminUser) {
         // Update existing admin
+        const updateData: any = {
+          full_name: adminFormData.full_name,
+          email: adminFormData.email,
+          phone: adminFormData.phone,
+          role: "admin",
+          branch_id: adminFormData.branch_id,
+          is_active: editingAdminUser.is_active,
+          preferred_language: adminFormData.preferred_language,
+        };
+
+        // Only include password if it's provided
+        if (adminFormData.password && adminFormData.password.trim() !== "") {
+          updateData.password = adminFormData.password;
+        }
+
         await updateAdminMutation.mutateAsync({
           adminId: editingAdminUser.id,
-          data: {
-            full_name: adminFormData.full_name,
-            email: adminFormData.email,
-            phone: adminFormData.phone,
-            role: "admin",
-            branch_id: adminFormData.branch_id,
-            is_active: editingAdminUser.is_active,
-            preferred_language: adminFormData.preferred_language,
-          },
+          data: updateData,
         });
 
-        toast({
-          title: "Success",
-          description: "Admin updated successfully!",
-        });
+        customToast.success("Admin updated successfully!");
       } else {
         // Create new admin
         await createAdminMutation.mutateAsync(adminFormData);
 
-        toast({
-          title: "Success",
-          description: "Admin created successfully!",
-        });
+        customToast.success("Admin created successfully!");
       }
 
       handleAdminSuccess();
     } catch (error: any) {
       console.error("Admin operation error:", error);
 
-      // Extract error message from API response
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
-        `Failed to ${editingAdminUser ? "update" : "create"} admin`;
+      // Extract detailed error message
+      const errorMessage = extractErrorMessage(error);
 
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      customToast.error(
+        `Failed to ${
+          editingAdminUser ? "update" : "create"
+        } admin: ${errorMessage}`
+      );
     }
   };
 
@@ -724,37 +786,26 @@ export default function SuperAdminUsers() {
           },
         });
 
-        toast({
-          title: "Success",
-          description: "Client updated successfully!",
-        });
+        customToast.success("Client updated successfully!");
       } else {
         // Create new client
         await createClientMutation.mutateAsync(clientFormData);
 
-        toast({
-          title: "Success",
-          description: "Client created successfully!",
-        });
+        customToast.success("Client created successfully!");
       }
 
       handleClientSuccess();
     } catch (error: any) {
       console.error("Client operation error:", error);
 
-      // Extract error message from API response
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
-        `Failed to ${editingClientUser ? "update" : "create"} client`;
+      // Extract detailed error message
+      const errorMessage = extractErrorMessage(error);
 
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      customToast.error(
+        `Failed to ${
+          editingClientUser ? "update" : "create"
+        } client: ${errorMessage}`
+      );
     }
   };
 
@@ -773,31 +824,21 @@ export default function SuperAdminUsers() {
       });
 
       // Show success toast
-      toast({
-        title: t("userManagement.userStatusUpdated"),
-        description: t("userManagement.userStatusUpdatedSuccess", {
-          name: editingUser.full_name,
-          status: formData.is_active
-            ? t("common.active")
-            : t("common.inactive"),
-        }),
-      });
+      customToast.success(
+        `User ${editingUser.full_name} status updated to ${
+          formData.is_active ? "active" : "inactive"
+        }`
+      );
 
       setShowEditUserModal(false);
       resetForm();
     } catch (error: any) {
       console.error("Error updating user status:", error);
 
-      // Show error toast
-      toast({
-        title: t("userManagement.updateUserError"),
-        description:
-          error?.response?.data?.error?.message ||
-          error?.response?.data?.error ||
-          error?.response?.data?.message ||
-          t("userManagement.updateUserErrorDesc"),
-        variant: "destructive",
-      });
+      // Extract detailed error message
+      const errorMessage = extractErrorMessage(error);
+
+      customToast.error(`Failed to update user status: ${errorMessage}`);
     }
   };
 
@@ -814,26 +855,16 @@ export default function SuperAdminUsers() {
       });
 
       // Show success toast
-      toast({
-        title: t("userManagement.userStatusUpdated"),
-        description: t("userManagement.userStatusUpdatedSuccess", {
-          name: "User",
-          status: isActive ? t("common.active") : t("common.inactive"),
-        }),
-      });
+      customToast.success(
+        `User status updated to ${isActive ? "active" : "inactive"}`
+      );
     } catch (error: any) {
       console.error("Error updating user status:", error);
 
-      // Show error toast
-      toast({
-        title: t("userManagement.updateUserError"),
-        description:
-          error?.response?.data?.error?.message ||
-          error?.response?.data?.error ||
-          error?.response?.data?.message ||
-          t("userManagement.updateUserErrorDesc"),
-        variant: "destructive",
-      });
+      // Extract detailed error message
+      const errorMessage = extractErrorMessage(error);
+
+      customToast.error(`Failed to update user status: ${errorMessage}`);
     }
   };
 
@@ -1557,17 +1588,87 @@ export default function SuperAdminUsers() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="admin_password">Password *</Label>
-              <Input
-                id="admin_password"
-                type="password"
-                value={adminFormData.password}
-                onChange={(e) =>
-                  handleAdminFormChange("password", e.target.value)
-                }
-                placeholder="Enter password (min 6 chars)"
-                required
-              />
+              <Label htmlFor="admin_password">
+                Password {!editingAdminUser ? "*" : ""}
+              </Label>
+              {!editingAdminUser ? (
+                // Create mode - auto-generated password
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="admin_password"
+                      type={showPassword ? "text" : "password"}
+                      value={adminFormData.password}
+                      disabled
+                      placeholder="Auto-generated password"
+                      className="pr-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newPassword = generatePassword();
+                      setAdminFormData((prev) => ({
+                        ...prev,
+                        password: newPassword,
+                      }));
+                      setShowPassword(true);
+                    }}
+                    className="px-3"
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-1" />
+                    Regenerate
+                  </Button>
+                </div>
+              ) : (
+                // Edit mode - manual password input
+                <div className="relative">
+                  <Input
+                    id="admin_password"
+                    type={showPassword ? "text" : "password"}
+                    value={adminFormData.password}
+                    onChange={(e) =>
+                      handleAdminFormChange("password", e.target.value)
+                    }
+                    placeholder="Enter new password (min 8 chars)"
+                    className="pr-20"
+                    required={!editingAdminUser}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
+              <p className="text-xs text-gray-500">
+                {!editingAdminUser
+                  ? "Password is auto-generated (8 characters). Click 'Regenerate' to create a new one."
+                  : "Leave empty to keep current password, or enter a new password (minimum 8 characters)."}
+              </p>
             </div>
           </div>
 
