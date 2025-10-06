@@ -31,10 +31,14 @@ export const useClientDashboard = () => {
 };
 
 // Admin Dashboard Hook
-export const useAdminDashboard = () => {
+export const useAdminDashboard = (params?: {
+  period?: string;
+  start_date?: string;
+  end_date?: string;
+}) => {
   return useQuery({
-    queryKey: queryKeys.dashboard.admin(),
-    queryFn: () => DashboardService.getAdminDashboard(),
+    queryKey: [...queryKeys.dashboard.admin(), params] as any,
+    queryFn: () => DashboardService.getAdminDashboard(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 60 * 1000, // 1 minute for admin updates
   });

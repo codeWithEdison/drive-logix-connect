@@ -34,6 +34,7 @@ import {
   Plus,
   Calendar,
   ChevronDown,
+  HardDrive,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -59,15 +60,29 @@ export function AdminDashboard() {
     (user as any)?.branch_name ||
     (user as any)?.branch?.code ||
     "";
-  const [selectedPeriod, setSelectedPeriod] = React.useState("monthly");
+  const [selectedPeriod, setSelectedPeriod] = React.useState("yearly");
 
   // API hooks
+  const apiPeriod = React.useMemo(() => {
+    switch (selectedPeriod) {
+      case "daily":
+        return "day";
+      case "weekly":
+        return "week";
+      case "monthly":
+        return "month";
+      case "yearly":
+      default:
+        return "year";
+    }
+  }, [selectedPeriod]);
+
   const {
     data: dashboardData,
     isLoading: dashboardLoading,
     error: dashboardError,
     refetch: refetchDashboard,
-  } = useAdminDashboard();
+  } = useAdminDashboard({ period: apiPeriod });
 
   // Note: Admin dashboard API does not accept filter POST; we rely on refetch
 
@@ -92,7 +107,7 @@ export function AdminDashboard() {
       iconColor: "text-blue-600",
     },
     {
-      title: "Total Users",
+      title: "Total Drivers",
       value: dashboardData?.data?.stats?.total_drivers?.toString() || "0",
       description: "Total",
       icon: Users,
@@ -104,6 +119,22 @@ export function AdminDashboard() {
       description: "Pending",
       icon: Clock,
       iconColor: "text-orange-600",
+    },
+    {
+      title: "Total Cargos",
+      value:
+        (dashboardData?.data as any)?.stats?.total_cargos?.toString() || "0",
+      description: "Cargos",
+      icon: Package,
+      iconColor: "text-indigo-600",
+    },
+    {
+      title: "Total Vehicles",
+      value:
+        (dashboardData?.data as any)?.stats?.total_vehicles?.toString() || "0",
+      description: "Vehicles",
+      icon: HardDrive,
+      iconColor: "text-sky-600",
     },
   ];
   const handleExportReport = () => {
@@ -143,8 +174,7 @@ export function AdminDashboard() {
 
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
-    // For admin, just refetch to refresh widgets; backend ignores period
-    refetchDashboard();
+    // React Query will refetch due to params in the query key
     customToast.success(`Filter applied: ${t(`common.${period}`)}`);
   };
 
@@ -530,11 +560,11 @@ export function AdminDashboard() {
                       {stat.description}
                     </p>
                   </div>
-                  <div
+                  {/* <div
                     className={`p-3 sm:p-3.5 rounded-lg sm:rounded-xl ${iconBg} group-hover:scale-110 transition-transform duration-300`}
                   >
                     <Icon className={`h-5 w-5 ${stat.iconColor}`} />
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>

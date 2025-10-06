@@ -81,10 +81,17 @@ export default function AdminCargos() {
   const {
     data: cargosResponse,
     isLoading,
+    isFetching,
     error,
     refetch,
   } = useAllCargos({
-    status: statusFilter === "all" ? undefined : (statusFilter as any),
+    // Map UI status to API-accepted values
+    status:
+      statusFilter === "all"
+        ? undefined
+        : ((statusFilter === "assigned"
+            ? "fully_assigned"
+            : statusFilter) as any),
     priority: priorityFilter === "all" ? undefined : (priorityFilter as any),
     client_id: clientIdFilter === "all-clients" ? undefined : clientIdFilter,
     date_from: dateFromFilter || undefined,
@@ -235,8 +242,8 @@ export default function AdminCargos() {
     window.open(`tel:${phone}`, "_self");
   };
 
-  const handleRefresh = () => {
-    refetch();
+  const handleRefresh = async () => {
+    await refetch();
     customToast.success(t("common.refreshed"));
   };
 
@@ -671,12 +678,16 @@ export default function AdminCargos() {
           <Button
             variant="outline"
             onClick={handleRefresh}
-            disabled={isLoading}
+            disabled={isLoading || isFetching}
           >
             <RefreshCw
-              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              className={`h-4 w-4 mr-2 ${
+                isLoading || isFetching ? "animate-spin" : ""
+              }`}
             />
-            {t("common.refresh")}
+            {isLoading || isFetching
+              ? t("common.loading")
+              : t("common.refresh")}
           </Button>
           <Button onClick={handleCreateNewCargo}>
             <Plus className="h-4 w-4 mr-2" />
@@ -684,6 +695,11 @@ export default function AdminCargos() {
           </Button>
         </div>
       </div>
+
+      {/* Lightweight loading indicator while refetching */}
+      {isFetching && !isLoading && (
+        <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 animate-pulse rounded" />
+      )}
 
       {/* Status Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-gray-200">
@@ -806,28 +822,35 @@ export default function AdminCargos() {
       </div>
 
       {/* Cargo Table */}
-      <CargoTable
-        cargos={cargos}
-        title=""
-        showStats={false}
-        showSearch={false} // Disable internal search since we use backend search
-        showFilters={false} // Disable internal filters since we use backend filters
-        showPagination={false} // We handle pagination manually
-        itemsPerPage={pageSize}
-        priorityFilter={priorityFilter}
-        onPriorityFilterChange={setPriorityFilter}
-        onStatusChange={handleStatusChange}
-        onCallClient={handleCallClient}
-        onCallDriver={handleCallDriver}
-        onTrackCargo={handleTrackCargo}
-        onCancelCargo={handleCancelCargo}
-        onDownloadReceipt={handleDownloadReceipt}
-        onUploadPhoto={handleUploadPhoto}
-        onReportIssue={handleReportIssue}
-        onViewDetails={handleViewDetails}
-        // Admin-specific actions
-        getCustomActions={getAvailableAdminActions}
-      />
+      <div className="relative">
+        {isFetching && !isLoading && (
+          <div className="absolute inset-0 z-10 bg-white/60 dark:bg-gray-900/40 backdrop-blur-[1px] flex items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+          </div>
+        )}
+        <CargoTable
+          cargos={cargos}
+          title=""
+          showStats={false}
+          showSearch={false} // Disable internal search since we use backend search
+          showFilters={false} // Disable internal filters since we use backend filters
+          showPagination={false} // We handle pagination manually
+          itemsPerPage={pageSize}
+          priorityFilter={priorityFilter}
+          onPriorityFilterChange={setPriorityFilter}
+          onStatusChange={handleStatusChange}
+          onCallClient={handleCallClient}
+          onCallDriver={handleCallDriver}
+          onTrackCargo={handleTrackCargo}
+          onCancelCargo={handleCancelCargo}
+          onDownloadReceipt={handleDownloadReceipt}
+          onUploadPhoto={handleUploadPhoto}
+          onReportIssue={handleReportIssue}
+          onViewDetails={handleViewDetails}
+          // Admin-specific actions
+          getCustomActions={getAvailableAdminActions}
+        />
+      </div>
 
       {/* Compact Pagination */}
       {pagination.totalPages > 1 && (
