@@ -581,9 +581,18 @@ export default function AssignmentModal({
         const branchInfo = item.branch
           ? ` (${item.branch.name} - ${item.branch.code_number})`
           : "";
-        return `${driverName}${branchInfo} - ${
-          item.user?.phone || item.phone || "No phone"
-        } - Rating: ${item.rating || "N/A"}`;
+        const driverCode =
+          item.code ||
+          item.driver_code ||
+          item.code_number ||
+          item.employee_code ||
+          item.unique_code ||
+          item.user?.code ||
+          item.user?.employee_code;
+        const phone = item.user?.phone || item.phone || "No phone";
+        return `${driverName}${branchInfo} - Code: ${
+          driverCode || "N/A"
+        } - Phone: ${phone} - Rating: ${item.rating || "N/A"}`;
       }
       case "vehicle":
         return `${item.make || "Unknown"} ${item.model || "Model"} - ${
@@ -1130,6 +1139,7 @@ export default function AssignmentModal({
                                   handleFieldChange("driver_id", driver.id);
                                   setDriverSearchOpen(false);
                                 }}
+                                className="cursor-pointer transition-colors hover:bg-blue-50 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white"
                               >
                                 <Check
                                   className={`mr-2 h-4 w-4 ${
@@ -1143,12 +1153,24 @@ export default function AssignmentModal({
                                     <span className="font-medium">
                                       {driver.user?.full_name || driver.name}
                                     </span>
-                                    <span className="text-xs text-gray-500">
-                                      {driver.user?.phone || driver.phone} •
-                                      Rating: {driver.rating || "N/A"}
+                                    <span className="text-xs text-gray-500 data-[selected=true]:text-blue-100">
+                                      Code:{" "}
+                                      {driver.code ||
+                                        driver.driver_code ||
+                                        driver.code_number ||
+                                        driver.employee_code ||
+                                        driver.unique_code ||
+                                        driver.user?.code ||
+                                        driver.user?.employee_code ||
+                                        "N/A"}{" "}
+                                      • Phone:{" "}
+                                      {driver.user?.phone ||
+                                        driver.phone ||
+                                        "No phone"}{" "}
+                                      • Rating: {driver.rating || "N/A"}
                                     </span>
                                     {driver.branch && (
-                                      <span className="text-xs text-blue-600 flex items-center gap-1">
+                                      <span className="text-xs text-blue-600 data-[selected=true]:text-blue-100 flex items-center gap-1">
                                         <Building className="h-3 w-3" />
                                         {driver.branch.name} -{" "}
                                         {driver.branch.code_number}
@@ -1618,6 +1640,7 @@ export default function AssignmentModal({
                                             [index]: false,
                                           }));
                                         }}
+                                        className="cursor-pointer transition-colors hover:bg-blue-50 data-[selected=true]:bg-blue-600 data-[selected=true]:text-white"
                                       >
                                         <Check
                                           className={`mr-2 h-4 w-4 ${
@@ -1632,12 +1655,23 @@ export default function AssignmentModal({
                                               {driver.user?.full_name ||
                                                 driver.name}
                                             </span>
-                                            <span className="text-xs text-gray-500">
+                                            <span className="text-xs text-gray-500 data-[selected=true]:text-blue-100">
+                                              Code:{" "}
+                                              {driver.code ||
+                                                driver.driver_code ||
+                                                driver.code_number ||
+                                                driver.employee_code ||
+                                                driver.unique_code ||
+                                                driver.user?.code ||
+                                                driver.user?.employee_code ||
+                                                "N/A"}{" "}
+                                              • Phone:{" "}
                                               {driver.user?.phone ||
-                                                driver.phone}
+                                                driver.phone ||
+                                                "No phone"}
                                             </span>
                                             {driver.branch && (
-                                              <span className="text-xs text-blue-600 flex items-center gap-1">
+                                              <span className="text-xs text-blue-600 data-[selected=true]:text-blue-100 flex items-center gap-1">
                                                 <Building className="h-3 w-3" />
                                                 {driver.branch.name} -{" "}
                                                 {driver.branch.code_number}

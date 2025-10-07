@@ -74,8 +74,20 @@ import {
 } from "./LiveTrackingMapFallback";
 
 // Use the actual Cargo type with tracking data
+type TrackingWithRelations = CargoTracking & {
+  driver?: {
+    full_name?: string;
+    phone?: string;
+  };
+  vehicle?: {
+    license_plate?: string;
+    make?: string;
+    model?: string;
+  };
+};
+
 type CargoWithTracking = CargoWithClient & {
-  tracking?: CargoTracking;
+  tracking?: TrackingWithRelations;
 };
 
 export const LiveTrackingMap: React.FC = () => {
@@ -115,7 +127,6 @@ export const LiveTrackingMap: React.FC = () => {
     {
       page: 1,
       limit: 50,
-      ...(isDriver && { driver_id: user?.id }),
       userRole: user?.role as "client" | "driver" | "admin",
     },
     { refetchInterval: 60000 } // Refresh every minute
@@ -448,7 +459,7 @@ export const LiveTrackingMap: React.FC = () => {
     <LiveTrackingErrorBoundary>
       <div className="h-full flex flex-col lg:flex-row gap-2 sm:gap-4 overflow-hidden">
         {/* Left Panel - Cargo List */}
-        <div className="w-full lg:w-[30%] flex flex-col min-w-0 h-[40vh] lg:h-full">
+        <div className="w-full lg:w-[40%] flex flex-col min-w-0 h-[40vh] lg:h-full">
           <Card className="flex-1 flex flex-col min-h-0">
             <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
               <div className="flex items-center justify-between">
@@ -662,9 +673,11 @@ export const LiveTrackingMap: React.FC = () => {
                                     ? (
                                         cargo as CargoWithTracking
                                       ).client?.full_name?.charAt(0) || "C"
-                                    : cargo.tracking?.driver?.full_name?.charAt(
-                                        0
-                                      ) || "D"}
+                                    : (
+                                        cargo.tracking as
+                                          | TrackingWithRelations
+                                          | undefined
+                                      )?.driver?.full_name?.charAt(0) || "D"}
                                 </span>
                               </div>
                               <div className="min-w-0 flex-1">
@@ -672,8 +685,11 @@ export const LiveTrackingMap: React.FC = () => {
                                   {isDriver
                                     ? (cargo as CargoWithTracking).client
                                         ?.full_name || "Client"
-                                    : cargo.tracking?.driver?.full_name ||
-                                      "Driver"}
+                                    : (
+                                        cargo.tracking as
+                                          | TrackingWithRelations
+                                          | undefined
+                                      )?.driver?.full_name || "Driver"}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {isDriver ? "Customer" : "Driver"}
@@ -681,22 +697,31 @@ export const LiveTrackingMap: React.FC = () => {
                               </div>
                             </div>
                             <div className="flex gap-0.5 sm:gap-1">
-                              {isClient && cargo.tracking?.driver?.phone && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-5 w-5 sm:h-6 sm:w-6 p-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    window.open(
-                                      `tel:${cargo.tracking.driver.phone}`,
-                                      "_self"
-                                    );
-                                  }}
-                                >
-                                  <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                </Button>
-                              )}
+                              {isClient &&
+                                (
+                                  cargo.tracking as
+                                    | TrackingWithRelations
+                                    | undefined
+                                )?.driver?.phone && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-5 w-5 sm:h-6 sm:w-6 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(
+                                        `tel:${
+                                          (
+                                            cargo.tracking as TrackingWithRelations
+                                          ).driver!.phone
+                                        }`,
+                                        "_self"
+                                      );
+                                    }}
+                                  >
+                                    <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                  </Button>
+                                )}
                               {isDriver && (
                                 <>
                                   {cargo.pickup_phone && (
@@ -753,7 +778,7 @@ export const LiveTrackingMap: React.FC = () => {
         </div>
 
         {/* Right Panel - Map and Details */}
-        <div className="w-full lg:w-[70%] flex flex-col min-w-0 overflow-hidden h-[60vh] lg:h-full">
+        <div className="w-full lg:w-[60%] flex flex-col min-w-0 overflow-hidden h-[60vh] lg:h-full">
           <Card className="flex-1 flex flex-col min-h-0">
             <CardContent className="p-0 h-full flex flex-col min-h-0">
               {/* Map Container */}
@@ -935,27 +960,44 @@ export const LiveTrackingMap: React.FC = () => {
                         <div className="space-y-2 sm:space-y-3">
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
-                              {selectedCargo.tracking?.driver?.full_name?.charAt(
-                                0
-                              ) || "D"}
+                              {(
+                                selectedCargo.tracking as
+                                  | TrackingWithRelations
+                                  | undefined
+                              )?.driver?.full_name?.charAt(0) || "D"}
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="font-semibold text-sm sm:text-base">
-                                {selectedCargo.tracking?.driver?.full_name ||
-                                  "Driver"}
+                                {(
+                                  selectedCargo.tracking as
+                                    | TrackingWithRelations
+                                    | undefined
+                                )?.driver?.full_name || "Driver"}
                               </h3>
-                              {selectedCargo.tracking?.driver?.phone && (
+                              {(
+                                selectedCargo.tracking as
+                                  | TrackingWithRelations
+                                  | undefined
+                              )?.driver?.phone && (
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Phone className="h-3 w-3" />
                                   <span className="truncate">
-                                    {selectedCargo.tracking.driver.phone}
+                                    {
+                                      (
+                                        selectedCargo.tracking as TrackingWithRelations
+                                      ).driver!.phone
+                                    }
                                   </span>
                                   <Button
                                     size="sm"
                                     className="bg-green-600 hover:bg-green-700 text-white h-5 sm:h-6 px-2 text-xs"
                                     onClick={() =>
                                       window.open(
-                                        `tel:${selectedCargo.tracking.driver.phone}`,
+                                        `tel:${
+                                          (
+                                            selectedCargo.tracking as TrackingWithRelations
+                                          ).driver!.phone
+                                        }`,
                                         "_self"
                                       )
                                     }
@@ -974,14 +1016,29 @@ export const LiveTrackingMap: React.FC = () => {
                           <div className="flex items-center gap-2 sm:gap-3">
                             <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                             <h3 className="font-semibold text-sm sm:text-base">
-                              {selectedCargo.tracking?.vehicle?.license_plate ||
-                                "Vehicle"}
+                              {(
+                                selectedCargo.tracking as
+                                  | TrackingWithRelations
+                                  | undefined
+                              )?.vehicle?.license_plate || "Vehicle"}
                             </h3>
                           </div>
-                          {selectedCargo.tracking?.vehicle?.make && (
+                          {(
+                            selectedCargo.tracking as
+                              | TrackingWithRelations
+                              | undefined
+                          )?.vehicle?.make && (
                             <div className="text-xs sm:text-sm text-gray-600">
-                              {selectedCargo.tracking.vehicle.make}{" "}
-                              {selectedCargo.tracking.vehicle.model}
+                              {
+                                (
+                                  selectedCargo.tracking as TrackingWithRelations
+                                ).vehicle!.make
+                              }{" "}
+                              {
+                                (
+                                  selectedCargo.tracking as TrackingWithRelations
+                                ).vehicle!.model
+                              }
                             </div>
                           )}
                         </div>

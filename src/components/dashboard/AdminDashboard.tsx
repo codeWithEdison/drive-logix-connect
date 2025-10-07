@@ -553,7 +553,7 @@ export function AdminDashboard() {
                     </div>
                     <div className="flex items-end gap-3">
                       <p className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">
-                        {stat.value}
+                        {stat.value} 
                       </p>
                     </div>
                     <p className="text-xs text-gray-600 mt-1 truncate">

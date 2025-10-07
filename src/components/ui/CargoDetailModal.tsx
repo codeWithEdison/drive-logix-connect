@@ -676,6 +676,8 @@ export function CargoDetailModal({
         break;
 
       case "assigned":
+      case "fully_assigned":
+      case "partially_assigned":
         actions.push({
           key: "cancel-cargo",
           label: "Cancel Cargo",
@@ -805,6 +807,7 @@ export function CargoDetailModal({
           </Badge>
         );
       case "assigned":
+      case "fully_assigned":
         return (
           <Badge className="bg-purple-100 text-purple-600">
             Driver Assigned
@@ -1951,7 +1954,9 @@ export function CargoDetailModal({
                   </Button>
                 )}
 
-              {cargo.status === "assigned" && (
+              {["assigned", "fully_assigned", "partially_assigned"].includes(
+                cargo.status
+              ) && (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   onClick={handleMarkPickedUp}
@@ -2039,9 +2044,14 @@ export function CargoDetailModal({
                 )}
 
               {/* Cancellation is only allowed before picked_up status */}
-              {["pending", "quoted", "accepted", "assigned"].includes(
-                cargo.status
-              ) && (
+              {[
+                "pending",
+                "quoted",
+                "accepted",
+                "assigned",
+                "fully_assigned",
+                "partially_assigned",
+              ].includes(cargo.status) && (
                 <Button
                   variant="outline"
                   className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"

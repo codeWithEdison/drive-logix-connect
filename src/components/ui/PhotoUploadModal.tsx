@@ -271,7 +271,7 @@ export function PhotoUploadModal({
                     <img
                       src={capturedImage}
                       alt="Captured"
-                      className="w-full h-48 object-cover rounded-lg"
+                      className="w-full h-auto object-cover rounded-lg"
                     />
                     <Button
                       size="sm"
