@@ -686,7 +686,7 @@ export const LiveTrackingMap: React.FC = () => {
                                     ? (cargo as CargoWithTracking).client
                                         ?.full_name || "Client"
                                     : (
-                                        cargo.tracking as
+                                        selectedCargo.tracking as
                                           | TrackingWithRelations
                                           | undefined
                                       )?.driver?.full_name || "Driver"}
