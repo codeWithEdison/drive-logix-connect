@@ -34,6 +34,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateInvoiceStatus } from "@/lib/api/hooks/invoiceHooks";
 import { toast } from "sonner";
 import PaymentConfirmationModal from "@/components/modals/PaymentConfirmationModal";
+import OfflinePaymentVerificationModal from "@/components/modals/OfflinePaymentVerificationModal";
 
 export interface InvoiceDetail {
   id: string;
@@ -86,6 +87,12 @@ export function InvoiceDetailModal({
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isPaymentConfirmationModalOpen, setIsPaymentConfirmationModalOpen] =
     useState(false);
+  const [isOfflineVerificationOpen, setIsOfflineVerificationOpen] =
+    useState(false);
+  const [showTransferOptions, setShowTransferOptions] = useState(false);
+  const [selectedTransferType, setSelectedTransferType] = useState<
+    "momo" | "bank" | null
+  >(null);
 
   if (!invoice) return null;
 
@@ -174,6 +181,20 @@ export function InvoiceDetailModal({
       showAdminActions &&
       (invoice.status === "sent" || invoice.status === "draft")
     );
+  };
+
+  const handleTransferOption = (type: "momo" | "bank") => {
+    setSelectedTransferType(type);
+    setShowTransferOptions(true);
+  };
+
+  const handlePayOnline = () => {
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleBackToOptions = () => {
+    setShowTransferOptions(false);
+    setSelectedTransferType(null);
   };
 
   return (
@@ -351,122 +372,193 @@ export function InvoiceDetailModal({
           </Card>
         )}
 
-        {/* Direct Payment Options */}
+        {/* Payment Options */}
         {!invoice.paid && invoice.status === "sent" && (
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-4">
                 <DollarSign className="h-5 w-5 text-blue-600" />
                 <h3 className="font-semibold text-gray-900">
-                  {t("invoices.directPaymentOptions", "Direct Payment Options")}
+                  {t("invoices.paymentOptions", "Payment Options")}
                 </h3>
               </div>
 
-              <div className="space-y-4">
-                {/* Bank Transfer Option */}
-                <div className="border rounded-lg p-4 bg-blue-50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Building2 className="h-5 w-5 text-blue-600" />
-                    <h4 className="font-semibold text-gray-900">
-                      {t("invoices.bankTransfer", "Bank Transfer")}
-                    </h4>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <img
-                        src="/logo.png"
-                        alt="Bank of Kigali"
-                        className="h-6 w-auto"
-                      />
-                      <span className="font-medium text-gray-700">
-                        Bank of Kigali
+              {!showTransferOptions ? (
+                /* Initial Payment Options */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Transfer Option */}
+                    <Button
+                      variant="outline"
+                      className="h-20 flex flex-col items-center justify-center gap-2 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-900"
+                      onClick={() => handleTransferOption("bank")}
+                    >
+                      <Building2 className="h-6 w-6 text-blue-600 hover:text-blue-700" />
+                      <span className="font-semibold text-gray-900 hover:text-blue-900">
+                        Bank Transfer
                       </span>
-                    </div>
-                    <div className="bg-white p-3 rounded border">
-                      <p className="text-sm text-gray-600">
-                        {t("invoices.accountName", "Account Name")}:
-                      </p>
-                      <p className="font-mono font-semibold text-gray-900">
-                        LOVEWAY RWANDA CO LTD
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {t("invoices.accountNumber", "Account Number")}:
-                      </p>
-                      <p className="font-mono font-semibold text-gray-900">
-                        00289-06965230-80
-                      </p>
-                    </div>
+                      <span className="text-xs text-gray-600 hover:text-blue-700">
+                        Manual verification
+                      </span>
+                    </Button>
+
+                    {/* Mobile Money Option */}
+                    <Button
+                      variant="outline"
+                      className="h-20 flex flex-col items-center justify-center gap-2 border-2 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50 hover:text-yellow-900"
+                      onClick={() => handleTransferOption("momo")}
+                    >
+                      <Smartphone className="h-6 w-6 text-yellow-600 hover:text-yellow-700" />
+                      <span className="font-semibold text-gray-900 hover:text-yellow-900">
+                        Mobile Money
+                      </span>
+                      <span className="text-xs text-gray-600 hover:text-yellow-700">
+                        MoMo transfer
+                      </span>
+                    </Button>
+                  </div>
+
+                  {/* Pay Online Option */}
+                  <div className="pt-4 border-t">
+                    <Button
+                      className="w-full bg-green-600 hover:bg-green-700 text-white h-12"
+                      onClick={handlePayOnline}
+                    >
+                      <Send className="h-5 w-5 mr-2" />
+                      Pay Online (Instant)
+                    </Button>
                   </div>
                 </div>
-
-                {/* Mobile Money Option */}
-                <div className="border rounded-lg p-4 bg-yellow-50">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Smartphone className="h-5 w-5 text-yellow-600" />
-                    <h4 className="font-semibold text-gray-900">
-                      {t("invoices.mobileMoney", "Mobile Money")}
-                    </h4>
+              ) : (
+                /* Transfer Details Section */
+                <div className="space-y-4">
+                  {/* Back Button */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleBackToOptions}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Back to Options
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-yellow-500 rounded flex items-center justify-center">
-                        <span className="text-white font-bold text-xs">
-                          MTN
-                        </span>
+
+                  {/* Bank Transfer Details */}
+                  {selectedTransferType === "bank" && (
+                    <div className="border rounded-lg p-4 bg-blue-50">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Building2 className="h-5 w-5 text-blue-600" />
+                        <h4 className="font-semibold text-gray-900">
+                          {t("invoices.bankTransfer", "Bank Transfer")}
+                        </h4>
                       </div>
-                      <span className="font-medium text-gray-700">
-                        MTN Mobile Money
-                      </span>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src="/logo.png"
+                            alt="Bank of Kigali"
+                            className="h-6 w-auto"
+                          />
+                          <span className="font-medium text-gray-700">
+                            Bank of Kigali
+                          </span>
+                        </div>
+                        <div className="bg-white p-3 rounded border">
+                          <p className="text-sm text-gray-600">
+                            {t("invoices.accountName", "Account Name")}:
+                          </p>
+                          <p className="font-mono font-semibold text-gray-900">
+                            LOVEWAY RWANDA CO LTD
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {t("invoices.accountNumber", "Account Number")}:
+                          </p>
+                          <p className="font-mono font-semibold text-gray-900">
+                            00289-06965230-80
+                          </p>
+                        </div>
+                      </div>
+                      <div className="pt-3">
+                        <Button
+                          variant="default"
+                          onClick={() => setIsOfflineVerificationOpen(true)}
+                        >
+                          Submit Bank Transfer Verification
+                        </Button>
+                      </div>
                     </div>
-                    <div className="bg-white p-3 rounded border">
-                      <p className="text-sm text-gray-600">
-                        {t("invoices.momoCode", "MoMo Code")}:
-                      </p>
-                      <p className="font-mono font-semibold text-gray-900">
-                        *182*6*1*{invoice.invoice_number}#
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {t("invoices.momoNumber", "MoMo Number")}:
-                      </p>
-                      <p className="font-mono font-semibold text-gray-900">
-                        +250 788 123 456
-                      </p>
+                  )}
+
+                  {/* Mobile Money Details */}
+                  {selectedTransferType === "momo" && (
+                    <div className="border rounded-lg p-4 bg-yellow-50">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Smartphone className="h-5 w-5 text-yellow-600" />
+                        <h4 className="font-semibold text-gray-900">
+                          {t("invoices.mobileMoney", "Mobile Money")}
+                        </h4>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-yellow-500 rounded flex items-center justify-center">
+                            <span className="text-white font-bold text-xs">
+                              MTN
+                            </span>
+                          </div>
+                          <span className="font-medium text-gray-700">
+                            MTN Mobile Money
+                          </span>
+                        </div>
+                        <div className="bg-white p-3 rounded border">
+                          <p className="text-sm text-gray-600">
+                            {t("invoices.momoCode", "MoMo Code")}:
+                          </p>
+                          <p className="font-mono font-semibold text-gray-900">
+                            *182*6*1*{invoice.invoice_number}#
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {t("invoices.momoNumber", "MoMo Number")}:
+                          </p>
+                          <p className="font-mono font-semibold text-gray-900">
+                            +250 788 123 456
+                          </p>
+                        </div>
+                      </div>
+                      <div className="pt-3">
+                        <Button
+                          variant="default"
+                          onClick={() => setIsOfflineVerificationOpen(true)}
+                        >
+                          Submit MoMo Transfer Verification
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment Instructions */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-amber-800 mb-2">
+                          {t(
+                            "invoices.paymentInstructions",
+                            "Payment Instructions"
+                          )}
+                        </h4>
+                        <p className="text-sm text-amber-700">
+                          {t(
+                            "invoices.paymentInstructionsText",
+                            "If you pay directly, you must send a screenshot or receipt that clearly shows the amount and transaction ID. Our team will review it."
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Payment Instructions */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-amber-800 mb-2">
-                        {t(
-                          "invoices.paymentInstructions",
-                          "Payment Instructions"
-                        )}
-                      </h4>
-                      <p className="text-sm text-amber-700">
-                        {t(
-                          "invoices.paymentInstructionsText",
-                          "If you pay directly, you must send a screenshot or receipt that clearly shows the amount and transaction ID. Our team will review it."
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Confirm Payment Button */}
-                <div className="pt-2">
-                  <Button
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => setIsPaymentConfirmationModalOpen(true)}
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    {t("invoices.confirmPayment", "Confirm Payment")}
-                  </Button>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -484,26 +576,9 @@ export function InvoiceDetailModal({
           </Card>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-4 border-t">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => onDownload?.(invoice.id)}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
-          </Button>
-          {canPay() && (
-            <Button
-              className="flex-1 bg-green-600 hover:bg-green-700"
-              onClick={handlePayNow}
-            >
-              <DollarSign className="h-4 w-4 mr-2" />
-              {showAdminActions ? "Mark as Paid" : "Pay Now"}
-            </Button>
-          )}
-          {canAdminAction() && (
+        {/* Admin Action Buttons */}
+        {canAdminAction() && (
+          <div className="flex gap-3 pt-4 border-t">
             <Button
               variant="outline"
               className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
@@ -512,8 +587,8 @@ export function InvoiceDetailModal({
               <X className="h-4 w-4 mr-2" />
               Cancel Invoice
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Payment Modal */}
@@ -527,6 +602,15 @@ export function InvoiceDetailModal({
           } as InvoicePaymentData
         }
         onPaymentSuccess={handlePaymentSuccess}
+      />
+
+      {/* Offline Payment Verification Modal (Client) */}
+      <OfflinePaymentVerificationModal
+        isOpen={isOfflineVerificationOpen}
+        onClose={() => setIsOfflineVerificationOpen(false)}
+        invoiceId={invoice.id}
+        defaultAmount={parseFloat(invoice.total_amount)}
+        defaultCurrency={invoice.currency}
       />
 
       {/* Payment Confirmation Modal for Admin */}

@@ -506,6 +506,9 @@
   "delivery": {
     "deliveryDetails": "Delivery Details",
     "startDelivery": "Start Delivery",
+    "startTransit": "Start Transit",
+    "markPickedUp": "Mark Picked Up",
+    "markDelivered": "Mark Delivered",
     "updateStatus": "Update Status",
     "confirmDelivery": "Confirm Delivery",
     "completeDelivery": "Complete Delivery",

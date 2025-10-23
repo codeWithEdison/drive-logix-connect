@@ -50,7 +50,7 @@ import {
   RefreshCw,
   Calendar,
 } from "lucide-react";
-import { TrackingComponent } from "./TrackingComponent";
+import { LiveTrackingMap } from "@/components/dashboard/LiveTrackingMap";
 import { StatsCard } from "@/components/ui/StatsCard";
 import { useDriverDashboard, useUpdateDriverStatus } from "@/lib/api/hooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -77,6 +77,11 @@ import {
   DriverStats,
   VehicleInfo,
 } from "@/types/dashboard";
+// Added imports for image upload/status updates to mirror CargoDetailModal
+import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
+import { useBulkUploadImages } from "@/lib/api/hooks/cargoImageHooks";
+import { useUpdateCargoStatus } from "@/lib/api/hooks/cargoHooks";
+import { CargoImageType, CargoStatus } from "@/types/shared";
 
 export function DriverDashboard() {
   const { t } = useLanguage();
@@ -88,6 +93,13 @@ export function DriverDashboard() {
   >("available");
   const [selectedDelivery, setSelectedDelivery] = useState<any>(null);
   const [showLiveTracking, setShowLiveTracking] = useState(false);
+  // Added local modals state to match CargoDetailModal flows
+  const [isPickupImageModalOpen, setIsPickupImageModalOpen] = useState(false);
+  const [isUploadingPickupImages, setIsUploadingPickupImages] = useState(false);
+  const [isDeliveryImageModalOpen, setIsDeliveryImageModalOpen] =
+    useState(false);
+  const [isUploadingDeliveryImages, setIsUploadingDeliveryImages] =
+    useState(false);
 
   // Rejection modal state
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -103,6 +115,10 @@ export function DriverDashboard() {
     refetch: refetchDashboard,
   } = useDriverDashboard();
 
+  // Added hooks for image uploads and status updates
+  const bulkUploadImages = useBulkUploadImages();
+  const updateCargoStatus = useUpdateCargoStatus();
+
   // Type the dashboard data properly - handle both old and new structure
   const dashboard = dashboardData?.data as any;
 
@@ -111,6 +127,70 @@ export function DriverDashboard() {
   // Assignment system hooks
   const acceptAssignmentMutation = useAcceptAssignment();
   const rejectAssignmentMutation = useRejectAssignment();
+
+  // Handlers to mirror CargoDetailModal flows
+  const handleMarkPickedUp = () => setIsPickupImageModalOpen(true);
+  const handleMarkDelivered = () => setIsDeliveryImageModalOpen(true);
+
+  const handlePickupImageUpload = async (data: {
+    photos: File[];
+    notes: string;
+    type: string;
+    cargoId: string;
+  }) => {
+    setIsUploadingPickupImages(true);
+    try {
+      const images = data.photos.map((file, index) => ({
+        file,
+        image_type: CargoImageType.PICKUP,
+        description: data.notes || `Pickup image ${index + 1}`,
+        is_primary: index === 0,
+      }));
+      await bulkUploadImages.mutateAsync({ cargoId: data.cargoId, images });
+      await updateCargoStatus.mutateAsync({
+        id: data.cargoId,
+        status: CargoStatus.PICKED_UP,
+        notes: "Cargo picked up successfully",
+      });
+      customToast.success(t("status.picked_up") || "Picked Up");
+      refetchDashboard();
+      setIsPickupImageModalOpen(false);
+    } catch (error: any) {
+      customToast.error(error?.message || t("errors.uploadFailed"));
+    } finally {
+      setIsUploadingPickupImages(false);
+    }
+  };
+
+  const handleDeliveryImageUpload = async (data: {
+    photos: File[];
+    notes: string;
+    type: string;
+    cargoId: string;
+  }) => {
+    setIsUploadingDeliveryImages(true);
+    try {
+      const images = data.photos.map((file, index) => ({
+        file,
+        image_type: CargoImageType.DELIVERY,
+        description: data.notes || `Delivery image ${index + 1}`,
+        is_primary: index === 0,
+      }));
+      await bulkUploadImages.mutateAsync({ cargoId: data.cargoId, images });
+      await updateCargoStatus.mutateAsync({
+        id: data.cargoId,
+        status: CargoStatus.DELIVERED,
+        notes: "Cargo delivered successfully",
+      });
+      customToast.success(t("status.delivered") || "Delivered");
+      refetchDashboard();
+      setIsDeliveryImageModalOpen(false);
+    } catch (error: any) {
+      customToast.error(error?.message || t("errors.uploadFailed"));
+    } finally {
+      setIsUploadingDeliveryImages(false);
+    }
+  };
 
   const statusConfig = {
     available: {
@@ -191,8 +271,26 @@ export function DriverDashboard() {
     navigate("/driver/ratings");
   };
 
-  const handleStartDelivery = () => {
-    setShowLiveTracking(true);
+  const handleStartDelivery = async () => {
+    try {
+      if (dashboard?.active_delivery) {
+        const cargoId =
+          dashboard.active_delivery.cargo_id || dashboard.active_delivery.id;
+        await updateCargoStatus.mutateAsync({
+          id: cargoId,
+          status: CargoStatus.IN_TRANSIT,
+          notes: "Transit started from dashboard",
+        });
+        customToast.success(
+          t("delivery.deliveryStarted") || "Delivery started successfully"
+        );
+        refetchDashboard();
+      }
+    } catch (error: any) {
+      customToast.error(error?.message || t("errors.updateFailed"));
+    } finally {
+      setShowLiveTracking(true);
+    }
   };
 
   const handleStatusChange = async (
@@ -530,9 +628,9 @@ export function DriverDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-        {/* Active Delivery with Live Tracking */}
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8">
+        {/* Active Delivery with Live Tracking - full width */}
+        <div className="w-full">
           <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden border-0">
             <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100 p-4 sm:p-6">
               <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-gray-900">
@@ -581,7 +679,9 @@ export function DriverDashboard() {
                           {t("common.hide")} {t("tracking.tracking")}
                         </Button>
                       </div>
-                      <TrackingComponent height="h-80" />
+                      <div className="h-80">
+                        <LiveTrackingMap />
+                      </div>
                     </div>
                   ) : (
                     <>
@@ -601,17 +701,27 @@ export function DriverDashboard() {
                             </p>
                           </div>
                         </div>
-                        <Badge
-                          className={
-                            activeDelivery?.priority === "urgent"
-                              ? "bg-orange-100 text-orange-700 border-orange-200"
-                              : "bg-blue-100 text-blue-700 border-blue-200"
-                          }
-                        >
-                          {t(
-                            `priority.${activeDelivery?.priority || "normal"}`
-                          )}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={
+                              activeDelivery?.priority === "urgent"
+                                ? "bg-orange-100 text-orange-700 border-orange-200"
+                                : "bg-blue-100 text-blue-700 border-blue-200"
+                            }
+                          >
+                            {t(
+                              `priority.${activeDelivery?.priority || "normal"}`
+                            )}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowLiveTracking(true)}
+                            className="border-gray-300 hover:bg-gray-50 w-full sm:w-auto"
+                          >
+                            {t("tracking.tracking")}
+                          </Button>
+                        </div>
                       </div>
 
                       {/* Route */}
@@ -673,13 +783,61 @@ export function DriverDashboard() {
 
                       {/* Action Buttons */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Button
-                          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                          onClick={handleStartDelivery}
-                        >
-                          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                          {t("delivery.startDelivery")}
-                        </Button>
+                        {/* Status-based primary action */}
+                        {(() => {
+                          const status = activeDelivery?.status;
+                          if (
+                            [
+                              "assigned",
+                              "fully_assigned",
+                              "partially_assigned",
+                            ].includes(status)
+                          ) {
+                            return (
+                              <Button
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl"
+                                onClick={handleMarkPickedUp}
+                              >
+                                <Package className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                {t("delivery.markPickedUp") || "Mark Picked Up"}
+                              </Button>
+                            );
+                          }
+                          if (status === "picked_up") {
+                            return (
+                              <Button
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl"
+                                onClick={handleStartDelivery}
+                              >
+                                <Navigation className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                {t("delivery.startTransit") || "Start Transit"}
+                              </Button>
+                            );
+                          }
+                          if (status === "in_transit") {
+                            return (
+                              <Button
+                                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl"
+                                onClick={handleMarkDelivered}
+                              >
+                                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                {t("delivery.markDelivered") ||
+                                  "Mark Delivered"}
+                              </Button>
+                            );
+                          }
+                          return (
+                            <Button
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl"
+                              onClick={handleStartDelivery}
+                            >
+                              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                              {t("delivery.startDelivery")}
+                            </Button>
+                          );
+                        })()}
+
+                        {/* Secondary actions */}
                         <Button
                           variant="outline"
                           className="border-gray-300 hover:bg-gray-50 py-3 rounded-xl font-semibold"
@@ -687,13 +845,18 @@ export function DriverDashboard() {
                           <Phone className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                           {t("common.call")} {t("common.client")}
                         </Button>
-                        <Button
-                          variant="outline"
-                          className="border-gray-300 hover:bg-gray-50 py-3 rounded-xl font-semibold"
-                        >
-                          <Camera className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                          {t("common.upload")} {t("delivery.uploadProof")}
-                        </Button>
+
+                        {activeDelivery?.status === "in_transit" && (
+                          <Button
+                            variant="outline"
+                            className="border-gray-300 hover:bg-gray-50 py-3 rounded-xl font-semibold"
+                            onClick={() => setIsDeliveryImageModalOpen(true)}
+                          >
+                            <Camera className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                            {t("common.upload")} {t("delivery.uploadProof")}
+                          </Button>
+                        )}
+
                         <Button
                           variant="outline"
                           className="text-orange-600 border-orange-300 hover:bg-orange-50 py-3 rounded-xl font-semibold"
@@ -724,142 +887,6 @@ export function DriverDashboard() {
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Pending Assignments */}
-        <div>
-          <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden border-0">
-            <CardHeader className="bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-100 p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-gray-900">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="p-2 bg-yellow-100 rounded-lg">
-                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg sm:text-xl font-bold">
-                        {t("dashboard.pendingAssignments")}
-                      </h2>
-                      <p className="text-xs sm:text-sm text-gray-600 font-normal">
-                        {t("dashboard.awaitingYourResponse")}
-                      </p>
-                    </div>
-                  </div>
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleViewAllCargos}
-                  className="border-yellow-300 text-yellow-600 hover:bg-yellow-50 w-full sm:w-auto"
-                >
-                  {t("common.viewAll")}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="h-80 sm:h-96 overflow-y-auto p-4 sm:p-6">
-              <div className="space-y-3 sm:space-y-4">
-                {pendingAssignments.length > 0 ? (
-                  pendingAssignments.map((assignment) => (
-                    <div
-                      key={assignment.id}
-                      className="p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl border border-gray-200 hover:shadow-md transition-all duration-300 space-y-3 sm:space-y-4"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                          </div>
-                          <span className="font-bold text-gray-900 text-sm sm:text-base truncate">
-                            {assignment.cargo.cargo_number}
-                          </span>
-                        </div>
-                        <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 text-xs">
-                          {t("dashboard.expiresIn")}{" "}
-                          {Math.floor(assignment.time_remaining / 60)}m
-                        </Badge>
-                      </div>
-
-                      <div className="space-y-2 sm:space-y-3">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                              {t("common.client")}
-                            </p>
-                            <p className="text-sm font-semibold text-gray-900 truncate">
-                              {assignment.cargo.client.name}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                              {t("common.destination")}
-                            </p>
-                            <p className="text-sm font-semibold text-blue-600 truncate">
-                              {assignment.cargo.delivery_location?.address ||
-                                t("common.locationTBD")}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                        <div className="p-2 sm:p-3 bg-white rounded-lg border border-gray-200">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            {t("common.weight")}
-                          </p>
-                          <p className="font-semibold text-gray-900 mt-1 text-sm sm:text-base">
-                            {assignment.cargo.weight} kg
-                          </p>
-                        </div>
-                        <div className="p-2 sm:p-3 bg-white rounded-lg border border-gray-200">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                            {t("common.value")}
-                          </p>
-                          <p className="font-semibold text-gray-900 mt-1 text-sm sm:text-base">
-                            ${assignment.cargo.value}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold text-sm"
-                          onClick={() => handleAcceptAssignment(assignment.id)}
-                        >
-                          {t("common.accept")}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-red-300 text-red-600 hover:bg-red-50 py-2 rounded-xl font-semibold text-sm"
-                          onClick={() => handleOpenRejectModal(assignment.id)}
-                        >
-                          {t("common.reject")}
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 sm:py-12">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                      <Clock className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-                      {t("dashboard.noPendingAssignments")}
-                    </h3>
-                    <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">
-                      {t("dashboard.noPendingAssignmentsDescription")}
-                    </p>
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -926,21 +953,21 @@ export function DriverDashboard() {
 
       {/* Additional Cards with View All Buttons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-        {/* Recent Deliveries */}
+        {/* Pending Assignments (replaces Recent Deliveries) */}
         <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden border-0">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100 p-4 sm:p-6">
+          <CardHeader className="bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-100 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
               <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-gray-900">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                   </div>
                   <div>
                     <h2 className="text-lg sm:text-xl font-bold">
-                      {t("dashboard.recentActivity")}
+                      {t("dashboard.pendingAssignments")}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-600 font-normal">
-                      {t("dashboard.latestDeliveries")}
+                      {t("dashboard.awaitingYourResponse")}
                     </p>
                   </div>
                 </div>
@@ -948,82 +975,127 @@ export function DriverDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleViewAllDeliveries}
-                className="border-purple-300 text-purple-600 hover:bg-purple-50 w-full sm:w-auto"
+                onClick={handleViewAllCargos}
+                className="border-yellow-300 text-yellow-600 hover:bg-yellow-50 w-full sm:w-auto"
               >
                 {t("common.viewAll")}
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
+          <CardContent className="h-80 sm:h-96 overflow-y-auto p-4 sm:p-6">
             <div className="space-y-3 sm:space-y-4">
-              {recentDeliveries.slice(0, 3).map((delivery) => (
-                <div
-                  key={delivery.cargo_id}
-                  className="p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-300"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-2 sm:mb-3">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Package className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-gray-900 text-sm sm:text-base truncate">
-                          {delivery.cargo_number || delivery.cargo_id}
-                        </p>
-                        <p className="text-sm text-gray-600 truncate">
-                          {delivery.client_name}
-                        </p>
+              {pendingAssignments.length > 0 ? (
+                pendingAssignments.map((assignment) => (
+                  <div
+                    key={assignment.id}
+                    className="p-4 sm:p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl border border-gray-200 hover:shadow-md transition-all duration-300 space-y-3 sm:space-y-4 overflow-hidden max-w-full"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <Package className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                            {assignment.cargo.cargo_number}
+                          </div>
+                          <div className="mt-1">
+                            <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 text-[10px] sm:text-xs">
+                              {t("dashboard.expiresIn")}{" "}
+                              {Math.floor(assignment.time_remaining / 60)}m
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <Badge
-                      className={
-                        delivery.status === "delivered"
-                          ? "bg-green-100 text-green-700 border-green-200 text-xs"
-                          : "bg-yellow-100 text-yellow-700 border-yellow-200 text-xs"
-                      }
-                    >
-                      {t(`status.${delivery.status}`)}
-                    </Badge>
-                  </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm gap-2 sm:gap-0">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span className="text-xs sm:text-sm">
-                        {delivery.delivery_date
-                          ? new Date(delivery.delivery_date).toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )
-                          : t("common.notAvailable")}
-                      </span>
-                    </div>
-                    {delivery.rating && (
-                      <div className="flex items-center gap-1">
-                        <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-current" />
-                        <span className="font-semibold text-gray-900 text-sm sm:text-base">
-                          {delivery.rating}
-                        </span>
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-500" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                            {t("common.client")}
+                          </p>
+                          <p className="text-sm font-semibold text-gray-900 truncate">
+                            {assignment.cargo.client.name}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                  </div>
 
-                  {delivery.review && (
-                    <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-white rounded-lg border border-gray-200">
-                      <p className="text-xs sm:text-sm text-gray-700 italic">
-                        "{delivery.review}"
-                      </p>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                {t("tracking.from")}
+                              </p>
+                              <p className="text-sm font-semibold text-gray-900 whitespace-normal break-words">
+                                {assignment.cargo.pickup_location?.address ||
+                                  assignment.cargo.pickup_address ||
+                                  t("common.locationTBD")}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                {t("tracking.to")}
+                              </p>
+                              <p className="text-sm font-semibold text-blue-600 whitespace-normal break-words">
+                                {assignment.cargo.delivery_location?.address ||
+                                  assignment.cargo.delivery_address ||
+                                  t("common.locationTBD")}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  )}
+
+                    <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                      <div className="p-2 sm:p-3 bg-white rounded-lg border border-gray-200">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          {t("common.weight")}
+                        </p>
+                        <p className="font-semibold text-gray-900 mt-1 text-sm sm:text-base">
+                          {assignment.cargo.weight} kg
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold text-sm"
+                        onClick={() => handleAcceptAssignment(assignment.id)}
+                      >
+                        {t("common.accept")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-300 text-red-600 hover:bg-red-50 py-2 rounded-xl font-semibold text-sm"
+                        onClick={() => handleOpenRejectModal(assignment.id)}
+                      >
+                        {t("common.reject")}
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 sm:py-12">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                    <Clock className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+                    {t("dashboard.noPendingAssignments")}
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">
+                    {t("dashboard.noPendingAssignmentsDescription")}
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1222,6 +1294,30 @@ export function DriverDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modals to mirror CargoDetailModal flows */}
+      {activeDelivery && (
+        <>
+          <PhotoUploadModal
+            isOpen={isPickupImageModalOpen}
+            onClose={() => setIsPickupImageModalOpen(false)}
+            cargoId={activeDelivery.cargo_id || activeDelivery.id}
+            cargoNumber={activeDelivery.cargo_number}
+            uploadType="loading"
+            onUpload={handlePickupImageUpload}
+            submitButtonText="Confirm Pickup"
+          />
+          <PhotoUploadModal
+            isOpen={isDeliveryImageModalOpen}
+            onClose={() => setIsDeliveryImageModalOpen(false)}
+            cargoId={activeDelivery.cargo_id || activeDelivery.id}
+            cargoNumber={activeDelivery.cargo_number}
+            uploadType="delivery"
+            onUpload={handleDeliveryImageUpload}
+            submitButtonText="Confirm Delivery"
+          />
+        </>
+      )}
     </div>
   );
 }

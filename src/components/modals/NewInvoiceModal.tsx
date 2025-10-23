@@ -78,11 +78,15 @@ export default function NewInvoiceModal({
 
   // Throttled estimation function to prevent infinite requests
   const throttledEstimateCost = useCallback(
-    (cargo: any) => {
+    (cargo: any, forceRecalculate = false) => {
       const params = `${cargo.weight_kg}-${cargo.distance_km}-${cargo.category_id}`;
 
-      // Skip if already estimated with same parameters
-      if (hasEstimatedCost && lastEstimationParams === params) {
+      // Skip if already estimated with same parameters (unless forced)
+      if (
+        !forceRecalculate &&
+        hasEstimatedCost &&
+        lastEstimationParams === params
+      ) {
         console.log(
           "💰 Skipping estimation - already estimated with same parameters"
         );
@@ -157,21 +161,36 @@ export default function NewInvoiceModal({
     if (isOpen && preselectedCargoId && cargos.length > 0) {
       const cargo = cargos.find((c: any) => c.id === preselectedCargoId);
       if (cargo) {
+        console.log("📦 Auto-populating cargo data:", {
+          cargoId: preselectedCargoId,
+          estimated_cost: cargo.estimated_cost,
+          weight_kg: cargo.weight_kg,
+          distance_km: cargo.distance_km,
+          category_id: cargo.category_id,
+        });
+
         // Set cargo ID
         setFormData((prev) => ({
           ...prev,
           cargoId: preselectedCargoId,
         }));
 
-        // Estimate cost using the throttled function if we have the required data
-        if (cargo.weight_kg && cargo.distance_km && cargo.category_id) {
-          throttledEstimateCost(cargo);
-        } else if (cargo.estimated_cost) {
-          // Fallback to existing estimated cost
+        // Prioritize existing estimated_cost over recalculation
+        if (cargo.estimated_cost && cargo.estimated_cost > 0) {
+          console.log(
+            "💰 Using existing estimated cost:",
+            cargo.estimated_cost
+          );
           setFormData((prev) => ({
             ...prev,
             subtotal: cargo.estimated_cost,
           }));
+          setHasEstimatedCost(true);
+        } else if (cargo.weight_kg && cargo.distance_km && cargo.category_id) {
+          console.log("💰 No existing cost, estimating new cost...");
+          throttledEstimateCost(cargo);
+        } else {
+          console.log("⚠️ Insufficient data for cost estimation");
         }
 
         // Set due date to one day before pickup date
@@ -246,7 +265,7 @@ export default function NewInvoiceModal({
   };
 
   const handleClose = () => {
-    // Reset form
+    // Reset form and estimation state
     setFormData({
       cargoId: "",
       subtotal: 0,
@@ -256,6 +275,9 @@ export default function NewInvoiceModal({
       dueDate: "",
       notes: "",
     });
+    setHasEstimatedCost(false);
+    setLastEstimationParams("");
+    isEstimatingRef.current = false;
     onClose();
   };
 
@@ -399,10 +421,10 @@ export default function NewInvoiceModal({
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      // Reset estimation state to allow recalculation
+                      // Force recalculation by resetting estimation state
                       setHasEstimatedCost(false);
                       setLastEstimationParams("");
-                      throttledEstimateCost(selectedCargo);
+                      throttledEstimateCost(selectedCargo, true);
                     }}
                     disabled={estimateCostMutation.isPending}
                     className="text-blue-600 border-blue-300 hover:bg-blue-100"

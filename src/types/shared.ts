@@ -816,6 +816,44 @@ export interface CreateRefundRequest {
 }
 
 // ===========================================
+// PAYMENT VERIFICATION (OFFLINE) INTERFACES
+// ===========================================
+
+export enum PaymentVerificationStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  MORE_INFO = "more_info",
+}
+
+export interface SubmitPaymentVerificationRequest {
+  invoice_id: UUID;
+  amount: number;
+  currency: string;
+  payment_date: string; // ISO date (YYYY-MM-DD)
+  bank_name: string;
+  reference: string;
+  notes?: string;
+  attachment_file_ids?: UUID[];
+}
+
+export interface PaymentVerification {
+  id: UUID;
+  invoice_id: UUID;
+  status: PaymentVerificationStatus;
+  amount: number;
+  currency: string;
+  notes?: string;
+  attachment_file_ids?: UUID[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PaymentVerificationActionRequest {
+  notes?: string;
+}
+
+// ===========================================
 // MAINTENANCE INTERFACES
 // ===========================================
 
