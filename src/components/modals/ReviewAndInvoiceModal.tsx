@@ -134,7 +134,7 @@ export default function ReviewAndInvoiceModal({
   useEffect(() => {
     if (isOpen && cargo) {
       setCargoData(cargo);
-      setFormData({
+      const initialFormData = {
         category_id: cargo.category_id || "",
         type: cargo.type || "",
         description: cargo.description || cargo.special_requirements || "",
@@ -164,9 +164,110 @@ export default function ReviewAndInvoiceModal({
         pickup_date: cargo.pickup_date ? cargo.pickup_date.split("T")[0] : "",
         estimated_cost: cargo.estimated_cost || 0,
         distance_km: Math.max(cargo.distance_km || 1, 1), // Ensure minimum 1km
-      });
+      };
+
+      setFormData(initialFormData);
+
+      // Initialize the last calculated values to prevent unnecessary recalculation on load
+      lastCalculatedValues.current = {
+        weight_kg: initialFormData.weight_kg,
+        distance_km: initialFormData.distance_km,
+        category_id: initialFormData.category_id,
+      };
     }
   }, [isOpen, cargo]);
+
+  // Ref to track last calculated values to prevent unnecessary recalculations
+  const lastCalculatedValues = useRef({
+    weight_kg: 0,
+    distance_km: 0,
+    category_id: "",
+  });
+
+  // Stable cost calculation function
+  const calculateCost = useCallback(
+    (weight: number, distance: number, categoryId: string) => {
+      estimateCostMutation.mutate(
+        {
+          weight_kg: weight,
+          distance_km: distance,
+          category_id: categoryId,
+        },
+        {
+          onSuccess: (response) => {
+            const estimatedCost = response.data?.estimated_cost || 0;
+            setFormData((prev) => ({
+              ...prev,
+              estimated_cost: estimatedCost,
+            }));
+            console.log("✅ Auto-cost calculation successful:", estimatedCost);
+          },
+          onError: (error) => {
+            console.error("❌ Auto-cost calculation failed:", error);
+            // Don't show error toast for auto-calculation to avoid spam
+          },
+        }
+      );
+    },
+    [estimateCostMutation]
+  );
+
+  // Auto-recalculate cost when cost-affecting fields change
+  useEffect(() => {
+    // Only auto-calculate if we have the minimum required data and cargo is loaded
+    if (
+      !cargo ||
+      !formData.category_id ||
+      !formData.weight_kg ||
+      !formData.distance_km ||
+      formData.weight_kg <= 0 ||
+      formData.distance_km <= 0
+    ) {
+      return;
+    }
+
+    const currentDistance = Math.max(
+      calculatedDistance || formData.distance_km || 1,
+      1
+    );
+
+    // Check if values have actually changed
+    const hasChanged =
+      lastCalculatedValues.current.weight_kg !== formData.weight_kg ||
+      lastCalculatedValues.current.distance_km !== currentDistance ||
+      lastCalculatedValues.current.category_id !== formData.category_id;
+
+    if (!hasChanged) {
+      return;
+    }
+
+    // Update the last calculated values
+    lastCalculatedValues.current = {
+      weight_kg: formData.weight_kg,
+      distance_km: currentDistance,
+      category_id: formData.category_id,
+    };
+
+    // Debounce the cost calculation to avoid excessive API calls
+    const timeoutId = setTimeout(() => {
+      console.log("🔄 Auto-recalculating cost due to field changes", {
+        weight: formData.weight_kg,
+        distance: currentDistance,
+        category: formData.category_id,
+      });
+
+      calculateCost(formData.weight_kg, currentDistance, formData.category_id);
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    formData.weight_kg,
+    formData.distance_km,
+    formData.category_id,
+    calculatedDistance,
+    cargo,
+    calculateCost,
+  ]);
 
   // Cleanup effect for timeouts and abort controllers (same as CreateCargoForm)
   useEffect(() => {
@@ -583,106 +684,179 @@ export default function ReviewAndInvoiceModal({
 
   return (
     <ModernModel isOpen={isOpen} onClose={onClose} title="Review and Invoicing">
-      <div className="space-y-6">
-        {/* Step Indicator */}
-        <div className="flex items-center justify-center space-x-4 mb-6">
-          <div
-            className={`flex items-center space-x-2 ${
-              currentStep >= 1 ? "text-blue-600" : "text-gray-400"
-            }`}
-          >
+      <div className="space-y-8">
+        {/* Enhanced Step Indicator */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+          <div className="flex items-center justify-center space-x-6">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep >= 1 ? "bg-blue-600 text-white" : "bg-gray-200"
+              className={`flex items-center space-x-3 transition-all duration-300 ${
+                currentStep >= 1 ? "text-blue-700" : "text-gray-400"
               }`}
             >
-              {currentStep > 1 ? (
-                <CheckCircle className="w-5 h-5" />
-              ) : (
-                <Edit3 className="w-5 h-5" />
-              )}
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+                  currentStep >= 1
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-blue-200"
+                    : "bg-gray-200 text-gray-400"
+                }`}
+              >
+                {currentStep > 1 ? (
+                  <CheckCircle className="w-6 h-6" />
+                ) : (
+                  <Edit3 className="w-6 h-6" />
+                )}
+              </div>
+              <div className="text-center">
+                <span className="font-semibold text-sm">Review & Edit</span>
+                <p className="text-xs text-gray-500 mt-1">
+                  Update cargo details
+                </p>
+              </div>
             </div>
-            <span className="font-medium">Review & Edit</span>
-          </div>
-          <div
-            className={`w-8 h-1 ${
-              currentStep >= 2 ? "bg-blue-600" : "bg-gray-200"
-            }`}
-          />
-          <div
-            className={`flex items-center space-x-2 ${
-              currentStep >= 2 ? "text-blue-600" : "text-gray-400"
-            }`}
-          >
+
+            <div className="flex items-center">
+              <div
+                className={`w-12 h-1 rounded-full transition-all duration-500 ${
+                  currentStep >= 2
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700"
+                    : "bg-gray-200"
+                }`}
+              />
+            </div>
+
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep >= 2 ? "bg-blue-600 text-white" : "bg-gray-200"
+              className={`flex items-center space-x-3 transition-all duration-300 ${
+                currentStep >= 2 ? "text-blue-700" : "text-gray-400"
               }`}
             >
-              <FileText className="w-5 h-5" />
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+                  currentStep >= 2
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-blue-200"
+                    : "bg-gray-200 text-gray-400"
+                }`}
+              >
+                <FileText className="w-6 h-6" />
+              </div>
+              <div className="text-center">
+                <span className="font-semibold text-sm">Create Invoice</span>
+                <p className="text-xs text-gray-500 mt-1">Generate billing</p>
+              </div>
             </div>
-            <span className="font-medium">Create Invoice</span>
           </div>
         </div>
 
         {currentStep === 1 ? (
-          <div className="space-y-6">
-            {/* Cargo Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Cargo Overview
+          <div className="space-y-8">
+            {/* Enhanced Cargo Overview */}
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+              <CardHeader className="bg-gray-50 border-b border-gray-200">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Package className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">
+                      Cargo Overview
+                    </h3>
+                    <p className="text-gray-600 text-sm font-normal">
+                      Review shipment details
+                    </p>
+                  </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Cargo ID
-                    </p>
-                    <p className="text-lg font-semibold">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Cargo ID
+                      </p>
+                    </div>
+                    <p className="text-xl font-bold text-gray-900 font-mono">
                       {cargo.cargo_number}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Client</p>
-                    <p className="text-lg">
+
+                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Client
+                      </p>
+                    </div>
+                    <p className="text-lg font-semibold text-gray-900">
                       {(cargo as any)?.client?.user?.full_name ||
                         "Unknown Client"}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Status</p>
-                    <Badge variant="outline">{cargo.status}</Badge>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Route</p>
-                    <p className="text-lg">
-                      {cargo.pickup_address} → {cargo.destination_address}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Priority
-                    </p>
+
+                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Status
+                      </p>
+                    </div>
                     <Badge
-                      className={
+                      variant="outline"
+                      className="text-sm px-3 py-1 font-medium"
+                    >
+                      {cargo.status}
+                    </Badge>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm md:col-span-2 lg:col-span-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <p className="text-sm font-medium text-gray-600">Route</p>
+                    </div>
+                    <div className="text-sm">
+                      <p className="font-medium text-gray-900 truncate">
+                        📍 {cargo.pickup_address}
+                      </p>
+                      <div className="flex items-center justify-center my-1">
+                        <div className="w-full h-px bg-gray-300"></div>
+                        <span className="px-2 text-gray-400">→</span>
+                        <div className="w-full h-px bg-gray-300"></div>
+                      </div>
+                      <p className="font-medium text-gray-900 truncate">
+                        🎯 {cargo.destination_address}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <p className="text-sm font-medium text-gray-600">
+                        Priority
+                      </p>
+                    </div>
+                    <Badge
+                      className={`text-sm px-3 py-1 font-medium ${
                         cargo.priority === "urgent"
-                          ? "bg-red-100 text-red-600"
+                          ? "bg-red-100 text-red-700 border-red-200"
                           : cargo.priority === "high"
-                          ? "bg-orange-100 text-orange-600"
-                          : "bg-gray-100 text-gray-600"
-                      }
+                          ? "bg-orange-100 text-orange-700 border-orange-200"
+                          : cargo.priority === "normal"
+                          ? "bg-blue-100 text-blue-700 border-blue-200"
+                          : "bg-gray-100 text-gray-700 border-gray-200"
+                      }`}
                     >
                       {cargo.priority?.toUpperCase()}
                     </Badge>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Current Cost
-                    </p>
-                    <p className="text-lg font-semibold text-green-600">
+
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <p className="text-sm font-medium text-green-700">
+                        Current Cost
+                      </p>
+                    </div>
+                    <p className="text-2xl font-bold text-green-600">
                       {new Intl.NumberFormat("rw-RW", {
                         style: "currency",
                         currency: "RWF",
@@ -695,69 +869,115 @@ export default function ReviewAndInvoiceModal({
               </CardContent>
             </Card>
 
-            {/* Editable Cargo Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Edit Cargo Details</CardTitle>
+            {/* Enhanced Editable Cargo Details */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader className="bg-gray-50 border-b border-gray-200">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <Edit3 className="h-6 w-6 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">
+                      Edit Cargo Details
+                    </h3>
+                    <p className="text-gray-600 text-sm font-normal">
+                      Update shipment information
+                    </p>
+                  </div>
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="p-8 space-y-8">
                 {/* Basic Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select
-                      value={formData.category_id}
-                      onValueChange={(value) =>
-                        handleInputChange("category_id", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category: any) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <h4 className="font-semibold text-gray-800 text-lg">
+                      Basic Information
+                    </h4>
                   </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="category"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Category *
+                      </Label>
+                      <Select
+                        value={formData.category_id}
+                        onValueChange={(value) =>
+                          handleInputChange("category_id", value)
+                        }
+                      >
+                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Select category..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category: any) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="type">Type</Label>
-                    <Input
-                      id="type"
-                      value={formData.type}
-                      onChange={(e) =>
-                        handleInputChange("type", e.target.value)
-                      }
-                      placeholder="e.g., Electronics, Furniture"
-                    />
-                  </div>
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="type"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Type
+                      </Label>
+                      <Input
+                        id="type"
+                        value={formData.type}
+                        onChange={(e) =>
+                          handleInputChange("type", e.target.value)
+                        }
+                        placeholder="e.g., Electronics, Furniture"
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
 
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) =>
-                        handleInputChange("description", e.target.value)
-                      }
-                      placeholder="Detailed description of the cargo"
-                      rows={3}
-                    />
+                    <div className="space-y-3 md:col-span-2">
+                      <Label
+                        htmlFor="description"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Description
+                      </Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) =>
+                          handleInputChange("description", e.target.value)
+                        }
+                        placeholder="Detailed description of the cargo"
+                        rows={3}
+                        className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <Separator />
-
                 {/* Physical Properties */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Physical Properties</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="weight">Weight (kg)</Label>
+                <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <h4 className="font-semibold text-gray-800 text-lg">
+                      Physical Properties
+                    </h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="weight"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Weight (kg) *
+                      </Label>
                       <Input
                         id="weight"
                         type="number"
@@ -770,11 +990,18 @@ export default function ReviewAndInvoiceModal({
                             parseFloat(e.target.value) || 0
                           )
                         }
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="0.0"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="volume">Volume (m³)</Label>
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="volume"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Volume (m³)
+                      </Label>
                       <Input
                         id="volume"
                         type="number"
@@ -787,11 +1014,18 @@ export default function ReviewAndInvoiceModal({
                             parseFloat(e.target.value) || 0
                           )
                         }
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="0.0"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="distance">Distance (km)</Label>
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="distance"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Distance (km) *
+                      </Label>
                       <Input
                         id="distance"
                         type="number"
@@ -804,217 +1038,276 @@ export default function ReviewAndInvoiceModal({
                             parseFloat(e.target.value) || 0
                           )
                         }
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="0.0"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Dimensions (cm)</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <Input
-                        placeholder="Length"
-                        type="number"
-                        min="0"
-                        value={formData.dimensions.length}
-                        onChange={(e) =>
-                          handleDimensionsChange(
-                            "length",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
-                      />
-                      <Input
-                        placeholder="Width"
-                        type="number"
-                        min="0"
-                        value={formData.dimensions.width}
-                        onChange={(e) =>
-                          handleDimensionsChange(
-                            "width",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
-                      />
-                      <Input
-                        placeholder="Height"
-                        type="number"
-                        min="0"
-                        value={formData.dimensions.height}
-                        onChange={(e) =>
-                          handleDimensionsChange(
-                            "height",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
-                      />
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-gray-700">
+                      Dimensions (cm)
+                    </Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Length"
+                          type="number"
+                          min="0"
+                          value={formData.dimensions.length}
+                          onChange={(e) =>
+                            handleDimensionsChange(
+                              "length",
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Width"
+                          type="number"
+                          min="0"
+                          value={formData.dimensions.width}
+                          onChange={(e) =>
+                            handleDimensionsChange(
+                              "width",
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Height"
+                          type="number"
+                          min="0"
+                          value={formData.dimensions.height}
+                          onChange={(e) =>
+                            handleDimensionsChange(
+                              "height",
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <Separator />
-
                 {/* Location Information */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Location Information</h4>
+                <div className="bg-green-50 rounded-xl p-6 border border-green-100">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <h4 className="font-semibold text-gray-800 text-lg">
+                      Location Information
+                    </h4>
+                  </div>
 
                   {/* Pickup Location */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="pickup_address">Pickup Address</Label>
-                      <div className="relative">
-                        <Input
-                          id="pickup_address"
-                          value={pickupSearchQuery || formData.pickup_address}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setPickupSearchQuery(value);
-                            if (value.length > 2) {
-                              searchLocation(value, true);
-                            } else {
-                              setPickupSearchResults([]);
-                            }
-                          }}
-                          placeholder="Search pickup location..."
-                          className="pr-10"
-                        />
-                        {isSearchingPickup && (
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <h5 className="font-medium text-gray-800">
+                        📍 Pickup Location
+                      </h5>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-3">
+                        <Label
+                          htmlFor="pickup_address"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Pickup Address *
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="pickup_address"
+                            value={pickupSearchQuery || formData.pickup_address}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setPickupSearchQuery(value);
+                              if (value.length > 2) {
+                                searchLocation(value, true);
+                              } else {
+                                setPickupSearchResults([]);
+                              }
+                            }}
+                            placeholder="Search pickup location..."
+                            className="h-11 pr-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                          />
+                          {isSearchingPickup && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            </div>
+                          )}
+                        </div>
+
+                        {pickupSearchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-48 overflow-y-auto">
+                            {pickupSearchResults.map((place) => (
+                              <div
+                                key={place.place_id}
+                                className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onClick={() => selectPlace(place, true)}
+                              >
+                                <div className="font-medium">
+                                  {place.structured_formatting.main_text}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {place.structured_formatting.secondary_text}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
 
-                      {pickupSearchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-48 overflow-y-auto">
-                          {pickupSearchResults.map((place) => (
-                            <div
-                              key={place.place_id}
-                              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                              onClick={() => selectPlace(place, true)}
-                            >
-                              <div className="font-medium">
-                                {place.structured_formatting.main_text}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {place.structured_formatting.secondary_text}
-                              </div>
-                            </div>
-                          ))}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <Label
+                            htmlFor="pickup_contact"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Pickup Contact (Read-only)
+                          </Label>
+                          <Input
+                            id="pickup_contact"
+                            value={formData.pickup_contact}
+                            readOnly
+                            className="h-11 bg-gray-50 border-gray-200"
+                          />
                         </div>
-                      )}
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="pickup_contact">
-                          Pickup Contact (Read-only)
-                        </Label>
-                        <Input
-                          id="pickup_contact"
-                          value={formData.pickup_contact}
-                          readOnly
-                          className="bg-gray-50"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="pickup_phone">
-                          Pickup Phone (Read-only)
-                        </Label>
-                        <Input
-                          id="pickup_phone"
-                          value={formData.pickup_phone}
-                          readOnly
-                          className="bg-gray-50"
-                        />
+                        <div className="space-y-3">
+                          <Label
+                            htmlFor="pickup_phone"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Pickup Phone (Read-only)
+                          </Label>
+                          <Input
+                            id="pickup_phone"
+                            value={formData.pickup_phone}
+                            readOnly
+                            className="h-11 bg-gray-50 border-gray-200"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Destination Location */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="destination_address">
-                        Destination Address
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="destination_address"
-                          value={
-                            destinationSearchQuery ||
-                            formData.destination_address
-                          }
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setDestinationSearchQuery(value);
-                            if (value.length > 2) {
-                              searchLocation(value, false);
-                            } else {
-                              setDestinationSearchResults([]);
+                  <div className="bg-white rounded-lg p-4 border border-gray-200 mb-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <h5 className="font-medium text-gray-800">
+                        🎯 Destination Location
+                      </h5>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-3">
+                        <Label
+                          htmlFor="destination_address"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Destination Address *
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="destination_address"
+                            value={
+                              destinationSearchQuery ||
+                              formData.destination_address
                             }
-                          }}
-                          placeholder="Search destination location..."
-                          className="pr-10"
-                        />
-                        {isSearchingDestination && (
-                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setDestinationSearchQuery(value);
+                              if (value.length > 2) {
+                                searchLocation(value, false);
+                              } else {
+                                setDestinationSearchResults([]);
+                              }
+                            }}
+                            placeholder="Search destination location..."
+                            className="h-11 pr-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                          />
+                          {isSearchingDestination && (
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            </div>
+                          )}
+                        </div>
+
+                        {destinationSearchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-48 overflow-y-auto">
+                            {destinationSearchResults.map((place) => (
+                              <div
+                                key={place.place_id}
+                                className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onClick={() => selectPlace(place, false)}
+                              >
+                                <div className="font-medium">
+                                  {place.structured_formatting.main_text}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {place.structured_formatting.secondary_text}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
 
-                      {destinationSearchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-48 overflow-y-auto">
-                          {destinationSearchResults.map((place) => (
-                            <div
-                              key={place.place_id}
-                              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                              onClick={() => selectPlace(place, false)}
-                            >
-                              <div className="font-medium">
-                                {place.structured_formatting.main_text}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {place.structured_formatting.secondary_text}
-                              </div>
-                            </div>
-                          ))}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <Label
+                            htmlFor="destination_contact"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Destination Contact (Read-only)
+                          </Label>
+                          <Input
+                            id="destination_contact"
+                            value={formData.destination_contact}
+                            readOnly
+                            className="h-11 bg-gray-50 border-gray-200"
+                          />
                         </div>
-                      )}
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="destination_contact">
-                          Destination Contact (Read-only)
-                        </Label>
-                        <Input
-                          id="destination_contact"
-                          value={formData.destination_contact}
-                          readOnly
-                          className="bg-gray-50"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="destination_phone">
-                          Destination Phone (Read-only)
-                        </Label>
-                        <Input
-                          id="destination_phone"
-                          value={formData.destination_phone}
-                          readOnly
-                          className="bg-gray-50"
-                        />
+                        <div className="space-y-3">
+                          <Label
+                            htmlFor="destination_phone"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Destination Phone (Read-only)
+                          </Label>
+                          <Input
+                            id="destination_phone"
+                            value={formData.destination_phone}
+                            readOnly
+                            className="h-11 bg-gray-50 border-gray-200"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Distance Calculation */}
                   {formData.pickupLat && formData.destinationLat && (
-                    <div className="space-y-2">
-                      <Label>Distance Calculation</Label>
-                      <div className="flex items-center gap-2">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <h5 className="font-medium text-gray-800">
+                          📏 Distance Calculation
+                        </h5>
+                      </div>
+                      <div className="flex items-center gap-3">
                         <Button
                           type="button"
                           variant="outline"
@@ -1030,87 +1323,134 @@ export default function ReviewAndInvoiceModal({
                             }
                           }}
                           disabled={isCalculatingDistance}
+                          className="h-9 border-blue-300 text-blue-700 hover:bg-blue-50"
                         >
                           {isCalculatingDistance
                             ? "Calculating..."
                             : "Recalculate Distance"}
                         </Button>
                         {calculatedDistance && (
-                          <span className="text-sm text-green-600 font-medium">
-                            📏 {calculatedDistance.toFixed(2)} km
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-blue-600">
+                              📏 {calculatedDistance.toFixed(2)} km
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <Separator />
-
                 {/* Special Requirements */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Special Requirements</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="fragile"
-                        checked={formData.fragile}
-                        onCheckedChange={(checked) =>
-                          handleInputChange("fragile", checked)
-                        }
-                      />
-                      <Label htmlFor="fragile">Fragile</Label>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="temperature_controlled"
-                        checked={formData.temperature_controlled}
-                        onCheckedChange={(checked) =>
-                          handleInputChange("temperature_controlled", checked)
-                        }
-                      />
-                      <Label htmlFor="temperature_controlled">
-                        Temperature Controlled
-                      </Label>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="insurance_required"
-                        checked={formData.insurance_required}
-                        onCheckedChange={(checked) =>
-                          handleInputChange("insurance_required", checked)
-                        }
-                      />
-                      <Label htmlFor="insurance_required">
-                        Insurance Required
-                      </Label>
-                    </div>
-
-                    {formData.insurance_required && (
-                      <div className="space-y-2">
-                        <Label htmlFor="insurance_amount">
-                          Insurance Amount (RWF)
-                        </Label>
-                        <Input
-                          id="insurance_amount"
-                          type="number"
-                          min="0"
-                          value={formData.insurance_amount}
-                          onChange={(e) =>
-                            handleInputChange(
-                              "insurance_amount",
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                        />
-                      </div>
-                    )}
+                <div className="bg-purple-50 rounded-xl p-6 border border-purple-100">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <h4 className="font-semibold text-gray-800 text-lg">
+                      Special Requirements
+                    </h4>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="special_requirements">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="fragile"
+                          checked={formData.fragile}
+                          onCheckedChange={(checked) =>
+                            handleInputChange("fragile", checked)
+                          }
+                        />
+                        <div>
+                          <Label
+                            htmlFor="fragile"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Fragile Items
+                          </Label>
+                          <p className="text-xs text-gray-500">
+                            Handle with extra care
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="temperature_controlled"
+                          checked={formData.temperature_controlled}
+                          onCheckedChange={(checked) =>
+                            handleInputChange("temperature_controlled", checked)
+                          }
+                        />
+                        <div>
+                          <Label
+                            htmlFor="temperature_controlled"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Temperature Controlled
+                          </Label>
+                          <p className="text-xs text-gray-500">
+                            Requires climate control
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg p-4 border border-gray-200 md:col-span-2">
+                      <div className="flex items-center space-x-3">
+                        <Switch
+                          id="insurance_required"
+                          checked={formData.insurance_required}
+                          onCheckedChange={(checked) =>
+                            handleInputChange("insurance_required", checked)
+                          }
+                        />
+                        <div className="flex-1">
+                          <Label
+                            htmlFor="insurance_required"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Insurance Required
+                          </Label>
+                          <p className="text-xs text-gray-500">
+                            Additional protection coverage
+                          </p>
+                        </div>
+                      </div>
+
+                      {formData.insurance_required && (
+                        <div className="mt-4 space-y-3">
+                          <Label
+                            htmlFor="insurance_amount"
+                            className="text-sm font-medium text-gray-700"
+                          >
+                            Insurance Amount (RWF)
+                          </Label>
+                          <Input
+                            id="insurance_amount"
+                            type="number"
+                            min="0"
+                            value={formData.insurance_amount}
+                            onChange={(e) =>
+                              handleInputChange(
+                                "insurance_amount",
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="0"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label
+                      htmlFor="special_requirements"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Special Requirements
                     </Label>
                     <Textarea
@@ -1122,40 +1462,75 @@ export default function ReviewAndInvoiceModal({
                           e.target.value
                         )
                       }
-                      placeholder="Any special handling requirements"
+                      placeholder="Any special handling requirements..."
                       rows={3}
+                      className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
                     />
                   </div>
                 </div>
 
-                <Separator />
-
                 {/* Priority and Dates */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Priority & Scheduling</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="priority">Priority</Label>
+                <div className="bg-orange-50 rounded-xl p-6 border border-orange-100">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <h4 className="font-semibold text-gray-800 text-lg">
+                      Priority & Scheduling
+                    </h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="priority"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Priority Level *
+                      </Label>
                       <Select
                         value={formData.priority}
                         onValueChange={(value) =>
                           handleInputChange("priority", value)
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="normal">Normal</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="urgent">Urgent</SelectItem>
+                          <SelectItem value="low">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                              Low Priority
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="normal">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                              Normal Priority
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="high">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                              High Priority
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="urgent">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                              Urgent Priority
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="pickup_date">Pickup Date</Label>
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="pickup_date"
+                        className="text-sm font-medium text-gray-700"
+                      >
+                        Pickup Date *
+                      </Label>
                       <Input
                         id="pickup_date"
                         type="date"
@@ -1163,31 +1538,35 @@ export default function ReviewAndInvoiceModal({
                         onChange={(e) =>
                           handleInputChange("pickup_date", e.target.value)
                         }
+                        className="h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
                   </div>
                 </div>
 
-                <Separator />
-
                 {/* Cost Estimation */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Cost Estimation</h4>
+                <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-100">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                    <h4 className="font-semibold text-gray-800 text-lg">
+                      Cost Estimation
+                    </h4>
+                  </div>
 
                   {/* Current Distance Display */}
                   {formData.distance_km > 0 && (
-                    <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="bg-white p-4 rounded-lg border border-emerald-200 mb-6">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-blue-800">
+                        <span className="text-sm font-medium text-emerald-700">
                           Current Distance:
                         </span>
-                        <span className="text-lg font-semibold text-blue-600">
+                        <span className="text-xl font-bold text-emerald-600">
                           📏 {formData.distance_km.toFixed(2)} km
                         </span>
                       </div>
                       {calculatedDistance &&
                         calculatedDistance !== formData.distance_km && (
-                          <div className="mt-2 text-xs text-blue-600">
+                          <div className="mt-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded">
                             ⚠️ Distance updated from{" "}
                             {formData.distance_km.toFixed(2)} km to{" "}
                             {calculatedDistance.toFixed(2)} km
@@ -1196,11 +1575,22 @@ export default function ReviewAndInvoiceModal({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="estimated_cost">
-                        Estimated Cost (RWF)
-                      </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Label
+                          htmlFor="estimated_cost"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Estimated Cost (RWF) *
+                        </Label>
+                        {estimateCostMutation.isPending && (
+                          <div className="flex items-center gap-1 text-emerald-600">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b border-emerald-600"></div>
+                            <span className="text-xs">Auto-calculating...</span>
+                          </div>
+                        )}
+                      </div>
                       <Input
                         id="estimated_cost"
                         type="number"
@@ -1213,6 +1603,10 @@ export default function ReviewAndInvoiceModal({
                             parseFloat(e.target.value) || 0
                           )
                         }
+                        className={`h-12 text-lg font-semibold border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 ${
+                          estimateCostMutation.isPending ? "bg-emerald-50" : ""
+                        }`}
+                        placeholder="0"
                       />
                     </div>
 
@@ -1244,7 +1638,7 @@ export default function ReviewAndInvoiceModal({
                                       estimatedCost
                                     );
                                     toast.success(
-                                      `Cost recalculated: ${new Intl.NumberFormat(
+                                      `Cost updated: ${new Intl.NumberFormat(
                                         "rw-RW",
                                         {
                                           style: "currency",
@@ -1262,11 +1656,11 @@ export default function ReviewAndInvoiceModal({
                               );
                             }}
                             disabled={estimateCostMutation.isPending}
-                            className="w-full"
+                            className="w-full h-12 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-400"
                           >
                             {estimateCostMutation.isPending
                               ? "Calculating..."
-                              : "Recalculate Cost"}
+                              : "Refresh Cost"}
                           </Button>
                         </div>
                       )}
@@ -1274,46 +1668,58 @@ export default function ReviewAndInvoiceModal({
 
                   {/* Cost Breakdown Display */}
                   {estimateCostMutation.data?.data?.breakdown && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-medium text-gray-800 mb-2">
-                        Cost Breakdown:
+                    <div className="bg-white p-6 rounded-lg border border-emerald-200 mt-6">
+                      <h5 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        Cost Breakdown
                       </h5>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          Base Cost:{" "}
-                          {new Intl.NumberFormat("rw-RW", {
-                            style: "currency",
-                            currency: "RWF",
-                          }).format(
-                            estimateCostMutation.data.data.breakdown.base_cost
-                          )}
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <div className="text-gray-600">Base Cost</div>
+                          <div className="font-semibold text-gray-900">
+                            {new Intl.NumberFormat("rw-RW", {
+                              style: "currency",
+                              currency: "RWF",
+                            }).format(
+                              estimateCostMutation.data.data.breakdown.base_cost
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          Weight Cost:{" "}
-                          {new Intl.NumberFormat("rw-RW", {
-                            style: "currency",
-                            currency: "RWF",
-                          }).format(
-                            estimateCostMutation.data.data.breakdown.weight_cost
-                          )}
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <div className="text-gray-600">Weight Cost</div>
+                          <div className="font-semibold text-gray-900">
+                            {new Intl.NumberFormat("rw-RW", {
+                              style: "currency",
+                              currency: "RWF",
+                            }).format(
+                              estimateCostMutation.data.data.breakdown
+                                .weight_cost
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          Distance Cost:{" "}
-                          {new Intl.NumberFormat("rw-RW", {
-                            style: "currency",
-                            currency: "RWF",
-                          }).format(
-                            estimateCostMutation.data.data.breakdown
-                              .distance_cost
-                          )}
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <div className="text-gray-600">Distance Cost</div>
+                          <div className="font-semibold text-gray-900">
+                            {new Intl.NumberFormat("rw-RW", {
+                              style: "currency",
+                              currency: "RWF",
+                            }).format(
+                              estimateCostMutation.data.data.breakdown
+                                .distance_cost
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          Category Multiplier:{" "}
-                          {
-                            estimateCostMutation.data.data.breakdown
-                              .category_multiplier
-                          }
-                          x
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <div className="text-gray-600">
+                            Category Multiplier
+                          </div>
+                          <div className="font-semibold text-gray-900">
+                            {
+                              estimateCostMutation.data.data.breakdown
+                                .category_multiplier
+                            }
+                            x
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1322,31 +1728,48 @@ export default function ReviewAndInvoiceModal({
               </CardContent>
             </Card>
 
-            {/* Step 1 Actions */}
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleStep1Submit}
-                disabled={updateCargoMutation.isPending}
-              >
-                {updateCargoMutation.isPending
-                  ? "Updating..."
-                  : "Continue to Invoice"}
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
+            {/* Enhanced Step 1 Actions */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  onClick={handleClose}
+                  className="h-11 px-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleStep1Submit}
+                  disabled={updateCargoMutation.isPending}
+                  className="h-11 px-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg"
+                >
+                  {updateCargoMutation.isPending
+                    ? "Updating..."
+                    : "Continue to Invoice"}
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Step 2: Invoice Creation */}
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Create Invoice</h3>
-              <p className="text-gray-600">
-                Cargo details have been updated. Now create the invoice for this
-                cargo.
-              </p>
+          <div className="space-y-8">
+            {/* Enhanced Step 2: Invoice Creation */}
+            <div className="hidden  bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-8 border border-green-100 text-center">
+              {/* <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="p-3 bg-green-100 rounded-full">
+                  <FileText className="h-8 w-8 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    Create Invoice
+                  </h3>
+                  <p className="text-green-600 font-medium">Step 2 of 2</p>
+                </div>
+              </div> */}
+              {/* <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                ✅ Cargo details have been successfully updated. Now you can
+                create the invoice for this shipment.
+              </p> */}
             </div>
 
             {!cargo ? (
@@ -1367,15 +1790,25 @@ export default function ReviewAndInvoiceModal({
               />
             )}
 
-            {/* Step 2 Actions */}
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setCurrentStep(1)}>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Back to Review
-              </Button>
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
+            {/* Enhanced Step 2 Actions */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStep(1)}
+                  className="h-11 px-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Back to Review
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClose}
+                  className="h-11 px-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         )}
