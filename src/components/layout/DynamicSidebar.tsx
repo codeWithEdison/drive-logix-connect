@@ -33,6 +33,7 @@ import {
   User,
   Building2,
   Map,
+  CreditCard,
 } from "lucide-react";
 
 const getNavigationConfig = (t: (key: string) => string) => ({
@@ -73,6 +74,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
     { title: t("navigation.drivers"), url: "/admin/drivers", icon: Users },
     { title: t("navigation.vehicles"), url: "/admin/trucks", icon: Truck },
     { title: t("navigation.invoices"), url: "/admin/invoices", icon: Receipt },
+    {
+      title: "Payment Verifications",
+      url: "/admin/payment-verifications",
+      icon: CreditCard,
+    },
     { title: t("navigation.reports"), url: "/admin/reports", icon: BarChart3 },
   ],
   super_admin: [
@@ -116,6 +122,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       title: t("navigation.invoices"),
       url: "/super-admin/invoices",
       icon: Receipt,
+    },
+    {
+      title: "Payment Verifications",
+      url: "/admin/payment-verifications",
+      icon: CreditCard,
     },
     {
       title: t("navigation.systemSettings"),

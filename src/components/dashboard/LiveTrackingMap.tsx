@@ -303,7 +303,7 @@ export const LiveTrackingMap: React.FC = () => {
   // Update map when cargo is selected
   const updateMapForSelectedCargo = useCallback(
     (cargo: CargoWithTracking) => {
-      if (!mapLoaded || !cargo.tracking) return;
+      if (!mapLoaded || !cargo?.tracking) return;
 
       MapService.clearMarkers();
       MapService.clearPolylines();
@@ -599,8 +599,8 @@ export const LiveTrackingMap: React.FC = () => {
                                 {/* Calculate progress percentage */}
                                 {(() => {
                                   const progress =
-                                    cargo.tracking?.progress_percentage ||
-                                    (cargo.tracking?.location_history?.length
+                                    cargo?.tracking?.progress_percentage ||
+                                    (cargo?.tracking?.location_history?.length
                                       ? Math.min(
                                           (cargo.tracking.location_history
                                             .length /
@@ -674,7 +674,7 @@ export const LiveTrackingMap: React.FC = () => {
                                         cargo as CargoWithTracking
                                       ).client?.full_name?.charAt(0) || "C"
                                     : (
-                                        cargo.tracking as
+                                        cargo?.tracking as
                                           | TrackingWithRelations
                                           | undefined
                                       )?.driver?.full_name?.charAt(0) || "D"}
@@ -686,7 +686,7 @@ export const LiveTrackingMap: React.FC = () => {
                                     ? (cargo as CargoWithTracking).client
                                         ?.full_name || "Client"
                                     : (
-                                        selectedCargo.tracking as
+                                        selectedCargo?.tracking as
                                           | TrackingWithRelations
                                           | undefined
                                       )?.driver?.full_name || "Driver"}
@@ -699,7 +699,7 @@ export const LiveTrackingMap: React.FC = () => {
                             <div className="flex gap-0.5 sm:gap-1">
                               {isClient &&
                                 (
-                                  cargo.tracking as
+                                  cargo?.tracking as
                                     | TrackingWithRelations
                                     | undefined
                                 )?.driver?.phone && (
@@ -712,8 +712,8 @@ export const LiveTrackingMap: React.FC = () => {
                                       window.open(
                                         `tel:${
                                           (
-                                            cargo.tracking as TrackingWithRelations
-                                          ).driver!.phone
+                                            cargo?.tracking as TrackingWithRelations
+                                          )?.driver?.phone
                                         }`,
                                         "_self"
                                       );
@@ -961,7 +961,7 @@ export const LiveTrackingMap: React.FC = () => {
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
                               {(
-                                selectedCargo.tracking as
+                                selectedCargo?.tracking as
                                   | TrackingWithRelations
                                   | undefined
                               )?.driver?.full_name?.charAt(0) || "D"}
@@ -969,13 +969,13 @@ export const LiveTrackingMap: React.FC = () => {
                             <div className="min-w-0 flex-1">
                               <h3 className="font-semibold text-sm sm:text-base">
                                 {(
-                                  selectedCargo.tracking as
+                                  selectedCargo?.tracking as
                                     | TrackingWithRelations
                                     | undefined
                                 )?.driver?.full_name || "Driver"}
                               </h3>
                               {(
-                                selectedCargo.tracking as
+                                selectedCargo?.tracking as
                                   | TrackingWithRelations
                                   | undefined
                               )?.driver?.phone && (
@@ -984,8 +984,8 @@ export const LiveTrackingMap: React.FC = () => {
                                   <span className="truncate">
                                     {
                                       (
-                                        selectedCargo.tracking as TrackingWithRelations
-                                      ).driver!.phone
+                                        selectedCargo?.tracking as TrackingWithRelations
+                                      )?.driver?.phone
                                     }
                                   </span>
                                   <Button
@@ -995,8 +995,8 @@ export const LiveTrackingMap: React.FC = () => {
                                       window.open(
                                         `tel:${
                                           (
-                                            selectedCargo.tracking as TrackingWithRelations
-                                          ).driver!.phone
+                                            selectedCargo?.tracking as TrackingWithRelations
+                                          )?.driver?.phone
                                         }`,
                                         "_self"
                                       )
@@ -1017,27 +1017,27 @@ export const LiveTrackingMap: React.FC = () => {
                             <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                             <h3 className="font-semibold text-sm sm:text-base">
                               {(
-                                selectedCargo.tracking as
+                                selectedCargo?.tracking as
                                   | TrackingWithRelations
                                   | undefined
                               )?.vehicle?.license_plate || "Vehicle"}
                             </h3>
                           </div>
                           {(
-                            selectedCargo.tracking as
+                            selectedCargo?.tracking as
                               | TrackingWithRelations
                               | undefined
                           )?.vehicle?.make && (
                             <div className="text-xs sm:text-sm text-gray-600">
                               {
                                 (
-                                  selectedCargo.tracking as TrackingWithRelations
-                                ).vehicle!.make
+                                  selectedCargo?.tracking as TrackingWithRelations
+                                )?.vehicle?.make
                               }{" "}
                               {
                                 (
-                                  selectedCargo.tracking as TrackingWithRelations
-                                ).vehicle!.model
+                                  selectedCargo?.tracking as TrackingWithRelations
+                                )?.vehicle?.model
                               }
                             </div>
                           )}
@@ -1097,7 +1097,7 @@ export const LiveTrackingMap: React.FC = () => {
 
                     {/* Progress and ETA */}
                     {(progressData ||
-                      selectedCargo.tracking?.progress_percentage) && (
+                      selectedCargo?.tracking?.progress_percentage) && (
                       <>
                         <Separator className="my-2 sm:my-3" />
                         <div className="space-y-2 sm:space-y-3">
@@ -1108,7 +1108,8 @@ export const LiveTrackingMap: React.FC = () => {
                             <span className="text-xs sm:text-sm font-medium text-blue-600">
                               {Math.round(
                                 progressData?.progress_percentage ||
-                                  selectedCargo.tracking?.progress_percentage ||
+                                  selectedCargo?.tracking
+                                    ?.progress_percentage ||
                                   0
                               )}
                               %
@@ -1121,7 +1122,8 @@ export const LiveTrackingMap: React.FC = () => {
                               style={{
                                 width: `${
                                   progressData?.progress_percentage ||
-                                  selectedCargo.tracking?.progress_percentage ||
+                                  selectedCargo?.tracking
+                                    ?.progress_percentage ||
                                   0
                                 }%`,
                               }}

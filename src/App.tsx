@@ -41,6 +41,7 @@ import AdminDrivers from "@/pages/admin/AdminDrivers";
 import AdminTrucks from "@/pages/admin/AdminTrucks";
 import AdminReports from "@/pages/admin/AdminReports";
 import AdminAssignments from "@/pages/admin/AdminAssignments";
+import AdminPaymentVerifications from "@/pages/admin/AdminPaymentVerifications";
 import AdminInvoices from "@/pages/admin/AdminInvoices";
 import SuperAdminUsers from "@/pages/superadmin/SuperAdminUsers";
 import SuperAdminSettings from "@/pages/superadmin/SuperAdminSettings";
@@ -257,9 +258,17 @@ function AppContent() {
           }
         />
         <Route
+          path="/admin/payment-verifications"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+              <AdminPaymentVerifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/invoices"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
               <AdminInvoices />
             </ProtectedRoute>
           }

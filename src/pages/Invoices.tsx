@@ -231,7 +231,25 @@ export default function Invoices() {
       (inv: any) => inv.id === invoiceId
     );
     if (invoiceToPay) {
-      setSelectedPaymentInvoice(invoiceToPay);
+      // Map the invoice data to the expected InvoicePaymentData structure
+      const paymentData: InvoicePaymentData = {
+        id: invoiceToPay.id,
+        invoice_number: invoiceToPay.invoice_number || invoiceToPay.id,
+        cargo_id: String(invoiceToPay.cargo_id || invoiceToPay.cargo?.id || ""),
+        total_amount: +(invoiceToPay.total_amount || 0),
+        currency: invoiceToPay.currency || "RWF",
+        status: invoiceToPay.status,
+        cargo: invoiceToPay.cargo
+          ? {
+              id: String(invoiceToPay.cargo.id),
+              type: invoiceToPay.cargo.type || "Unknown",
+              pickup_address: invoiceToPay.cargo.pickup_address || "Unknown",
+              destination_address:
+                invoiceToPay.cargo.destination_address || "Unknown",
+            }
+          : undefined,
+      };
+      setSelectedPaymentInvoice(paymentData);
       setIsPaymentModalOpen(true);
     } else {
       toast.error(t("invoices.invoiceNotFound"));
@@ -612,7 +630,8 @@ export default function Invoices() {
                   return (
                     <TableRow
                       key={invoice.id}
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className="hover:bg-gray-50 cursor-pointer transition-colors duration-200"
+                      onClick={() => handleViewInvoice(invoice)}
                     >
                       <TableCell className="text-sm text-gray-500">
                         {index + 1}
@@ -696,26 +715,36 @@ export default function Invoices() {
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => handleViewInvoice(invoice)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewInvoice(invoice);
+                              }}
                             >
                               <Eye className="h-4 w-4 mr-2" />
                               {t("invoices.viewDetails")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleDownloadInvoice(invoice.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadInvoice(invoice.id);
+                              }}
                             >
                               <Download className="h-4 w-4 mr-2" />
                               {t("invoices.downloadPdf")}
                             </DropdownMenuItem>
                             {invoice.status === "sent" && (
                               <DropdownMenuItem
-                                onClick={() => handlePayNow(invoice.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePayNow(invoice.id);
+                                }}
                               >
                                 <DollarSign className="h-4 w-4 mr-2" />
                                 {t("invoices.payNow")}

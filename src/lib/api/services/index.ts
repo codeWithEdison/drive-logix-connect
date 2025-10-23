@@ -8,6 +8,7 @@ export { CargoService, CargoCategoryService } from "./cargoService";
 export { DeliveryService } from "./deliveryService";
 export { InvoiceService } from "./invoiceService";
 export { PaymentService, RefundService } from "./paymentService";
+export { PaymentVerificationService } from "./paymentVerificationService";
 export { InsuranceService } from "./insuranceService";
 export { RouteService } from "./routeService";
 export { SearchService } from "./searchService";
