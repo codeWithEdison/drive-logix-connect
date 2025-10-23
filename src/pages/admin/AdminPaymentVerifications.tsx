@@ -19,12 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import ModernModel from "@/components/modal/ModernModel";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
@@ -38,6 +33,7 @@ import {
   FileText,
   RefreshCw,
   Download,
+  FileDown,
 } from "lucide-react";
 import { usePaymentVerifications } from "@/lib/api/hooks/paymentVerificationHooks";
 import PaymentVerificationActions from "@/components/admin/PaymentVerificationActions";
@@ -116,6 +112,63 @@ export default function AdminPaymentVerifications() {
     });
   };
 
+  const downloadCSV = () => {
+    if (verifications.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const headers = [
+      "#",
+      "Invoice #",
+      "Client Name",
+      "Client Email",
+      "Amount",
+      "Currency",
+      "Bank Name",
+      "Reference",
+      "Payment Date",
+      "Status",
+      "Submitted Date",
+    ];
+
+    const csvData = verifications.map((verification: any, index: number) => [
+      index + 1,
+      verification.invoice?.invoice_number || verification.invoice_id,
+      verification.client?.user?.full_name ||
+        verification.submitter?.full_name ||
+        "Unknown",
+      verification.client?.user?.email || verification.submitter?.email || "",
+      verification.amount,
+      verification.currency,
+      verification.bank_name,
+      verification.reference,
+      formatDate(verification.payment_date),
+      verification.status.replace("_", " ").toUpperCase(),
+      formatDate(verification.created_at),
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map((row) => row.map((field) => `"${field}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `payment-verifications-${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("CSV file downloaded successfully");
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -166,17 +219,28 @@ export default function AdminPaymentVerifications() {
             Review and manage offline payment submissions
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isLoading}
-        >
-          <RefreshCw
-            className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-          />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadCSV}
+            disabled={isLoading || verifications.length === 0}
+          >
+            <FileDown className="w-4 h-4 mr-2" />
+            Download CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading}
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -217,6 +281,7 @@ export default function AdminPaymentVerifications() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-16">#</TableHead>
                   <TableHead>Invoice #</TableHead>
                   <TableHead>Client</TableHead>
                   <TableHead>Amount</TableHead>
@@ -229,8 +294,18 @@ export default function AdminPaymentVerifications() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {verifications.map((verification: any) => (
-                  <TableRow key={verification.id}>
+                {verifications.map((verification: any, index: number) => (
+                  <TableRow
+                    key={verification.id}
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      setSelectedVerification(verification);
+                      setIsDetailModalOpen(true);
+                    }}
+                  >
+                    <TableCell className="font-medium text-gray-600">
+                      {index + 1}
+                    </TableCell>
                     <TableCell className="font-mono text-sm">
                       {verification.invoice?.invoice_number ||
                         verification.invoice_id}
@@ -269,7 +344,8 @@ export default function AdminPaymentVerifications() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedVerification(verification);
                           setIsDetailModalOpen(true);
                         }}
@@ -287,271 +363,266 @@ export default function AdminPaymentVerifications() {
       </Card>
 
       {/* Detail Modal */}
-      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Payment Verification Details</DialogTitle>
-          </DialogHeader>
-
-          {selectedVerification && (
-            <div className="space-y-6">
-              {/* Invoice & Client Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Invoice & Client Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Invoice Number
-                      </Label>
-                      <p className="font-mono text-sm bg-gray-50 p-2 rounded">
-                        {selectedVerification.invoice?.invoice_number ||
-                          selectedVerification.invoice_id}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Invoice Amount
-                      </Label>
-                      <p className="text-lg font-bold">
-                        {formatCurrency(
-                          parseFloat(
-                            selectedVerification.invoice?.total_amount ||
-                              selectedVerification.amount
-                          ),
-                          selectedVerification.currency
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Client Name
-                      </Label>
-                      <p className="bg-gray-50 p-2 rounded">
-                        {selectedVerification.client?.user?.full_name ||
-                          selectedVerification.submitter?.full_name ||
-                          "Unknown"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Client Email
-                      </Label>
-                      <p className="bg-gray-50 p-2 rounded">
-                        {selectedVerification.client?.user?.email ||
-                          selectedVerification.submitter?.email ||
-                          "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Client Phone
-                      </Label>
-                      <p className="bg-gray-50 p-2 rounded">
-                        {selectedVerification.client?.user?.phone || "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Invoice Status
-                      </Label>
-                      <div className="pt-2">
-                        <Badge variant="outline">
-                          {selectedVerification.invoice?.status || "Unknown"}
-                        </Badge>
-                      </div>
+      <ModernModel
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title="Payment Verification Details"
+      >
+        {selectedVerification && (
+          <div className="space-y-6">
+            {/* Invoice & Client Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  Invoice & Client Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Invoice Number
+                    </Label>
+                    <p className="font-mono text-sm bg-gray-50 p-2 rounded">
+                      {selectedVerification.invoice?.invoice_number ||
+                        selectedVerification.invoice_id}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Invoice Amount
+                    </Label>
+                    <p className="text-lg font-bold">
+                      {formatCurrency(
+                        parseFloat(
+                          selectedVerification.invoice?.total_amount ||
+                            selectedVerification.amount
+                        ),
+                        selectedVerification.currency
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Client Name
+                    </Label>
+                    <p className="bg-gray-50 p-2 rounded">
+                      {selectedVerification.client?.user?.full_name ||
+                        selectedVerification.submitter?.full_name ||
+                        "Unknown"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Client Email
+                    </Label>
+                    <p className="bg-gray-50 p-2 rounded">
+                      {selectedVerification.client?.user?.email ||
+                        selectedVerification.submitter?.email ||
+                        "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Client Phone
+                    </Label>
+                    <p className="bg-gray-50 p-2 rounded">
+                      {selectedVerification.client?.user?.phone || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Invoice Status
+                    </Label>
+                    <div className="pt-2">
+                      <Badge variant="outline">
+                        {selectedVerification.invoice?.status || "Unknown"}
+                      </Badge>
                     </div>
                   </div>
+                </div>
 
-                  {selectedVerification.cargo && (
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Cargo Information
-                      </Label>
-                      <div className="bg-gray-50 p-3 rounded mt-1">
-                        <p className="text-sm">
-                          <strong>Description:</strong>{" "}
-                          {selectedVerification.cargo.description}
-                        </p>
-                        <p className="text-sm">
-                          <strong>Weight:</strong>{" "}
-                          {selectedVerification.cargo.weight_kg} kg
-                        </p>
-                        <p className="text-sm">
-                          <strong>Pickup:</strong>{" "}
-                          {selectedVerification.cargo.pickup_address}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Payment Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Payment Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Payment Amount
-                      </Label>
-                      <p className="text-lg font-bold">
-                        {formatCurrency(
-                          parseFloat(selectedVerification.amount),
-                          selectedVerification.currency
-                        )}
+                {selectedVerification.cargo && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Cargo Information
+                    </Label>
+                    <div className="bg-gray-50 p-3 rounded mt-1">
+                      <p className="text-sm">
+                        <strong>Description:</strong>{" "}
+                        {selectedVerification.cargo.description}
                       </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Bank Name
-                      </Label>
-                      <p className="bg-gray-50 p-2 rounded uppercase font-medium">
-                        {selectedVerification.bank_name}
+                      <p className="text-sm">
+                        <strong>Weight:</strong>{" "}
+                        {selectedVerification.cargo.weight_kg} kg
                       </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Reference Number
-                      </Label>
-                      <p className="font-mono text-sm bg-gray-50 p-2 rounded">
-                        {selectedVerification.reference}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Payment Date
-                      </Label>
-                      <p className="bg-gray-50 p-2 rounded">
-                        {formatDate(selectedVerification.payment_date)}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Verification Status
-                      </Label>
-                      <div className="pt-2">
-                        {getStatusBadge(selectedVerification.status)}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Submitted Date
-                      </Label>
-                      <p className="bg-gray-50 p-2 rounded">
-                        {formatDate(selectedVerification.created_at)}
+                      <p className="text-sm">
+                        <strong>Pickup:</strong>{" "}
+                        {selectedVerification.cargo.pickup_address}
                       </p>
                     </div>
                   </div>
-
-                  {selectedVerification.notes && (
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">
-                        Notes
-                      </Label>
-                      <p className="bg-gray-50 p-3 rounded mt-1">
-                        {selectedVerification.notes}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Payment Proof Files */}
-              {selectedVerification.payment_proofs &&
-                selectedVerification.payment_proofs.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        Payment Proof Files
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {selectedVerification.payment_proofs.map(
-                          (proof: any, index: number) => (
-                            <div
-                              key={proof.id}
-                              className="border rounded-lg p-4 bg-gray-50"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <FileText className="h-8 w-8 text-blue-600" />
-                                  <div>
-                                    <p className="font-medium text-sm">
-                                      {proof.file?.original_name ||
-                                        `Proof ${index + 1}`}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {(proof.file?.size / 1024).toFixed(1)} KB
-                                      • {proof.file?.mime_type}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      window.open(
-                                        proof.file?.file_url,
-                                        "_blank"
-                                      )
-                                    }
-                                  >
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    View
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const link = document.createElement("a");
-                                      link.href = proof.file?.file_url;
-                                      link.download =
-                                        proof.file?.original_name ||
-                                        "payment-proof.pdf";
-                                      link.click();
-                                    }}
-                                  >
-                                    <Download className="h-4 w-4 mr-1" />
-                                    Download
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
                 )}
+              </CardContent>
+            </Card>
 
-              {/* Admin Actions */}
-              {selectedVerification.status === "pending" && (
+            {/* Payment Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Payment Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Payment Amount
+                    </Label>
+                    <p className="text-lg font-bold">
+                      {formatCurrency(
+                        parseFloat(selectedVerification.amount),
+                        selectedVerification.currency
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Bank Name
+                    </Label>
+                    <p className="bg-gray-50 p-2 rounded uppercase font-medium">
+                      {selectedVerification.bank_name}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Reference Number
+                    </Label>
+                    <p className="font-mono text-sm bg-gray-50 p-2 rounded">
+                      {selectedVerification.reference}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Payment Date
+                    </Label>
+                    <p className="bg-gray-50 p-2 rounded">
+                      {formatDate(selectedVerification.payment_date)}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Verification Status
+                    </Label>
+                    <div className="pt-2">
+                      {getStatusBadge(selectedVerification.status)}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Submitted Date
+                    </Label>
+                    <p className="bg-gray-50 p-2 rounded">
+                      {formatDate(selectedVerification.created_at)}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedVerification.notes && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">
+                      Notes
+                    </Label>
+                    <p className="bg-gray-50 p-3 rounded mt-1">
+                      {selectedVerification.notes}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Payment Proof Files */}
+            {selectedVerification.payment_proofs &&
+              selectedVerification.payment_proofs.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Admin Actions</CardTitle>
+                    <CardTitle className="text-lg">
+                      Payment Proof Files
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <PaymentVerificationActions
-                      verificationId={selectedVerification.id}
-                      onAction={handleAction}
-                    />
+                    <div className="space-y-3">
+                      {selectedVerification.payment_proofs.map(
+                        (proof: any, index: number) => (
+                          <div
+                            key={proof.id}
+                            className="border rounded-lg p-4 bg-gray-50"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <FileText className="h-8 w-8 text-blue-600" />
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {proof.file?.original_name ||
+                                      `Proof ${index + 1}`}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {(proof.file?.size / 1024).toFixed(1)} KB •{" "}
+                                    {proof.file?.mime_type}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    window.open(proof.file?.file_url, "_blank")
+                                  }
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const link = document.createElement("a");
+                                    link.href = proof.file?.file_url;
+                                    link.download =
+                                      proof.file?.original_name ||
+                                      "payment-proof.pdf";
+                                    link.click();
+                                  }}
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Download
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+            {/* Admin Actions */}
+            {selectedVerification.status === "pending" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Admin Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PaymentVerificationActions
+                    verificationId={selectedVerification.id}
+                    onAction={handleAction}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+      </ModernModel>
     </div>
   );
 }
