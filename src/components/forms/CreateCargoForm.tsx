@@ -29,7 +29,7 @@ import {
   LocationType,
 } from "@/types/shared";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Check, ChevronsUpDown } from "lucide-react";
 import {
   MapPin,
   Package,
@@ -43,6 +43,19 @@ import {
   Save,
   Calendar,
 } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
   googleMapsService,
@@ -121,6 +134,19 @@ export function CreateCargoForm() {
   const [pickupLocationSearch, setPickupLocationSearch] = useState("");
   const [destinationLocationSearch, setDestinationLocationSearch] =
     useState("");
+
+  // Search states for dropdowns
+  const [cargoCategorySearch, setCargoCategorySearch] = useState("");
+  const [pickupDistrictSearch, setPickupDistrictSearch] = useState("");
+  const [destinationDistrictSearch, setDestinationDistrictSearch] =
+    useState("");
+
+  // Combobox open states
+  const [cargoCategoryOpen, setCargoCategoryOpen] = useState(false);
+  const [pickupDistrictOpen, setPickupDistrictOpen] = useState(false);
+  const [destinationDistrictOpen, setDestinationDistrictOpen] = useState(false);
+  const [pickupLocationOpen, setPickupLocationOpen] = useState(false);
+  const [destinationLocationOpen, setDestinationLocationOpen] = useState(false);
 
   // Performance optimization refs and state
   const searchCache = useRef<Map<string, GooglePlace[]>>(new Map());
@@ -390,6 +416,35 @@ export function CreateCargoForm() {
 
       return matchesType && matchesSearch;
     });
+  };
+
+  // Filter cargo categories based on search query
+  const filterCargoCategories = (categories: any[], searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      return categories;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return categories.filter(
+      (category) =>
+        category.name.toLowerCase().includes(query) ||
+        (category.description &&
+          category.description.toLowerCase().includes(query))
+    );
+  };
+
+  // Filter districts based on search query
+  const filterDistricts = (districts: any[], searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      return districts;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return districts.filter(
+      (district) =>
+        district.name.toLowerCase().includes(query) ||
+        (district.province && district.province.toLowerCase().includes(query))
+    );
   };
 
   // Handle existing location selection
@@ -884,27 +939,79 @@ export function CreateCargoForm() {
                   {t("cargo.cargoCategory")}{" "}
                   <span className="text-red-500">*</span>
                 </Label>
-                <Select
-                  value={formData.cargoCategoryId}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, cargoCategoryId: value })
-                  }
+
+                <Popover
+                  open={cargoCategoryOpen}
+                  onOpenChange={setCargoCategoryOpen}
                 >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={t(
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={cargoCategoryOpen}
+                      className="w-full justify-between"
+                    >
+                      {formData.cargoCategoryId
+                        ? cargoCategories?.find(
+                            (category) =>
+                              category.id === formData.cargoCategoryId
+                          )?.name
+                        : t(
                         "createCargo.steps.cargoDetails.selectCargoCategory"
-                      )}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
+                          )}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput
+                        placeholder={t(
+                          "createCargo.steps.cargoDetails.searchCategory"
+                        )}
+                      />
+                      <CommandList>
+                        <CommandEmpty>
+                          {t(
+                            "createCargo.steps.cargoDetails.noCategoriesFound"
+                          )}
+                        </CommandEmpty>
+                        <CommandGroup>
                     {cargoCategories?.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                            <CommandItem
+                              key={category.id}
+                              value={category.name}
+                              onSelect={() => {
+                                setFormData({
+                                  ...formData,
+                                  cargoCategoryId: category.id,
+                                });
+                                setCargoCategoryOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  formData.cargoCategoryId === category.id
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                }`}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium">
                         {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                                </span>
+                                {category.description && (
+                                  <span className="text-sm text-muted-foreground">
+                                    {category.description}
+                                  </span>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {formData.cargoType === "other" && (
@@ -1101,45 +1208,67 @@ export function CreateCargoForm() {
                     )}
                   </Label>
 
-                  {/* Search Input */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
+                  <Popover
+                    open={pickupLocationOpen}
+                    onOpenChange={setPickupLocationOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={pickupLocationOpen}
+                        className="w-full justify-between"
+                      >
+                        {formData.selectedPickupLocationId
+                          ? myLocations?.find(
+                              (location) =>
+                                location.id ===
+                                formData.selectedPickupLocationId
+                            )?.name
+                          : t(
+                              "createCargo.steps.pickupDelivery.choosePickupLocation"
+                            )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput
                       placeholder={t(
                         "createCargo.steps.pickupDelivery.searchLocation"
                       )}
-                      value={pickupLocationSearch}
-                      onChange={(e) => setPickupLocationSearch(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-
-                  {/* Location Dropdown */}
-                  <Select
-                    value={formData.selectedPickupLocationId}
-                    onValueChange={(value) =>
-                      handleExistingLocationSelect(value, true)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={t(
-                          "createCargo.steps.pickupDelivery.choosePickupLocation"
-                        )}
-                      />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {t(
+                              "createCargo.steps.pickupDelivery.noLocationsFound"
+                            )}
+                          </CommandEmpty>
+                          <CommandGroup>
                       {filterLocations(
                         myLocations || [],
-                        pickupLocationSearch,
-                        LocationType.PICKUP_POINT
-                      ).length > 0 ? (
-                        filterLocations(
-                          myLocations || [],
-                          pickupLocationSearch,
+                              "",
                           LocationType.PICKUP_POINT
                         ).map((location) => (
-                          <SelectItem key={location.id} value={location.id}>
+                              <CommandItem
+                                key={location.id}
+                                value={location.name}
+                                onSelect={() => {
+                                  handleExistingLocationSelect(
+                                    location.id,
+                                    true
+                                  );
+                                  setPickupLocationOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${
+                                    formData.selectedPickupLocationId ===
+                                    location.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                />
                             <div className="flex flex-col">
                               <span className="font-medium">
                                 {location.name}
@@ -1147,23 +1276,19 @@ export function CreateCargoForm() {
                               <span className="text-sm text-muted-foreground">
                                 {location.address}
                               </span>
-                              {/* {location.contact_person && (
+                                  {location.contact_person && (
                                 <span className="text-xs text-muted-foreground">
                                   Contact: {location.contact_person}
                                 </span>
-                              )} */}
-                            </div>
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-2 text-sm text-muted-foreground text-center">
-                          {t(
-                            "createCargo.steps.pickupDelivery.noLocationsFound"
                           )}
                         </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
 
                   {/* Show selected location info */}
                   {formData.selectedPickupLocationId && (
@@ -1252,31 +1377,83 @@ export function CreateCargoForm() {
                       {t("createCargo.steps.pickupDelivery.district")}{" "}
                       <span className="text-red-500">*</span>
                     </Label>
-                    <Select
-                      value={formData.pickupDistrictId}
-                      onValueChange={(value) => {
-                        console.log("Pickup district selected:", value);
+
+                    <Popover
+                      open={pickupDistrictOpen}
+                      onOpenChange={setPickupDistrictOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={pickupDistrictOpen}
+                          className="w-full justify-between"
+                        >
+                          {formData.pickupDistrictId
+                            ? districts?.find(
+                                (district) =>
+                                  district.id === formData.pickupDistrictId
+                              )?.name
+                            : t(
+                                "createCargo.steps.pickupDelivery.selectPickupDistrict"
+                              )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.searchDistrict"
+                            )}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              {t(
+                                "createCargo.steps.pickupDelivery.noDistrictsFound"
+                              )}
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {districts?.map((district) => (
+                                <CommandItem
+                                  key={district.id}
+                                  value={district.name}
+                                  onSelect={() => {
+                                    console.log(
+                                      "Pickup district selected:",
+                                      district.id
+                                    );
                         setFormData({
                           ...formData,
-                          pickupDistrictId: value,
-                        });
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t(
-                            "createCargo.steps.pickupDelivery.selectPickupDistrict"
-                          )}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {districts?.map((district) => (
-                          <SelectItem key={district.id} value={district.id}>
+                                      pickupDistrictId: district.id,
+                                    });
+                                    setPickupDistrictOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      formData.pickupDistrictId === district.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
                             {district.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                                    </span>
+                                    {district.province && (
+                                      <span className="text-sm text-muted-foreground">
+                                        {district.province}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   {/* Address Search */}
@@ -1522,47 +1699,67 @@ export function CreateCargoForm() {
                     )}
                   </Label>
 
-                  {/* Search Input */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
+                  <Popover
+                    open={destinationLocationOpen}
+                    onOpenChange={setDestinationLocationOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={destinationLocationOpen}
+                        className="w-full justify-between"
+                      >
+                        {formData.selectedDestinationLocationId
+                          ? myLocations?.find(
+                              (location) =>
+                                location.id ===
+                                formData.selectedDestinationLocationId
+                            )?.name
+                          : t(
+                              "createCargo.steps.pickupDelivery.chooseDeliveryLocation"
+                            )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput
                       placeholder={t(
                         "createCargo.steps.pickupDelivery.searchLocation"
                       )}
-                      value={destinationLocationSearch}
-                      onChange={(e) =>
-                        setDestinationLocationSearch(e.target.value)
-                      }
-                      className="pl-10"
-                    />
-                  </div>
-
-                  {/* Location Dropdown */}
-                  <Select
-                    value={formData.selectedDestinationLocationId}
-                    onValueChange={(value) =>
-                      handleExistingLocationSelect(value, false)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={t(
-                          "createCargo.steps.pickupDelivery.chooseDeliveryLocation"
-                        )}
-                      />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {t(
+                              "createCargo.steps.pickupDelivery.noLocationsFound"
+                            )}
+                          </CommandEmpty>
+                          <CommandGroup>
                       {filterLocations(
                         myLocations || [],
-                        destinationLocationSearch,
-                        LocationType.DELIVERY_POINT
-                      ).length > 0 ? (
-                        filterLocations(
-                          myLocations || [],
-                          destinationLocationSearch,
+                              "",
                           LocationType.DELIVERY_POINT
                         ).map((location) => (
-                          <SelectItem key={location.id} value={location.id}>
+                              <CommandItem
+                                key={location.id}
+                                value={location.name}
+                                onSelect={() => {
+                                  handleExistingLocationSelect(
+                                    location.id,
+                                    false
+                                  );
+                                  setDestinationLocationOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={`mr-2 h-4 w-4 ${
+                                    formData.selectedDestinationLocationId ===
+                                    location.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                />
                             <div className="flex flex-col">
                               <span className="font-medium">
                                 {location.name}
@@ -1576,17 +1773,13 @@ export function CreateCargoForm() {
                                 </span>
                               )}
                             </div>
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-2 text-sm text-muted-foreground text-center">
-                          {t(
-                            "createCargo.steps.pickupDelivery.noLocationsFound"
-                          )}
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
 
                   {/* Show selected location info */}
                   {formData.selectedDestinationLocationId && (
@@ -1675,31 +1868,84 @@ export function CreateCargoForm() {
                       {t("createCargo.steps.pickupDelivery.district")}{" "}
                       <span className="text-red-500">*</span>
                     </Label>
-                    <Select
-                      value={formData.destinationDistrictId}
-                      onValueChange={(value) => {
-                        console.log("Destination district selected:", value);
+
+                    <Popover
+                      open={destinationDistrictOpen}
+                      onOpenChange={setDestinationDistrictOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={destinationDistrictOpen}
+                          className="w-full justify-between"
+                        >
+                          {formData.destinationDistrictId
+                            ? districts?.find(
+                                (district) =>
+                                  district.id === formData.destinationDistrictId
+                              )?.name
+                            : t(
+                                "createCargo.steps.pickupDelivery.selectDeliveryDistrict"
+                              )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.searchDistrict"
+                            )}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              {t(
+                                "createCargo.steps.pickupDelivery.noDistrictsFound"
+                              )}
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {districts?.map((district) => (
+                                <CommandItem
+                                  key={district.id}
+                                  value={district.name}
+                                  onSelect={() => {
+                                    console.log(
+                                      "Destination district selected:",
+                                      district.id
+                                    );
                         setFormData({
                           ...formData,
-                          destinationDistrictId: value,
-                        });
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t(
-                            "createCargo.steps.pickupDelivery.selectDeliveryDistrict"
-                          )}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {districts?.map((district) => (
-                          <SelectItem key={district.id} value={district.id}>
+                                      destinationDistrictId: district.id,
+                                    });
+                                    setDestinationDistrictOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      formData.destinationDistrictId ===
+                                      district.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
                             {district.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                                    </span>
+                                    {district.province && (
+                                      <span className="text-sm text-muted-foreground">
+                                        {district.province}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   {/* Address Search */}
