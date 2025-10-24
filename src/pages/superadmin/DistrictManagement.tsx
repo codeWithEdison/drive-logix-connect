@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useDistricts,
@@ -71,6 +71,8 @@ export default function DistrictManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBranchId, setSelectedBranchId] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -93,7 +95,8 @@ export default function DistrictManagementPage() {
     ...(searchQuery.trim() && { search: searchQuery.trim() }),
     branch_id:
       selectedBranchId === "all" ? undefined : selectedBranchId || undefined,
-    limit: 50,
+    page: currentPage,
+    limit: pageSize,
   });
 
   // Debounce search input
@@ -113,9 +116,28 @@ export default function DistrictManagementPage() {
   const deleteDistrictMutation = useDeleteDistrict();
   const toggleStatusMutation = useToggleDistrictStatus();
 
-  // Pagination state (client-side)
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  // Extract pagination info from API response
+  const pagination = useMemo(() => {
+    if (districtsData) {
+      return {
+        page: districtsData.page || currentPage,
+        limit: districtsData.limit || pageSize,
+        total: districtsData.total || 0,
+        totalPages: districtsData.totalPages || 0,
+      };
+    }
+    return {
+      page: currentPage,
+      limit: pageSize,
+      total: 0,
+      totalPages: 0,
+    };
+  }, [districtsData, currentPage, pageSize]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedBranchId]);
 
   const handleCreateDistrict = async () => {
     try {
@@ -229,17 +251,6 @@ export default function DistrictManagementPage() {
 
   const filteredDistricts = districtsData?.districts || [];
 
-  // Client-side pagination helpers
-  const totalDistricts = filteredDistricts.length;
-  const totalPages = Math.max(1, Math.ceil(totalDistricts / itemsPerPage));
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedDistricts = filteredDistricts.slice(startIndex, endIndex);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedBranchId, totalDistricts]);
-
   // Debug logging
   console.log("🔍 DistrictManagement Debug:");
   console.log("districtsData:", districtsData);
@@ -309,7 +320,7 @@ export default function DistrictManagementPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedDistricts.map((district, idx) => (
+                  {filteredDistricts.map((district, idx) => (
                     <TableRow
                       key={district.id}
                       className="cursor-pointer hover:bg-gray-50"
@@ -319,7 +330,7 @@ export default function DistrictManagementPage() {
                       }}
                     >
                       <TableCell className="text-sm text-gray-600">
-                        {startIndex + idx + 1}
+                        {(currentPage - 1) * pageSize + idx + 1}
                       </TableCell>
                       <TableCell className="font-medium">
                         {district.name}
@@ -397,10 +408,33 @@ export default function DistrictManagementPage() {
 
       {/* Pagination Controls */}
       <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="text-sm text-gray-600">
-          Showing {totalDistricts === 0 ? 0 : startIndex + 1} to{" "}
-          {Math.min(endIndex, totalDistricts)} of {totalDistricts} districts
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Show per page:</span>
+          <Select
+            value={pageSize.toString()}
+            onValueChange={(value) => {
+              setPageSize(Number(value));
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        <div className="text-sm text-gray-600">
+          Showing {(currentPage - 1) * pageSize + 1} to{" "}
+          {Math.min(currentPage * pageSize, pagination.total || 0)} of{" "}
+          {pagination.total || 0} districts
+        </div>
+
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -411,13 +445,15 @@ export default function DistrictManagementPage() {
             Previous
           </Button>
           <span className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
+            Page {currentPage} of {pagination.totalPages || 1}
           </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
+            onClick={() =>
+              setCurrentPage((p) => Math.min(pagination.totalPages || 1, p + 1))
+            }
+            disabled={currentPage === (pagination.totalPages || 1)}
           >
             Next
           </Button>
