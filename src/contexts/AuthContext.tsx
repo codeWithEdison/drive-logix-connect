@@ -8,6 +8,7 @@ import {
   CreateUserRequest,
 } from "@/types/shared";
 import { customToast } from "@/lib/utils/toast";
+import { storage } from "@/lib/services/secureStorage";
 
 interface AuthContextType {
   user: User | null;
@@ -29,23 +30,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check for stored user on mount
-    const storedUser = localStorage.getItem("logistics_user");
-    const storedToken = localStorage.getItem("access_token");
-
-    if (storedUser && storedToken) {
+    const checkStoredUser = async () => {
       try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-        localStorage.removeItem("logistics_user");
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-      }
-    }
+        const storedUser = await storage.getItem("logistics_user");
+        const storedToken = await storage.getItem("access_token");
 
-    // Mark as initialized after checking localStorage
-    setIsInitialized(true);
+        if (storedUser && storedToken) {
+          try {
+            const userData = JSON.parse(storedUser);
+            setUser(userData);
+          } catch (error) {
+            console.error("Error parsing stored user:", error);
+            await storage.removeItem("logistics_user");
+            await storage.removeItem("access_token");
+            await storage.removeItem("refresh_token");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking stored user:", error);
+      } finally {
+        // Mark as initialized after checking storage
+        setIsInitialized(true);
+      }
+    };
+
+    checkStoredUser();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -68,10 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Store user data and tokens
-        localStorage.setItem("logistics_user", JSON.stringify(user));
-        localStorage.setItem("access_token", accessToken);
+        await storage.setItem("logistics_user", JSON.stringify(user));
+        await storage.setItem("access_token", accessToken);
         if (refreshToken) {
-          localStorage.setItem("refresh_token", refreshToken);
+          await storage.setItem("refresh_token", refreshToken);
         }
 
         setUser(user);
@@ -126,11 +135,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      // Clear local storage and state regardless of API call result
+      // Clear secure storage and state regardless of API call result
       setUser(null);
-      localStorage.removeItem("logistics_user");
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      await storage.removeItem("logistics_user");
+      await storage.removeItem("access_token");
+      await storage.removeItem("refresh_token");
       customToast.auth.logoutSuccess();
     }
   };

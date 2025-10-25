@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { ApiResponse, ApiError } from "../../types/shared";
+import { storage } from "../services/secureStorage";
 
 // Extend AxiosRequestConfig to include metadata
 declare module "axios" {
@@ -11,8 +12,8 @@ declare module "axios" {
 // Base configuration
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://loveway-logistics-backends.onrender.com";
-  // "http://localhost:3000";
+  // "https://loveway-logistics-backends.onrender.com";
+  "http://localhost:3000";
 const API_VERSION = "v1";
 
 // Request throttling
@@ -47,15 +48,15 @@ const axiosInstance: AxiosInstance = axios.create({
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
-  (config) => {
+  async (config) => {
     // Add auth token if available
-    const token = localStorage.getItem("access_token");
+    const token = await storage.getItem("access_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     // Add language header
-    const language = localStorage.getItem("preferred_language") || "en";
+    const language = (await storage.getItem("preferred_language")) || "en";
     config.headers["Accept-Language"] = language;
 
     // Add request timestamp for throttling
@@ -78,8 +79,8 @@ axiosInstance.interceptors.response.use(
     // Store tokens if present
     if (response.data.data?.tokens) {
       const { accessToken, refreshToken } = response.data.data.tokens;
-      if (accessToken) localStorage.setItem("access_token", accessToken);
-      if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
+      if (accessToken) storage.setItem("access_token", accessToken);
+      if (refreshToken) storage.setItem("refresh_token", refreshToken);
     }
 
     return response;
@@ -105,7 +106,7 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem("refresh_token");
+      const refreshToken = await storage.getItem("refresh_token");
       if (refreshToken) {
         try {
           const response = await axiosInstance.post("/auth/refresh", {
@@ -114,16 +115,16 @@ axiosInstance.interceptors.response.use(
 
           const { accessToken, refreshToken: newRefreshToken } =
             response.data.data;
-          localStorage.setItem("access_token", accessToken);
-          localStorage.setItem("refresh_token", newRefreshToken);
+          await storage.setItem("access_token", accessToken);
+          await storage.setItem("refresh_token", newRefreshToken);
 
           // Retry original request
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return axiosInstance(originalRequest);
         } catch (refreshError) {
           // Refresh failed, redirect to login
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
+          await storage.removeItem("access_token");
+          await storage.removeItem("refresh_token");
           window.location.href = "/login";
           return Promise.reject(refreshError);
         }
