@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { offlineStorageService } from "@/lib/services/offlineStorage";
 import { networkService } from "@/lib/services/networkService";
-import axiosInstance from "@/lib/api/axios";
+import { SyncService } from "@/lib/api/services/syncService";
+import { SyncItem, SyncPushRequest } from "@/types/mobile";
 
-export interface SyncItem {
+export interface LocalSyncItem {
   id: number;
   entityType: string;
   action: "create" | "update" | "delete";
@@ -16,15 +17,17 @@ export interface SyncItem {
 
 export interface OfflineSyncHook {
   isOnline: boolean;
-  pendingItems: SyncItem[];
+  pendingItems: LocalSyncItem[];
   isSyncing: boolean;
   syncProgress: number;
+  lastSyncTime: string | null;
   addToSyncQueue: (
     entityType: string,
     action: "create" | "update" | "delete",
     payload: any
   ) => Promise<void>;
   syncNow: () => Promise<void>;
+  pullServerChanges: () => Promise<void>;
   retryFailedItems: () => Promise<void>;
   clearCompletedItems: () => Promise<void>;
   getCacheStats: () => Promise<{
@@ -39,9 +42,10 @@ export interface OfflineSyncHook {
  */
 export const useOfflineSync = (): OfflineSyncHook => {
   const [isOnline, setIsOnline] = useState(true);
-  const [pendingItems, setPendingItems] = useState<SyncItem[]>([]);
+  const [pendingItems, setPendingItems] = useState<LocalSyncItem[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncProgress, setSyncProgress] = useState(0);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
 
   const loadSyncQueue = useCallback(async () => {
     try {
@@ -94,26 +98,35 @@ export const useOfflineSync = (): OfflineSyncHook => {
         return;
       }
 
-      let completed = 0;
-      const total = pendingItems.length;
+      // Convert local sync items to backend format
+      const syncItems: SyncItem[] = pendingItems.map((item) => ({
+        entityType: item.entityType,
+        entityId: item.payload.id,
+        action: item.action,
+        payload: item.payload,
+        timestamp: item.timestamp,
+      }));
 
-      for (const item of pendingItems) {
-        try {
-          // Update status to processing
-          await offlineStorageService.addToSyncQueue({
-            ...item,
-            status: "processing",
-          });
+      // Push changes to backend using SyncService
+      const response = await SyncService.pushChanges(syncItems);
 
-          // Perform sync based on entity type and action
-          const success = await performSyncOperation(item);
+      if (response.success) {
+        const { queued_count, processed_count, conflicts } = response.data;
 
-          if (success) {
-            // Mark as completed and remove from queue
+        // Handle conflicts
+        if (conflicts.length > 0) {
+          console.warn("Sync conflicts detected:", conflicts);
+          // TODO: Implement conflict resolution UI
+        }
+
+        // Mark successfully processed items as completed
+        let completed = 0;
+        for (const item of pendingItems) {
+          if (completed < processed_count) {
             await offlineStorageService.removeFromSyncQueue(item.id);
             completed++;
           } else {
-            // Mark as failed and increment retry count
+            // Mark remaining items as failed
             await offlineStorageService.addToSyncQueue({
               ...item,
               status: "failed",
@@ -121,19 +134,19 @@ export const useOfflineSync = (): OfflineSyncHook => {
               errorMessage: "Sync operation failed",
             });
           }
+        }
 
-          // Update progress
-          setSyncProgress((completed / total) * 100);
-        } catch (error) {
-          console.error(`Failed to sync item ${item.id}:`, error);
-
-          // Mark as failed
+        // Update last sync time
+        setLastSyncTime(new Date().toISOString());
+        setSyncProgress(100);
+      } else {
+        // Mark all items as failed
+        for (const item of pendingItems) {
           await offlineStorageService.addToSyncQueue({
             ...item,
             status: "failed",
             retryCount: item.retryCount + 1,
-            errorMessage:
-              error instanceof Error ? error.message : "Unknown error",
+            errorMessage: "Sync operation failed",
           });
         }
       }
@@ -142,70 +155,72 @@ export const useOfflineSync = (): OfflineSyncHook => {
       await loadSyncQueue();
     } catch (error) {
       console.error("Sync operation failed:", error);
+
+      // Mark all items as failed
+      const items = await offlineStorageService.getSyncQueue();
+      const pendingItems = items.filter(
+        (item) => item.status === "pending" || item.status === "processing"
+      );
+
+      for (const item of pendingItems) {
+        await offlineStorageService.addToSyncQueue({
+          ...item,
+          status: "failed",
+          retryCount: item.retryCount + 1,
+          errorMessage:
+            error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+
+      await loadSyncQueue();
     } finally {
       setIsSyncing(false);
       setSyncProgress(0);
     }
   }, [isSyncing, isOnline, loadSyncQueue]);
 
-  const performSyncOperation = async (item: SyncItem): Promise<boolean> => {
+  const pullServerChanges = useCallback(async () => {
+    if (isSyncing || !isOnline) return;
+
+    setIsSyncing(true);
+
     try {
-      const { entityType, action, payload } = item;
+      // Pull changes from server
+      const response = await SyncService.pullChanges(lastSyncTime || undefined);
 
-      // Determine API endpoint based on entity type
-      let endpoint = "";
-      let method = "POST";
+      if (response.success) {
+        const { changes } = response.data;
 
-      switch (entityType) {
-        case "cargo":
-          endpoint =
-            action === "create" ? "/api/cargos" : `/api/cargos/${payload.id}`;
-          method =
-            action === "create"
-              ? "POST"
-              : action === "update"
-              ? "PUT"
-              : "DELETE";
-          break;
-        case "delivery":
-          endpoint =
-            action === "create"
-              ? "/api/deliveries"
-              : `/api/deliveries/${payload.id}`;
-          method =
-            action === "create"
-              ? "POST"
-              : action === "update"
-              ? "PUT"
-              : "DELETE";
-          break;
-        case "gps_location":
-          endpoint = "/api/batch/gps-locations";
-          method = "POST";
-          break;
-        default:
-          console.warn(`Unknown entity type: ${entityType}`);
-          return false;
+        // Process server changes
+        for (const change of changes) {
+          try {
+            // Apply server changes to local storage
+            await offlineStorageService.setItem(
+              `${change.entity_type}_${change.entity_id}`,
+              JSON.stringify({
+                ...change.payload,
+                _serverUpdated: true,
+                _serverTimestamp: change.created_at,
+              })
+            );
+
+            console.log(
+              `Applied server change: ${change.entity_type} ${change.action}`
+            );
+          } catch (error) {
+            console.error(`Failed to apply server change:`, error);
+          }
+        }
+
+        // Update last sync time
+        setLastSyncTime(response.data.last_sync);
       }
-
-      // Make API call using axios
-      let response;
-      if (method === "POST") {
-        response = await axiosInstance.post(endpoint, payload);
-      } else if (method === "PUT") {
-        response = await axiosInstance.put(endpoint, payload);
-      } else if (method === "DELETE") {
-        response = await axiosInstance.delete(endpoint);
-      } else {
-        response = await axiosInstance.get(endpoint);
-      }
-
-      return response.data.success;
     } catch (error) {
-      console.error("Sync operation error:", error);
-      return false;
+      console.error("Failed to pull server changes:", error);
+    } finally {
+      setIsSyncing(false);
     }
-  };
+  }, [isSyncing, isOnline, lastSyncTime]);
 
   const retryFailedItems = useCallback(async () => {
     try {
@@ -290,8 +305,10 @@ export const useOfflineSync = (): OfflineSyncHook => {
     pendingItems,
     isSyncing,
     syncProgress,
+    lastSyncTime,
     addToSyncQueue,
     syncNow,
+    pullServerChanges,
     retryFailedItems,
     clearCompletedItems,
     getCacheStats,

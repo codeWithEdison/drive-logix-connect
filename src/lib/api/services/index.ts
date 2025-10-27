@@ -27,3 +27,9 @@ export { BranchService } from "./branchService";
 export { DistrictService } from "./districtService";
 export { CargoImageService } from "./cargoImageService";
 export { ServiceAreaService } from "./serviceAreaService";
+
+// Export new mobile services
+export { SyncService } from "./syncService";
+export { AppConfigService } from "./appConfigService";
+export { MobileApiService } from "./mobileApiService";
+export { BatchService } from "./batchService";

@@ -16,6 +16,7 @@ export * from "./hooks";
 
 // Export types
 export * from "../../types/frontend";
+export * from "../../types/mobile";
 
 // Export utilities
 export * from "../utils/frontend";

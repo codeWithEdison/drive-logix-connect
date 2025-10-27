@@ -152,7 +152,7 @@ class PushNotificationService {
 
       // Register with backend using axios
       const response = await axiosInstance.post(
-        "/mobile/device/register",
+        "/mobile/register-device",
         deviceInfo
       );
 
@@ -216,8 +216,8 @@ class PushNotificationService {
       const deviceInfo = await storage.getObject<DeviceInfo>("device_info");
 
       if (deviceInfo?.token) {
-        await axiosInstance.delete("/mobile/device/unregister", {
-          data: { token: deviceInfo.token },
+        await axiosInstance.post("/mobile/deregister-device", {
+          token: deviceInfo.token,
         });
       }
 

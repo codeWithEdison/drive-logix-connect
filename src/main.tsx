@@ -12,11 +12,17 @@ import { pushNotificationService } from "./lib/services/pushNotificationService"
 import { networkService } from "./lib/services/networkService";
 import { appStateService } from "./lib/services/appStateService";
 import { deviceService } from "./lib/services/deviceService";
+import { AppConfigService } from "./lib/api/services/appConfigService";
 
 // Initialize services
 const initializeServices = async () => {
   try {
-    // Initialize offline storage first
+    // Initialize app configuration first
+    console.log("Initializing app configuration...");
+    await AppConfigService.initialize();
+    console.log("App configuration initialized successfully");
+
+    // Initialize offline storage
     await offlineStorageService.initialize();
 
     // Initialize device service
@@ -44,10 +50,26 @@ googleMapsInitService.initialize().catch((error) => {
   // App continues to work with fallback behavior
 });
 
+// Initialize app configuration for all platforms
+const initializeAppConfig = async () => {
+  try {
+    console.log("Initializing app configuration...");
+    await AppConfigService.initialize();
+    console.log("App configuration initialized successfully");
+  } catch (error) {
+    console.error("App configuration initialization failed:", error);
+  }
+};
+
 // Initialize Capacitor services
 if (Capacitor.isNativePlatform()) {
   initializeServices().catch((error) => {
     console.error("Capacitor services initialization failed:", error);
+  });
+} else {
+  // For web platform, only initialize app config
+  initializeAppConfig().catch((error) => {
+    console.error("App config initialization failed:", error);
   });
 }
 
