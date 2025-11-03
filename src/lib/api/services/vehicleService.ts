@@ -26,6 +26,45 @@ export class VehicleService {
     return response.data;
   }
 
+  // Compare JIMI devices with existing vehicles (Super Admin)
+  static async compareJimiDevices(): Promise<
+    ApiResponse<
+      {
+        new: Array<{
+          jimiDevice: any;
+          mappedVehicle: any;
+        }>;
+        existing: any[];
+        conflicts: any[];
+      }
+    >
+  > {
+    const response = await axiosInstance.get("/vehicles/compare-jimi");
+    return response.data;
+  }
+
+  // Batch create vehicles from validated rows (Super Admin)
+  static async batchCreateVehicles(
+    vehicles: any[]
+  ): Promise<
+    ApiResponse<
+      {
+        total: number;
+        created: number;
+        errors: number;
+        details: {
+          created: Array<any>;
+          errors: Array<{ vehicle: any; error: string }>;
+        };
+      }
+    >
+  > {
+    const response = await axiosInstance.post("/vehicles/batch-create", {
+      vehicles,
+    });
+    return response.data;
+  }
+
   // Get available vehicles without assignments
   static async getAvailableVehiclesWithoutAssignments(
     filters: AvailableVehicleFilters = {}

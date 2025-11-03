@@ -33,6 +33,7 @@ import {
   useUpdateVehicle,
   useApproveVehicle,
 } from "@/lib/api/hooks";
+import { VehicleService } from "@/lib/api/services/vehicleService";
 import { useBranches } from "@/lib/api/hooks/branchHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
 import { CreateVehicleRequest, VehicleType, FuelType } from "@/types/shared";
 import { toast } from "@/hooks/use-toast";
+import VehicleSyncModal, { VehicleSyncRow } from "@/components/vehicles/VehicleSyncModal";
 
 const AdminTrucks = () => {
   const { t } = useLanguage();
@@ -49,6 +51,9 @@ const AdminTrucks = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [syncRows, setSyncRows] = useState<VehicleSyncRow[]>([]);
+  const [isPushing, setIsPushing] = useState(false);
   const [editingTruck, setEditingTruck] = useState<Truck | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -522,6 +527,86 @@ const AdminTrucks = () => {
     window.location.href = `/admin/maintenance/${truckId}`;
   };
 
+  const handlePushVehicles = async () => {
+    try {
+      setIsPushing(true);
+      const res = await VehicleService.compareJimiDevices();
+      const newRows = (res as any)?.data?.new || [];
+      const rows: VehicleSyncRow[] = newRows.map((item: any) => {
+        const mv = item.mappedVehicle || {};
+        const toCell = (v: any) => ({ value: v ?? "", error: null });
+        return {
+          device_imei: toCell(mv.device_imei),
+          plate_number: toCell(mv.plate_number),
+          vehicle_type: toCell(mv.vehicle_type),
+          make: toCell(mv.make),
+          model: toCell(mv.model),
+          year: toCell(mv.year),
+          color: toCell(mv.color),
+          driver_name: toCell(mv.driver_name),
+          driver_phone: toCell(mv.driver_phone),
+          sim_number: toCell(mv.sim_number),
+          device_model: toCell(mv.device_model),
+          device_name: toCell(mv.device_name),
+          device_activation_time: toCell(mv.device_activation_time || mv.activationTime),
+          device_expiration: toCell(mv.device_expiration || mv.expiration),
+          capacity_kg: toCell(mv.capacity_kg),
+          capacity_volume: toCell(mv.capacity_volume),
+          fuel_type: toCell(mv.fuel_type),
+          branch_id: toCell(mv.branch_id || user?.branch_id || ""),
+          status: toCell(mv.status || "active"),
+          gps_provider: toCell(mv.gps_provider || (mv.device_imei ? "jimi" : "")),
+          __ref__: item.jimiDevice,
+        };
+      });
+      setSyncRows(rows);
+      setIsSyncModalOpen(true);
+    } catch (e: any) {
+      toast({ title: "Sync failed", description: e?.error?.message || e?.message || "Compare failed", variant: "destructive" });
+    } finally {
+      setIsPushing(false);
+    }
+  };
+
+  const handleSyncSave = async (vehicles: any[]) => {
+    const res = await VehicleService.batchCreateVehicles(vehicles);
+    const created = (res as any)?.data?.created ?? 0;
+    const errors = (res as any)?.data?.errors ?? 0;
+    if (created > 0) {
+      customToast.success(`Created ${created} vehicles`);
+    }
+    if (errors > 0) {
+      const errDetails = (res as any)?.data?.details?.errors || [];
+      // Build a map by IMEI or plate
+      const errorMap = new Map<string, string>();
+      errDetails.forEach((e: any) => {
+        const v = e.vehicle || {};
+        const key = v.device_imei || v.plate_number;
+        if (key) errorMap.set(key, e.error || "Failed to create");
+      });
+      // Annotate rows with server error on plate_number (visible column)
+      setSyncRows((prev) =>
+        prev.map((row) => {
+          const key = row.device_imei?.value || row.plate_number?.value;
+          if (key && errorMap.has(key)) {
+            return {
+              ...row,
+              plate_number: {
+                value: row.plate_number?.value,
+                error: errorMap.get(key) as string,
+              },
+              hasErrors: true,
+            } as any;
+          }
+          return row;
+        })
+      );
+      customToast.error(`${errors} failed. Check error messages in the table and retry.`);
+    }
+    await refetch();
+    if (errors === 0) setIsSyncModalOpen(false);
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -626,6 +711,18 @@ const AdminTrucks = () => {
             />
             {t("common.refresh")}
           </Button>
+          {user?.role === "super_admin" && (
+            <Button variant="secondary" onClick={handlePushVehicles} disabled={isPushing}>
+              {isPushing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Loading...
+                </>
+              ) : (
+                <>PUSH vehicles</>
+              )}
+            </Button>
+          )}
           <Button onClick={handleCreateNew}>
             <Plus className="h-4 w-4 mr-2" />
             {t("adminTrucks.addNew")}
@@ -1155,6 +1252,15 @@ const AdminTrucks = () => {
           </div>
         </div>
       </ModernModel>
+
+      {isSyncModalOpen && (
+        <VehicleSyncModal
+          isOpen={isSyncModalOpen}
+          onClose={() => setIsSyncModalOpen(false)}
+          rows={syncRows}
+          onSave={handleSyncSave}
+        />
+      )}
 
       {/* Edit Truck Modal */}
       <ModernModel
