@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { CustomTabs } from "@/components/ui/CustomTabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,11 +42,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
 import { CreateVehicleRequest, VehicleType, FuelType } from "@/types/shared";
 import { toast } from "@/hooks/use-toast";
-import VehicleSyncModal, { VehicleSyncRow } from "@/components/vehicles/VehicleSyncModal";
+import VehicleSyncModal, {
+  VehicleSyncRow,
+} from "@/components/vehicles/VehicleSyncModal";
 
 const AdminTrucks = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   const [selectedTruck, setSelectedTruck] = useState<Truck | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -520,7 +524,7 @@ const AdminTrucks = () => {
   };
 
   const handleTrackTruck = (truckId: string) => {
-    window.location.href = `/admin/tracking/${truckId}`;
+    navigate(`/admin/fleet-monitor?highlight=${truckId}`);
   };
 
   const handleAddMaintenance = (truckId: string) => {
@@ -548,21 +552,29 @@ const AdminTrucks = () => {
           sim_number: toCell(mv.sim_number),
           device_model: toCell(mv.device_model),
           device_name: toCell(mv.device_name),
-          device_activation_time: toCell(mv.device_activation_time || mv.activationTime),
+          device_activation_time: toCell(
+            mv.device_activation_time || mv.activationTime
+          ),
           device_expiration: toCell(mv.device_expiration || mv.expiration),
           capacity_kg: toCell(mv.capacity_kg),
           capacity_volume: toCell(mv.capacity_volume),
           fuel_type: toCell(mv.fuel_type),
           branch_id: toCell(mv.branch_id || user?.branch_id || ""),
           status: toCell(mv.status || "active"),
-          gps_provider: toCell(mv.gps_provider || (mv.device_imei ? "jimi" : "")),
+          gps_provider: toCell(
+            mv.gps_provider || (mv.device_imei ? "jimi" : "")
+          ),
           __ref__: item.jimiDevice,
         };
       });
       setSyncRows(rows);
       setIsSyncModalOpen(true);
     } catch (e: any) {
-      toast({ title: "Sync failed", description: e?.error?.message || e?.message || "Compare failed", variant: "destructive" });
+      toast({
+        title: "Sync failed",
+        description: e?.error?.message || e?.message || "Compare failed",
+        variant: "destructive",
+      });
     } finally {
       setIsPushing(false);
     }
@@ -601,7 +613,9 @@ const AdminTrucks = () => {
           return row;
         })
       );
-      customToast.error(`${errors} failed. Check error messages in the table and retry.`);
+      customToast.error(
+        `${errors} failed. Check error messages in the table and retry.`
+      );
     }
     await refetch();
     if (errors === 0) setIsSyncModalOpen(false);
@@ -712,7 +726,11 @@ const AdminTrucks = () => {
             {t("common.refresh")}
           </Button>
           {user?.role === "super_admin" && (
-            <Button variant="secondary" onClick={handlePushVehicles} disabled={isPushing}>
+            <Button
+              variant="secondary"
+              onClick={handlePushVehicles}
+              disabled={isPushing}
+            >
               {isPushing ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
@@ -932,6 +950,8 @@ const AdminTrucks = () => {
             setIsDetailModalOpen(false);
             setSelectedTruck(null);
           }}
+          onTrackTruck={handleTrackTruck}
+          onEditTruck={handleEditTruck}
         />
       )}
 

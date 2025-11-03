@@ -34,6 +34,7 @@ import {
   Building2,
   Map,
   CreditCard,
+  Navigation,
 } from "lucide-react";
 
 const getNavigationConfig = (t: (key: string) => string) => ({
@@ -73,6 +74,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
     },
     { title: t("navigation.drivers"), url: "/admin/drivers", icon: Users },
     { title: t("navigation.vehicles"), url: "/admin/trucks", icon: Truck },
+    { title: "Fleet Monitor", url: "/admin/fleet-monitor", icon: Navigation },
     { title: t("navigation.invoices"), url: "/admin/invoices", icon: Receipt },
     {
       title: "Payment Verifications",
@@ -98,6 +100,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       url: "/super-admin/trucks",
       icon: Truck,
     },
+    { title: "Fleet Monitor", url: "/admin/fleet-monitor", icon: Navigation },
     {
       title: t("navigation.userManagement"),
       url: "/super-admin/users",

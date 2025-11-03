@@ -42,6 +42,8 @@ import { AssignedCargosPage } from "@/pages/AssignedCargosPage";
 import AdminCargos from "@/pages/admin/AdminCargos";
 import AdminDrivers from "@/pages/admin/AdminDrivers";
 import AdminTrucks from "@/pages/admin/AdminTrucks";
+import VehicleLiveTracking from "@/pages/admin/VehicleLiveTracking";
+import FleetMonitor from "@/pages/admin/FleetMonitor";
 import AdminReports from "@/pages/admin/AdminReports";
 import AdminAssignments from "@/pages/admin/AdminAssignments";
 import AdminPaymentVerifications from "@/pages/admin/AdminPaymentVerifications";
@@ -254,6 +256,22 @@ function AppContent() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminTrucks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/vehicles/:vehicleId/live"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <VehicleLiveTracking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/fleet-monitor"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                <FleetMonitor />
               </ProtectedRoute>
             }
           />

@@ -317,7 +317,15 @@ export function TruckDetailModal({
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={() => onTrackTruck?.(truck.id)}
+            >
+              <Navigation className="h-4 w-4 mr-2" />
+              Track Vehicle
+            </Button>
             <Button
               variant="outline"
               className="w-full"
