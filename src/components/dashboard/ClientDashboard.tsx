@@ -283,89 +283,68 @@ export function ClientDashboard() {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Welcome Header with Client Info */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 text-white">
+      <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 rounded-2xl sm:rounded-3xl p-3 sm:p-6 lg:p-8 text-white">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+          <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+            {/* Profile Icon, Title and Description in One Row on Mobile */}
+            <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 min-w-0 flex-1">
               {/* Client Avatar */}
               <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
+                <div className="w-10 h-10 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
                   {user?.avatar_url ? (
                     <img
                       src={user.avatar_url}
                       alt={user.full_name}
-                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover"
+                      className="w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-full object-cover"
                     />
                   ) : (
-                    <User className="w-6 h-6 sm:w-8 sm:h-8 text-white/80" />
+                    <User className="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white/80" />
                   )}
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+                <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-3 h-3 sm:w-5 sm:h-5 lg:w-6 lg:h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 lg:w-2 lg:h-2 bg-white rounded-full"></div>
                 </div>
               </div>
 
-              {/* Client Info */}
+              {/* Client Info - Compact on Mobile */}
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 leading-tight">
-                  {t("clientDashboard.header.welcomeBack")}{" "}
-                  <span className="break-words">
-                    {user?.full_name || t("common.client")}
-                  </span>
-                  !
-                </h1>
-                <p className="text-purple-100 text-sm sm:text-base lg:text-lg mb-2 sm:mb-3">
-                  {t("clientDashboard.header.trackShipments")}
-                </p>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-                  <div className="flex items-center gap-2">
-                    <Package className="w-3 h-3 sm:w-4 sm:h-4 text-purple-200" />
-                    <span className="font-semibold">
-                      {dashboardData?.data?.stats?.total_cargos || 0}
+                <div className="flex flex-col sm:block">
+                  <h1 className="text-base sm:text-xl lg:text-2xl xl:text-3xl font-bold leading-tight truncate">
+                    {t("clientDashboard.header.welcomeBack")}{" "}
+                    <span className="break-words">
+                      {user?.full_name || t("common.client")}
                     </span>
-                    <span className="text-purple-200">
-                      {t("clientDashboard.stats.totalShipmentsLabel")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Truck className="w-3 h-3 sm:w-4 sm:h-4 text-purple-200" />
-                    <span className="font-semibold">
-                      {dashboardData?.data?.stats?.in_transit_cargos || 0}
-                    </span>
-                    <span className="text-purple-200">
-                      {t("clientDashboard.stats.inTransitLabel")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-green-500/20 text-green-200 border-green-400/30 text-xs">
-                      {t("clientDashboard.header.activeClient")}
-                    </Badge>
-                  </div>
+                    !
+                  </h1>
+                  <p className="text-purple-100 text-xs sm:text-sm lg:text-base xl:text-lg mt-0.5 sm:mt-1 truncate">
+                    {t("clientDashboard.header.trackShipments")}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+            {/* Action Buttons - One Row on Mobile */}
+            <div className="flex flex-row items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isLoading}
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-xs sm:text-sm px-2 sm:px-3 flex-1 sm:flex-initial"
               >
                 <RefreshCw
-                  className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                  className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${isLoading ? "animate-spin" : ""}`}
                 />
-                {t("common.refresh")}
+                <span>{t("common.refresh")}</span>
               </Button>
               <Button
-                className="bg-white/20 border-white/30 text-white hover:bg-white/30 w-full sm:w-auto"
+                className="bg-white/20 border-white/30 text-white hover:bg-white/30 text-xs sm:text-sm px-2 sm:px-3 flex-1 sm:flex-initial"
                 onClick={handleCreateCargo}
               >
-                <Plus className="w-4 h-4 mr-2" />
-                {t("dashboard.createNewCargo")}
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">{t("dashboard.createNewCargo")}</span>
+                <span className="sm:hidden">{t("common.create")}</span>
               </Button>
             </div>
           </div>
@@ -383,21 +362,16 @@ export function ClientDashboard() {
           onClick={handleTotalCargosClick}
         >
           <CardContent className="p-3 sm:p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  {t("clientDashboard.stats.totalShipments")}
-                </p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                  {dashboardData?.data?.stats?.total_cargos || 0}
-                </p>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  {t("clientDashboard.stats.allTime")}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
-                <Package className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600" />
-              </div>
+            <div className="space-y-1 sm:space-y-2">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                {t("clientDashboard.stats.totalShipments")}
+              </p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                {dashboardData?.data?.stats?.total_cargos || 0}
+              </p>
+              <p className="text-xs text-gray-500 hidden sm:block">
+                {t("clientDashboard.stats.allTime")}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -407,21 +381,16 @@ export function ClientDashboard() {
           onClick={handleInTransitClick}
         >
           <CardContent className="p-3 sm:p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  {t("clientDashboard.stats.inTransit")}
-                </p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                  {dashboardData?.data?.stats?.in_transit_cargos || 0}
-                </p>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  {t("clientDashboard.stats.activeDeliveries")}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
-                <Truck className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
-              </div>
+            <div className="space-y-1 sm:space-y-2">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                {t("clientDashboard.stats.inTransit")}
+              </p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                {dashboardData?.data?.stats?.in_transit_cargos || 0}
+              </p>
+              <p className="text-xs text-gray-500 hidden sm:block">
+                {t("clientDashboard.stats.activeDeliveries")}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -431,21 +400,16 @@ export function ClientDashboard() {
           onClick={handleDeliveredClick}
         >
           <CardContent className="p-3 sm:p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  {t("clientDashboard.stats.delivered")}
-                </p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                  {dashboardData?.data?.stats?.delivered_cargos || 0}
-                </p>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  {t("clientDashboard.stats.completed")}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
-              </div>
+            <div className="space-y-1 sm:space-y-2">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                {t("clientDashboard.stats.delivered")}
+              </p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                {dashboardData?.data?.stats?.delivered_cargos || 0}
+              </p>
+              <p className="text-xs text-gray-500 hidden sm:block">
+                {t("clientDashboard.stats.completed")}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -455,153 +419,66 @@ export function ClientDashboard() {
           onClick={handlePendingPaymentsClick}
         >
           <CardContent className="p-3 sm:p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  {t("clientDashboard.stats.pendingPayment")}
-                </p>
-                <div className="min-w-0">
-                  <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 break-words leading-tight">
-                    RWF{" "}
-                    {dashboardData?.data?.stats?.pending_payments?.toLocaleString() ||
-                      "0"}
-                  </p>
-                </div>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  {t("clientDashboard.stats.outstanding")}
+            <div className="space-y-1 sm:space-y-2 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+                {t("clientDashboard.stats.pendingPayment")}
+              </p>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 break-words leading-tight">
+                  RWF{" "}
+                  {dashboardData?.data?.stats?.pending_payments?.toLocaleString() ||
+                    "0"}
                 </p>
               </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto flex-shrink-0">
-                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-orange-600" />
-              </div>
+              <p className="text-xs text-gray-500 hidden sm:block">
+                {t("clientDashboard.stats.outstanding")}
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Live Tracking - Full Width */}
-      <div>
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 p-4 sm:p-6">
-            <CardTitle className="flex items-center gap-2 sm:gap-3 text-gray-900">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold">
-                  {t("dashboard.liveTracking")}
-                </h2>
-                <p className="text-xs sm:text-sm text-gray-600 font-normal">
-                  Real-time shipment tracking
-                </p>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <LiveTrackingMap />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity and Invoices Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
-        {/* Recent Activity */}
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden lg:col-span-2">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100 p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+      {/* Live Tracking - Full Width - Only show when client has in-transit cargos */}
+      {dashboardData?.data?.stats?.in_transit_cargos > 0 && (
+        <div>
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 p-4 sm:p-6">
               <CardTitle className="flex items-center gap-2 sm:gap-3 text-gray-900">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                 </div>
                 <div>
                   <h2 className="text-lg sm:text-xl font-bold">
-                    {t("dashboard.recentActivity")}
+                    {t("dashboard.liveTracking")}
                   </h2>
                   <p className="text-xs sm:text-sm text-gray-600 font-normal">
-                    Latest updates
+                    Real-time shipment tracking
                   </p>
                 </div>
               </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleViewAllActivities}
-                className="border-green-300 text-green-600 hover:bg-green-50 w-full sm:w-auto"
-              >
-                {t("common.viewAll")}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            <div className="space-y-3 sm:space-y-4">
-              {dashboardData?.data.recent_activities?.map((activity, index) => (
-                <div key={activity.id} className="relative">
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      {activity.type === "delivery" && (
-                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                      )}
-                      {activity.type === "transit" && (
-                        <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                      )}
-                      {activity.type === "created" && (
-                        <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                        {activity.type === "delivery" && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                        )}
-                        {activity.type === "transit" && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                        )}
-                        {activity.type === "created" && (
-                          <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
-                        )}
-                        <span className="text-sm font-medium text-gray-900 truncate">
-                          {activity.title}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1 break-words">
-                        {activity.description}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(activity.timestamp).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  {index <
-                    (dashboardData?.data.recent_activities?.length || 0) -
-                      1 && (
-                    <div className="absolute left-4 sm:left-5 top-8 sm:top-10 w-px h-6 sm:h-8 bg-gray-200"></div>
-                  )}
-                </div>
-              )) || (
-                <div className="text-center text-gray-500 py-6 sm:py-8">
-                  <Bell className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 sm:mb-3" />
-                  <p className="text-sm sm:text-base">
-                    {t("dashboard.noRecentActivity")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-0">
+              <LiveTrackingMap />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-        {/* Recent Cargo Invoices */}
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden lg:col-span-3 flex flex-col h-[400px] sm:h-[450px] lg:h-[500px]">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100 p-4 sm:p-6 flex-shrink-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+      {/* Recent Activity and Invoices Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
+        {/* Recent Cargo Invoices - Show first on mobile */}
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden lg:col-span-3 order-1 lg:order-2">
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100 p-3 sm:p-4 lg:p-6 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
               <CardTitle className="flex items-center gap-2 sm:gap-3 text-gray-900">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg">
+                  <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-purple-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold">
+                  <h2 className="text-base sm:text-lg lg:text-xl font-bold">
                     {t("dashboard.recentInvoices")}
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-600 font-normal">
+                  <p className="text-xs text-gray-600 font-normal hidden sm:block">
                     Payment history
                   </p>
                 </div>
@@ -610,14 +487,70 @@ export function ClientDashboard() {
                 variant="outline"
                 size="sm"
                 onClick={handleViewAllInvoices}
-                className="border-purple-300 text-purple-600 hover:bg-purple-50 w-full sm:w-auto"
+                className="border-purple-300 text-purple-600 hover:bg-purple-50 text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-8"
               >
                 {t("common.viewAll")}
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6 flex-1 min-h-0 overflow-hidden">
-            <div className="h-full overflow-y-auto overflow-x-auto">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            {/* Mobile: Card Layout */}
+            <div className="space-y-3 sm:hidden">
+              {dashboardData?.data.recent_invoices?.map((invoice) => (
+                <div
+                  key={invoice.invoice_id}
+                  className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">
+                        {t("dashboard.invoiceNo")}
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {invoice.invoice_number}
+                      </p>
+                    </div>
+                    <Badge
+                      className={`text-xs font-medium shrink-0 ${
+                        invoice.status === "paid"
+                          ? "bg-green-100 text-green-600"
+                          : invoice.status === "pending"
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-yellow-100 text-yellow-600"
+                      }`}
+                    >
+                      {t(`invoice.status.${invoice.status}`)}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200">
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">
+                        {t("dashboard.cargoNumber")}
+                      </p>
+                      <p className="text-xs text-gray-900 truncate">
+                        {invoice.cargo_number || invoice.cargo_id || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">
+                        {t("dashboard.amount")}
+                      </p>
+                      <p className="text-xs font-semibold text-gray-900">
+                        RWF {invoice.amount.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )) || (
+                <div className="text-center text-gray-500 py-6">
+                  <DollarSign className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">{t("dashboard.noRecentInvoices")}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop: Table Layout */}
+            <div className="hidden sm:block h-full max-h-[400px] lg:max-h-[450px] overflow-y-auto overflow-x-auto">
               <Table>
                 <TableHeader className="sticky top-0 bg-white z-10">
                   <TableRow>
@@ -627,7 +560,7 @@ export function ClientDashboard() {
                     <TableHead className="text-xs font-medium text-gray-600">
                       {t("dashboard.cargoNumber")}
                     </TableHead>
-                    <TableHead className="text-xs font-medium text-gray-600 hidden sm:table-cell">
+                    <TableHead className="text-xs font-medium text-gray-600 hidden lg:table-cell">
                       {t("dashboard.client")}
                     </TableHead>
                     <TableHead className="text-xs font-medium text-gray-600">
@@ -644,7 +577,7 @@ export function ClientDashboard() {
                       <TableCell className="text-sm font-medium text-gray-900">
                         <div className="min-w-0">
                           <p className="truncate">{invoice.invoice_number}</p>
-                          <p className="text-xs text-gray-500 sm:hidden">
+                          <p className="text-xs text-gray-500 lg:hidden mt-0.5">
                             {user?.full_name}
                           </p>
                         </div>
@@ -654,7 +587,7 @@ export function ClientDashboard() {
                           {invoice.cargo_number || invoice.cargo_id}
                         </p>
                       </TableCell>
-                      <TableCell className="text-sm font-medium text-gray-900 hidden sm:table-cell">
+                      <TableCell className="text-sm font-medium text-gray-900 hidden lg:table-cell">
                         {user?.full_name}
                       </TableCell>
                       <TableCell className="text-sm font-medium text-gray-900">
@@ -689,6 +622,90 @@ export function ClientDashboard() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity - Show second on mobile */}
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden lg:col-span-2 order-2 lg:order-1">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100 p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-gray-900">
+                <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg">
+                  <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg lg:text-xl font-bold">
+                    {t("dashboard.recentActivity")}
+                  </h2>
+                  <p className="text-xs text-gray-600 font-normal hidden sm:block">
+                    Latest updates
+                  </p>
+                </div>
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleViewAllActivities}
+                className="border-green-300 text-green-600 hover:bg-green-50 text-xs sm:text-sm px-2 sm:px-3 h-7 sm:h-8 w-full sm:w-auto"
+              >
+                {t("common.viewAll")}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="space-y-2.5 sm:space-y-3 lg:space-y-4">
+              {dashboardData?.data.recent_activities?.map((activity, index) => (
+                <div key={activity.id} className="relative">
+                  <div className="flex items-start gap-2 sm:gap-3 lg:gap-4">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      {activity.type === "delivery" && (
+                        <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-green-600" />
+                      )}
+                      {activity.type === "transit" && (
+                        <Truck className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-blue-600" />
+                      )}
+                      {activity.type === "created" && (
+                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-orange-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        {activity.type === "delivery" && (
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                        )}
+                        {activity.type === "transit" && (
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        )}
+                        {activity.type === "created" && (
+                          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
+                        )}
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                          {activity.title}
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1 break-words line-clamp-2">
+                        {activity.description}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5 sm:mt-1">
+                        {new Date(activity.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  {index <
+                    (dashboardData?.data.recent_activities?.length || 0) -
+                      1 && (
+                    <div className="absolute left-3.5 sm:left-4 lg:left-5 top-7 sm:top-8 lg:top-10 w-px h-4 sm:h-6 lg:h-8 bg-gray-200"></div>
+                  )}
+                </div>
+              )) || (
+                <div className="text-center text-gray-500 py-4 sm:py-6 lg:py-8">
+                  <Bell className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 mx-auto mb-2" />
+                  <p className="text-xs sm:text-sm lg:text-base">
+                    {t("dashboard.noRecentActivity")}
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
