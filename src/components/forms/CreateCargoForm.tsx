@@ -61,6 +61,7 @@ import {
   googleMapsService,
   GooglePlace,
 } from "@/lib/services/googleMapsService";
+import { motion } from "framer-motion";
 
 export function CreateCargoForm() {
   const { t } = useLanguage();
@@ -841,97 +842,121 @@ export function CreateCargoForm() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
       {/* Enhanced Progress Bar - Mobile Responsive */}
-      <div className="flex items-center justify-between mb-8 overflow-x-auto  p-2">
+      <motion.div
+        className="flex items-center justify-between mb-6 sm:mb-8 overflow-x-auto p-2 sm:p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         {[1, 2, 3, 4].map((number) => (
           <div key={number} className="flex items-center flex-shrink-0">
             <div
-              className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs md:text-sm font-medium transition-all duration-300 shadow-sm ${
+              className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 shadow-md ${
                 step === number
-                  ? "bg-blue-500 text-white ring-2 md:ring-4 ring-blue-100" // Current step - blue
+                  ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white ring-2 sm:ring-4 ring-blue-200 scale-110" // Current step
                   : step > number
-                  ? "bg-green-500 text-white" // Completed step - green
-                  : "bg-gray-200 text-gray-500" // Future step - gray
+                  ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white" // Completed step
+                  : "bg-gray-100 text-gray-400" // Future step
               }`}
             >
               {number === 4 ? (
-                <CheckCircle className="h-4 w-4 md:h-5 md:w-5" />
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
               ) : (
                 number
               )}
             </div>
             {number < 4 && (
               <div
-                className={`w-8 md:w-16 h-1 mx-1 md:mx-3 transition-all duration-300 rounded-full ${
+                className={`w-6 sm:w-12 md:w-16 h-1.5 sm:h-2 mx-1 sm:mx-2 md:mx-3 transition-all duration-300 rounded-full ${
                   step > number
-                    ? "bg-green-500" // Completed line - green
-                    : "bg-gray-200" // Future line - gray
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600" // Completed line
+                    : "bg-gray-200" // Future line
                 }`}
               />
             )}
           </div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Step 1: Cargo Details */}
       {step === 1 && (
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-primary" />
-              {t("createCargo.steps.cargoDetails.title")}
-            </CardTitle>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <span className="text-sm font-semibold text-red-700">
-                  {t("createCargo.requiredFieldsNote")}
-                </span>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Card className="card-elevated border-0 shadow-xl bg-white/95 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl sm:text-2xl">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                {t("createCargo.steps.cargoDetails.title")}
+              </CardTitle>
+              <div className="bg-blue-50 border border-blue-200 rounded-full px-4 py-2 mt-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-xs sm:text-sm font-semibold text-blue-700">
+                    {t("createCargo.requiredFieldsNote")}
+                  </span>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            </CardHeader>
+            <CardContent className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="cargoType">
+                <Label htmlFor="cargoType" className="text-sm font-semibold text-gray-700">
                   {t("createCargo.steps.cargoDetails.cargoType")}{" "}
                   <span className="text-red-500">*</span>
                 </Label>
-                <Select
-                  value={formData.cargoType}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, cargoType: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={t(
-                        "createCargo.steps.cargoDetails.selectCargoType"
-                      )}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="electronics">
-                      {t("createCargo.steps.cargoDetails.types.electronics")}
-                    </SelectItem>
-                    <SelectItem value="furniture">
-                      {t("createCargo.steps.cargoDetails.types.furniture")}
-                    </SelectItem>
-                    <SelectItem value="documents">
-                      {t("createCargo.steps.cargoDetails.types.documents")}
-                    </SelectItem>
-                    <SelectItem value="food">
-                      {t("createCargo.steps.cargoDetails.types.food")}
-                    </SelectItem>
-                    <SelectItem value="clothing">
-                      {t("createCargo.steps.cargoDetails.types.clothing")}
-                    </SelectItem>
-                    <SelectItem value="other">
-                      {t("createCargo.steps.cargoDetails.types.other")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between rounded-full px-4 py-3 h-auto font-semibold border-gray-200 hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    >
+                      <span className="truncate">
+                        {formData.cargoType
+                          ? t(`createCargo.steps.cargoDetails.types.${formData.cargoType}`)
+                          : t("createCargo.steps.cargoDetails.selectCargoType")}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput
+                        placeholder={t("createCargo.steps.cargoDetails.selectCargoType")}
+                      />
+                      <CommandList>
+                        <CommandEmpty>
+                          {t("createCargo.steps.cargoDetails.noCategoriesFound")}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {["electronics", "furniture", "documents", "food", "clothing", "other"].map((type) => (
+                            <CommandItem
+                              key={type}
+                              value={type}
+                              onSelect={() => {
+                                setFormData({ ...formData, cargoType: type });
+                              }}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  formData.cargoType === type ? "opacity-100" : "opacity-0"
+                                }`}
+                              />
+                              {t(`createCargo.steps.cargoDetails.types.${type}`)}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
@@ -949,34 +974,30 @@ export function CreateCargoForm() {
                       variant="outline"
                       role="combobox"
                       aria-expanded={cargoCategoryOpen}
-                      className="w-full justify-between"
+                      className="w-full justify-between rounded-full px-4 py-3 h-auto font-semibold border-gray-200 hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     >
-                      {formData.cargoCategoryId
-                        ? cargoCategories?.find(
-                            (category) =>
-                              category.id === formData.cargoCategoryId
-                          )?.name
-                        : t(
-                        "createCargo.steps.cargoDetails.selectCargoCategory"
-                          )}
+                      <span className="truncate">
+                        {formData.cargoCategoryId
+                          ? cargoCategories?.find(
+                              (category) =>
+                                category.id === formData.cargoCategoryId
+                            )?.name
+                          : t("createCargo.steps.cargoDetails.selectCargoCategory")}
+                      </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0" align="start">
                     <Command>
                       <CommandInput
-                        placeholder={t(
-                          "createCargo.steps.cargoDetails.searchCategory"
-                        )}
+                        placeholder={t("createCargo.steps.cargoDetails.searchCategory")}
                       />
                       <CommandList>
                         <CommandEmpty>
-                          {t(
-                            "createCargo.steps.cargoDetails.noCategoriesFound"
-                          )}
+                          {t("createCargo.steps.cargoDetails.noCategoriesFound")}
                         </CommandEmpty>
                         <CommandGroup>
-                    {cargoCategories?.map((category) => (
+                          {cargoCategories?.map((category) => (
                             <CommandItem
                               key={category.id}
                               value={category.name}
@@ -996,8 +1017,8 @@ export function CreateCargoForm() {
                                 }`}
                               />
                               <div className="flex flex-col">
-                                <span className="font-medium">
-                        {category.name}
+                                <span className="font-semibold">
+                                  {category.name}
                                 </span>
                                 {category.description && (
                                   <span className="text-sm text-muted-foreground">
