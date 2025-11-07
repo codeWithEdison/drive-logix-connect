@@ -231,3 +231,17 @@ export class CargoCategoryService {
     return response.data;
   }
 }
+
+// Website Statistics Service
+export class WebsiteStatisticsService {
+  // Get website statistics
+  static async getStatistics(): Promise<
+    ApiResponse<{
+      total_deliveries: number;
+      total_clients: number;
+    }>
+  > {
+    const response = await axiosInstance.get("/website/statistics");
+    return response.data;
+  }
+}

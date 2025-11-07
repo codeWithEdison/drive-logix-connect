@@ -4,6 +4,11 @@ import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
 import { motion } from "framer-motion";
 import {
+  CargoCategoryService,
+  WebsiteStatisticsService,
+} from "@/lib/api/services/cargoService";
+import { CargoCategory } from "@/types/shared";
+import {
   Truck,
   MapPin,
   Shield,
@@ -37,6 +42,17 @@ import {
   ChevronRight,
   LogIn,
   Globe,
+  Quote,
+  Search,
+  ChevronDown as ChevronDownIcon,
+  X as CloseIcon,
+  HelpCircle,
+  Plus,
+  Minus,
+  ArrowRight,
+  Sparkles,
+  Send,
+  ArrowUp,
 } from "lucide-react";
 
 const LandingPage: React.FC = () => {
@@ -45,11 +61,21 @@ const LandingPage: React.FC = () => {
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
   const [currentVehicleIndex, setCurrentVehicleIndex] = useState(0);
   const [currentAppImageIndex, setCurrentAppImageIndex] = useState(0);
+  const [cargoCategories, setCargoCategories] = useState<CargoCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [calculatorInputs, setCalculatorInputs] = useState({
     distance: "",
     weight: "",
     category: "standard",
   });
+  const [categorySearch, setCategorySearch] = useState("");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [statistics, setStatistics] = useState({
+    total_deliveries: 5000,
+    total_clients: 1000,
+  });
+  const [loadingStatistics, setLoadingStatistics] = useState(true);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -106,6 +132,34 @@ const LandingPage: React.FC = () => {
       weight: "",
       category: "standard",
     });
+    setCategorySearch("");
+  };
+
+  // Format large counts: use K+ only when >= 1000, else show raw with +
+  const formatCount = (value: number): string => {
+    if (value >= 1000) {
+      const thousands = value / 1000;
+      const decimals = value % 1000 === 0 ? 0 : 1;
+      return `${thousands.toFixed(decimals)}K+`;
+    }
+    return `${value}+`;
+  };
+
+  // Filter categories based on search
+  const filteredCategories = cargoCategories.filter((category) =>
+    category.name.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  // Get selected category details
+  const selectedCategory = cargoCategories.find(
+    (cat) => cat.id === calculatorInputs.category
+  );
+
+  // Handle category selection
+  const handleCategorySelect = (categoryId: string, categoryName: string) => {
+    handleCalculatorInputChange("category", categoryId);
+    setCategorySearch(categoryName);
+    setShowCategoryDropdown(false);
   };
 
   const vehicles = [
@@ -207,6 +261,56 @@ const LandingPage: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [appImages.length]);
+
+  // Fetch cargo categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const response = await CargoCategoryService.getCategories({
+          is_active: true,
+        });
+        if (response.success && response.data) {
+          setCargoCategories(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching cargo categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Toggle back-to-top visibility on scroll
+  useEffect(() => {
+    const onScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Fetch website statistics from backend
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        setLoadingStatistics(true);
+        const response = await WebsiteStatisticsService.getStatistics();
+        if (response.success && response.data) {
+          setStatistics(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching website statistics:", error);
+        // Keep default values if fetch fails
+      } finally {
+        setLoadingStatistics(false);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
 
   const benefits = [
     {
@@ -647,7 +751,11 @@ const LandingPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-4 pt-8">
                 <div className="text-center lg:text-left">
                   <div className="text-3xl md:text-4xl font-bold text-blue-400">
-                    5K+
+                    {loadingStatistics ? (
+                      <span className="inline-block animate-pulse">...</span>
+                    ) : (
+                      formatCount(statistics.total_deliveries)
+                    )}
                   </div>
                   <div className="text-sm text-gray-300">Deliveries</div>
                 </div>
@@ -1461,115 +1569,394 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* Testimonials Section - Animated */}
+      <section className="py-16 md:py-28 bg-gradient-to-b from-white via-purple-50/30 to-white relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <motion.div
+          className="absolute top-10 right-10 w-64 h-64 md:w-96 md:h-96 bg-purple-400/5 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            x: [0, 50, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-10 w-64 h-64 md:w-80 md:h-80 bg-blue-400/5 rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            x: [0, -30, 0],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            className="text-center mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 via-pink-100 to-blue-100 text-purple-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Heart className="w-3 h-3 md:w-4 md:h-4" />
+              Client Stories
+            </motion.div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               {t("landing.testimonials.title")}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
               {t("landing.testimonials.subtitle")}
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          {/* Testimonials Grid */}
+          <motion.div
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-50px" }}
+          >
             {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center mb-4">
-                  <img
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full mr-4"
-                  />
-                  <div>
-                    <h4 className="font-semibold text-gray-900">
-                      {testimonial.name}
-                    </h4>
-                    <p className="text-sm text-gray-600">{testimonial.role}</p>
+              <motion.div
+                key={index}
+                variants={{
+                  hidden: { opacity: 0, y: 50 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                whileHover={{
+                  y: -10,
+                  scale: 1.02,
+                  transition: { duration: 0.3 },
+                }}
+                className="group relative bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-shadow duration-300 border border-gray-100"
+              >
+                {/* Quote Icon */}
+                <motion.div
+                  className="absolute -top-3 -left-3 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white shadow-lg"
+                  whileHover={{ rotate: 180, scale: 1.1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Quote className="w-4 h-4 md:w-5 md:h-5" />
+                </motion.div>
+
+                {/* Gradient Background on Hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-pink-50/50 to-blue-50/50 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                <div className="relative z-10">
+                  {/* Rating Stars */}
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.1 + 0.3 }}
+                        viewport={{ once: true }}
+                      >
+                        <Star className="w-4 h-4 md:w-5 md:h-5 text-yellow-400 fill-current" />
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Testimonial Content */}
+                  <p className="text-sm md:text-base text-gray-700 mb-6 leading-relaxed italic">
+                    "{testimonial.content}"
+                  </p>
+
+                  {/* Author Info */}
+                  <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                    <motion.img
+                      src={testimonial.avatar}
+                      alt={testimonial.name}
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full ring-2 ring-purple-100 object-cover"
+                      whileHover={{ scale: 1.1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                    <div>
+                      <h4 className="text-sm md:text-base font-bold text-gray-900">
+                        {testimonial.name}
+                      </h4>
+                      <p className="text-xs md:text-sm text-gray-600">
+                        {testimonial.role}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-5 h-5 text-yellow-400 fill-current"
-                    />
-                  ))}
-                </div>
-                <p className="text-gray-600">"{testimonial.content}"</p>
-              </div>
+
+                {/* Corner Accent */}
+                <div className="absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-purple-500/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
+
+          {/* Trust Indicators */}
+          <motion.div
+            className="mt-12 md:mt-16 flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <div className="flex items-center gap-2 text-gray-700">
+              <Star className="w-5 h-5 text-yellow-400 fill-current" />
+              <span className="text-sm md:text-base font-semibold">
+                4.9/5 Rating
+              </span>
+            </div>
+            <div className="hidden sm:block w-1 h-1 bg-gray-300 rounded-full"></div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <Heart className="w-5 h-5 text-red-500 fill-current" />
+              <span className="text-sm md:text-base font-semibold">
+                {loadingStatistics ? (
+                  <span className="inline-block animate-pulse">Loading...</span>
+                ) : (
+                  `${statistics.total_clients}+ Happy Clients`
+                )}
+              </span>
+            </div>
+            <div className="hidden sm:block w-1 h-1 bg-gray-300 rounded-full"></div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <Shield className="w-5 h-5 text-blue-500" />
+              <span className="text-sm md:text-base font-semibold">
+                100% Verified Reviews
+              </span>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* Pricing Section - Animated */}
+      <section
+        id="pricing"
+        className="py-16 md:py-28 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 relative overflow-hidden"
+      >
+        {/* Animated Background */}
+        <motion.div
+          className="absolute top-0 left-0 w-64 h-64 md:w-96 md:h-96 bg-blue-400/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-80 h-80 md:w-96 md:h-96 bg-purple-400/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, -50, 0],
+            y: [0, -30, 0],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            className="text-center mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <DollarSign className="w-3 h-3 md:w-4 md:h-4" />
+              Transparent Pricing
+            </motion.div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               {t("landing.pricingSection.title")}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
               {t("landing.pricingSection.subtitle")}
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {/* Standard Rates */}
-            <div className="bg-blue-50 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                {t("landing.pricingSection.standardRates")}
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-gray-600">
+          <div className="grid lg:grid-cols-2 gap-6 md:gap-8 max-w-6xl mx-auto">
+            {/* Standard Rates - Animated with Scroll */}
+            <motion.div
+              className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-lg border border-gray-100 flex flex-col"
+              style={{ height: "fit-content" }}
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex items-center gap-3 mb-6 flex-shrink-0">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                  <Package className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                </div>
+                <h3 className="text-lg md:text-2xl font-bold text-gray-900">
+                  {t("landing.pricingSection.standardRates")}
+                </h3>
+              </div>
+
+              <div className="space-y-3 mb-6 flex-shrink-0">
+                <motion.div
+                  className="flex justify-between items-center p-3 md:p-4 bg-blue-50 rounded-xl"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <span className="text-sm md:text-base text-gray-700 font-medium">
                     {t("landing.pricing.perKm")}
                   </span>
-                  <span className="font-semibold text-blue-600">RWF 500</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-gray-600">
+                  <span className="text-sm md:text-lg font-bold text-blue-600">
+                    RWF 500
+                  </span>
+                </motion.div>
+                <motion.div
+                  className="flex justify-between items-center p-3 md:p-4 bg-blue-50 rounded-xl"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <span className="text-sm md:text-base text-gray-700 font-medium">
                     {t("landing.pricing.perKg")}
                   </span>
-                  <span className="font-semibold text-blue-600">RWF 250</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-gray-600">Standard Items</span>
-                  <span className="font-semibold text-blue-600">1.0x</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-gray-600">Fragile Items</span>
-                  <span className="font-semibold text-blue-600">1.5x</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-gray-600">Electronics</span>
-                  <span className="font-semibold text-blue-600">1.3x</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-gray-600">Documents</span>
-                  <span className="font-semibold text-green-600">0.8x</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-gray-600">Furniture</span>
-                  <span className="font-semibold text-blue-600">1.2x</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                  <span className="text-gray-600">Food Items</span>
-                  <span className="font-semibold text-blue-600">1.1x</span>
-                </div>
+                  <span className="text-sm md:text-lg font-bold text-blue-600">
+                    RWF 250
+                  </span>
+                </motion.div>
               </div>
-            </div>
 
-            {/* Interactive Price Calculator */}
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
-              <h3 className="text-2xl font-bold mb-6">Price Calculator</h3>
+              <div className="border-t border-gray-200 pt-6 flex-shrink-0">
+                <h4 className="text-sm md:text-base font-bold text-gray-900 mb-4">
+                  Category Multipliers
+                </h4>
+              </div>
 
-              <div className="space-y-6">
+              {/* Scrollable Category List */}
+              <div className="overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+                {loadingCategories ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="p-3 md:p-4 bg-gray-100 rounded-xl animate-pulse h-12"
+                      ></div>
+                    ))}
+                  </div>
+                ) : (
+                  <motion.div
+                    className="space-y-2 md:space-y-3"
+                    variants={{
+                      hidden: { opacity: 0 },
+                      show: {
+                        opacity: 1,
+                        transition: {
+                          staggerChildren: 0.1,
+                        },
+                      },
+                    }}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true }}
+                  >
+                    {cargoCategories.map((category, index) => (
+                      <motion.div
+                        key={category.id}
+                        variants={{
+                          hidden: { opacity: 0, x: -20 },
+                          show: { opacity: 1, x: 0 },
+                        }}
+                        className="flex justify-between items-center p-3 md:p-4 bg-gradient-to-r from-gray-50 to-blue-50/50 rounded-xl hover:shadow-md transition-shadow duration-200"
+                        whileHover={{ scale: 1.02 }}
+                      >
+                        <div>
+                          <span className="text-xs md:text-sm text-gray-700 font-medium block">
+                            {category.name}
+                          </span>
+                          {category.description && (
+                            <span className="text-xs text-gray-500 block mt-1">
+                              {category.description}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={`text-sm md:text-base font-bold ${
+                            category.base_rate_multiplier < 1
+                              ? "text-green-600"
+                              : category.base_rate_multiplier > 1.2
+                              ? "text-orange-600"
+                              : "text-blue-600"
+                          }`}
+                        >
+                          {category.base_rate_multiplier.toFixed(1)}x
+                        </span>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Interactive Price Calculator - Animated */}
+            <motion.div
+              className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white shadow-2xl"
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                </div>
+                <h3 className="text-lg md:text-2xl font-bold">
+                  Price Calculator
+                </h3>
+              </div>
+
+              <motion.div
+                className="space-y-4 md:space-y-6"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.1,
+                    },
+                  },
+                }}
+                initial="hidden"
+                animate="show"
+              >
                 {/* Distance Input */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                >
+                  <label className="block text-xs md:text-sm font-medium mb-2">
                     Distance (km)
                   </label>
                   <input
@@ -1579,14 +1966,19 @@ const LandingPage: React.FC = () => {
                     onChange={(e) =>
                       handleCalculatorInputChange("distance", e.target.value)
                     }
-                    className="w-full px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full px-4 md:px-5 py-2 md:py-3 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm md:text-base"
                     placeholder="Enter distance"
                   />
-                </div>
+                </motion.div>
 
                 {/* Weight Input */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                >
+                  <label className="block text-xs md:text-sm font-medium mb-2">
                     Weight (kg)
                   </label>
                   <input
@@ -1596,329 +1988,765 @@ const LandingPage: React.FC = () => {
                     onChange={(e) =>
                       handleCalculatorInputChange("weight", e.target.value)
                     }
-                    className="w-full px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full px-4 md:px-5 py-2 md:py-3 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm md:text-base"
                     placeholder="Enter weight"
                   />
-                </div>
+                </motion.div>
 
-                {/* Category Selection */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
+                {/* Category Selection - Searchable Combobox */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  className="relative"
+                >
+                  <label className="block text-xs md:text-sm font-medium mb-2">
                     Item Category
                   </label>
-                  <select
-                    value={calculatorInputs.category}
-                    onChange={(e) =>
-                      handleCalculatorInputChange("category", e.target.value)
-                    }
-                    className="w-full px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  >
-                    <option value="standard">Standard Items (1.0x)</option>
-                    <option value="fragile">Fragile Items (1.5x)</option>
-                    <option value="electronics">Electronics (1.3x)</option>
-                    <option value="documents">Documents (0.8x)</option>
-                    <option value="furniture">Furniture (1.2x)</option>
-                    <option value="food">Food Items (1.1x)</option>
-                  </select>
-                </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={categorySearch || selectedCategory?.name || ""}
+                      onChange={(e) => {
+                        setCategorySearch(e.target.value);
+                        setShowCategoryDropdown(true);
+                      }}
+                      onFocus={() => setShowCategoryDropdown(true)}
+                      placeholder="Search or select category..."
+                      className="w-full px-4 md:px-5 py-2 md:py-3 pr-10 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm md:text-base"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      {categorySearch && (
+                        <button
+                          onClick={() => {
+                            setCategorySearch("");
+                            setShowCategoryDropdown(true);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                        >
+                          <CloseIcon className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
+                        </button>
+                      )}
+                      <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+                    </div>
+
+                    {/* Dropdown */}
+                    {showCategoryDropdown && (
+                      <motion.div
+                        className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                      >
+                        {loadingCategories ? (
+                          <div className="p-4 text-center text-gray-500 text-sm">
+                            Loading categories...
+                          </div>
+                        ) : filteredCategories.length > 0 ? (
+                          filteredCategories.map((category) => (
+                            <button
+                              key={category.id}
+                              onClick={() =>
+                                handleCategorySelect(category.id, category.name)
+                              }
+                              className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                                calculatorInputs.category === category.id
+                                  ? "bg-blue-50"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <div className="text-sm md:text-base font-medium text-gray-900">
+                                    {category.name}
+                                  </div>
+                                  {category.description && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {category.description}
+                                    </div>
+                                  )}
+                                </div>
+                                <span
+                                  className={`text-sm font-bold ml-2 ${
+                                    category.base_rate_multiplier < 1
+                                      ? "text-green-600"
+                                      : category.base_rate_multiplier > 1.2
+                                      ? "text-orange-600"
+                                      : "text-blue-600"
+                                  }`}
+                                >
+                                  {category.base_rate_multiplier.toFixed(1)}x
+                                </span>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500 text-sm">
+                            No categories found
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Click outside to close */}
+                  {showCategoryDropdown && (
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowCategoryDropdown(false)}
+                    />
+                  )}
+                </motion.div>
 
                 {/* Price Display */}
-                <div className="bg-white/20 rounded-lg p-4 text-center">
-                  <div className="text-sm text-blue-100 mb-1">
+                <motion.div
+                  className="bg-white/20 backdrop-blur-sm rounded-xl p-4 md:p-6 text-center border border-white/20"
+                  variants={{
+                    hidden: { opacity: 0, scale: 0.9 },
+                    show: { opacity: 1, scale: 1 },
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="text-xs md:text-sm text-blue-100 mb-1 md:mb-2">
                     Estimated Price
                   </div>
-                  <div className="text-3xl font-bold">
+                  <motion.div
+                    className="text-2xl md:text-4xl font-bold"
+                    key={calculatePrice()}
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     RWF {calculatePrice().toLocaleString()}
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <button
+                <motion.div
+                  className="flex gap-3"
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                >
+                  <motion.button
                     onClick={resetCalculator}
-                    className="flex-1 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full transition-colors"
+                    className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 md:py-3 rounded-full transition-colors text-sm md:text-base font-semibold"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     Reset
-                  </button>
-                  <Link
-                    to="/create-cargo"
-                    className="flex-1 bg-white text-blue-600 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors text-center"
-                  >
-                    Book Now
+                  </motion.button>
+                  <Link to="/create-cargo" className="flex-1">
+                    <motion.div
+                      className="w-full bg-white text-blue-600 px-4 py-2 md:py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors text-center text-sm md:text-base"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Book Now
+                    </motion.div>
                   </Link>
-                </div>
-              </div>
-            </div>
+                </motion.div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* FAQ Section - Animated */}
+      <section
+        id="faq"
+        className="py-16 md:py-28 bg-gradient-to-br from-white via-indigo-50/30 to-white relative overflow-hidden"
+      >
+        {/* Animated Background */}
+        <motion.div
+          className="absolute top-10 left-10 w-64 h-64 md:w-96 md:h-96 bg-indigo-400/5 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            x: [0, 30, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-10 right-10 w-80 h-80 md:w-96 md:h-96 bg-purple-400/5 rounded-full blur-3xl"
+          animate={{
+            scale: [1.3, 1, 1.3],
+            x: [0, -40, 0],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            className="text-center mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100 text-indigo-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <HelpCircle className="w-3 h-3 md:w-4 md:h-4" />
+              FAQ
+            </motion.div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               {t("landing.faq.title")}
             </h2>
-            <p className="text-xl text-gray-600">{t("landing.faq.subtitle")}</p>
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-sm">
-                <button
-                  onClick={() => toggleFaq(index)}
-                  className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 rounded-xl transition-colors"
-                >
-                  <span className="font-semibold text-gray-900">
-                    {faq.question}
-                  </span>
-                  <ChevronDown
-                    className={`w-5 h-5 text-gray-500 transition-transform ${
-                      openFaq === index ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {openFaq === index && (
-                  <div className="px-6 pb-4">
-                    <p className="text-gray-600">{faq.answer}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Us Section */}
-      <section id="contact" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              {t("landing.contact.title")}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {t("landing.contact.subtitle")}
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600">
+              {t("landing.faq.subtitle")}
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center p-6 bg-blue-50 rounded-xl">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Phone className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t("landing.contact.phone")}
-              </h3>
-              <p className="text-gray-600">
-                {t("landing.contact.phoneNumbers.primary")}
-              </p>
-              <p className="text-gray-600">
-                {t("landing.contact.phoneNumbers.secondary")}
-              </p>
-            </div>
+          {/* FAQ Accordion */}
+          <motion.div
+            className="space-y-3 md:space-y-4"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1,
+                },
+              },
+            }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {faqs.map((faq, index) => (
+              <motion.div
+                key={index}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                className="group"
+              >
+                <motion.div
+                  className="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 overflow-hidden"
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {/* Question Button */}
+                  <motion.button
+                    onClick={() => toggleFaq(index)}
+                    className="w-full px-4 md:px-6 py-4 md:py-5 text-left flex justify-between items-center gap-4 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-300"
+                    whileTap={{ scale: 0.99 }}
+                  >
+                    <div className="flex items-start gap-3 flex-1">
+                      {/* Icon */}
+                      <motion.div
+                        className={`flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                          openFaq === index
+                            ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
+                            : "bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600"
+                        }`}
+                        animate={{
+                          rotate: openFaq === index ? 180 : 0,
+                        }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {openFaq === index ? (
+                          <Minus className="w-4 h-4 md:w-5 md:h-5" />
+                        ) : (
+                          <Plus className="w-4 h-4 md:w-5 md:h-5" />
+                        )}
+                      </motion.div>
 
-            <div className="text-center p-6 bg-green-50 rounded-xl">
-              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t("landing.contact.email")}
-              </h3>
-              <p className="text-gray-600">
-                {t("landing.contact.emails.info")}
-              </p>
-              <p className="text-gray-600">
-                {t("landing.contact.emails.support")}
-              </p>
-            </div>
+                      {/* Question Text */}
+                      <span className="text-sm md:text-base lg:text-lg font-bold text-gray-900 pr-4">
+                        {faq.question}
+                      </span>
+                    </div>
 
-            <div className="text-center p-6 bg-orange-50 rounded-xl md:col-span-2 lg:col-span-1">
-              <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <LocationIcon className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t("landing.contact.address")}
+                    {/* Chevron */}
+                    <motion.div
+                      animate={{
+                        rotate: openFaq === index ? 180 : 0,
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className="flex-shrink-0"
+                    >
+                      <ChevronDown className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
+                    </motion.div>
+                  </motion.button>
+
+                  {/* Answer */}
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      height: openFaq === index ? "auto" : 0,
+                      opacity: openFaq === index ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 md:px-6 pb-4 md:pb-5 pt-2">
+                      <div className="pl-11 md:pl-13 pr-10">
+                        <motion.p
+                          className="text-xs md:text-sm lg:text-base text-gray-600 leading-relaxed"
+                          initial={{ y: -10 }}
+                          animate={{ y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {faq.answer}
+                        </motion.p>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Help CTA */}
+          <motion.div
+            className="mt-12 md:mt-16 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-2xl md:rounded-3xl p-6 md:p-8 border border-indigo-100">
+              <HelpCircle className="w-10 h-10 md:w-12 md:h-12 text-indigo-600 mx-auto mb-4" />
+              <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
+                Still have questions?
               </h3>
-              <p className="text-gray-600">
-                {t("landing.contact.addressInfo.street")}
+              <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
+                Can't find the answer you're looking for? Please chat to our
+                friendly team.
               </p>
-              <p className="text-gray-600">
-                {t("landing.contact.addressInfo.country")}
-              </p>
+              <Link to="/contact">
+                <motion.button
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-semibold text-sm md:text-base hover:shadow-xl transition-all duration-300"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Contact Support
+                </motion.button>
+              </Link>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Get Started Section */}
-      <section className="py-20 bg-blue-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            {t("landing.getStarted.title")}
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            {t("landing.getStarted.subtitle")}
-          </p>
+      {/* Ready to Get Started CTA Section - Animated */}
+      <section className="py-16 md:py-28 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <motion.div
+          className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            x: [0, -50, 0],
+            y: [0, -30, 0],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <Link
-              to="/login"
-              className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors"
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            {/* Badge */}
+            <motion.div
+              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full mb-6 md:mb-8 font-semibold text-xs md:text-sm border border-white/30"
+              whileHover={{ scale: 1.05 }}
             >
-              {t("landing.getStarted.bookNow")}
-            </Link>
-            <Link
-              to="/create-cargo"
-              className="bg-blue-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-800 transition-colors"
+              <Sparkles className="w-3 h-3 md:w-4 md:h-4" />
+              Start Your Journey
+            </motion.div>
+
+            {/* Title */}
+            <motion.h2
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
             >
-              {t("landing.getStarted.getQuote")}
-            </Link>
-            <a
-              href="#download"
-              className="bg-blue-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-800 transition-colors"
+              {t("landing.getStarted.title")}
+            </motion.h2>
+
+            {/* Subtitle */}
+            <motion.p
+              className="text-base sm:text-lg md:text-xl lg:text-2xl text-blue-100 mb-8 md:mb-12 max-w-3xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
             >
-              {t("landing.getStarted.downloadApp")}
-            </a>
-            <a
-              href="#contact"
-              className="bg-blue-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-800 transition-colors"
+              {t("landing.getStarted.subtitle")}
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6"
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
+                },
+              }}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
             >
-              {t("landing.getStarted.contactUs")}
-            </a>
-          </div>
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: { opacity: 1, y: 0 },
+                }}
+              >
+                <Link to="/login">
+                  <motion.button
+                    className="group bg-white text-blue-600 px-6 md:px-10 py-3 md:py-4 rounded-full font-bold text-sm md:text-base shadow-2xl shadow-black/20 hover:shadow-white/30 transition-all duration-300 flex items-center gap-2"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Truck className="w-4 h-4 md:w-5 md:h-5" />
+                    {t("landing.getStarted.bookNow")}
+                    <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </Link>
+              </motion.div>
+
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: { opacity: 1, y: 0 },
+                }}
+              >
+                <a href="#download">
+                  <motion.button
+                    className="bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white px-6 md:px-10 py-3 md:py-4 rounded-full font-bold text-sm md:text-base hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Smartphone className="w-4 h-4 md:w-5 md:h-5" />
+                    {t("landing.getStarted.downloadApp")}
+                  </motion.button>
+                </a>
+              </motion.div>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              className="grid grid-cols-3 gap-4 md:gap-8 mt-12 md:mt-16 max-w-3xl mx-auto"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <div className="text-center">
+                <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2">
+                  {loadingStatistics ? (
+                    <span className="inline-block animate-pulse">...</span>
+                  ) : (
+                    formatCount(statistics.total_clients)
+                  )}
+                </div>
+                <div className="text-xs sm:text-sm md:text-base text-blue-200">
+                  Happy Clients
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2">
+                  98%
+                </div>
+                <div className="text-xs sm:text-sm md:text-base text-blue-200">
+                  Success Rate
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2">
+                  24/7
+                </div>
+                <div className="text-xs sm:text-sm md:text-base text-blue-200">
+                  Support
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
+      {/* Footer - Modern Animated */}
+      <footer className="bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 text-white py-12 md:py-16 relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Main Footer Content */}
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-8 md:mb-12"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1,
+                },
+              },
+            }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+          >
+            {/* Brand Section */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { opacity: 1, y: 0 },
+              }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-2 mb-4">
                 <img
-                  src="/logo-text.png"
+                  src="/lovewaylogistic.png"
                   alt="Loveway Logistics"
-                  className="h-8 w-auto"
+                  className="h-8 md:h-10 w-auto"
                 />
+                <div>
+                  <h3 className="text-lg md:text-xl font-bold">
+                    Loveway Logistic
+                  </h3>
+                </div>
               </div>
-              <p className="text-gray-400 mb-4">
+              <p className="text-sm md:text-base text-gray-400 leading-relaxed">
                 {t("landing.footer.description")}
               </p>
-              <div className="flex space-x-4">
-                <Facebook className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
-                <Twitter className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
-                <Instagram className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
-                <Linkedin className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer" />
+              {/* Social Media */}
+              <div className="flex gap-3 pt-2">
+                {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
+                  <motion.a
+                    key={i}
+                    href="#"
+                    className="w-9 h-9 md:w-10 md:h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors duration-300"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Icon className="w-4 h-4 md:w-5 md:h-5" />
+                  </motion.a>
+                ))}
               </div>
-            </div>
+            </motion.div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">
+            {/* Services */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { opacity: 1, y: 0 },
+              }}
+            >
+              <h3 className="text-base md:text-lg font-bold mb-4">
                 {t("landing.footer.services")}
               </h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a
-                    href="#services"
-                    className="hover:text-white transition-colors"
+              <ul className="space-y-2 md:space-y-3 text-sm md:text-base text-gray-400">
+                {[
+                  {
+                    label: t("landing.footer.links.sameDay"),
+                    href: "#services",
+                  },
+                  {
+                    label: t("landing.footer.links.scheduled"),
+                    href: "#services",
+                  },
+                  {
+                    label: t("landing.footer.links.fragile"),
+                    href: "#services",
+                  },
+                  {
+                    label: t("landing.footer.links.business"),
+                    href: "#services",
+                  },
+                ].map((link, i) => (
+                  <motion.li
+                    key={i}
+                    whileHover={{ x: 5 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {t("landing.footer.links.sameDay")}
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#services"
-                    className="hover:text-white transition-colors"
-                  >
-                    {t("landing.footer.links.scheduled")}
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#services"
-                    className="hover:text-white transition-colors"
-                  >
-                    {t("landing.footer.links.fragile")}
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#services"
-                    className="hover:text-white transition-colors"
-                  >
-                    {t("landing.footer.links.business")}
-                  </a>
-                </li>
+                    <a
+                      href={link.href}
+                      className="hover:text-blue-400 transition-colors duration-200 flex items-center gap-2"
+                    >
+                      <ArrowRight className="w-3 h-3 md:w-4 md:h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {link.label}
+                    </a>
+                  </motion.li>
+                ))}
               </ul>
-            </div>
+            </motion.div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">
+            {/* Support */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { opacity: 1, y: 0 },
+              }}
+            >
+              <h3 className="text-base md:text-lg font-bold mb-4">
                 {t("landing.footer.support")}
               </h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <a href="#faq" className="hover:text-white transition-colors">
-                    {t("landing.footer.links.faq")}
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#contact"
-                    className="hover:text-white transition-colors"
+              <ul className="space-y-2 md:space-y-3 text-sm md:text-base text-gray-400">
+                {[
+                  { label: t("landing.footer.links.faq"), href: "#faq" },
+                  {
+                    label: t("landing.footer.links.contact"),
+                    href: "#contact",
+                  },
+                  { label: t("landing.footer.links.track"), href: "#tracking" },
+                  { label: t("landing.footer.links.help"), href: "#help" },
+                ].map((link, i) => (
+                  <motion.li
+                    key={i}
+                    whileHover={{ x: 5 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    {t("landing.footer.links.contact")}
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#tracking"
-                    className="hover:text-white transition-colors"
-                  >
-                    {t("landing.footer.links.track")}
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#help"
-                    className="hover:text-white transition-colors"
-                  >
-                    {t("landing.footer.links.help")}
-                  </a>
-                </li>
+                    <a
+                      href={link.href}
+                      className="hover:text-blue-400 transition-colors duration-200"
+                    >
+                      {link.label}
+                    </a>
+                  </motion.li>
+                ))}
               </ul>
-            </div>
+            </motion.div>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">
+            {/* Contact Info */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { opacity: 1, y: 0 },
+              }}
+            >
+              <h3 className="text-base md:text-lg font-bold mb-4">
                 {t("landing.footer.contactInfo")}
               </h3>
-              <div className="space-y-2 text-gray-400">
-                <div className="flex items-center">
-                  <Phone className="w-4 h-4 mr-2" />
+              <div className="space-y-3 md:space-y-4 text-sm md:text-base text-gray-400">
+                <motion.div
+                  className="flex items-start gap-3"
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="w-8 h-8 md:w-9 md:h-9 bg-blue-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-3 h-3 md:w-4 md:h-4 text-blue-400" />
+                  </div>
                   <span>{t("landing.contact.phoneNumbers.primary")}</span>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="w-4 h-4 mr-2" />
+                </motion.div>
+                <motion.div
+                  className="flex items-start gap-3"
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="w-8 h-8 md:w-9 md:h-9 bg-green-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-3 h-3 md:w-4 md:h-4 text-green-400" />
+                  </div>
                   <span>{t("landing.contact.emails.support")}</span>
-                </div>
-                <div className="flex items-center">
-                  <LocationIcon className="w-4 h-4 mr-2" />
+                </motion.div>
+                <motion.div
+                  className="flex items-start gap-3"
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="w-8 h-8 md:w-9 md:h-9 bg-orange-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <LocationIcon className="w-3 h-3 md:w-4 md:h-4 text-orange-400" />
+                  </div>
                   <span>
                     {t("landing.contact.addressInfo.street")},{" "}
                     {t("landing.contact.addressInfo.country")}
                   </span>
-                </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Bottom Bar */}
+          <motion.div
+            className="border-t border-gray-800 pt-6 md:pt-8"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs md:text-sm text-gray-400">
+              <p>{t("landing.footer.copyright")}</p>
+              <div className="flex gap-6">
+                <a href="#" className="hover:text-white transition-colors">
+                  Privacy Policy
+                </a>
+                <a href="#" className="hover:text-white transition-colors">
+                  Terms of Service
+                </a>
+                <a href="#" className="hover:text-white transition-colors">
+                  Cookie Policy
+                </a>
               </div>
             </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>{t("landing.footer.copyright")}</p>
-          </div>
+          </motion.div>
         </div>
       </footer>
+
+      {/* Back to Top Button */}
+      <motion.button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className={`fixed bottom-6 right-6 z-50 p-3 md:p-4 rounded-full shadow-2xl bg-blue-600 text-white hover:bg-blue-700 transition-colors ${
+          showBackToTop
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{
+          scale: showBackToTop ? 1 : 0.9,
+          opacity: showBackToTop ? 1 : 0,
+        }}
+        whileHover={{ scale: 1.05, y: -2 }}
+        whileTap={{ scale: 0.95 }}
+        aria-label="Back to top"
+      >
+        <ArrowUp className="w-5 h-5 md:w-6 md:h-6" />
+      </motion.button>
     </div>
   );
 };
