@@ -115,11 +115,12 @@ export default function Login() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
+                className="w-16 h-16"
               >
                 <img
                   src="/lovewaylogistic.png"
                   alt="Loveway Logistics"
-                  className="w-16 h-16 object-contain"
+                  className="w-full h-full object-cover rounded-full"
                 />
               </motion.div>
               <div>
@@ -188,11 +189,13 @@ export default function Login() {
               transition={{ duration: 0.5 }}
             >
               <div className="flex items-center justify-center gap-3 mb-4">
-                <img
-                  src="/lovewaylogistic.png"
-                  alt="Loveway Logistics"
-                  className="w-12 h-12 object-contain"
-                />
+                <div className="w-12 h-12">
+                  <img
+                    src="/lovewaylogistic.png"
+                    alt="Loveway Logistics"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
                 <h1 className="text-2xl font-bold text-white">
                   Loveway Logistics
                 </h1>

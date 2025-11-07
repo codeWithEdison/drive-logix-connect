@@ -1916,222 +1916,222 @@
         "title": "Business Shipping",
         "description": "Regular business delivery solutions"
       }
-    }
-  },
-  "paymentOptions": {
-    "title": "Flexible Payment Options",
-    "subtitle": "Choose the payment method that works best for you.",
-    "badge": "Payment Methods",
-    "subtitleShort": "Choose your preferred payment method",
-    "supported": "Supported",
-    "secureBadge": "All payments are secure and encrypted"
-  },
-  "trackingFeatures": {
-    "title": "Advanced Tracking Features",
-    "subtitle": "Stay connected with your cargo every step of the way.",
-    "liveGps": {
-      "title": "Live GPS Tracking",
-      "description": "See your cargo's exact location"
     },
-    "route": {
-      "title": "Route Visualization",
-      "description": "View the planned delivery route"
+    "paymentOptions": {
+      "title": "Flexible Payment Options",
+      "subtitle": "Choose the payment method that works best for you.",
+      "badge": "Payment Methods",
+      "subtitleShort": "Choose your preferred payment method",
+      "supported": "Supported",
+      "secureBadge": "All payments are secure and encrypted"
     },
-    "eta": {
-      "title": "ETA Updates",
-      "description": "Get accurate delivery time estimates"
+    "trackingFeatures": {
+      "title": "Advanced Tracking Features",
+      "subtitle": "Stay connected with your cargo every step of the way.",
+      "liveGps": {
+        "title": "Live GPS Tracking",
+        "description": "See your cargo's exact location"
+      },
+      "route": {
+        "title": "Route Visualization",
+        "description": "View the planned delivery route"
+      },
+      "eta": {
+        "title": "ETA Updates",
+        "description": "Get accurate delivery time estimates"
+      },
+      "notifications": {
+        "title": "Status Notifications",
+        "description": "SMS and email updates"
+      },
+      "photos": {
+        "title": "Delivery Photos",
+        "description": "Photo confirmation upon delivery"
+      }
     },
-    "notifications": {
-      "title": "Status Notifications",
-      "description": "SMS and email updates"
+    "testimonials": {
+      "title": "What Our Customers Say",
+      "subtitle": "Don't just take our word for it - hear from our satisfied customers.",
+      "badge": "Client Stories",
+      "trustIndicators": {
+        "rating": "4.9/5 Rating",
+        "happyClients": "Happy Clients",
+        "verifiedReviews": "100% Verified Reviews"
+      },
+      "sarah": {
+        "name": "Sarah Johnson",
+        "role": "Business Owner",
+        "content": "Loveway Logistics has been a game-changer for our business. Reliable delivery every time!"
+      },
+      "michael": {
+        "name": "Michael Chen",
+        "role": "E-commerce Store",
+        "content": "Perfect for our online store deliveries. Customers love the tracking feature!"
+      },
+      "emily": {
+        "name": "Emily Rodriguez",
+        "role": "Individual Customer",
+        "content": "Great service, always on time. The real-time tracking gives me peace of mind."
+      }
     },
-    "photos": {
-      "title": "Delivery Photos",
-      "description": "Photo confirmation upon delivery"
-    }
-  },
-  "testimonials": {
-    "title": "What Our Customers Say",
-    "subtitle": "Don't just take our word for it - hear from our satisfied customers.",
-    "badge": "Client Stories",
-    "trustIndicators": {
-      "rating": "4.9/5 Rating",
-      "happyClients": "Happy Clients",
-      "verifiedReviews": "100% Verified Reviews"
+    "pricingSection": {
+      "title": "Transparent Pricing",
+      "subtitle": "Clear, upfront pricing with no hidden fees.",
+      "standardRates": "Standard Rates",
+      "getQuote": "Get Instant Quote",
+      "getQuoteDescription": "Enter your shipment details to get an accurate price estimate.",
+      "getQuoteButton": "Get Quote Now",
+      "categoryMultipliers": "Category Multipliers",
+      "priceCalculator": "Price Calculator",
+      "calculator": {
+        "distance": "Distance (km)",
+        "weight": "Weight (kg)",
+        "category": "Item Category",
+        "categoryPlaceholder": "Search or select category...",
+        "loadingCategories": "Loading categories...",
+        "noCategories": "No categories found",
+        "estimatedPrice": "Estimated Price",
+        "reset": "Reset",
+        "bookNow": "Book Now"
+      }
     },
-    "sarah": {
-      "name": "Sarah Johnson",
-      "role": "Business Owner",
-      "content": "Loveway Logistics has been a game-changer for our business. Reliable delivery every time!"
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Find answers to common questions about our services.",
+      "tracking": {
+        "question": "How do I track my shipment?",
+        "answer": "Once you book a shipment, you'll receive a tracking link via SMS and email. You can also track your cargo in real-time through our website or mobile app."
+      },
+      "payment": {
+        "question": "What payment methods do you accept?",
+        "answer": "We accept mobile money (MTN, Airtel), bank transfers, online payments, and cash on delivery where available."
+      },
+      "delivery": {
+        "question": "How long does delivery take?",
+        "answer": "Delivery times vary based on distance and service type. Same-day delivery is available for urgent shipments, while standard delivery typically takes 1-3 business days."
+      },
+      "damage": {
+        "question": "What if my cargo is damaged?",
+        "answer": "All our drivers are insured and we have a comprehensive damage policy. Contact our support team immediately if you notice any damage to your cargo."
+      },
+      "address": {
+        "question": "Can I change the delivery address?",
+        "answer": "Yes, you can change the delivery address up to 2 hours before the scheduled delivery time through our app or by contacting customer support."
+      },
+      "weekend": {
+        "question": "Do you deliver on weekends?",
+        "answer": "Yes, we offer weekend delivery services for an additional fee. You can select weekend delivery when booking your shipment."
+      },
+      "helpCta": {
+        "title": "Still have questions?",
+        "description": "Can't find the answer you're looking for? Please chat to our friendly team.",
+        "button": "Contact Support"
+      }
     },
-    "michael": {
-      "name": "Michael Chen",
-      "role": "E-commerce Store",
-      "content": "Perfect for our online store deliveries. Customers love the tracking feature!"
+    "contact": {
+      "title": "Contact Us",
+      "subtitle": "Get in touch with our team for any questions or support you need.",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "phoneNumbers": {
+        "primary": "+250 788 123 456",
+        "secondary": "+250 789 123 456"
+      },
+      "emails": {
+        "info": "info@lovewaylogistics.com",
+        "support": "support@lovewaylogistics.com"
+      },
+      "addressInfo": {
+        "street": "KG 123 St, Kigali",
+        "country": "Rwanda"
+      }
     },
-    "emily": {
-      "name": "Emily Rodriguez",
-      "role": "Individual Customer",
-      "content": "Great service, always on time. The real-time tracking gives me peace of mind."
-    }
-  },
-  "pricingSection": {
-    "title": "Transparent Pricing",
-    "subtitle": "Clear, upfront pricing with no hidden fees.",
-    "standardRates": "Standard Rates",
-    "getQuote": "Get Instant Quote",
-    "getQuoteDescription": "Enter your shipment details to get an accurate price estimate.",
-    "getQuoteButton": "Get Quote Now",
-    "categoryMultipliers": "Category Multipliers",
-    "priceCalculator": "Price Calculator",
-    "calculator": {
-      "distance": "Distance (km)",
-      "weight": "Weight (kg)",
-      "category": "Item Category",
-      "categoryPlaceholder": "Search or select category...",
-      "loadingCategories": "Loading categories...",
-      "noCategories": "No categories found",
-      "estimatedPrice": "Estimated Price",
-      "reset": "Reset",
-      "bookNow": "Book Now"
-    }
-  },
-  "faq": {
-    "title": "Frequently Asked Questions",
-    "subtitle": "Find answers to common questions about our services.",
-    "tracking": {
-      "question": "How do I track my shipment?",
-      "answer": "Once you book a shipment, you'll receive a tracking link via SMS and email. You can also track your cargo in real-time through our website or mobile app."
+    "getStarted": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join thousands of satisfied customers who trust Loveway Logistics for their delivery needs.",
+      "bookNow": "Book Now",
+      "getQuote": "Get Quote",
+      "downloadApp": "Download App",
+      "contactUs": "Contact Us",
+      "badge": "Start Your Journey",
+      "stats": {
+        "happyClients": "Happy Clients",
+        "successRate": "Success Rate",
+        "support": "Support"
+      }
     },
-    "payment": {
-      "question": "What payment methods do you accept?",
-      "answer": "We accept mobile money (MTN, Airtel), bank transfers, online payments, and cash on delivery where available."
+    "footer": {
+      "description": "Professional logistics platform connecting clients, drivers, and fleet management with real-time tracking and secure payments.",
+      "services": "Services",
+      "support": "Support",
+      "contactInfo": "Contact Info",
+      "copyright": "© 2024 Loveway Logistics Platform. All rights reserved.",
+      "links": {
+        "sameDay": "Same-Day Delivery",
+        "scheduled": "Scheduled Delivery",
+        "fragile": "Fragile Items",
+        "business": "Business Shipping",
+        "faq": "FAQ",
+        "contact": "Contact Us",
+        "track": "Track Shipment",
+        "help": "Help Center"
+      },
+      "policies": {
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "cookies": "Cookie Policy"
+      }
     },
-    "delivery": {
-      "question": "How long does delivery take?",
-      "answer": "Delivery times vary based on distance and service type. Same-day delivery is available for urgent shipments, while standard delivery typically takes 1-3 business days."
+    "trackingDemo": {
+      "title": "Live Tracking",
+      "active": "Active",
+      "eta": "ETA",
+      "status": "Status",
+      "inTransit": "In Transit"
     },
-    "damage": {
-      "question": "What if my cargo is damaged?",
-      "answer": "All our drivers are insured and we have a comprehensive damage policy. Contact our support team immediately if you notice any damage to your cargo."
+    "downloadApp": {
+      "title": "Download Our App",
+      "subtitle": "Get the full Loveway Logistics experience on your mobile device",
+      "downloadButton": "Download App",
+      "available": "Available on iOS and Android",
+      "androidOnly": "Available on Android",
+      "features": {
+        "details": "Cargo Details",
+        "client": "Client Dashboard",
+        "tracking": "Real-time Tracking"
+      }
     },
-    "address": {
-      "question": "Can I change the delivery address?",
-      "answer": "Yes, you can change the delivery address up to 2 hours before the scheduled delivery time through our app or by contacting customer support."
+    "vehicles": {
+      "title": "Our Vehicle Fleet",
+      "subtitle": "Choose the right vehicle for your cargo needs. We have a diverse fleet to handle any shipment size.",
+      "badge": "Our Fleet",
+      "truck": {
+        "name": "Heavy Truck",
+        "capacity": "Up to 25 tons",
+        "description": "Perfect for large shipments, construction materials, and heavy equipment. Our heavy trucks are equipped with advanced tracking and safety features.",
+        "weight": "Max: 25,000 kg",
+        "dimensions": "12m x 2.5m x 3m"
+      },
+      "van": {
+        "name": "Delivery Van",
+        "capacity": "Up to 2 tons",
+        "description": "Ideal for medium-sized packages, documents, and small business deliveries. Fast and efficient for urban deliveries.",
+        "weight": "Max: 2,000 kg",
+        "dimensions": "4m x 2m x 2m"
+      },
+      "motorcycle": {
+        "name": "Delivery Motorcycle",
+        "capacity": "Up to 50 kg",
+        "description": "Perfect for urgent deliveries, documents, and small packages. Navigates through traffic quickly for same-day delivery.",
+        "weight": "Max: 50 kg",
+        "dimensions": "2m x 0.8m x 1.2m"
+      }
     },
-    "weekend": {
-      "question": "Do you deliver on weekends?",
-      "answer": "Yes, we offer weekend delivery services for an additional fee. You can select weekend delivery when booking your shipment."
-    },
-    "helpCta": {
-      "title": "Still have questions?",
-      "description": "Can't find the answer you're looking for? Please chat to our friendly team.",
-      "button": "Contact Support"
-    }
-  },
-  "contact": {
-    "title": "Contact Us",
-    "subtitle": "Get in touch with our team for any questions or support you need.",
-    "phone": "Phone",
-    "email": "Email",
-    "address": "Address",
-    "phoneNumbers": {
-      "primary": "+250 788 123 456",
-      "secondary": "+250 789 123 456"
-    },
-    "emails": {
-      "info": "info@lovewaylogistics.com",
-      "support": "support@lovewaylogistics.com"
-    },
-    "addressInfo": {
-      "street": "KG 123 St, Kigali",
-      "country": "Rwanda"
-    }
-  },
-  "getStarted": {
-    "title": "Ready to Get Started?",
-    "subtitle": "Join thousands of satisfied customers who trust Loveway Logistics for their delivery needs.",
-    "bookNow": "Book Now",
-    "getQuote": "Get Quote",
-    "downloadApp": "Download App",
-    "contactUs": "Contact Us",
-    "badge": "Start Your Journey",
-    "stats": {
-      "happyClients": "Happy Clients",
-      "successRate": "Success Rate",
-      "support": "Support"
-    }
-  },
-  "footer": {
-    "description": "Professional logistics platform connecting clients, drivers, and fleet management with real-time tracking and secure payments.",
-    "services": "Services",
-    "support": "Support",
-    "contactInfo": "Contact Info",
-    "copyright": "© 2024 Loveway Logistics Platform. All rights reserved.",
-    "links": {
-      "sameDay": "Same-Day Delivery",
-      "scheduled": "Scheduled Delivery",
-      "fragile": "Fragile Items",
-      "business": "Business Shipping",
-      "faq": "FAQ",
-      "contact": "Contact Us",
-      "track": "Track Shipment",
-      "help": "Help Center"
-    },
-    "policies": {
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "cookies": "Cookie Policy"
-    }
-  },
-  "mobileMenu": {
-    "navigation": "Navigation",
-    "tools": "Tools",
-    "language": "Language"
-  },
-  "trackingDemo": {
-    "title": "Live Tracking",
-    "active": "Active",
-    "eta": "ETA",
-    "status": "Status",
-    "inTransit": "In Transit"
-  },
-  "downloadApp": {
-    "title": "Download Our App",
-    "subtitle": "Get the full Loveway Logistics experience on your mobile device",
-    "downloadButton": "Download App",
-    "available": "Available on iOS and Android",
-    "androidOnly": "Available on Android",
-    "features": {
-      "details": "Cargo Details",
-      "client": "Client Dashboard",
-      "tracking": "Real-time Tracking"
-    }
-  },
-  "vehicles": {
-    "title": "Our Vehicle Fleet",
-    "subtitle": "Choose the right vehicle for your cargo needs. We have a diverse fleet to handle any shipment size.",
-    "badge": "Our Fleet",
-    "truck": {
-      "name": "Heavy Truck",
-      "capacity": "Up to 25 tons",
-      "description": "Perfect for large shipments, construction materials, and heavy equipment. Our heavy trucks are equipped with advanced tracking and safety features.",
-      "weight": "Max: 25,000 kg",
-      "dimensions": "12m x 2.5m x 3m"
-    },
-    "van": {
-      "name": "Delivery Van",
-      "capacity": "Up to 2 tons",
-      "description": "Ideal for medium-sized packages, documents, and small business deliveries. Fast and efficient for urban deliveries.",
-      "weight": "Max: 2,000 kg",
-      "dimensions": "4m x 2m x 2m"
-    },
-    "motorcycle": {
-      "name": "Delivery Motorcycle",
-      "capacity": "Up to 50 kg",
-      "description": "Perfect for urgent deliveries, documents, and small packages. Navigates through traffic quickly for same-day delivery.",
-      "weight": "Max: 50 kg",
-      "dimensions": "2m x 0.8m x 1.2m"
+    "mobileMenu": {
+      "navigation": "Navigation",
+      "tools": "Tools",
+      "language": "Language"
     }
   },
 

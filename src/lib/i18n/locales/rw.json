@@ -172,7 +172,7 @@
     "users": "Abakoresha",
     "preferredLanguage": "Ururimi Rwifuza",
     "password": "Ijambo banga",
-    "cargo": "Umuzigo", 
+    "cargo": "Umuzigo",
     "branch": "Iryo",
     "avatar": "Iryo",
     "allBranches": "Iryo yose",
@@ -1330,7 +1330,14 @@
       "subtitle": "kurikirana buri kirometelo cy'urugendo",
       "description": "Urubuga rwihariye kandi rwizewe mu by'ubwikorezi ruhuza abakiriya, abashoferi ndetse nabagenzura ibinyabiziga hamwe no gukurikirana ikinyabigiza aho kiri hose. Tuguha serivise aho waba uherereye hose mugihugu. Komeza Ubucuruzi bwawe hamwe na sisiteme yo gucunga neza ubwikorezi bw'imizigo yawe.",
       "ctaPrimary": "Ohereza ubu",
-      "ctaSecondary": "Kurikirana Imizigo yawe"
+      "ctaSecondary": "Kurikirana Imizigo yawe",
+      "badge": "Kohereza Vuba kandi Birizewe",
+      "descriptionShort": "Urubuga rwihariye rwo kohereza imizigo rufite uburyo bwo gukurikirana mu gihe nyacyo n'amahitamo yo kwishyura byizewe.",
+      "stats": {
+        "deliveries": "Ibyoherejwe",
+        "onTime": "Ku Gihe",
+        "support": "Ubufasha"
+      }
     },
     "steps": {
       "book": {
@@ -1361,162 +1368,195 @@
       }
     },
     "pricing": {
-  "perKm": "Ku Kilometero",
-  "perKg": "Ku Kilogarama",
-  "sameDay": "Kohereza kumunsi umwe"
-},
+      "perKm": "Ku Kilometero",
+      "perKg": "Ku Kilogarama",
+      "sameDay": "Kohereza kumunsi umwe"
+    },
     "navigation": {
-  "services": "Serivisi",
-  "tracking": "Kurikirana",
-  "pricing": "Ibiciro",
-  "faq": "Ibibazo Bisanzwe",
-  "contact": "Tuvugishe",
-  "getStarted": "Tangira"
+      "services": "Serivisi",
+      "tracking": "Kurikirana",
+      "pricing": "Ibiciro",
+      "faq": "Ibibazo Bisanzwe",
+      "contact": "Tuvugishe",
+      "getStarted": "Tangira"
     },
     "benefits": {
-  "title": "Kuki Wahitamo Loveway Logistics?",
-  "subtitle": "Dutanga ibisubizo byuzuye mu by’ubwikorezi dukoresheje ikoranabuhanga rigezweho na serivisi zidasanzwe!!,Utasanga ahandi",
-  "realTimeTracking": {
-    "title": "Kurikirana umuzigo wawe mu gihe nyacyo",
-    "description": "Reba amakuru ya GPS ako kanya kugira ngo umenye aho umuzigo wawe ugeze igihe cyose"
+      "title": "Kuki Wahitamo Loveway Logistics?",
+      "subtitle": "Dutanga ibisubizo byuzuye mu by'ubwikorezi dukoresheje ikoranabuhanga rigezweho na serivisi zidasanzwe!!,Utasanga ahandi",
+      "badge": "Kuki Wahitamo",
+      "subtitleShort": "Menya ubwoba mu byoherejwe byose",
+      "realTimeTracking": {
+        "title": "Kurikirana umuzigo wawe mu gihe nyacyo",
+        "description": "Reba amakuru ya GPS ako kanya kugira ngo umenye aho umuzigo wawe ugeze igihe cyose"
       },
       "securePayments": {
-      "title": "Kwishyura Byizewe",
-      "description": "Hari uburyo bwinshi bwo kwishyura burimo mobile money n’ikoreshwa rya banki"
+        "title": "Kwishyura Byizewe",
+        "description": "Hari uburyo bwinshi bwo kwishyura burimo mobile money n’ikoreshwa rya banki"
       },
       "reliableDrivers": {
-      "title": "Abashoferi Bizera",
-      "description": "Abashoferi bemewe, bafite ubunyamwuga kandi bafite ubwishingizi"
+        "title": "Abashoferi Bizera",
+        "description": "Abashoferi bemewe, bafite ubunyamwuga kandi bafite ubwishingizi"
       },
       "fastDelivery": {
-      "title": "Kohereza Imizigo Vuba",
-      "description": "Inzira nziza yo Kohereza imizigo yawe vuba kandi neza"
+        "title": "Kohereza Imizigo Vuba",
+        "description": "Inzira nziza yo Kohereza imizigo yawe vuba kandi neza"
       },
       "support": {
-      "title": "Serivisi 24/7",
-     "description": "Serivisi y’abakiriya iboneka igihe cyose ayikeneye"
-     },
-     "transparentPricing": {
-     "title": "Ibiciro muburyo Bugaragara",
-     "description": "Nta mafaranga yihishe, igiciro kigaragara bitewe ni ntera n’uburemere"
-     }
-
+        "title": "Serivisi 24/7",
+        "description": "Serivisi y’abakiriya iboneka igihe cyose ayikeneye"
+      },
+      "transparentPricing": {
+        "title": "Ibiciro muburyo Bugaragara",
+        "description": "Nta mafaranga yihishe, igiciro kigaragara bitewe ni ntera n’uburemere"
+      }
     },
     "howItWorks": {
       "title": "Uko Bikora",
-      "subtitle": "Biroroshye, vuba kandi birizewe,shaka umuzigo wawe mu ntambwe eshatu gusa"
+      "subtitle": "Biroroshye, vuba kandi birizewe,shaka umuzigo wawe mu ntambwe eshatu gusa",
+      "badge": "Uburyo Bworoshye",
+      "subtitleShort": "Tangira mu ntambwe eshatu zoroshye"
     },
     "services": {
       "title": "Serivisi Dutanga",
-      "subtitle": "Ibisubizo byuzuye byo kohereza imizigo byateguwe ku buryo buhuye n’ibyo ukeneye.",
+      "subtitle": "Ibisubizo byuzuye byo kohereza imizigo byateguwe ku buryo buhuye n'ibyo ukeneye.",
+      "badge": "Serivisi Zacu",
+      "subtitleShort": "Ibisubizo byuzuye by'ubwikorezi byose ukeneye",
+      "learnMore": "Menya byinshi",
       "sameDay": {
-      "title": "Kohereza Mu Munsi umwe",
-      "description": "Serivisi yihuse ku bicuruzwa byihutirwa"
+        "title": "Kohereza Mu Munsi umwe",
+        "description": "Serivisi yihuse ku bicuruzwa byihutirwa"
       },
       "scheduled": {
-      "title": "Kohereza Biteganijwe",
-      "description": "Tegura uko imizigo yawe izoherezwa mbere"
+        "title": "Kohereza Biteganijwe",
+        "description": "Tegura uko imizigo yawe izoherezwa mbere"
       },
       "fragile": {
-      "title": "Ibintu Byoroshye",
-      "description": "Kubika no gutwara imizigo yoroshye neza"
+        "title": "Ibintu Byoroshye",
+        "description": "Kubika no gutwara imizigo yoroshye neza"
       },
       "large": {
-      "title": "Ibintu Biremereye",
-      "description": "Gutwara imizigo iremereye cyangwa minini"
+        "title": "Ibintu Biremereye",
+        "description": "Gutwara imizigo iremereye cyangwa minini"
       },
       "documents": {
-      "title": "Gutwara Inyandiko",
-      "description": "Gutwara inyandiko na pakegi mu buryo bwizewe"
+        "title": "Gutwara Inyandiko",
+        "description": "Gutwara inyandiko na pakegi mu buryo bwizewe"
       },
       "business": {
-      "title": "Kohereza ibicuruzwa",
-      "description": "Igisubizo kidasanzwe mu gutwara ibicuruzwa by’ubucuruzi"
-}
-
+        "title": "Kohereza ibicuruzwa",
+        "description": "Igisubizo kidasanzwe mu gutwara ibicuruzwa by’ubucuruzi"
+      }
     },
     "paymentOptions": {
       "title": "Amahitamo yo Kwishyura",
-      "subtitle": "Hitamo uburyo bwo kwishyura bukoroheye."
+      "subtitle": "Hitamo uburyo bwo kwishyura bukoroheye.",
+      "badge": "Uburyo bwo Kwishyura",
+      "subtitleShort": "Hitamo uburyo bwo kwishyura wifuza",
+      "supported": "Byemewe",
+      "secureBadge": "Ubwishyu bwose burakomeye kandi bufite ubwigenge"
     },
     "trackingFeatures": {
       "title": "Ibiranga Kurikirana Bigezweho",
       "subtitle": "Komeza ukurikirane imizigo yawe muri buri ntambwe y’urugendo.",
       "liveGps": {
-      "title": "Kurikirana GPS mu Gihe Nyacyo",
-      "description": "Reba aho imizigo yawe iri neza"
+        "title": "Kurikirana GPS mu Gihe Nyacyo",
+        "description": "Reba aho imizigo yawe iri neza"
       },
       "route": {
-     "title": "Kubona inzira",
-      "description": "Reba uburyo bwateguwe bwo gutwara umuzigo wawe"
+        "title": "Kubona inzira",
+        "description": "Reba uburyo bwateguwe bwo gutwara umuzigo wawe"
       },
-     "eta": {
-     "title": "Amakuru y’Igihe cyo Kugera",
-      "description": "Bona igihe nyacyo cyo kohereza"
+      "eta": {
+        "title": "Amakuru y’Igihe cyo Kugera",
+        "description": "Bona igihe nyacyo cyo kohereza"
       },
       "notifications": {
-      "title": "Amakuru y’Ubuzima bw’Imizigo",
-      "description": "Amakuru atangwa kuri SMS na email"
+        "title": "Amakuru y’Ubuzima bw’Imizigo",
+        "description": "Amakuru atangwa kuri SMS na email"
       },
       "photos": {
-      "title": "Amashusho yo Kwemeza Itangwa",
-      "description": "Emeza ko imizigo yagejejwe aho yajyaga ukoresheje amashusho"
-      } 
+        "title": "Amashusho yo Kwemeza Itangwa",
+        "description": "Emeza ko imizigo yagejejwe aho yajyaga ukoresheje amashusho"
+      }
     },
     "testimonials": {
-      "title": "Ibivugwa n’Abakiriya bacu",
-  "subtitle": "Ntitwivugira ahubeo ibikorwa birivugira, reba ubuhamya bwa bamwe mubakiriya twakoranye.",
-  "sarah": {
-    "name": "Sarah Johnson",
-    "role": "Nyir'Ubucuruzi",
-    "content": "Loveway Logistics yaduhinduriye imikorere. Ubu kohereza ibicurunzwa birihuta kandi birizewe!"
-  },
-  "michael": {
-    "name": "Michael Chen",
-    "role": "Iduka rya E-commerce",
-    "content": "Ni uburyo bwiza bwo kugeza ibintu ku bakiriya bacu kuri internet. Bakunda cyane uburyo bwo gukurikirana ibyo baguze!"
-  },
-  "emily": {
-    "name": "Emily Rodriguez",
-    "role": "Umukiriya ku giti cye",
-    "content": "Serivisi nziza kandi ku gihe. Uburyo bwo gukurikirana mu gihe nyacyo bubyura umutima."
+      "title": "Ibivugwa n'Abakiriya bacu",
+      "subtitle": "Ntitwivugira ahubeo ibikorwa birivugira, reba ubuhamya bwa bamwe mubakiriya twakoranye.",
+      "badge": "Inkuru z'Abakiriya",
+      "trustIndicators": {
+        "rating": "Amanota 4.9/5",
+        "happyClients": "Abakiriya Banyuzwe",
+        "verifiedReviews": "100% Isuzuma Ryemejwe"
+      },
+      "sarah": {
+        "name": "Sarah Johnson",
+        "role": "Nyir'Ubucuruzi",
+        "content": "Loveway Logistics yaduhinduriye imikorere. Ubu kohereza ibicurunzwa birihuta kandi birizewe!"
+      },
+      "michael": {
+        "name": "Michael Chen",
+        "role": "Iduka rya E-commerce",
+        "content": "Ni uburyo bwiza bwo kugeza ibintu ku bakiriya bacu kuri internet. Bakunda cyane uburyo bwo gukurikirana ibyo baguze!"
+      },
+      "emily": {
+        "name": "Emily Rodriguez",
+        "role": "Umukiriya ku giti cye",
+        "content": "Serivisi nziza kandi ku gihe. Uburyo bwo gukurikirana mu gihe nyacyo bubyura umutima."
       }
     },
     "pricingSection": {
-       "title": "Ibiciro biboneye",
-       "subtitle": "Ibiciro bisobanutse neza kandi biboneye bitewe nibigize umuzigo wawe",
-       "standardRates": "Ibiciro Bisanzwe",
-       "getQuote": "Bona Igiciro Ako Kanya",
-        "getQuoteDescription": "Injiza ibisobanuro by'ibyo wohereza kugira ngo ubone igiciro nyacyo.",
-        "getQuoteButton": "Saba Igiciro Nonaha"
+      "title": "Ibiciro biboneye",
+      "subtitle": "Ibiciro bisobanutse neza kandi biboneye bitewe nibigize umuzigo wawe",
+      "standardRates": "Ibiciro Bisanzwe",
+      "getQuote": "Bona Igiciro Ako Kanya",
+      "getQuoteDescription": "Injiza ibisobanuro by'ibyo wohereza kugira ngo ubone igiciro nyacyo.",
+      "getQuoteButton": "Saba Igiciro Nonaha",
+      "categoryMultipliers": "Ibyongereyeho mu Byiciro",
+      "priceCalculator": "Kalkulateri y'Ibiciro",
+      "calculator": {
+        "distance": "Intera (km)",
+        "weight": "Uburemere (kg)",
+        "category": "Icyiciro cy'Ikintu",
+        "categoryPlaceholder": "Shakisha cyangwa hitamo icyiciro...",
+        "loadingCategories": "Urakira gupakira ibyiciro...",
+        "noCategories": "Nta byiciro byabonetse",
+        "estimatedPrice": "Igiciro Giteganyijwe",
+        "reset": "Subiramo",
+        "bookNow": "Iyandikishe Nonaha"
+      }
     },
     "faq": {
-   "title": "Ibibazo Bikunze Kubazwa",
-  "subtitle": "Sobanukirwa ibisubizo by'ibibazo bisanzwe ku mikorere yacu.",
-  "tracking": {
-  "question": "Ese nigute nakurikirana ibyoherejwe?",
-  "answer": "Nyuma yo gutumiza serivisi, uhabwa link yo gukurikirana biciye kuri SMS na email. Ushobora no gukurikirana ibyoherejwe byawe mu gihe nyacyo ukoresheje urubuga rwacu cyangwa application."
-},
-"payment": {
-  "question": "Ese mwakira ubuhe buryo bwo kwishyura?",
-  "answer": "Dukoresha Mobile Money (MTN, Airtel), kohereza kuri banki, kwishyura kuri murandasi, ndetse no kwishyura muntoki mugihe bishoboka."
-},
-"delivery": {
-  "question": "Ese kohereza bitwara igihe kingana gute?",
-  "answer": "Igihe cyo kohereza giterwa n’intera n’ubwoko bwa serivisi. Kohereza mu munsi umwe birashoboka mugihe byihutirwa, naho ibisanzwe bifata iminsi 1-3 y’akazi."
-},
-"damage": {
-  "question": "Ese bizagenda bite niba umuzigo wange wangiritse?",
-  "answer": "Abashoferi bacu bose barishingiwe kandi dufite politiki yuzuye ijyanye n'ibyangiritse.Ihutire kutumenyesha ako kanya nimba habayeho kwangirika."
-},
-"address": {
-  "question": "Ese nshobora guhindura aderesi?",
-  "answer": "Yego Rwose, ushobora guhindura aderesi ya delivery nibura mu masaha 2 mbere y’igihe cyateganyijwe ukoresheje application cyangwa ukavugana nababishitswe."
-},
-"weekend": {
-  "question": "Ese mutanga serivisi muri wikendi?",
-  "answer": "Yego rwose, dutanga serivisi muri wikende ku kiguzi cyiyongereyeho. Ushobora kuyihitamo igihe watumizaga serivisi."
-}
+      "title": "Ibibazo Bikunze Kubazwa",
+      "subtitle": "Sobanukirwa ibisubizo by'ibibazo bisanzwe ku mikorere yacu.",
+      "tracking": {
+        "question": "Ese nigute nakurikirana ibyoherejwe?",
+        "answer": "Nyuma yo gutumiza serivisi, uhabwa link yo gukurikirana biciye kuri SMS na email. Ushobora no gukurikirana ibyoherejwe byawe mu gihe nyacyo ukoresheje urubuga rwacu cyangwa application."
+      },
+      "payment": {
+        "question": "Ese mwakira ubuhe buryo bwo kwishyura?",
+        "answer": "Dukoresha Mobile Money (MTN, Airtel), kohereza kuri banki, kwishyura kuri murandasi, ndetse no kwishyura muntoki mugihe bishoboka."
+      },
+      "delivery": {
+        "question": "Ese kohereza bitwara igihe kingana gute?",
+        "answer": "Igihe cyo kohereza giterwa n’intera n’ubwoko bwa serivisi. Kohereza mu munsi umwe birashoboka mugihe byihutirwa, naho ibisanzwe bifata iminsi 1-3 y’akazi."
+      },
+      "damage": {
+        "question": "Ese bizagenda bite niba umuzigo wange wangiritse?",
+        "answer": "Abashoferi bacu bose barishingiwe kandi dufite politiki yuzuye ijyanye n'ibyangiritse.Ihutire kutumenyesha ako kanya nimba habayeho kwangirika."
+      },
+      "address": {
+        "question": "Ese nshobora guhindura aderesi?",
+        "answer": "Yego Rwose, ushobora guhindura aderesi ya delivery nibura mu masaha 2 mbere y’igihe cyateganyijwe ukoresheje application cyangwa ukavugana nababishitswe."
+      },
+      "weekend": {
+        "question": "Ese mutanga serivisi muri wikendi?",
+        "answer": "Yego rwose, dutanga serivisi muri wikende ku kiguzi cyiyongereyeho. Ushobora kuyihitamo igihe watumizaga serivisi."
+      },
+      "helpCta": {
+        "title": "Ufite ibibazo byinshi?",
+        "description": "Ntushobora kubona igisubizo ushakisha? Nyamuneka vugana n'ikipe yacu y'abantu baneza.",
+        "button": "Vugana n'Ubufasha"
+      }
     },
     "contact": {
       "title": "Tuvugishe",
@@ -1539,11 +1579,17 @@
     },
     "getStarted": {
       "title": "Witeguye Gutangira?",
-       "subtitle": "Injira mu bihumbi by'abakiriya banyuzwe kandi bizera Loveway Logistics mu gutanga imizigo yabo.",
-       "bookNow": "Iyandikishe Nonaha",
+      "subtitle": "Injira mu bihumbi by'abakiriya banyuzwe kandi bizera Loveway Logistics mu gutanga imizigo yabo.",
+      "bookNow": "Iyandikishe Nonaha",
       "getQuote": "Saba Igiciro",
-       "downloadApp": "Kuramo App",
-      "contactUs": "Tuvugishe"
+      "downloadApp": "Kuramo App",
+      "contactUs": "Tuvugishe",
+      "badge": "Tangira Urugendo Rwawe",
+      "stats": {
+        "happyClients": "Abakiriya Banyuzwe",
+        "successRate": "Urugero rwo Gushobora",
+        "support": "Ubufasha"
+      }
     },
     "footer": {
       "description": "Urubuga rwihariye kandi rwizewe mu by'ubwikorezi ruhuza abakiriya, abashoferi ndetse nabagenzura ibinyabiziga hamwe no gukurikirana ikinyabigiza aho kiri hose. Tuguha serivise aho waba uherereye hose mugihugu, rufite uburyo bwo gukurikirana Ibyoherejwe mu gihe nyacyo no kwishyura byizewe.",
@@ -1551,23 +1597,28 @@
       "support": "Ubufasha",
       "contactInfo": "Amakuru yo Kuvugana",
       "copyright": "© 2024 Loveway Logistics Platform. Uburenganzira bwose burabitswe.",
-  "links": {
-  "sameDay": "Kohereza mu Munsi Umwe",
-  "scheduled": "Kohereza Biteganyijwe",
-  "fragile": "Ibintu byoroshye",
-  "business": "Kohereza ibicurunzwa",
-  "faq": "Ibibazo",
-  "contact": "Tuvugishe",
-  "track": "Kurikirana Ibyoherejwe",
-  "help": "Ikigo cy'Ubufasha"
+      "links": {
+        "sameDay": "Kohereza mu Munsi Umwe",
+        "scheduled": "Kohereza Biteganyijwe",
+        "fragile": "Ibintu byoroshye",
+        "business": "Kohereza ibicurunzwa",
+        "faq": "Ibibazo",
+        "contact": "Tuvugishe",
+        "track": "Kurikirana Ibyoherejwe",
+        "help": "Ikigo cy'Ubufasha"
+      },
+      "policies": {
+        "privacy": "Politiki y'Ubwigenge",
+        "terms": "Amategeko yo Gukoresha",
+        "cookies": "Politiki y'Amakuki"
       }
     },
     "trackingDemo": {
-     "title": "Kurikirana mu Gihe Nyacyo",
-  "active": "Bikora",
-  "eta": "Igihe cyo kugera (ETA)",
-  "status": "Imiterere",
-  "inTransit": "ibikiri mu nzira"
+      "title": "Kurikirana mu Gihe Nyacyo",
+      "active": "Bikora",
+      "eta": "Igihe cyo kugera (ETA)",
+      "status": "Imiterere",
+      "inTransit": "ibikiri mu nzira"
     },
     "downloadApp": {
       "title": "Kuramo Application yacu",
@@ -1575,16 +1626,16 @@
       "downloadButton": "Kuramo App",
       "available": "Iboneka kuri iOS na Android",
       "androidOnly": "Iboneka kuri Android gusa",
-"features": {
-      "details": "Ibisobanuro byu muzigo",
-      "client": "Dashboard y’Umukiriya",
-      "tracking": "Kurikirana mu Gihe Nyacyo"
-}
-
+      "features": {
+        "details": "Ibisobanuro byu muzigo",
+        "client": "Dashboard y’Umukiriya",
+        "tracking": "Kurikirana mu Gihe Nyacyo"
+      }
     },
     "vehicles": {
       "title": "Ibikoresho byacu byo Gutwara",
       "subtitle": "Hitamo ikoresho cy'ukuri k'ibikoresho byawe. Dufite ibikoresho byinshi byo gutwara ibikoresho byose.",
+      "badge": "Ibikoresho Byacu",
       "truck": {
         "name": "Imodoka Nini",
         "capacity": "Kugeza ku toni 25",
@@ -1593,12 +1644,11 @@
         "dimensions": "12m x 2.5m x 3m"
       },
       "van": {
-       "name": "Vani",
-       "capacity": "Kugeza kuri toni 2",
-       "description": "Ni nziza cyane ku mapaki afatika, impapuro, n’ibyo gutanga ibicuruzwa ku bucuruzi buto. Irihuta kandi ikora neza cyane cyane mu mijyi.",
-       "weight": "Ntarenza: 2,000 kg",
-       "dimensions": "4m x 2m x 2m"
-
+        "name": "Vani",
+        "capacity": "Kugeza kuri toni 2",
+        "description": "Ni nziza cyane ku mapaki afatika, impapuro, n’ibyo gutanga ibicuruzwa ku bucuruzi buto. Irihuta kandi ikora neza cyane cyane mu mijyi.",
+        "weight": "Ntarenza: 2,000 kg",
+        "dimensions": "4m x 2m x 2m"
       },
       "motorcycle": {
         "name": "Moto",
@@ -1606,8 +1656,12 @@
         "description": "Ikwiriye cyane ibikoresho byihutirwa, impapuro n'udupaki duto. Irihuta mu muhanda no mugihe kibinyabiziga byinshi, ishobora gukoreshwa mukohereza mu munsi umwe.",
         "weight": "Ntarenza: 50 kg",
         "dimensions": "2m x 0.8m x 1.2m"
-
       }
+    },
+    "mobileMenu": {
+      "navigation": "Kuyobora",
+      "tools": "Ibikoresho",
+      "language": "Ururimi"
     }
   }
 }

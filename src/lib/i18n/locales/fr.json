@@ -1371,7 +1371,14 @@
       "subtitle": "Suivez Chaque Kilomètre",
       "description": "Plateforme logistique professionnelle connectant clients, chauffeurs et gestion de flotte avec suivi en temps réel. Nous livrons exactement où vous vous trouvez - peu importe où vous êtes. Rationalisez vos opérations de fret avec notre système avancé de gestion des transports.",
       "ctaPrimary": "Expédier Maintenant",
-      "ctaSecondary": "Suivre Votre Expédition"
+      "ctaSecondary": "Suivre Votre Expédition",
+      "badge": "Livraison Rapide et Fiable",
+      "descriptionShort": "Plateforme professionnelle de livraison de cargaisons avec suivi en temps réel et options de paiement sécurisées.",
+      "stats": {
+        "deliveries": "Livraisons",
+        "onTime": "À l'Heure",
+        "support": "Support"
+      }
     },
     "steps": {
       "book": {
@@ -1417,6 +1424,8 @@
     "benefits": {
       "title": "Pourquoi Choisir Loveway Logistics?",
       "subtitle": "Nous fournissons des solutions logistiques complètes avec une technologie de pointe et un service exceptionnel.",
+      "badge": "Pourquoi Nous Choisir",
+      "subtitleShort": "Vivez l'excellence à chaque livraison",
       "realTimeTracking": {
         "title": "Suivi en Temps Réel",
         "description": "Mises à jour GPS en direct pour savoir où se trouve votre cargaison à tout moment"
@@ -1444,11 +1453,16 @@
     },
     "howItWorks": {
       "title": "Comment Ça Marche",
-      "subtitle": "Simple, rapide et fiable - faites livrer votre cargaison en trois étapes faciles."
+      "subtitle": "Simple, rapide et fiable - faites livrer votre cargaison en trois étapes faciles.",
+      "badge": "Processus Simple",
+      "subtitleShort": "Commencez en trois étapes faciles"
     },
     "services": {
       "title": "Services Que Nous Offrons",
       "subtitle": "Solutions de livraison complètes adaptées à vos besoins spécifiques.",
+      "badge": "Nos Services",
+      "subtitleShort": "Solutions logistiques complètes pour tous vos besoins",
+      "learnMore": "En savoir plus",
       "sameDay": {
         "title": "Livraison le Même Jour",
         "description": "Service express pour les envois urgents"
@@ -1476,7 +1490,11 @@
     },
     "paymentOptions": {
       "title": "Options de Paiement Flexibles",
-      "subtitle": "Choisissez la méthode de paiement qui vous convient le mieux."
+      "subtitle": "Choisissez la méthode de paiement qui vous convient le mieux.",
+      "badge": "Méthodes de Paiement",
+      "subtitleShort": "Choisissez votre méthode de paiement préférée",
+      "supported": "Pris en charge",
+      "secureBadge": "Tous les paiements sont sécurisés et cryptés"
     },
     "trackingFeatures": {
       "title": "Fonctionnalités de Suivi Avancées",
@@ -1505,6 +1523,12 @@
     "testimonials": {
       "title": "Ce Que Disent Nos Clients",
       "subtitle": "Ne nous croyez pas sur parole - écoutez nos clients satisfaits.",
+      "badge": "Histoires de Clients",
+      "trustIndicators": {
+        "rating": "Note 4.9/5",
+        "happyClients": "Clients Heureux",
+        "verifiedReviews": "100% Avis Vérifiés"
+      },
       "sarah": {
         "name": "Sarah Johnson",
         "role": "Propriétaire d'Entreprise",
@@ -1527,7 +1551,20 @@
       "standardRates": "Tarifs Standard",
       "getQuote": "Obtenir un Devis Instantané",
       "getQuoteDescription": "Entrez les détails de votre envoi pour obtenir une estimation de prix précise.",
-      "getQuoteButton": "Obtenir un Devis Maintenant"
+      "getQuoteButton": "Obtenir un Devis Maintenant",
+      "categoryMultipliers": "Multiplicateurs de Catégorie",
+      "priceCalculator": "Calculateur de Prix",
+      "calculator": {
+        "distance": "Distance (km)",
+        "weight": "Poids (kg)",
+        "category": "Catégorie d'Article",
+        "categoryPlaceholder": "Rechercher ou sélectionner une catégorie...",
+        "loadingCategories": "Chargement des catégories...",
+        "noCategories": "Aucune catégorie trouvée",
+        "estimatedPrice": "Prix Estimé",
+        "reset": "Réinitialiser",
+        "bookNow": "Réserver Maintenant"
+      }
     },
     "faq": {
       "title": "Questions Fréquemment Posées",
@@ -1555,6 +1592,11 @@
       "weekend": {
         "question": "Livrez-vous le week-end?",
         "answer": "Oui, nous offrons des services de livraison le week-end moyennant des frais supplémentaires. Vous pouvez sélectionner la livraison le week-end lors de la réservation de votre envoi."
+      },
+      "helpCta": {
+        "title": "Vous avez encore des questions?",
+        "description": "Vous ne trouvez pas la réponse que vous cherchez? Veuillez contacter notre équipe amicale.",
+        "button": "Contacter le Support"
       }
     },
     "contact": {
@@ -1582,7 +1624,13 @@
       "bookNow": "Réserver Maintenant",
       "getQuote": "Obtenir un Devis",
       "downloadApp": "Télécharger l'App",
-      "contactUs": "Contactez-Nous"
+      "contactUs": "Contactez-Nous",
+      "badge": "Commencez Votre Voyage",
+      "stats": {
+        "happyClients": "Clients Heureux",
+        "successRate": "Taux de Réussite",
+        "support": "Support"
+      }
     },
     "footer": {
       "description": "Plateforme logistique professionnelle connectant clients, chauffeurs et gestion de flotte avec suivi en temps réel et paiements sécurisés.",
@@ -1599,6 +1647,11 @@
         "contact": "Contactez-Nous",
         "track": "Suivre l'Expédition",
         "help": "Centre d'Aide"
+      },
+      "policies": {
+        "privacy": "Politique de Confidentialité",
+        "terms": "Conditions d'Utilisation",
+        "cookies": "Politique des Cookies"
       }
     },
     "trackingDemo": {
@@ -1623,6 +1676,7 @@
     "vehicles": {
       "title": "Notre Flotte de Véhicules",
       "subtitle": "Choisissez le bon véhicule pour vos besoins de cargaison. Nous avons une flotte diversifiée pour gérer toute taille d'expédition.",
+      "badge": "Notre Flotte",
       "truck": {
         "name": "Camion Lourd",
         "capacity": "Jusqu'à 25 tonnes",
@@ -1644,6 +1698,11 @@
         "weight": "Max: 50 kg",
         "dimensions": "2m x 0.8m x 1.2m"
       }
+    },
+    "mobileMenu": {
+      "navigation": "Navigation",
+      "tools": "Outils",
+      "language": "Langue"
     }
   }
 }
