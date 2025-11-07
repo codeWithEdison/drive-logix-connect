@@ -414,6 +414,7 @@
     "insuranceExpires": "L'assurance expire",
     "currentStatus": "Statut actuel"
   },
+  
   "delivery": {
     "deliveryDetails": "Détails de la livraison",
     "startDelivery": "Commencer la livraison",

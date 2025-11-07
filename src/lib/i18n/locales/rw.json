@@ -979,7 +979,160 @@
     "unknownVehicle": "Ikinyabiziga Kitazwi",
     "downloadReceipt": "Gukuramo inyemezabuguzi byatangiye",
     "uploadPhoto": "Uburyo bwo kohereza amafoto buraza vuba",
-    "reportIssue": "Uburyo bwo gutanga raporo y’ibibazo bigiye kuza vuba"
+    "reportIssue": "Uburyo bwo gutanga raporo y'ibibazo bigiye kuza vuba",
+    "stats": {
+      "totalCargos": "Imizigo Yose",
+      "inTransit": "Iri mu Nzira",
+      "delivered": "Yatanzwe",
+      "pending": "Gutegereza"
+    },
+    "filters": {
+      "searchPlaceholder": "Shakisha ukoresheje umukiriya, aho hantu, nimero y'imizigo, cyangwa ubwoko...",
+      "filterByStatus": "Hitamo imiterere",
+      "allStatus": "Imiterere Yose",
+      "allPriority": "Urwego Rwose",
+      "priority": "Urwego",
+      "filteredResults": "Ibyabonetse ({{total}} imizigo yose)",
+      "showingCargos": "Hagaragazwa {{total}} imizigo",
+      "clearFilters": "Sukura Amashakisha",
+      "noMatchFilters": "Nta mizigo ihuye n'amashakisha yawe",
+      "adjustFilters": "Gerageza guhindura amagambo yo gushakisha cyangwa amashakisha kugirango ubone ibyo ushaka.",
+      "clearAllFilters": "Sukura Amashakisha Yose"
+    },
+    "pagination": {
+      "showPerPage": "Erekana buri ipaji:",
+      "perPage": "Buri ipaji:",
+      "showing": "Erekana {{start}} - {{end}} by'{{total}} ibyabonetse",
+      "showingMobile": "{{start}}-{{end}} by'{{total}}",
+      "previous": "Ibanze",
+      "next": "Ikurikira"
+    },
+    "status": {
+      "pending": "Gutegereza",
+      "quoted": "Yashyizweho",
+      "accepted": "Yemewe",
+      "assigned": "Yashyizweho",
+      "pickedUp": "Yakurwaga",
+      "inTransit": "Iri mu Nzira",
+      "delivered": "Yatanzwe",
+      "cancelled": "Yahagaritswe"
+    },
+    "priority": {
+      "low": "Ntoya",
+      "normal": "Bisanzwe",
+      "high": "Nini",
+      "urgent": "Bihutirwa"
+    }
+  },
+  "cargoTable": {
+    "title": "Imizigo",
+    "stats": {
+      "total": "Yose",
+      "active": "Bikora",
+      "inTransit": "Iri mu Nzira",
+      "pending": "Gutegereza",
+      "delivered": "Yatanzwe",
+      "completed": "Byarangiye",
+      "totalSpent": "Amafaranga Yose Yakoreshejwe"
+    },
+    "search": {
+      "placeholder": "Shakisha ukoresheje umukiriya, aho hantu, cyangwa ubwoko..."
+    },
+    "filters": {
+      "filterByStatus": "Hitamo imiterere",
+      "allStatus": "Imiterere Yose",
+      "allPriority": "Urwego Rwose",
+      "priority": "Urwego",
+      "active": "Bikora",
+      "completed": "Byarangiye",
+      "transit": "Iri mu Nzira",
+      "cancelled": "Yahagaritswe"
+    },
+    "table": {
+      "cargoInfo": "Amakuru y'Imizigo",
+      "client": "Umukiriya",
+      "route": "Inzira",
+      "driver": "Umushoferi",
+      "vehicle": "Ikinyabiziga",
+      "status": "Imiterere",
+      "actions": "Ibyakozwe",
+      "from": "Kuva",
+      "to": "Kugeza",
+      "general": "Bisanzwe",
+      "notAvailable": "Ntibiboneka"
+    },
+    "status": {
+      "pending": "Gutegereza",
+      "quoted": "Inyemezabuguzi Yoherejwe",
+      "accepted": "Inyemezabuguzi Yishyuwe",
+      "partiallyAssigned": "Yashyizweho Gufata",
+      "fullyAssigned": "Yashyizweho Buzuye",
+      "fully_assigned": "Yashyizweho Buzuye",
+      "pickedUp": "Imizigo Yakurwaga",
+      "picked_up": "Imizigo Yakurwaga",
+      "inTransit": "Iri mu Nzira",
+      "in_transit": "Iri mu Nzira",
+      "delivered": "Yatanzwe",
+      "cancelled": "Yahagaritswe",
+      "disputed": "Yagize Ikibazo",
+      "statusLabel": "Imiterere: {{status}}"
+    },
+    "statusDescription": {
+      "pending": "Gusaba byashyizweho, gutegereza igiciro",
+      "quoted": "Igiciro cyatanzwe, gutegereza kwemera",
+      "accepted": "Umukiriya yemeje, byiteguye gushyirwa",
+      "partiallyAssigned": "Uburemere buke bwashyizweho, gushyirwa kwinshi byashoboka",
+      "fullyAssigned": "Uburemere bwose bw'imizigo bwashyizweho ku bashoferi",
+      "fully_assigned": "Uburemere bwose bw'imizigo bwashyizweho ku bashoferi",
+      "pickedUp": "Yakurwaga neza, ubu iri mu nzira",
+      "picked_up": "Yakurwaga neza, ubu iri mu nzira",
+      "inTransit": "Iri mu nzira kugeza aho hantu",
+      "in_transit": "Iri mu nzira kugeza aho hantu",
+      "delivered": "Yatanzwe neza kugeza aho hantu",
+      "cancelled": "Kohereza ryahagaritswe",
+      "disputed": "Ikibazo cyatanzwe, rikagenzurwa"
+    },
+    "priority": {
+      "urgent": "Bihutirwa",
+      "high": "Nini",
+      "normal": "Bisanzwe",
+      "low": "Ntoya"
+    },
+    "priorityDescription": {
+      "urgent": "Kohereza gikomeye gisaba kwitabwaho mu minsi",
+      "high": "Kohereza gikomeye gisaba gukora vuba",
+      "normal": "Urwego rw'ibanze, gukora bisanzwe",
+      "low": "Ntibihutirwa, byashobora gukorwa mu bikorwa bisanzwe"
+    },
+    "actions": {
+      "changeTo": "Guhindura kuri {{status}}",
+      "callClient": "Hamagara Umukiriya",
+      "callDriver": "Hamagara Umushoferi",
+      "track": "Kurikirana",
+      "downloadReceipt": "Kuramo Inyemezabuguzi",
+      "uploadPhoto": "Kohereza Ifoto",
+      "reportIssue": "Tanga Ikibazo",
+      "acceptCargo": "Emera Imizigo",
+      "markPickedUp": "Marka Yakurwaga",
+      "startTransit": "Tangira mu Nzira",
+      "markDelivered": "Marka Yatanzwe",
+      "cancelCargo": "Hagarika Imizigo",
+      "trackCargo": "Kurikirana Imizigo",
+      "call": "Hamagara",
+      "details": "Ibisobanuro"
+    },
+    "mobile": {
+      "generalCargo": "Imizigo Bisanzwe",
+      "pickupLocation": "Aho Kurwaga",
+      "destination": "Aho Kugeza",
+      "description": "Ibisobanuro:",
+      "assigned": "Yashyizweho:",
+      "notAvailable": "Ntibiboneka"
+    },
+    "pagination": {
+      "showing": "Erekana {{start}} kugeza {{end}} by'{{total}} ibyabonetse",
+      "showingMobile": "{{start}}-{{end}} by'{{total}}"
+    }
   },
   "history": {
     "title": "Amateka y'Imizigo",

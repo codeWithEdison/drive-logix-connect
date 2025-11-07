@@ -29,7 +29,7 @@ import {
   LocationType,
 } from "@/types/shared";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, RefreshCw, Check, ChevronsUpDown } from "lucide-react";
+import { AlertCircle, RefreshCw, Check, ChevronsUpDown, X } from "lucide-react";
 import {
   MapPin,
   Package,
@@ -149,6 +149,12 @@ export function CreateCargoForm() {
   const [pickupLocationOpen, setPickupLocationOpen] = useState(false);
   const [destinationLocationOpen, setDestinationLocationOpen] = useState(false);
 
+  // Search states for comboboxes
+  const [cargoTypeSearch, setCargoTypeSearch] = useState("");
+  const [urgencySearch, setUrgencySearch] = useState("");
+  const [showCargoTypeDropdown, setShowCargoTypeDropdown] = useState(false);
+  const [showUrgencyDropdown, setShowUrgencyDropdown] = useState(false);
+
   // Performance optimization refs and state
   const searchCache = useRef<Map<string, GooglePlace[]>>(new Map());
   const searchTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
@@ -160,7 +166,8 @@ export function CreateCargoForm() {
 
   // API hooks
   const createCargoMutation = useCreateCargo();
-  const { data: cargoCategories } = useCargoCategories({ is_active: true });
+  const { data: cargoCategories, isLoading: loadingCategories } =
+    useCargoCategories({ is_active: true });
   const { data: myLocations } = useMyLocations();
   const { data: districts } = useActiveDistricts();
   const createLocationMutation = useCreateLocation();
@@ -444,7 +451,7 @@ export function CreateCargoForm() {
     return districts.filter(
       (district) =>
         district.name.toLowerCase().includes(query) ||
-        (district.province && district.province.toLowerCase().includes(query))
+        (district.branch && district.branch.name.toLowerCase().includes(query))
     );
   };
 
@@ -887,1722 +894,2126 @@ export function CreateCargoForm() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <Card className="card-elevated border-0 shadow-xl bg-white/95 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-xl sm:text-2xl">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          <Card className="border-0 shadow-2xl bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 backdrop-blur-sm">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl md:text-2xl">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
                 </div>
                 {t("createCargo.steps.cargoDetails.title")}
               </CardTitle>
-              <div className="bg-blue-50 border border-blue-200 rounded-full px-4 py-2 mt-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-xs sm:text-sm font-semibold text-blue-700">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 mt-2 sm:mt-3">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-[10px] sm:text-xs font-semibold text-blue-700">
+                    {t("createCargo.requiredFieldsNote")}
+                  </span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 sm:space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label
+                    htmlFor="cargoType"
+                    className="text-xs sm:text-sm font-semibold text-gray-700"
+                  >
+                    {t("createCargo.steps.cargoDetails.cargoType")}{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={
+                        cargoTypeSearch ||
+                        (formData.cargoType
+                          ? t(
+                              `createCargo.steps.cargoDetails.types.${formData.cargoType}`
+                            )
+                          : "")
+                      }
+                      onChange={(e) => {
+                        setCargoTypeSearch(e.target.value);
+                        setShowCargoTypeDropdown(true);
+                      }}
+                      onFocus={() => setShowCargoTypeDropdown(true)}
+                      placeholder={t(
+                        "createCargo.steps.cargoDetails.selectCargoType"
+                      )}
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      {cargoTypeSearch && (
+                        <button
+                          onClick={() => {
+                            setCargoTypeSearch("");
+                            setShowCargoTypeDropdown(true);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                        >
+                          <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                        </button>
+                      )}
+                      <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                    </div>
+
+                    {/* Dropdown */}
+                    {showCargoTypeDropdown && (
+                      <motion.div
+                        className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                      >
+                        {[
+                          "electronics",
+                          "furniture",
+                          "documents",
+                          "food",
+                          "clothing",
+                          "other",
+                        ]
+                          .filter(
+                            (type) =>
+                              !cargoTypeSearch ||
+                              t(`createCargo.steps.cargoDetails.types.${type}`)
+                                .toLowerCase()
+                                .includes(cargoTypeSearch.toLowerCase())
+                          )
+                          .map((type) => (
+                            <button
+                              key={type}
+                              onClick={() => {
+                                setFormData({ ...formData, cargoType: type });
+                                setCargoTypeSearch("");
+                                setShowCargoTypeDropdown(false);
+                              }}
+                              className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                                formData.cargoType === type ? "bg-blue-50" : ""
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Check
+                                  className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                                    formData.cargoType === type
+                                      ? "opacity-100 text-blue-600"
+                                      : "opacity-0"
+                                  }`}
+                                />
+                                <span className="text-xs sm:text-sm font-medium text-gray-900">
+                                  {t(
+                                    `createCargo.steps.cargoDetails.types.${type}`
+                                  )}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                      </motion.div>
+                    )}
+
+                    {/* Click outside to close */}
+                    {showCargoTypeDropdown && (
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowCargoTypeDropdown(false)}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label
+                    htmlFor="cargoCategoryId"
+                    className="text-xs sm:text-sm font-semibold text-gray-700"
+                  >
+                    {t("cargo.cargoCategory")}{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={
+                        cargoCategorySearch ||
+                        (formData.cargoCategoryId
+                          ? cargoCategories?.find(
+                              (c) => c.id === formData.cargoCategoryId
+                            )?.name || ""
+                          : "")
+                      }
+                      onChange={(e) => {
+                        setCargoCategorySearch(e.target.value);
+                        setCargoCategoryOpen(true);
+                      }}
+                      onFocus={() => setCargoCategoryOpen(true)}
+                      placeholder={t(
+                        "createCargo.steps.cargoDetails.selectCargoCategory"
+                      )}
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      {cargoCategorySearch && (
+                        <button
+                          onClick={() => {
+                            setCargoCategorySearch("");
+                            setCargoCategoryOpen(true);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                        >
+                          <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                        </button>
+                      )}
+                      <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                    </div>
+
+                    {/* Dropdown */}
+                    {cargoCategoryOpen && (
+                      <motion.div
+                        className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                      >
+                        {loadingCategories ? (
+                          <div className="p-3 sm:p-4 text-center text-gray-500 text-xs sm:text-sm">
+                            {t(
+                              "createCargo.steps.cargoDetails.loadingCategories"
+                            ) || "Loading..."}
+                          </div>
+                        ) : cargoCategories &&
+                          cargoCategories.filter(
+                            (category) =>
+                              !cargoCategorySearch ||
+                              category.name
+                                .toLowerCase()
+                                .includes(cargoCategorySearch.toLowerCase()) ||
+                              (category.description &&
+                                category.description
+                                  .toLowerCase()
+                                  .includes(cargoCategorySearch.toLowerCase()))
+                          ).length > 0 ? (
+                          cargoCategories
+                            .filter(
+                              (category) =>
+                                !cargoCategorySearch ||
+                                category.name
+                                  .toLowerCase()
+                                  .includes(
+                                    cargoCategorySearch.toLowerCase()
+                                  ) ||
+                                (category.description &&
+                                  category.description
+                                    .toLowerCase()
+                                    .includes(
+                                      cargoCategorySearch.toLowerCase()
+                                    ))
+                            )
+                            .map((category) => (
+                              <button
+                                key={category.id}
+                                onClick={() => {
+                                  setFormData({
+                                    ...formData,
+                                    cargoCategoryId: category.id,
+                                  });
+                                  setCargoCategorySearch("");
+                                  setCargoCategoryOpen(false);
+                                }}
+                                className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                                  formData.cargoCategoryId === category.id
+                                    ? "bg-blue-50"
+                                    : ""
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Check
+                                    className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
+                                      formData.cargoCategoryId === category.id
+                                        ? "opacity-100 text-blue-600"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  <div className="flex flex-col flex-1">
+                                    <span className="text-xs sm:text-sm font-semibold text-gray-900">
+                                      {category.name}
+                                    </span>
+                                    {category.description && (
+                                      <span className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
+                                        {category.description}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+                            ))
+                        ) : (
+                          <div className="p-3 sm:p-4 text-center text-gray-500 text-xs sm:text-sm">
+                            {t(
+                              "createCargo.steps.cargoDetails.noCategoriesFound"
+                            )}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+
+                    {/* Click outside to close */}
+                    {cargoCategoryOpen && (
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setCargoCategoryOpen(false)}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {formData.cargoType === "other" && (
+                  <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
+                    <Label
+                      htmlFor="otherCargoType"
+                      className="text-xs sm:text-sm font-semibold text-gray-700"
+                    >
+                      {t("createCargo.steps.cargoDetails.specifyType")}{" "}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="otherCargoType"
+                      placeholder={t(
+                        "createCargo.steps.cargoDetails.enterCargoType"
+                      )}
+                      value={formData.otherCargoType}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          otherCargoType: e.target.value,
+                        })
+                      }
+                      className="rounded-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label
+                    htmlFor="weight"
+                    className="text-xs sm:text-sm font-semibold text-gray-700"
+                  >
+                    {t("createCargo.steps.cargoDetails.weight")}{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    placeholder="25"
+                    value={formData.weight}
+                    onChange={(e) =>
+                      setFormData({ ...formData, weight: e.target.value })
+                    }
+                    className="rounded-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label className="text-xs sm:text-sm font-semibold text-gray-700">
+                  {t("createCargo.steps.cargoDetails.dimensions")}
+                </Label>
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-3">
+                  <div>
+                    <Input
+                      id="length"
+                      placeholder={t("createCargo.steps.cargoDetails.length")}
+                      value={formData.length}
+                      onChange={(e) =>
+                        setFormData({ ...formData, length: e.target.value })
+                      }
+                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      id="width"
+                      placeholder={t("createCargo.steps.cargoDetails.width")}
+                      value={formData.width}
+                      onChange={(e) =>
+                        setFormData({ ...formData, width: e.target.value })
+                      }
+                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      id="height"
+                      placeholder={t("createCargo.steps.cargoDetails.height")}
+                      value={formData.height}
+                      onChange={(e) =>
+                        setFormData({ ...formData, height: e.target.value })
+                      }
+                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label
+                  htmlFor="urgency"
+                  className="text-xs sm:text-sm font-semibold text-gray-700"
+                >
+                  {t("createCargo.steps.cargoDetails.urgency")}
+                </Label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={
+                      urgencySearch ||
+                      (formData.urgency
+                        ? t(
+                            `createCargo.steps.cargoDetails.urgencyOptions.${formData.urgency}`
+                          )
+                        : "")
+                    }
+                    onChange={(e) => {
+                      setUrgencySearch(e.target.value);
+                      setShowUrgencyDropdown(true);
+                    }}
+                    onFocus={() => setShowUrgencyDropdown(true)}
+                    placeholder={t("createCargo.steps.cargoDetails.urgency")}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {urgencySearch && (
+                      <button
+                        onClick={() => {
+                          setUrgencySearch("");
+                          setShowUrgencyDropdown(true);
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                      >
+                        <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                      </button>
+                    )}
+                    <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                  </div>
+
+                  {/* Dropdown */}
+                  {showUrgencyDropdown && (
+                    <motion.div
+                      className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      {["standard", "express", "urgent"]
+                        .filter(
+                          (urgency) =>
+                            !urgencySearch ||
+                            t(
+                              `createCargo.steps.cargoDetails.urgencyOptions.${urgency}`
+                            )
+                              .toLowerCase()
+                              .includes(urgencySearch.toLowerCase())
+                        )
+                        .map((urgency) => (
+                          <button
+                            key={urgency}
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                urgency: urgency as any,
+                              });
+                              setUrgencySearch("");
+                              setShowUrgencyDropdown(false);
+                            }}
+                            className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                              formData.urgency === urgency ? "bg-blue-50" : ""
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Check
+                                className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                                  formData.urgency === urgency
+                                    ? "opacity-100 text-blue-600"
+                                    : "opacity-0"
+                                }`}
+                              />
+                              <span className="text-xs sm:text-sm font-medium text-gray-900">
+                                {t(
+                                  `createCargo.steps.cargoDetails.urgencyOptions.${urgency}`
+                                )}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                    </motion.div>
+                  )}
+
+                  {/* Click outside to close */}
+                  {showUrgencyDropdown && (
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowUrgencyDropdown(false)}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label
+                  htmlFor="description"
+                  className="text-xs sm:text-sm font-semibold text-gray-700"
+                >
+                  {t("createCargo.steps.cargoDetails.description")}
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder={t(
+                    "createCargo.steps.cargoDetails.descriptionPlaceholder"
+                  )}
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  rows={3}
+                  maxLength={1000}
+                  className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm"
+                />
+                <p className="text-[10px] sm:text-xs text-gray-500 font-medium">
+                  {formData.description.length}/1000 characters
+                </p>
+              </div>
+
+              <Button
+                onClick={handleNext}
+                disabled={!validateStep(1)}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full py-3 sm:py-4 md:py-5 text-sm sm:text-base md:text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+              >
+                <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                  {t("createCargo.steps.cargoDetails.nextButton")}
+                  <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                </span>
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Step 2: Enhanced Locations */}
+      {step === 2 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Card className="border-0 shadow-2xl bg-gradient-to-br from-white via-green-50/30 to-emerald-50/20 backdrop-blur-sm">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl md:text-2xl">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
+                </div>
+                {t("createCargo.steps.pickupDelivery.title")}
+              </CardTitle>
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 mt-2 sm:mt-3">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-[10px] sm:text-xs font-semibold text-green-700">
+                    {t("createCargo.requiredFieldsNote")}
+                  </span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 sm:space-y-6 md:space-y-8">
+              {/* Pickup Location Section */}
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-1.5 sm:gap-2">
+                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                    {t("createCargo.steps.pickupDelivery.pickupLocation")}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Label
+                      htmlFor="useExistingPickupLocation"
+                      className="text-sm"
+                    >
+                      {t(
+                        "createCargo.steps.pickupDelivery.useExistingLocation"
+                      )}
+                    </Label>
+                    <Switch
+                      id="useExistingPickupLocation"
+                      checked={formData.useExistingPickupLocation}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          useExistingPickupLocation: checked,
+                          selectedPickupLocationId: checked
+                            ? formData.selectedPickupLocationId
+                            : "",
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Existing Location Selection */}
+                {formData.useExistingPickupLocation && (
+                  <div className="space-y-2">
+                    <Label>
+                      {t(
+                        "createCargo.steps.pickupDelivery.selectExistingPickupLocation"
+                      )}
+                    </Label>
+
+                    <Popover
+                      open={pickupLocationOpen}
+                      onOpenChange={setPickupLocationOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={pickupLocationOpen}
+                          className="w-full justify-between"
+                        >
+                          {formData.selectedPickupLocationId
+                            ? myLocations?.find(
+                                (location) =>
+                                  location.id ===
+                                  formData.selectedPickupLocationId
+                              )?.name
+                            : t(
+                                "createCargo.steps.pickupDelivery.choosePickupLocation"
+                              )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.searchLocation"
+                            )}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              {t(
+                                "createCargo.steps.pickupDelivery.noLocationsFound"
+                              )}
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {filterLocations(
+                                myLocations || [],
+                                "",
+                                LocationType.PICKUP_POINT
+                              ).map((location) => (
+                                <CommandItem
+                                  key={location.id}
+                                  value={location.name}
+                                  onSelect={() => {
+                                    handleExistingLocationSelect(
+                                      location.id,
+                                      true
+                                    );
+                                    setPickupLocationOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      formData.selectedPickupLocationId ===
+                                      location.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
+                                      {location.name}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                      {location.address}
+                                    </span>
+                                    {location.contact_person && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Contact: {location.contact_person}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Show selected location info */}
+                    {formData.selectedPickupLocationId && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium text-blue-900">
+                            {t(
+                              "createCargo.steps.pickupDelivery.selectedLocation"
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <p>
+                            <span className="font-medium">
+                              {t("common.name")}:
+                            </span>{" "}
+                            {formData.newPickupLocationName}
+                          </p>
+                          <p>
+                            <span className="font-medium">
+                              {t("common.address")}:
+                            </span>{" "}
+                            {formData.pickupAddress}
+                          </p>
+                          {formData.pickupContactName && (
+                            <p>
+                              <span className="font-medium">
+                                {t(
+                                  "createCargo.steps.pickupDelivery.contactName"
+                                )}
+                                :
+                              </span>{" "}
+                              {formData.pickupContactName}
+                            </p>
+                          )}
+                          {formData.pickupContactPhone && (
+                            <p>
+                              <span className="font-medium">
+                                {t(
+                                  "createCargo.steps.pickupDelivery.contactPhone"
+                                )}
+                                :
+                              </span>{" "}
+                              {formData.pickupContactPhone}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-xs text-blue-700 mt-2">
+                          💡{" "}
+                          {t(
+                            "createCargo.steps.pickupDelivery.editContactDetails"
+                          )}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* New Location Creation */}
+                {!formData.useExistingPickupLocation && (
+                  <>
+                    {/* Location Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="newPickupLocationName">
+                        {t("createCargo.steps.pickupDelivery.locationName")}
+                      </Label>
+                      <Input
+                        id="newPickupLocationName"
+                        placeholder={t(
+                          "createCargo.steps.pickupDelivery.locationNamePlaceholder"
+                        )}
+                        value={formData.newPickupLocationName}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            newPickupLocationName: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* District Selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="pickupDistrictId">
+                        {t("createCargo.steps.pickupDelivery.district")}{" "}
+                        <span className="text-red-500">*</span>
+                      </Label>
+
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={
+                            pickupDistrictSearch ||
+                            (formData.pickupDistrictId
+                              ? districts?.find(
+                                  (d) => d.id === formData.pickupDistrictId
+                                )?.name || ""
+                              : "")
+                          }
+                          onChange={(e) => {
+                            setPickupDistrictSearch(e.target.value);
+                            setPickupDistrictOpen(true);
+                          }}
+                          onFocus={() => setPickupDistrictOpen(true)}
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.selectPickupDistrict"
+                          )}
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                          {pickupDistrictSearch && (
+                            <button
+                              onClick={() => {
+                                setPickupDistrictSearch("");
+                                setPickupDistrictOpen(true);
+                              }}
+                              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                            >
+                              <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                            </button>
+                          )}
+                          <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                        </div>
+
+                        {/* Dropdown */}
+                        {pickupDistrictOpen && (
+                          <motion.div
+                            className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                          >
+                            {districts &&
+                            districts.filter(
+                              (district) =>
+                                !pickupDistrictSearch ||
+                                district.name
+                                  .toLowerCase()
+                                  .includes(
+                                    pickupDistrictSearch.toLowerCase()
+                                  ) ||
+                                (district.branch &&
+                                  district.branch.name
+                                    .toLowerCase()
+                                    .includes(
+                                      pickupDistrictSearch.toLowerCase()
+                                    ))
+                            ).length > 0 ? (
+                              districts
+                                .filter(
+                                  (district) =>
+                                    !pickupDistrictSearch ||
+                                    district.name
+                                      .toLowerCase()
+                                      .includes(
+                                        pickupDistrictSearch.toLowerCase()
+                                      ) ||
+                                    (district.branch &&
+                                      district.branch.name
+                                        .toLowerCase()
+                                        .includes(
+                                          pickupDistrictSearch.toLowerCase()
+                                        ))
+                                )
+                                .map((district) => (
+                                  <button
+                                    key={district.id}
+                                    onClick={() => {
+                                      setFormData({
+                                        ...formData,
+                                        pickupDistrictId: district.id,
+                                      });
+                                      setPickupDistrictSearch("");
+                                      setPickupDistrictOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                                      formData.pickupDistrictId === district.id
+                                        ? "bg-blue-50"
+                                        : ""
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Check
+                                        className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
+                                          formData.pickupDistrictId ===
+                                          district.id
+                                            ? "opacity-100 text-blue-600"
+                                            : "opacity-0"
+                                        }`}
+                                      />
+                                      <div className="flex flex-col flex-1">
+                                        <span className="text-xs sm:text-sm font-semibold text-gray-900">
+                                          {district.name}
+                                        </span>
+                                        {district.branch && (
+                                          <span className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
+                                            {district.branch.name}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </button>
+                                ))
+                            ) : (
+                              <div className="p-3 sm:p-4 text-center text-gray-500 text-xs sm:text-sm">
+                                {t(
+                                  "createCargo.steps.pickupDelivery.noDistrictsFound"
+                                )}
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+
+                        {/* Click outside to close */}
+                        {pickupDistrictOpen && (
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setPickupDistrictOpen(false)}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Address Search */}
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label className="text-xs sm:text-sm font-semibold text-gray-700">
+                        {t("createCargo.steps.pickupDelivery.pickupAddress")}{" "}
+                        <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <div className="flex gap-1.5 sm:gap-2">
+                          <div className="flex-1 relative">
+                            <Search className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+                            <Input
+                              placeholder={t(
+                                "createCargo.steps.pickupDelivery.searchPickupLocation"
+                              )}
+                              value={pickupSearchQuery}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setPickupSearchQuery(value);
+                                if (value.length > 2) {
+                                  searchLocation(value, true);
+                                } else {
+                                  setPickupSearchResults([]);
+                                }
+                              }}
+                              className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                            />
+                            {isSearchingPickup && (
+                              <div className="absolute right-2.5 sm:right-3 md:right-4 top-1/2 transform -translate-y-1/2">
+                                <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-blue-600" />
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              searchLocation(pickupSearchQuery, true)
+                            }
+                            disabled={
+                              isSearchingPickup || pickupSearchQuery.length < 3
+                            }
+                            className="rounded-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm font-semibold border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm"
+                          >
+                            {isSearchingPickup ? (
+                              <>
+                                <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                                <span className="hidden sm:inline">
+                                  {t("common.searching")}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">
+                                  {t("common.search")}
+                                </span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Search Results */}
+                        {pickupSearchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                            {pickupSearchResults.map((result) => (
+                              <div
+                                key={result.place_id}
+                                className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onClick={() => selectLocation(result, true)}
+                              >
+                                <div className="font-medium">
+                                  {result.structured_formatting.main_text}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {result.structured_formatting.secondary_text}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <Textarea
+                        placeholder={t(
+                          "createCargo.steps.pickupDelivery.enterPickupAddress"
+                        )}
+                        value={formData.pickupAddress}
+                        onChange={(e) => {
+                          const newFormData = {
+                            ...formData,
+                            pickupAddress: e.target.value,
+                          };
+                          setFormData(newFormData);
+
+                          // Calculate distance if both addresses are set
+                          if (
+                            newFormData.pickupAddress &&
+                            newFormData.destinationAddress &&
+                            newFormData.pickupLat &&
+                            newFormData.destinationLat
+                          ) {
+                            calculateDistanceBetweenLocations(
+                              parseFloat(newFormData.pickupLat),
+                              parseFloat(newFormData.pickupLng),
+                              parseFloat(newFormData.destinationLat),
+                              parseFloat(newFormData.destinationLng)
+                            );
+                          }
+                        }}
+                        rows={2}
+                        className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm"
+                      />
+                    </div>
+
+                    {/* Pickup Contact Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label
+                          htmlFor="pickupContactName"
+                          className="text-xs sm:text-sm font-semibold text-gray-700"
+                        >
+                          {t("createCargo.steps.pickupDelivery.contactName")}
+                        </Label>
+                        <div className="relative">
+                          <User className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+                          <Input
+                            id="pickupContactName"
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.contactNamePlaceholder"
+                            )}
+                            value={formData.pickupContactName}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                pickupContactName: e.target.value,
+                              })
+                            }
+                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label
+                          htmlFor="pickupContactPhone"
+                          className="text-xs sm:text-sm font-semibold text-gray-700"
+                        >
+                          {t("createCargo.steps.pickupDelivery.contactPhone")}
+                        </Label>
+                        <div className="relative">
+                          <Phone className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+                          <Input
+                            id="pickupContactPhone"
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.contactPhonePlaceholder"
+                            )}
+                            value={formData.pickupContactPhone}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                pickupContactPhone: e.target.value,
+                              })
+                            }
+                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label
+                        htmlFor="pickupOpeningHours"
+                        className="text-xs sm:text-sm font-semibold text-gray-700"
+                      >
+                        {t("createCargo.steps.pickupDelivery.openingHours")}
+                      </Label>
+                      <div className="relative">
+                        <Clock className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+                        <Input
+                          id="pickupOpeningHours"
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.openingHoursPlaceholder"
+                          )}
+                          value={formData.pickupOpeningHours}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              pickupOpeningHours: e.target.value,
+                            })
+                          }
+                          className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="savePickupData"
+                        checked={formData.savePickupData}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            savePickupData: e.target.checked,
+                          })
+                        }
+                        className="rounded"
+                      />
+                      <Label
+                        htmlFor="savePickupData"
+                        className="text-sm flex items-center gap-1"
+                      >
+                        <Save className="h-4 w-4" />
+                        {t("createCargo.steps.pickupDelivery.savePickupData")}
+                      </Label>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Destination Location Section */}
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground flex items-center gap-1.5 sm:gap-2">
+                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                    {t("createCargo.steps.pickupDelivery.deliveryLocation")}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Label
+                      htmlFor="useExistingDestinationLocation"
+                      className="text-sm"
+                    >
+                      {t(
+                        "createCargo.steps.pickupDelivery.useExistingLocation"
+                      )}
+                    </Label>
+                    <Switch
+                      id="useExistingDestinationLocation"
+                      checked={formData.useExistingDestinationLocation}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          useExistingDestinationLocation: checked,
+                          selectedDestinationLocationId: checked
+                            ? formData.selectedDestinationLocationId
+                            : "",
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Existing Location Selection */}
+                {formData.useExistingDestinationLocation && (
+                  <div className="space-y-2">
+                    <Label>
+                      {t(
+                        "createCargo.steps.pickupDelivery.selectExistingDeliveryLocation"
+                      )}
+                    </Label>
+
+                    <Popover
+                      open={destinationLocationOpen}
+                      onOpenChange={setDestinationLocationOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={destinationLocationOpen}
+                          className="w-full justify-between"
+                        >
+                          {formData.selectedDestinationLocationId
+                            ? myLocations?.find(
+                                (location) =>
+                                  location.id ===
+                                  formData.selectedDestinationLocationId
+                              )?.name
+                            : t(
+                                "createCargo.steps.pickupDelivery.chooseDeliveryLocation"
+                              )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.searchLocation"
+                            )}
+                          />
+                          <CommandList>
+                            <CommandEmpty>
+                              {t(
+                                "createCargo.steps.pickupDelivery.noLocationsFound"
+                              )}
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {filterLocations(
+                                myLocations || [],
+                                "",
+                                LocationType.DELIVERY_POINT
+                              ).map((location) => (
+                                <CommandItem
+                                  key={location.id}
+                                  value={location.name}
+                                  onSelect={() => {
+                                    handleExistingLocationSelect(
+                                      location.id,
+                                      false
+                                    );
+                                    setDestinationLocationOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={`mr-2 h-4 w-4 ${
+                                      formData.selectedDestinationLocationId ===
+                                      location.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    }`}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
+                                      {location.name}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                      {location.address}
+                                    </span>
+                                    {location.contact_person && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Contact: {location.contact_person}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+
+                    {/* Show selected location info */}
+                    {formData.selectedDestinationLocationId && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="h-4 w-4 text-red-600" />
+                          <span className="font-medium text-red-900">
+                            {t(
+                              "createCargo.steps.pickupDelivery.selectedLocation"
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <p>
+                            <span className="font-medium">
+                              {t("common.name")}:
+                            </span>{" "}
+                            {formData.newDestinationLocationName}
+                          </p>
+                          <p>
+                            <span className="font-medium">
+                              {t("common.address")}:
+                            </span>{" "}
+                            {formData.destinationAddress}
+                          </p>
+                          {formData.destinationContactName && (
+                            <p>
+                              <span className="font-medium">
+                                {t(
+                                  "createCargo.steps.pickupDelivery.contactName"
+                                )}
+                                :
+                              </span>{" "}
+                              {formData.destinationContactName}
+                            </p>
+                          )}
+                          {formData.destinationContactPhone && (
+                            <p>
+                              <span className="font-medium">
+                                {t(
+                                  "createCargo.steps.pickupDelivery.contactPhone"
+                                )}
+                                :
+                              </span>{" "}
+                              {formData.destinationContactPhone}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-xs text-red-700 mt-2">
+                          💡{" "}
+                          {t(
+                            "createCargo.steps.pickupDelivery.editContactDetails"
+                          )}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* New Location Creation */}
+                {!formData.useExistingDestinationLocation && (
+                  <>
+                    {/* Location Name */}
+                    <div className="space-y-2">
+                      <Label htmlFor="newDestinationLocationName">
+                        {t("createCargo.steps.pickupDelivery.locationName")}
+                      </Label>
+                      <Input
+                        id="newDestinationLocationName"
+                        placeholder={t(
+                          "createCargo.steps.pickupDelivery.locationNamePlaceholder"
+                        )}
+                        value={formData.newDestinationLocationName}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            newDestinationLocationName: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* District Selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="destinationDistrictId">
+                        {t("createCargo.steps.pickupDelivery.district")}{" "}
+                        <span className="text-red-500">*</span>
+                      </Label>
+
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={
+                            destinationDistrictSearch ||
+                            (formData.destinationDistrictId
+                              ? districts?.find(
+                                  (d) => d.id === formData.destinationDistrictId
+                                )?.name || ""
+                              : "")
+                          }
+                          onChange={(e) => {
+                            setDestinationDistrictSearch(e.target.value);
+                            setDestinationDistrictOpen(true);
+                          }}
+                          onFocus={() => setDestinationDistrictOpen(true)}
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.selectDeliveryDistrict"
+                          )}
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                          {destinationDistrictSearch && (
+                            <button
+                              onClick={() => {
+                                setDestinationDistrictSearch("");
+                                setDestinationDistrictOpen(true);
+                              }}
+                              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                            >
+                              <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                            </button>
+                          )}
+                          <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                        </div>
+
+                        {/* Dropdown */}
+                        {destinationDistrictOpen && (
+                          <motion.div
+                            className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                          >
+                            {districts &&
+                            districts.filter(
+                              (district) =>
+                                !destinationDistrictSearch ||
+                                district.name
+                                  .toLowerCase()
+                                  .includes(
+                                    destinationDistrictSearch.toLowerCase()
+                                  ) ||
+                                (district.branch &&
+                                  district.branch.name
+                                    .toLowerCase()
+                                    .includes(
+                                      destinationDistrictSearch.toLowerCase()
+                                    ))
+                            ).length > 0 ? (
+                              districts
+                                .filter(
+                                  (district) =>
+                                    !destinationDistrictSearch ||
+                                    district.name
+                                      .toLowerCase()
+                                      .includes(
+                                        destinationDistrictSearch.toLowerCase()
+                                      ) ||
+                                    (district.branch &&
+                                      district.branch.name
+                                        .toLowerCase()
+                                        .includes(
+                                          destinationDistrictSearch.toLowerCase()
+                                        ))
+                                )
+                                .map((district) => (
+                                  <button
+                                    key={district.id}
+                                    onClick={() => {
+                                      setFormData({
+                                        ...formData,
+                                        destinationDistrictId: district.id,
+                                      });
+                                      setDestinationDistrictSearch("");
+                                      setDestinationDistrictOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                                      formData.destinationDistrictId ===
+                                      district.id
+                                        ? "bg-blue-50"
+                                        : ""
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Check
+                                        className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
+                                          formData.destinationDistrictId ===
+                                          district.id
+                                            ? "opacity-100 text-blue-600"
+                                            : "opacity-0"
+                                        }`}
+                                      />
+                                      <div className="flex flex-col flex-1">
+                                        <span className="text-xs sm:text-sm font-semibold text-gray-900">
+                                          {district.name}
+                                        </span>
+                                        {district.branch && (
+                                          <span className="text-[10px] sm:text-xs text-gray-500 mt-0.5">
+                                            {district.branch.name}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </button>
+                                ))
+                            ) : (
+                              <div className="p-3 sm:p-4 text-center text-gray-500 text-xs sm:text-sm">
+                                {t(
+                                  "createCargo.steps.pickupDelivery.noDistrictsFound"
+                                )}
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+
+                        {/* Click outside to close */}
+                        {destinationDistrictOpen && (
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setDestinationDistrictOpen(false)}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Address Search */}
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label className="text-xs sm:text-sm font-semibold text-gray-700">
+                        {t("createCargo.steps.pickupDelivery.deliveryAddress")}{" "}
+                        <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <div className="flex gap-1.5 sm:gap-2">
+                          <div className="flex-1 relative">
+                            <Search className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+                            <Input
+                              placeholder={t(
+                                "createCargo.steps.pickupDelivery.searchDeliveryLocation"
+                              )}
+                              value={destinationSearchQuery}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setDestinationSearchQuery(value);
+                                if (value.length > 2) {
+                                  searchLocation(value, false);
+                                } else {
+                                  setDestinationSearchResults([]);
+                                }
+                              }}
+                              className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                            />
+                            {isSearchingDestination && (
+                              <div className="absolute right-2.5 sm:right-3 md:right-4 top-1/2 transform -translate-y-1/2">
+                                <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-blue-600" />
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              searchLocation(destinationSearchQuery, false)
+                            }
+                            disabled={
+                              isSearchingDestination ||
+                              destinationSearchQuery.length < 3
+                            }
+                            className="rounded-full px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm font-semibold border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm"
+                          >
+                            {isSearchingDestination ? (
+                              <>
+                                <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                                <span className="hidden sm:inline">
+                                  {t("common.searching")}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Search className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">
+                                  {t("common.search")}
+                                </span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Search Results */}
+                        {destinationSearchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                            {destinationSearchResults.map((result) => (
+                              <div
+                                key={result.place_id}
+                                className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                onClick={() => selectLocation(result, false)}
+                              >
+                                <div className="font-medium">
+                                  {result.structured_formatting.main_text}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {result.structured_formatting.secondary_text}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <Textarea
+                        placeholder={t(
+                          "createCargo.steps.pickupDelivery.enterDeliveryAddress"
+                        )}
+                        value={formData.destinationAddress}
+                        onChange={(e) => {
+                          const newFormData = {
+                            ...formData,
+                            destinationAddress: e.target.value,
+                          };
+                          setFormData(newFormData);
+
+                          // Calculate distance if both addresses are set
+                          if (
+                            newFormData.pickupAddress &&
+                            newFormData.destinationAddress &&
+                            newFormData.pickupLat &&
+                            newFormData.destinationLat
+                          ) {
+                            calculateDistanceBetweenLocations(
+                              parseFloat(newFormData.pickupLat),
+                              parseFloat(newFormData.pickupLng),
+                              parseFloat(newFormData.destinationLat),
+                              parseFloat(newFormData.destinationLng)
+                            );
+                          }
+                        }}
+                        rows={2}
+                        className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm"
+                      />
+                    </div>
+
+                    {/* Destination Contact Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label
+                          htmlFor="destinationContactName"
+                          className="text-xs sm:text-sm font-semibold text-gray-700"
+                        >
+                          {t("createCargo.steps.pickupDelivery.contactName")}
+                        </Label>
+                        <div className="relative">
+                          <User className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+                          <Input
+                            id="destinationContactName"
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.contactNamePlaceholder"
+                            )}
+                            value={formData.destinationContactName}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                destinationContactName: e.target.value,
+                              })
+                            }
+                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 sm:space-y-2">
+                        <Label
+                          htmlFor="destinationContactPhone"
+                          className="text-xs sm:text-sm font-semibold text-gray-700"
+                        >
+                          {t("createCargo.steps.pickupDelivery.contactPhone")}
+                        </Label>
+                        <div className="relative">
+                          <Phone className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+                          <Input
+                            id="destinationContactPhone"
+                            placeholder={t(
+                              "createCargo.steps.pickupDelivery.contactPhonePlaceholder"
+                            )}
+                            value={formData.destinationContactPhone}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                destinationContactPhone: e.target.value,
+                              })
+                            }
+                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label
+                        htmlFor="destinationOpeningHours"
+                        className="text-xs sm:text-sm font-semibold text-gray-700"
+                      >
+                        {t("createCargo.steps.pickupDelivery.openingHours")}
+                      </Label>
+                      <div className="relative">
+                        <Clock className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+                        <Input
+                          id="destinationOpeningHours"
+                          placeholder={t(
+                            "createCargo.steps.pickupDelivery.openingHoursPlaceholder"
+                          )}
+                          value={formData.destinationOpeningHours}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              destinationOpeningHours: e.target.value,
+                            })
+                          }
+                          className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="saveDestinationData"
+                        checked={formData.saveDestinationData}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            saveDestinationData: e.target.checked,
+                          })
+                        }
+                        className="rounded"
+                      />
+                      <Label
+                        htmlFor="saveDestinationData"
+                        className="text-sm flex items-center gap-1"
+                      >
+                        <Save className="h-4 w-4" />
+                        {t("createCargo.steps.pickupDelivery.saveDeliveryData")}
+                      </Label>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Additional Details */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="pickupDate">
+                    {t("createCargo.steps.pickupDelivery.preferredPickupDate")}{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative">
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="pickupDate"
+                        type="date"
+                        value={formData.pickupDate}
+                        onChange={(e) => {
+                          const selectedDate = e.target.value;
+                          const today = new Date().toISOString().split("T")[0];
+
+                          if (selectedDate < today) {
+                            toast.error(
+                              t(
+                                "createCargo.steps.pickupDelivery.selectDateFromToday"
+                              )
+                            );
+                            return;
+                          }
+
+                          setFormData({
+                            ...formData,
+                            pickupDate: selectedDate,
+                          });
+                        }}
+                        min={new Date().toISOString().split("T")[0]} // Disable past dates
+                        className="pl-10 bg-white border-gray-300 focus:border-primary focus:ring-primary"
+                        placeholder="Select pickup date"
+                      />
+                      {formData.pickupDate ? (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-xs text-gray-500">
+                        📅{" "}
+                        {t(
+                          "createCargo.steps.pickupDelivery.selectDateFromToday"
+                        )}
+                      </p>
+                      {formData.pickupDate && (
+                        <p className="text-xs text-green-600 font-medium">
+                          Selected:{" "}
+                          {new Date(formData.pickupDate).toLocaleDateString(
+                            "en-US",
+                            {
+                              weekday: "short",
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {formData.pickupDate && (
+                    <p className="text-sm text-green-600">
+                      ✓{" "}
+                      {t("createCargo.steps.pickupDelivery.pickupDateSelected")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="specialInstructions">
+                    {t("createCargo.steps.pickupDelivery.specialInstructions")}{" "}
+                    ({t("auth.optional")})
+                  </Label>
+                  <Textarea
+                    id="specialInstructions"
+                    placeholder={t(
+                      "createCargo.steps.pickupDelivery.specialInstructionsPlaceholder"
+                    )}
+                    value={formData.specialInstructions}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        specialInstructions: e.target.value,
+                      })
+                    }
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              {/* Distance Display - Bottom */}
+              {formData.pickupAddress && formData.destinationAddress && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-blue-900">
+                      <MapPin className="h-4 w-4" />
+                      <span className="font-medium">
+                        {formData.distance > 0
+                          ? `${t(
+                              "createCargo.steps.pickupDelivery.estimatedDistance"
+                            )}: ${formData.distance} km`
+                          : isCalculatingDistance
+                          ? t(
+                              "createCargo.steps.pickupDelivery.calculatingDistance"
+                            )
+                          : t(
+                              "createCargo.steps.pickupDelivery.distanceWillBeCalculated"
+                            )}
+                      </span>
+                    </div>
+                    {(formData.distance === 0 || isCalculatingDistance) && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    )}
+                  </div>
+                  {formData.distance > 0 && (
+                    <div className="mt-2 text-sm text-blue-700">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={calculateDistance}
+                        disabled={isCalculatingDistance}
+                        className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                      >
+                        <RefreshCw
+                          className={`h-3 w-3 mr-1 ${
+                            isCalculatingDistance ? "animate-spin" : ""
+                          }`}
+                        />
+                        {t(
+                          "createCargo.steps.pickupDelivery.recalculateDistance"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  className="flex-1"
+                >
+                  {t("common.back")}
+                </Button>
+                <Button
+                  onClick={handleNext}
+                  disabled={!validateStep(2)}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full py-4 sm:py-5 text-base sm:text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    {t("createCargo.steps.pickupDelivery.reviewCreateCargo")}
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Step 3: Cost Estimate & Confirmation */}
+      {step === 3 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Card className="border-0 shadow-2xl bg-gradient-to-br from-white via-purple-50/30 to-pink-50/20 backdrop-blur-sm">
+            <CardHeader className="pb-3 sm:pb-4">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl md:text-2xl">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Calculator className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
+                </div>
+                {t("createCargo.steps.confirmation.title")}
+              </CardTitle>
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200/50 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 mt-2 sm:mt-3">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-500 rounded-full"></div>
+                  <span className="text-[10px] sm:text-xs font-semibold text-purple-700">
                     {t("createCargo.requiredFieldsNote")}
                   </span>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cargoType" className="text-sm font-semibold text-gray-700">
-                  {t("createCargo.steps.cargoDetails.cargoType")}{" "}
-                  <span className="text-red-500">*</span>
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className="w-full justify-between rounded-full px-4 py-3 h-auto font-semibold border-gray-200 hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    >
-                      <span className="truncate">
-                        {formData.cargoType
-                          ? t(`createCargo.steps.cargoDetails.types.${formData.cargoType}`)
-                          : t("createCargo.steps.cargoDetails.selectCargoType")}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
-                    <Command>
-                      <CommandInput
-                        placeholder={t("createCargo.steps.cargoDetails.selectCargoType")}
-                      />
-                      <CommandList>
-                        <CommandEmpty>
-                          {t("createCargo.steps.cargoDetails.noCategoriesFound")}
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {["electronics", "furniture", "documents", "food", "clothing", "other"].map((type) => (
-                            <CommandItem
-                              key={type}
-                              value={type}
-                              onSelect={() => {
-                                setFormData({ ...formData, cargoType: type });
-                              }}
-                            >
-                              <Check
-                                className={`mr-2 h-4 w-4 ${
-                                  formData.cargoType === type ? "opacity-100" : "opacity-0"
-                                }`}
-                              />
-                              {t(`createCargo.steps.cargoDetails.types.${type}`)}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cargoCategoryId">
-                  {t("cargo.cargoCategory")}{" "}
-                  <span className="text-red-500">*</span>
-                </Label>
-
-                <Popover
-                  open={cargoCategoryOpen}
-                  onOpenChange={setCargoCategoryOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={cargoCategoryOpen}
-                      className="w-full justify-between rounded-full px-4 py-3 h-auto font-semibold border-gray-200 hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                    >
-                      <span className="truncate">
-                        {formData.cargoCategoryId
-                          ? cargoCategories?.find(
-                              (category) =>
-                                category.id === formData.cargoCategoryId
-                            )?.name
-                          : t("createCargo.steps.cargoDetails.selectCargoCategory")}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
-                    <Command>
-                      <CommandInput
-                        placeholder={t("createCargo.steps.cargoDetails.searchCategory")}
-                      />
-                      <CommandList>
-                        <CommandEmpty>
-                          {t("createCargo.steps.cargoDetails.noCategoriesFound")}
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {cargoCategories?.map((category) => (
-                            <CommandItem
-                              key={category.id}
-                              value={category.name}
-                              onSelect={() => {
-                                setFormData({
-                                  ...formData,
-                                  cargoCategoryId: category.id,
-                                });
-                                setCargoCategoryOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={`mr-2 h-4 w-4 ${
-                                  formData.cargoCategoryId === category.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                }`}
-                              />
-                              <div className="flex flex-col">
-                                <span className="font-semibold">
-                                  {category.name}
-                                </span>
-                                {category.description && (
-                                  <span className="text-sm text-muted-foreground">
-                                    {category.description}
-                                  </span>
-                                )}
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {formData.cargoType === "other" && (
-                <div className="space-y-2">
-                  <Label htmlFor="otherCargoType">
-                    {t("createCargo.steps.cargoDetails.specifyType")}{" "}
-                    <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="otherCargoType"
-                    placeholder={t(
-                      "createCargo.steps.cargoDetails.enterCargoType"
-                    )}
-                    value={formData.otherCargoType}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        otherCargoType: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="weight">
-                  {t("createCargo.steps.cargoDetails.weight")}{" "}
-                  <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  placeholder="25"
-                  value={formData.weight}
-                  onChange={(e) =>
-                    setFormData({ ...formData, weight: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("createCargo.steps.cargoDetails.dimensions")}</Label>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Input
-                    id="length"
-                    placeholder={t("createCargo.steps.cargoDetails.length")}
-                    value={formData.length}
-                    onChange={(e) =>
-                      setFormData({ ...formData, length: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Input
-                    id="width"
-                    placeholder={t("createCargo.steps.cargoDetails.width")}
-                    value={formData.width}
-                    onChange={(e) =>
-                      setFormData({ ...formData, width: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Input
-                    id="height"
-                    placeholder={t("createCargo.steps.cargoDetails.height")}
-                    value={formData.height}
-                    onChange={(e) =>
-                      setFormData({ ...formData, height: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="urgency">
-                {t("createCargo.steps.cargoDetails.urgency")}
-              </Label>
-              <Select
-                value={formData.urgency}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, urgency: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">
-                    {t(
-                      "createCargo.steps.cargoDetails.urgencyOptions.standard"
-                    )}
-                  </SelectItem>
-                  <SelectItem value="express">
-                    {t("createCargo.steps.cargoDetails.urgencyOptions.express")}
-                  </SelectItem>
-                  <SelectItem value="urgent">
-                    {t("createCargo.steps.cargoDetails.urgencyOptions.urgent")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">
-                {t("createCargo.steps.cargoDetails.description")}
-              </Label>
-              <Textarea
-                id="description"
-                placeholder={t(
-                  "createCargo.steps.cargoDetails.descriptionPlaceholder"
-                )}
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={3}
-                maxLength={1000}
-              />
-              <p className="text-xs text-muted-foreground">
-                {formData.description.length}/1000 characters
-              </p>
-            </div>
-
-            <Button
-              onClick={handleNext}
-              disabled={!validateStep(1)}
-              className="w-full bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
-            >
-              {t("createCargo.steps.cargoDetails.nextButton")}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Enhanced Locations */}
-      {step === 2 && (
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              {t("createCargo.steps.pickupDelivery.title")}
-            </CardTitle>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <span className="text-sm font-semibold text-red-700">
-                  {t("createCargo.requiredFieldsNote")}
-                </span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            {/* Pickup Location Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-green-600" />
-                  {t("createCargo.steps.pickupDelivery.pickupLocation")}
+              {/* Cost Breakdown */}
+              <div className="bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 backdrop-blur-sm rounded-2xl p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3 border border-blue-100/50">
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900">
+                  {t("createCargo.steps.confirmation.costBreakdown")}
                 </h3>
-                <div className="flex items-center gap-2">
-                  <Label
-                    htmlFor="useExistingPickupLocation"
-                    className="text-sm"
-                  >
-                    {t("createCargo.steps.pickupDelivery.useExistingLocation")}
-                  </Label>
-                  <Switch
-                    id="useExistingPickupLocation"
-                    checked={formData.useExistingPickupLocation}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        useExistingPickupLocation: checked,
-                        selectedPickupLocationId: checked
-                          ? formData.selectedPickupLocationId
-                          : "",
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Existing Location Selection */}
-              {formData.useExistingPickupLocation && (
-                <div className="space-y-2">
-                  <Label>
-                    {t(
-                      "createCargo.steps.pickupDelivery.selectExistingPickupLocation"
-                    )}
-                  </Label>
-
-                  <Popover
-                    open={pickupLocationOpen}
-                    onOpenChange={setPickupLocationOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={pickupLocationOpen}
-                        className="w-full justify-between"
-                      >
-                        {formData.selectedPickupLocationId
-                          ? myLocations?.find(
-                              (location) =>
-                                location.id ===
-                                formData.selectedPickupLocationId
-                            )?.name
-                          : t(
-                              "createCargo.steps.pickupDelivery.choosePickupLocation"
-                            )}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput
-                      placeholder={t(
-                        "createCargo.steps.pickupDelivery.searchLocation"
-                      )}
-                        />
-                        <CommandList>
-                          <CommandEmpty>
-                            {t(
-                              "createCargo.steps.pickupDelivery.noLocationsFound"
-                            )}
-                          </CommandEmpty>
-                          <CommandGroup>
-                      {filterLocations(
-                        myLocations || [],
-                              "",
-                          LocationType.PICKUP_POINT
-                        ).map((location) => (
-                              <CommandItem
-                                key={location.id}
-                                value={location.name}
-                                onSelect={() => {
-                                  handleExistingLocationSelect(
-                                    location.id,
-                                    true
-                                  );
-                                  setPickupLocationOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    formData.selectedPickupLocationId ===
-                                    location.id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  }`}
-                                />
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {location.name}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                {location.address}
-                              </span>
-                                  {location.contact_person && (
-                                <span className="text-xs text-muted-foreground">
-                                  Contact: {location.contact_person}
-                                </span>
-                          )}
-                        </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Show selected location info */}
-                  {formData.selectedPickupLocationId && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="h-4 w-4 text-blue-600" />
-                        <span className="font-medium text-blue-900">
-                          {t(
-                            "createCargo.steps.pickupDelivery.selectedLocation"
-                          )}
-                        </span>
-                      </div>
-                      <div className="text-sm space-y-1">
-                        <p>
-                          <span className="font-medium">
-                            {t("common.name")}:
-                          </span>{" "}
-                          {formData.newPickupLocationName}
-                        </p>
-                        <p>
-                          <span className="font-medium">
-                            {t("common.address")}:
-                          </span>{" "}
-                          {formData.pickupAddress}
-                        </p>
-                        {formData.pickupContactName && (
-                          <p>
-                            <span className="font-medium">
-                              {t(
-                                "createCargo.steps.pickupDelivery.contactName"
-                              )}
-                              :
-                            </span>{" "}
-                            {formData.pickupContactName}
-                          </p>
-                        )}
-                        {formData.pickupContactPhone && (
-                          <p>
-                            <span className="font-medium">
-                              {t(
-                                "createCargo.steps.pickupDelivery.contactPhone"
-                              )}
-                              :
-                            </span>{" "}
-                            {formData.pickupContactPhone}
-                          </p>
-                        )}
-                      </div>
-                      <p className="text-xs text-blue-700 mt-2">
-                        💡{" "}
-                        {t(
-                          "createCargo.steps.pickupDelivery.editContactDetails"
-                        )}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* New Location Creation */}
-              {!formData.useExistingPickupLocation && (
-                <>
-                  {/* Location Name */}
+                {estimateCostMutation.isPending ? (
                   <div className="space-y-2">
-                    <Label htmlFor="newPickupLocationName">
-                      {t("createCargo.steps.pickupDelivery.locationName")}
-                    </Label>
-                    <Input
-                      id="newPickupLocationName"
-                      placeholder={t(
-                        "createCargo.steps.pickupDelivery.locationNamePlaceholder"
-                      )}
-                      value={formData.newPickupLocationName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          newPickupLocationName: e.target.value,
-                        })
-                      }
-                    />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
                   </div>
-
-                  {/* District Selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="pickupDistrictId">
-                      {t("createCargo.steps.pickupDelivery.district")}{" "}
-                      <span className="text-red-500">*</span>
-                    </Label>
-
-                    <Popover
-                      open={pickupDistrictOpen}
-                      onOpenChange={setPickupDistrictOpen}
-                    >
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={pickupDistrictOpen}
-                          className="w-full justify-between"
-                        >
-                          {formData.pickupDistrictId
-                            ? districts?.find(
-                                (district) =>
-                                  district.id === formData.pickupDistrictId
-                              )?.name
-                            : t(
-                                "createCargo.steps.pickupDelivery.selectPickupDistrict"
-                              )}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <Command>
-                          <CommandInput
-                            placeholder={t(
-                              "createCargo.steps.pickupDelivery.searchDistrict"
-                            )}
-                          />
-                          <CommandList>
-                            <CommandEmpty>
-                              {t(
-                                "createCargo.steps.pickupDelivery.noDistrictsFound"
-                              )}
-                            </CommandEmpty>
-                            <CommandGroup>
-                              {districts?.map((district) => (
-                                <CommandItem
-                                  key={district.id}
-                                  value={district.name}
-                                  onSelect={() => {
-                                    console.log(
-                                      "Pickup district selected:",
-                                      district.id
-                                    );
-                        setFormData({
-                          ...formData,
-                                      pickupDistrictId: district.id,
-                                    });
-                                    setPickupDistrictOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={`mr-2 h-4 w-4 ${
-                                      formData.pickupDistrictId === district.id
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    }`}
-                                  />
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
-                            {district.name}
-                                    </span>
-                                    {district.province && (
-                                      <span className="text-sm text-muted-foreground">
-                                        {district.province}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Address Search */}
-                  <div className="space-y-2">
-                    <Label>
-                      {t("createCargo.steps.pickupDelivery.pickupAddress")}{" "}
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    <div className="relative">
-                      <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            placeholder={t(
-                              "createCargo.steps.pickupDelivery.searchPickupLocation"
-                            )}
-                            value={pickupSearchQuery}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setPickupSearchQuery(value);
-                              if (value.length > 2) {
-                                searchLocation(value, true);
-                              } else {
-                                setPickupSearchResults([]);
-                              }
-                            }}
-                            className="pl-10"
-                          />
-                          {isSearchingPickup && (
-                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                              <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            searchLocation(pickupSearchQuery, true)
-                          }
-                          disabled={
-                            isSearchingPickup || pickupSearchQuery.length < 3
-                          }
-                        >
-                          {isSearchingPickup ? (
-                            <>
-                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                              {t("common.searching")}
-                            </>
-                          ) : (
-                            <>
-                              <Search className="h-4 w-4 mr-2" />
-                              {t("common.search")}
-                            </>
-                          )}
-                        </Button>
-                      </div>
-
-                      {/* Search Results */}
-                      {pickupSearchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                          {pickupSearchResults.map((result) => (
-                            <div
-                              key={result.place_id}
-                              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                              onClick={() => selectLocation(result, true)}
-                            >
-                              <div className="font-medium">
-                                {result.structured_formatting.main_text}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {result.structured_formatting.secondary_text}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <Textarea
-                      placeholder={t(
-                        "createCargo.steps.pickupDelivery.enterPickupAddress"
-                      )}
-                      value={formData.pickupAddress}
-                      onChange={(e) => {
-                        const newFormData = {
-                          ...formData,
-                          pickupAddress: e.target.value,
-                        };
-                        setFormData(newFormData);
-
-                        // Calculate distance if both addresses are set
-                        if (
-                          newFormData.pickupAddress &&
-                          newFormData.destinationAddress &&
-                          newFormData.pickupLat &&
-                          newFormData.destinationLat
-                        ) {
-                          calculateDistanceBetweenLocations(
-                            parseFloat(newFormData.pickupLat),
-                            parseFloat(newFormData.pickupLng),
-                            parseFloat(newFormData.destinationLat),
-                            parseFloat(newFormData.destinationLng)
-                          );
-                        }
-                      }}
-                      rows={2}
-                    />
-                  </div>
-
-                  {/* Pickup Contact Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="pickupContactName">
-                        {t("createCargo.steps.pickupDelivery.contactName")}
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="pickupContactName"
-                          placeholder={t(
-                            "createCargo.steps.pickupDelivery.contactNamePlaceholder"
-                          )}
-                          value={formData.pickupContactName}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              pickupContactName: e.target.value,
-                            })
-                          }
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="pickupContactPhone">
-                        {t("createCargo.steps.pickupDelivery.contactPhone")}
-                      </Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="pickupContactPhone"
-                          placeholder={t(
-                            "createCargo.steps.pickupDelivery.contactPhonePlaceholder"
-                          )}
-                          value={formData.pickupContactPhone}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              pickupContactPhone: e.target.value,
-                            })
-                          }
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="pickupOpeningHours">
-                      {t("createCargo.steps.pickupDelivery.openingHours")}
-                    </Label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="pickupOpeningHours"
-                        placeholder={t(
-                          "createCargo.steps.pickupDelivery.openingHoursPlaceholder"
-                        )}
-                        value={formData.pickupOpeningHours}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            pickupOpeningHours: e.target.value,
-                          })
-                        }
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="savePickupData"
-                      checked={formData.savePickupData}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          savePickupData: e.target.checked,
-                        })
-                      }
-                      className="rounded"
-                    />
-                    <Label
-                      htmlFor="savePickupData"
-                      className="text-sm flex items-center gap-1"
-                    >
-                      <Save className="h-4 w-4" />
-                      {t("createCargo.steps.pickupDelivery.savePickupData")}
-                    </Label>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Destination Location Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-red-600" />
-                  {t("createCargo.steps.pickupDelivery.deliveryLocation")}
-                </h3>
-                <div className="flex items-center gap-2">
-                  <Label
-                    htmlFor="useExistingDestinationLocation"
-                    className="text-sm"
-                  >
-                    {t("createCargo.steps.pickupDelivery.useExistingLocation")}
-                  </Label>
-                  <Switch
-                    id="useExistingDestinationLocation"
-                    checked={formData.useExistingDestinationLocation}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        useExistingDestinationLocation: checked,
-                        selectedDestinationLocationId: checked
-                          ? formData.selectedDestinationLocationId
-                          : "",
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Existing Location Selection */}
-              {formData.useExistingDestinationLocation && (
-                <div className="space-y-2">
-                  <Label>
-                    {t(
-                      "createCargo.steps.pickupDelivery.selectExistingDeliveryLocation"
-                    )}
-                  </Label>
-
-                  <Popover
-                    open={destinationLocationOpen}
-                    onOpenChange={setDestinationLocationOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={destinationLocationOpen}
-                        className="w-full justify-between"
-                      >
-                        {formData.selectedDestinationLocationId
-                          ? myLocations?.find(
-                              (location) =>
-                                location.id ===
-                                formData.selectedDestinationLocationId
-                            )?.name
-                          : t(
-                              "createCargo.steps.pickupDelivery.chooseDeliveryLocation"
-                            )}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput
-                      placeholder={t(
-                        "createCargo.steps.pickupDelivery.searchLocation"
-                      )}
-                        />
-                        <CommandList>
-                          <CommandEmpty>
-                            {t(
-                              "createCargo.steps.pickupDelivery.noLocationsFound"
-                            )}
-                          </CommandEmpty>
-                          <CommandGroup>
-                      {filterLocations(
-                        myLocations || [],
-                              "",
-                          LocationType.DELIVERY_POINT
-                        ).map((location) => (
-                              <CommandItem
-                                key={location.id}
-                                value={location.name}
-                                onSelect={() => {
-                                  handleExistingLocationSelect(
-                                    location.id,
-                                    false
-                                  );
-                                  setDestinationLocationOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    formData.selectedDestinationLocationId ===
-                                    location.id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  }`}
-                                />
-                            <div className="flex flex-col">
-                              <span className="font-medium">
-                                {location.name}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                {location.address}
-                              </span>
-                              {location.contact_person && (
-                                <span className="text-xs text-muted-foreground">
-                                  Contact: {location.contact_person}
-                                </span>
-                              )}
-                            </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Show selected location info */}
-                  {formData.selectedDestinationLocationId && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="h-4 w-4 text-red-600" />
-                        <span className="font-medium text-red-900">
-                          {t(
-                            "createCargo.steps.pickupDelivery.selectedLocation"
-                          )}
-                        </span>
-                      </div>
-                      <div className="text-sm space-y-1">
-                        <p>
-                          <span className="font-medium">
-                            {t("common.name")}:
-                          </span>{" "}
-                          {formData.newDestinationLocationName}
-                        </p>
-                        <p>
-                          <span className="font-medium">
-                            {t("common.address")}:
-                          </span>{" "}
-                          {formData.destinationAddress}
-                        </p>
-                        {formData.destinationContactName && (
-                          <p>
-                            <span className="font-medium">
-                              {t(
-                                "createCargo.steps.pickupDelivery.contactName"
-                              )}
-                              :
-                            </span>{" "}
-                            {formData.destinationContactName}
-                          </p>
-                        )}
-                        {formData.destinationContactPhone && (
-                          <p>
-                            <span className="font-medium">
-                              {t(
-                                "createCargo.steps.pickupDelivery.contactPhone"
-                              )}
-                              :
-                            </span>{" "}
-                            {formData.destinationContactPhone}
-                          </p>
-                        )}
-                      </div>
-                      <p className="text-xs text-red-700 mt-2">
-                        💡{" "}
-                        {t(
-                          "createCargo.steps.pickupDelivery.editContactDetails"
-                        )}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* New Location Creation */}
-              {!formData.useExistingDestinationLocation && (
-                <>
-                  {/* Location Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="newDestinationLocationName">
-                      {t("createCargo.steps.pickupDelivery.locationName")}
-                    </Label>
-                    <Input
-                      id="newDestinationLocationName"
-                      placeholder={t(
-                        "createCargo.steps.pickupDelivery.locationNamePlaceholder"
-                      )}
-                      value={formData.newDestinationLocationName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          newDestinationLocationName: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  {/* District Selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="destinationDistrictId">
-                      {t("createCargo.steps.pickupDelivery.district")}{" "}
-                      <span className="text-red-500">*</span>
-                    </Label>
-
-                    <Popover
-                      open={destinationDistrictOpen}
-                      onOpenChange={setDestinationDistrictOpen}
-                    >
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={destinationDistrictOpen}
-                          className="w-full justify-between"
-                        >
-                          {formData.destinationDistrictId
-                            ? districts?.find(
-                                (district) =>
-                                  district.id === formData.destinationDistrictId
-                              )?.name
-                            : t(
-                                "createCargo.steps.pickupDelivery.selectDeliveryDistrict"
-                              )}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <Command>
-                          <CommandInput
-                            placeholder={t(
-                              "createCargo.steps.pickupDelivery.searchDistrict"
-                            )}
-                          />
-                          <CommandList>
-                            <CommandEmpty>
-                              {t(
-                                "createCargo.steps.pickupDelivery.noDistrictsFound"
-                              )}
-                            </CommandEmpty>
-                            <CommandGroup>
-                              {districts?.map((district) => (
-                                <CommandItem
-                                  key={district.id}
-                                  value={district.name}
-                                  onSelect={() => {
-                                    console.log(
-                                      "Destination district selected:",
-                                      district.id
-                                    );
-                        setFormData({
-                          ...formData,
-                                      destinationDistrictId: district.id,
-                                    });
-                                    setDestinationDistrictOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={`mr-2 h-4 w-4 ${
-                                      formData.destinationDistrictId ===
-                                      district.id
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    }`}
-                                  />
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
-                            {district.name}
-                                    </span>
-                                    {district.province && (
-                                      <span className="text-sm text-muted-foreground">
-                                        {district.province}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* Address Search */}
-                  <div className="space-y-2">
-                    <Label>
-                      {t("createCargo.steps.pickupDelivery.deliveryAddress")}{" "}
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    <div className="relative">
-                      <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                          <Input
-                            placeholder={t(
-                              "createCargo.steps.pickupDelivery.searchDeliveryLocation"
-                            )}
-                            value={destinationSearchQuery}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setDestinationSearchQuery(value);
-                              if (value.length > 2) {
-                                searchLocation(value, false);
-                              } else {
-                                setDestinationSearchResults([]);
-                              }
-                            }}
-                            className="pl-10"
-                          />
-                          {isSearchingDestination && (
-                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                              <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            searchLocation(destinationSearchQuery, false)
-                          }
-                          disabled={
-                            isSearchingDestination ||
-                            destinationSearchQuery.length < 3
-                          }
-                        >
-                          {isSearchingDestination ? (
-                            <>
-                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                              {t("common.searching")}
-                            </>
-                          ) : (
-                            <>
-                              <Search className="h-4 w-4 mr-2" />
-                              {t("common.search")}
-                            </>
-                          )}
-                        </Button>
-                      </div>
-
-                      {/* Search Results */}
-                      {destinationSearchResults.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                          {destinationSearchResults.map((result) => (
-                            <div
-                              key={result.place_id}
-                              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                              onClick={() => selectLocation(result, false)}
-                            >
-                              <div className="font-medium">
-                                {result.structured_formatting.main_text}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {result.structured_formatting.secondary_text}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <Textarea
-                      placeholder={t(
-                        "createCargo.steps.pickupDelivery.enterDeliveryAddress"
-                      )}
-                      value={formData.destinationAddress}
-                      onChange={(e) => {
-                        const newFormData = {
-                          ...formData,
-                          destinationAddress: e.target.value,
-                        };
-                        setFormData(newFormData);
-
-                        // Calculate distance if both addresses are set
-                        if (
-                          newFormData.pickupAddress &&
-                          newFormData.destinationAddress &&
-                          newFormData.pickupLat &&
-                          newFormData.destinationLat
-                        ) {
-                          calculateDistanceBetweenLocations(
-                            parseFloat(newFormData.pickupLat),
-                            parseFloat(newFormData.pickupLng),
-                            parseFloat(newFormData.destinationLat),
-                            parseFloat(newFormData.destinationLng)
-                          );
-                        }
-                      }}
-                      rows={2}
-                    />
-                  </div>
-
-                  {/* Destination Contact Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="destinationContactName">
-                        {t("createCargo.steps.pickupDelivery.contactName")}
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="destinationContactName"
-                          placeholder={t(
-                            "createCargo.steps.pickupDelivery.contactNamePlaceholder"
-                          )}
-                          value={formData.destinationContactName}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              destinationContactName: e.target.value,
-                            })
-                          }
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="destinationContactPhone">
-                        {t("createCargo.steps.pickupDelivery.contactPhone")}
-                      </Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          id="destinationContactPhone"
-                          placeholder={t(
-                            "createCargo.steps.pickupDelivery.contactPhonePlaceholder"
-                          )}
-                          value={formData.destinationContactPhone}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              destinationContactPhone: e.target.value,
-                            })
-                          }
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="destinationOpeningHours">
-                      {t("createCargo.steps.pickupDelivery.openingHours")}
-                    </Label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="destinationOpeningHours"
-                        placeholder={t(
-                          "createCargo.steps.pickupDelivery.openingHoursPlaceholder"
-                        )}
-                        value={formData.destinationOpeningHours}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            destinationOpeningHours: e.target.value,
-                          })
-                        }
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="saveDestinationData"
-                      checked={formData.saveDestinationData}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          saveDestinationData: e.target.checked,
-                        })
-                      }
-                      className="rounded"
-                    />
-                    <Label
-                      htmlFor="saveDestinationData"
-                      className="text-sm flex items-center gap-1"
-                    >
-                      <Save className="h-4 w-4" />
-                      {t("createCargo.steps.pickupDelivery.saveDeliveryData")}
-                    </Label>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Additional Details */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="pickupDate">
-                  {t("createCargo.steps.pickupDelivery.preferredPickupDate")}{" "}
-                  <span className="text-red-500">*</span>
-                </Label>
-                <div className="relative">
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="pickupDate"
-                      type="date"
-                      value={formData.pickupDate}
-                      onChange={(e) => {
-                        const selectedDate = e.target.value;
-                        const today = new Date().toISOString().split("T")[0];
-
-                        if (selectedDate < today) {
-                          toast.error(
-                            t(
-                              "createCargo.steps.pickupDelivery.selectDateFromToday"
-                            )
-                          );
-                          return;
-                        }
-
-                        setFormData({ ...formData, pickupDate: selectedDate });
-                      }}
-                      min={new Date().toISOString().split("T")[0]} // Disable past dates
-                      className="pl-10 bg-white border-gray-300 focus:border-primary focus:ring-primary"
-                      placeholder="Select pickup date"
-                    />
-                    {formData.pickupDate ? (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-gray-500">
-                      📅{" "}
-                      {t(
-                        "createCargo.steps.pickupDelivery.selectDateFromToday"
-                      )}
+                ) : estimateCostMutation.error ? (
+                  <div className="text-center py-4">
+                    <AlertCircle className="h-8 w-8 mx-auto text-red-500 mb-2" />
+                    <p className="text-red-600 text-sm">
+                      {t("createCargo.steps.confirmation.costError")}
                     </p>
-                    {formData.pickupDate && (
-                      <p className="text-xs text-green-600 font-medium">
-                        Selected:{" "}
-                        {new Date(formData.pickupDate).toLocaleDateString(
-                          "en-US",
-                          {
-                            weekday: "short",
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          }
-                        )}
-                      </p>
-                    )}
                   </div>
-                </div>
-                {formData.pickupDate && (
-                  <p className="text-sm text-green-600">
-                    ✓ {t("createCargo.steps.pickupDelivery.pickupDateSelected")}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="specialInstructions">
-                  {t("createCargo.steps.pickupDelivery.specialInstructions")} (
-                  {t("auth.optional")})
-                </Label>
-                <Textarea
-                  id="specialInstructions"
-                  placeholder={t(
-                    "createCargo.steps.pickupDelivery.specialInstructionsPlaceholder"
-                  )}
-                  value={formData.specialInstructions}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      specialInstructions: e.target.value,
-                    })
-                  }
-                  rows={3}
-                />
-              </div>
-            </div>
-
-            {/* Distance Display - Bottom */}
-            {formData.pickupAddress && formData.destinationAddress && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-blue-900">
-                    <MapPin className="h-4 w-4" />
-                    <span className="font-medium">
-                      {formData.distance > 0
-                        ? `${t(
-                            "createCargo.steps.pickupDelivery.estimatedDistance"
-                          )}: ${formData.distance} km`
-                        : isCalculatingDistance
-                        ? t(
-                            "createCargo.steps.pickupDelivery.calculatingDistance"
-                          )
-                        : t(
-                            "createCargo.steps.pickupDelivery.distanceWillBeCalculated"
-                          )}
-                    </span>
-                  </div>
-                  {(formData.distance === 0 || isCalculatingDistance) && (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  )}
-                </div>
-                {formData.distance > 0 && (
-                  <div className="mt-2 text-sm text-blue-700">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={calculateDistance}
-                      disabled={isCalculatingDistance}
-                      className="text-blue-600 border-blue-300 hover:bg-blue-100"
-                    >
-                      <RefreshCw
-                        className={`h-3 w-3 mr-1 ${
-                          isCalculatingDistance ? "animate-spin" : ""
-                        }`}
-                      />
-                      {t(
-                        "createCargo.steps.pickupDelivery.recalculateDistance"
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setStep(1)}
-                className="flex-1"
-              >
-                {t("common.back")}
-              </Button>
-              <Button
-                onClick={handleNext}
-                disabled={!validateStep(2)}
-                className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
-              >
-                {t("createCargo.steps.pickupDelivery.reviewCreateCargo")}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Cost Estimate & Confirmation */}
-      {step === 3 && (
-        <Card className="card-elevated">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-primary" />
-              {t("createCargo.steps.confirmation.title")}
-            </CardTitle>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <span className="text-sm font-semibold text-red-700">
-                  {t("createCargo.requiredFieldsNote")}
-                </span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Cost Breakdown */}
-            <div className="bg-muted rounded-lg p-4 space-y-3">
-              <h3 className="font-semibold text-foreground">
-                {t("createCargo.steps.confirmation.costBreakdown")}
-              </h3>
-              {estimateCostMutation.isPending ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-              ) : estimateCostMutation.error ? (
-                <div className="text-center py-4">
-                  <AlertCircle className="h-8 w-8 mx-auto text-red-500 mb-2" />
-                  <p className="text-red-600 text-sm">
-                    {t("createCargo.steps.confirmation.costError")}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2 text-sm">
-                  {costBreakdown ? (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Base Cost</span>
-                        <span>
-                          RWF {costBreakdown.base_cost.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Weight Cost ({formData.weight}kg)
-                        </span>
-                        <span>
-                          RWF {costBreakdown.weight_cost.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Distance Cost ({costBreakdown.total_distance_km}km)
-                        </span>
-                        <span>
-                          RWF {costBreakdown.distance_cost.toLocaleString()}
-                        </span>
-                      </div>
-                      {costBreakdown.category_multiplier > 1 && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Category Multiplier (
-                            {costBreakdown.category_multiplier}x)
+                ) : (
+                  <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
+                    {costBreakdown ? (
+                      <>
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
+                          <span className="text-gray-700 font-medium">
+                            Base Cost
                           </span>
-                          <span>Applied</span>
+                          <span className="font-bold text-gray-900">
+                            RWF {costBreakdown.base_cost.toLocaleString()}
+                          </span>
                         </div>
-                      )}
-                      <div className="border-t border-border pt-2 flex justify-between font-semibold text-lg">
-                        <span>
-                          {t("createCargo.steps.confirmation.totalCost")}
-                        </span>
-                        <span className="text-primary">
-                          RWF {estimatedCost.toLocaleString()}
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
+                          <span className="text-gray-700 font-medium">
+                            Weight Cost ({formData.weight}kg)
+                          </span>
+                          <span className="font-bold text-gray-900">
+                            RWF {costBreakdown.weight_cost.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
+                          <span className="text-gray-700 font-medium">
+                            Distance Cost ({costBreakdown.total_distance_km}km)
+                          </span>
+                          <span className="font-bold text-gray-900">
+                            RWF {costBreakdown.distance_cost.toLocaleString()}
+                          </span>
+                        </div>
+                        {costBreakdown.category_multiplier > 1 && (
+                          <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
+                            <span className="text-gray-700 font-medium">
+                              Category Multiplier (
+                              {costBreakdown.category_multiplier}x)
+                            </span>
+                            <span className="font-bold text-green-600">
+                              Applied
+                            </span>
+                          </div>
+                        )}
+                        <div className="border-t-2 border-blue-200 pt-3 sm:pt-4 flex justify-between items-center bg-gradient-to-r from-blue-100/80 to-indigo-100/80 rounded-xl p-3 sm:p-4">
+                          <span className="text-sm sm:text-base md:text-lg font-bold text-gray-900">
+                            {t("createCargo.steps.confirmation.totalCost")}
+                          </span>
+                          <span className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                            RWF {estimatedCost.toLocaleString()}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-4 sm:py-6">
+                        <p className="text-xs sm:text-sm text-gray-600">
+                          Cost breakdown will be calculated after location
+                          selection
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Summary */}
+              <div className="space-y-3 sm:space-y-4">
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900">
+                  {t("createCargo.steps.confirmation.shipmentSummary")}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 text-xs sm:text-sm">
+                  <div>
+                    <p className="text-muted-foreground">
+                      {t("createCargo.steps.confirmation.cargoType")}
+                    </p>
+                    <p className="font-medium capitalize">
+                      {formData.cargoType === "other"
+                        ? formData.otherCargoType
+                        : formData.cargoType}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">
+                      {t("createCargo.steps.confirmation.weight")}
+                    </p>
+                    <p className="font-medium">{formData.weight} kg</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">
+                      {t("createCargo.steps.confirmation.distance")}
+                    </p>
+                    <p className="font-medium">{formData.distance} km</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">
+                      {t("createCargo.steps.confirmation.dimensions")}
+                    </p>
+                    <p className="font-medium">
+                      {formData.length && formData.width && formData.height
+                        ? `${formData.length} × ${formData.width} × ${formData.height} cm`
+                        : t("createCargo.steps.confirmation.notSpecified")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">
+                      {t("createCargo.steps.confirmation.urgency")}
+                    </p>
+                    <p className="font-medium capitalize">{formData.urgency}</p>
+                  </div>
+                </div>
+
+                {/* Location Details */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-foreground">
+                    {t("createCargo.steps.confirmation.locationDetails")}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-green-600" />
+                        <span className="font-medium text-green-600">
+                          {t("createCargo.steps.confirmation.pickup")}
                         </span>
                       </div>
-                    </>
-                  ) : (
-                    <div className="text-center py-4">
                       <p className="text-muted-foreground">
-                        Cost breakdown will be calculated after location
-                        selection
+                        {formData.pickupAddress}
                       </p>
+                      {formData.pickupContactName && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("createCargo.steps.confirmation.contact")}:{" "}
+                          {formData.pickupContactName} •{" "}
+                          {formData.pickupContactPhone}
+                        </p>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Summary */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-foreground">
-                {t("createCargo.steps.confirmation.shipmentSummary")}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">
-                    {t("createCargo.steps.confirmation.cargoType")}
-                  </p>
-                  <p className="font-medium capitalize">
-                    {formData.cargoType === "other"
-                      ? formData.otherCargoType
-                      : formData.cargoType}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">
-                    {t("createCargo.steps.confirmation.weight")}
-                  </p>
-                  <p className="font-medium">{formData.weight} kg</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">
-                    {t("createCargo.steps.confirmation.distance")}
-                  </p>
-                  <p className="font-medium">{formData.distance} km</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">
-                    {t("createCargo.steps.confirmation.dimensions")}
-                  </p>
-                  <p className="font-medium">
-                    {formData.length && formData.width && formData.height
-                      ? `${formData.length} × ${formData.width} × ${formData.height} cm`
-                      : t("createCargo.steps.confirmation.notSpecified")}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">
-                    {t("createCargo.steps.confirmation.urgency")}
-                  </p>
-                  <p className="font-medium capitalize">{formData.urgency}</p>
-                </div>
-              </div>
-
-              {/* Location Details */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-foreground">
-                  {t("createCargo.steps.confirmation.locationDetails")}
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-green-600" />
-                      <span className="font-medium text-green-600">
-                        {t("createCargo.steps.confirmation.pickup")}
-                      </span>
-                    </div>
-                    <p className="text-muted-foreground">
-                      {formData.pickupAddress}
-                    </p>
-                    {formData.pickupContactName && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("createCargo.steps.confirmation.contact")}:{" "}
-                        {formData.pickupContactName} •{" "}
-                        {formData.pickupContactPhone}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-red-600" />
+                        <span className="font-medium text-red-600">
+                          {t("createCargo.steps.confirmation.delivery")}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground">
+                        {formData.destinationAddress}
                       </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-red-600" />
-                      <span className="font-medium text-red-600">
-                        {t("createCargo.steps.confirmation.delivery")}
-                      </span>
+                      {formData.destinationContactName && (
+                        <p className="text-xs text-muted-foreground">
+                          {t("createCargo.steps.confirmation.contact")}:{" "}
+                          {formData.destinationContactName} •{" "}
+                          {formData.destinationContactPhone}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-muted-foreground">
-                      {formData.destinationAddress}
-                    </p>
-                    {formData.destinationContactName && (
-                      <p className="text-xs text-muted-foreground">
-                        {t("createCargo.steps.confirmation.contact")}:{" "}
-                        {formData.destinationContactName} •{" "}
-                        {formData.destinationContactPhone}
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setStep(2)}
-                className="flex-1"
-              >
-                {t("common.back")}
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={createCargoMutation.isPending}
-                className="flex-1 bg-gradient-primary hover:bg-primary-hover disabled:opacity-50"
-              >
-                {createCargoMutation.isPending
-                  ? t("common.loading")
-                  : t("createCargo.steps.confirmation.createCargo")}
-                <Package className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="flex gap-2 sm:gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(2)}
+                  className="flex-1 rounded-full px-3 sm:px-4 py-2.5 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm"
+                >
+                  {t("common.back")}
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={createCargoMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full py-3 sm:py-4 md:py-5 text-sm sm:text-base md:text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                >
+                  <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    {createCargoMutation.isPending
+                      ? t("common.loading")
+                      : t("createCargo.steps.confirmation.createCargo")}
+                    <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                  </span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Step 4: Success */}
       {step === 4 && (
-        <Card className="card-elevated">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-6">
-              <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-10 w-10 text-green-600" />
-              </div>
-
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-foreground">
-                  {t("createCargo.steps.success.title")}
-                </h2>
-                <p className="text-muted-foreground">
-                  {t("createCargo.steps.success.description")}
-                </p>
-              </div>
-
-              <div className="bg-muted rounded-lg p-4 space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Cargo Number:
-                  </span>
-                  <span className="font-medium">
-                    {cargoData?.cargo_number || "N/A"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {t("createCargo.steps.success.totalAmount")}
-                  </span>
-                  <span className="font-bold">
-                    RWF {estimatedCost.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {t("createCargo.steps.success.status")}
-                  </span>
-                  <span className="text-green-600 font-medium">
-                    {t("createCargo.steps.success.cargoCreated")}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Button
-                  className="w-full"
-                  onClick={() => (window.location.href = "/my-cargos")}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="border-0 shadow-2xl bg-gradient-to-br from-white via-green-50/30 to-emerald-50/20 backdrop-blur-sm">
+            <CardContent className="pt-4 sm:pt-6 pb-4 sm:pb-6">
+              <div className="text-center space-y-4 sm:space-y-6">
+                <motion.div
+                  className="mx-auto w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5, type: "spring" }}
                 >
-                  {t("createCargo.steps.success.viewMyCargos")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => (window.location.href = "/create-cargo")}
-                >
-                  {t("createCargo.steps.success.createAnotherCargo")}
-                </Button>
+                  <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-white" />
+                </motion.div>
+
+                <div className="space-y-1.5 sm:space-y-2">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+                    {t("createCargo.steps.success.title")}
+                  </h2>
+                  <p className="text-xs sm:text-sm md:text-base text-gray-600">
+                    {t("createCargo.steps.success.description")}
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50/80 via-emerald-50/60 to-blue-50/80 backdrop-blur-sm rounded-2xl p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3 border border-green-100/50">
+                  <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
+                    <span className="text-xs sm:text-sm text-gray-700 font-medium">
+                      Cargo Number:
+                    </span>
+                    <span className="text-xs sm:text-sm md:text-base font-bold text-gray-900">
+                      {cargoData?.cargo_number || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
+                    <span className="text-xs sm:text-sm text-gray-700 font-medium">
+                      {t("createCargo.steps.success.totalAmount")}
+                    </span>
+                    <span className="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                      RWF {estimatedCost.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
+                    <span className="text-xs sm:text-sm text-gray-700 font-medium">
+                      {t("createCargo.steps.success.status")}
+                    </span>
+                    <span className="text-green-600 font-medium">
+                      {t("createCargo.steps.success.cargoCreated")}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 sm:space-y-3">
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full py-3 sm:py-4 md:py-5 text-sm sm:text-base md:text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                    onClick={() => (window.location.href = "/my-cargos")}
+                  >
+                    {t("createCargo.steps.success.viewMyCargos")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-full px-3 sm:px-4 py-2.5 sm:py-3 md:py-4 text-xs sm:text-sm md:text-base font-semibold border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm"
+                    onClick={() => (window.location.href = "/create-cargo")}
+                  >
+                    {t("createCargo.steps.success.createAnotherCargo")}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
     </div>
   );

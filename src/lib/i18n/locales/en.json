@@ -1564,7 +1564,160 @@
     "unknownVehicle": "Unknown Vehicle",
     "downloadReceipt": "Receipt download started",
     "uploadPhoto": "Photo upload feature coming soon",
-    "reportIssue": "Issue reporting feature coming soon"
+    "reportIssue": "Issue reporting feature coming soon",
+    "stats": {
+      "totalCargos": "Total Cargos",
+      "inTransit": "In Transit",
+      "delivered": "Delivered",
+      "pending": "Pending"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by client, location, cargo number, or type...",
+      "filterByStatus": "Filter by status",
+      "allStatus": "All Status",
+      "allPriority": "All Priority",
+      "priority": "Priority",
+      "filteredResults": "Filtered results ({{total}} total cargos)",
+      "showingCargos": "Showing {{total}} cargos",
+      "clearFilters": "Clear Filters",
+      "noMatchFilters": "No cargos match your filters",
+      "adjustFilters": "Try adjusting your search terms or filters to find what you're looking for.",
+      "clearAllFilters": "Clear All Filters"
+    },
+    "pagination": {
+      "showPerPage": "Show per page:",
+      "perPage": "Per page:",
+      "showing": "Showing {{start}} - {{end}} of {{total}} results",
+      "showingMobile": "{{start}}-{{end}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "status": {
+      "pending": "Pending",
+      "quoted": "Quoted",
+      "accepted": "Accepted",
+      "assigned": "Assigned",
+      "pickedUp": "Picked Up",
+      "inTransit": "In Transit",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
+    "priority": {
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High",
+      "urgent": "Urgent"
+    }
+  },
+  "cargoTable": {
+    "title": "Cargos",
+    "stats": {
+      "total": "Total",
+      "active": "Active",
+      "inTransit": "In Transit",
+      "pending": "Pending",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "totalSpent": "Total Spent"
+    },
+    "search": {
+      "placeholder": "Search by client, location, or type..."
+    },
+    "filters": {
+      "filterByStatus": "Filter by status",
+      "allStatus": "All Status",
+      "allPriority": "All Priority",
+      "priority": "Priority",
+      "active": "Active",
+      "completed": "Completed",
+      "transit": "In Transit",
+      "cancelled": "Cancelled"
+    },
+    "table": {
+      "cargoInfo": "Cargo Info",
+      "client": "Client",
+      "route": "Route",
+      "driver": "Driver",
+      "vehicle": "Vehicle",
+      "status": "Status",
+      "actions": "Actions",
+      "from": "From",
+      "to": "To",
+      "general": "General",
+      "notAvailable": "N/A"
+    },
+    "status": {
+      "pending": "Pending",
+      "quoted": "Invoice Sent",
+      "accepted": "Invoice Paid",
+      "partiallyAssigned": "Partially Assigned",
+      "fullyAssigned": "Fully Assigned",
+      "fully_assigned": "Fully Assigned",
+      "pickedUp": "Cargo Collected",
+      "picked_up": "Cargo Collected",
+      "inTransit": "In Transit",
+      "in_transit": "In Transit",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "disputed": "Disputed",
+      "statusLabel": "Status: {{status}}"
+    },
+    "statusDescription": {
+      "pending": "Request submitted, waiting for pricing",
+      "quoted": "Price quote provided, awaiting acceptance",
+      "accepted": "Client confirmed, ready for assignment",
+      "partiallyAssigned": "Some weight assigned, more assignments possible",
+      "fullyAssigned": "All cargo weight assigned to drivers",
+      "fully_assigned": "All cargo weight assigned to drivers",
+      "pickedUp": "Successfully picked up, now in transit",
+      "picked_up": "Successfully picked up, now in transit",
+      "inTransit": "Being transported to destination",
+      "in_transit": "Being transported to destination",
+      "delivered": "Successfully delivered to destination",
+      "cancelled": "Shipment was cancelled",
+      "disputed": "Issue reported, under investigation"
+    },
+    "priority": {
+      "urgent": "Urgent",
+      "high": "High",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "priorityDescription": {
+      "urgent": "Critical shipment requiring immediate attention",
+      "high": "Important shipment requiring faster processing",
+      "normal": "Standard priority, default processing",
+      "low": "Non-urgent, can be processed during normal operations"
+    },
+    "actions": {
+      "changeTo": "Change to {{status}}",
+      "callClient": "Call Client",
+      "callDriver": "Call Driver",
+      "track": "Track",
+      "downloadReceipt": "Download Receipt",
+      "uploadPhoto": "Upload Photo",
+      "reportIssue": "Report Issue",
+      "acceptCargo": "Accept Cargo",
+      "markPickedUp": "Mark Picked Up",
+      "startTransit": "Start Transit",
+      "markDelivered": "Mark Delivered",
+      "cancelCargo": "Cancel Cargo",
+      "trackCargo": "Track Cargo",
+      "call": "Call",
+      "details": "Details"
+    },
+    "mobile": {
+      "generalCargo": "General Cargo",
+      "pickupLocation": "Pickup Location",
+      "destination": "Destination",
+      "description": "Description:",
+      "assigned": "Assigned:",
+      "notAvailable": "N/A"
+    },
+    "pagination": {
+      "showing": "Showing {{start}} to {{end}} of {{total}} results",
+      "showingMobile": "{{start}}-{{end}} of {{total}}"
+    }
   },
   "history": {
     "title": "Cargo History",
