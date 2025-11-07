@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
+import { motion } from "framer-motion";
 import {
   Truck,
   MapPin,
@@ -34,6 +35,8 @@ import {
   Linkedin,
   ChevronLeft,
   ChevronRight,
+  LogIn,
+  Globe,
 } from "lucide-react";
 
 const LandingPage: React.FC = () => {
@@ -291,17 +294,19 @@ const LandingPage: React.FC = () => {
 
   const paymentMethods = [
     {
-      icon: <Smartphone className="w-8 h-8" />,
+      image:
+        "https://images.seeklogo.com/logo-png/55/1/mtn-momo-mobile-money-uganda-logo-png_seeklogo-556395.png",
       title: t("landing.payment.mobile.title"),
       description: t("landing.payment.mobile.description"),
     },
     {
-      icon: <Banknote className="w-8 h-8" />,
+      image:
+        "https://eu-images.contentstack.com/v3/assets/blt7dacf616844cf077/bltdf84714343190854/6799459ee12d0ab52679d073/kigali.png?width=1280&auto=webp&quality=80&format=jpg&disable=upscale",
       title: t("landing.payment.bank.title"),
       description: t("landing.payment.bank.description"),
     },
     {
-      icon: <CreditCard className="w-8 h-8" />,
+      image: "https://cdn-icons-png.flaticon.com/512/6963/6963703.png",
       title: t("landing.payment.online.title"),
       description: t("landing.payment.online.description"),
     },
@@ -391,64 +396,80 @@ const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
+      {/* Modern Navigation Header */}
+      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
+            {/* Logo Section */}
             <div className="flex items-center">
-              <img
-                src="/logo-text.png"
-                alt="Loveway Logistics"
-                className="h-8 w-auto"
-              />
+              <div className="flex items-center gap-3 group">
+                <div className="relative">
+                  <img
+                    src="/logo-text.png"
+                    alt="Loveway Logistics"
+                    className="h-10 w-auto transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden lg:flex items-center gap-8">
               <a
                 href="#services"
-                className="text-gray-700 hover:text-blue-600 transition-colors"
+                className="relative text-gray-700 hover:text-blue-600 transition-all duration-300 text-sm font-semibold py-2 group"
               >
                 {t("landing.navigation.services")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
               <a
                 href="#vehicles"
-                className="text-gray-700 hover:text-blue-600 transition-colors"
+                className="relative text-gray-700 hover:text-blue-600 transition-all duration-300 text-sm font-semibold py-2 group"
               >
                 {t("landing.navigation.tracking")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
               <a
                 href="#pricing"
-                className="text-gray-700 hover:text-blue-600 transition-colors"
+                className="relative text-gray-700 hover:text-blue-600 transition-all duration-300 text-sm font-semibold py-2 group"
               >
                 {t("landing.navigation.pricing")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
               <a
                 href="#faq"
-                className="text-gray-700 hover:text-blue-600 transition-colors"
+                className="relative text-gray-700 hover:text-blue-600 transition-all duration-300 text-sm font-semibold py-2 group"
               >
                 {t("landing.navigation.faq")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
               <a
                 href="#contact"
-                className="text-gray-700 hover:text-blue-600 transition-colors"
+                className="relative text-gray-700 hover:text-blue-600 transition-all duration-300 text-sm font-semibold py-2 group"
               >
                 {t("landing.navigation.contact")}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
               </a>
-              <LanguageSwitcher variant="ghost" size="sm" showLabel={false} />
-              <Link
-                to="/login"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {t("landing.navigation.getStarted")}
-              </Link>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 ml-4 pl-4 border-l border-gray-200">
+                <LanguageSwitcher variant="ghost" size="sm" showLabel={true} />
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-full hover:from-blue-700 hover:to-blue-800 transition-all duration-300 text-sm font-semibold shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 hover:-translate-y-0.5"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </Link>
+              </div>
             </div>
 
             {/* Mobile menu button */}
-            <div className="md:hidden">
+            <div className="lg:hidden flex items-center gap-3">
+              <LanguageSwitcher variant="ghost" size="sm" showLabel={false} />
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-gray-700 hover:text-blue-600"
+                className="text-gray-700 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-full transition-all duration-200"
               >
                 {isMenuOpen ? (
                   <X className="w-6 h-6" />
@@ -459,62 +480,107 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Mobile Navigation */}
+          {/* Modern Mobile Navigation Card */}
           {isMenuOpen && (
-            <div className="md:hidden py-4 border-t border-gray-200">
-              <div className="flex flex-col space-y-4">
-                <a
-                  href="#services"
-                  className="text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  {t("landing.navigation.services")}
-                </a>
-                <a
-                  href="#vehicles"
-                  className="text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  {t("landing.navigation.tracking")}
-                </a>
-                <a
-                  href="#pricing"
-                  className="text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  {t("landing.navigation.pricing")}
-                </a>
-                <a
-                  href="#faq"
-                  className="text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  {t("landing.navigation.faq")}
-                </a>
-                <a
-                  href="#contact"
-                  className="text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  {t("landing.navigation.contact")}
-                </a>
-                <div className="flex justify-center">
-                  <LanguageSwitcher
-                    variant="outline"
-                    size="sm"
-                    showLabel={true}
-                  />
+            <div className="lg:hidden absolute top-full left-0 right-0 mt-2 mx-4">
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                {/* Navigation Section */}
+                <div className="p-6">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                    Navigation
+                  </h3>
+                  <nav className="space-y-1">
+                    <a
+                      href="#services"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-medium px-3 py-2.5 rounded-lg group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <Package className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span>{t("landing.navigation.services")}</span>
+                    </a>
+                    <a
+                      href="#vehicles"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-medium px-3 py-2.5 rounded-lg group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <Truck className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span>{t("landing.navigation.tracking")}</span>
+                    </a>
+                    <a
+                      href="#pricing"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-medium px-3 py-2.5 rounded-lg group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <DollarSign className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span>{t("landing.navigation.pricing")}</span>
+                    </a>
+                    <a
+                      href="#faq"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-medium px-3 py-2.5 rounded-lg group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <ChevronDown className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span>{t("landing.navigation.faq")}</span>
+                    </a>
+                    <a
+                      href="#contact"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-medium px-3 py-2.5 rounded-lg group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                        <Mail className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span>{t("landing.navigation.contact")}</span>
+                    </a>
+                  </nav>
                 </div>
-                <Link
-                  to="/login"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center"
-                >
-                  {t("landing.navigation.getStarted")}
-                </Link>
+
+                {/* Tools Section */}
+                <div className="px-6 pb-6">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                    Tools
+                  </h3>
+                  <div className="flex items-center gap-3 text-gray-700 px-3 py-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Globe className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <span className="text-sm font-medium flex-1">Language</span>
+                    <LanguageSwitcher
+                      variant="ghost"
+                      size="sm"
+                      showLabel={true}
+                    />
+                  </div>
+                </div>
+
+                {/* Sign In Button */}
+                <div className="p-6 pt-0">
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-blue-600/30 w-full"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Sign In
+                  </Link>
+                </div>
               </div>
             </div>
           )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-16 relative min-h-screen flex items-center">
-        {/* Background Image */}
+      {/* Modern Hero Section */}
+      <section className="pt-20 relative min-h-screen flex items-center overflow-hidden">
+        {/* Animated Background with Gradient Overlay */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
@@ -522,56 +588,110 @@ const LandingPage: React.FC = () => {
               "url('/image/red-truck-road-with-blurred-background_470606-193.jpg')",
           }}
         >
-          <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-gray-900/90"></div>
+          {/* Animated Shapes */}
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
         </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8 text-white">
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left Content */}
+            <div className="space-y-6 md:space-y-8 text-white text-center lg:text-left">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+                <Truck className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-semibold">
+                  Fast & Reliable Delivery
+                </span>
+              </div>
+
+              {/* Main Heading */}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
                 {t("landing.hero.title")}{" "}
-                <span className="text-blue-400">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
                   {t("landing.hero.titleHighlight")}
                 </span>
-                <br />
-                {t("landing.hero.subtitle")}
               </h1>
-              <p className="text-xl text-gray-200 leading-relaxed">
-                {t("landing.hero.description")}
+
+              {/* One Sentence Description */}
+              <p className="text-lg md:text-xl text-gray-200 max-w-2xl mx-auto lg:mx-0">
+                Professional cargo delivery platform with real-time tracking and
+                secure payment options.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
                   to="/login"
-                  className="bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors text-center"
+                  className="group relative bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-full text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 text-center shadow-2xl shadow-blue-600/50 hover:shadow-blue-600/70 hover:scale-105"
                 >
-                  {t("landing.hero.ctaPrimary")}
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <Truck className="w-5 h-5" />
+                    {t("landing.hero.ctaPrimary")}
+                  </span>
                 </Link>
                 <a
                   href="#download"
-                  className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-gray-900 transition-colors text-center"
+                  className="group border-2 border-white/50 text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-white hover:text-blue-900 transition-all duration-300 text-center backdrop-blur-sm hover:scale-105"
                 >
-                  {t("landing.downloadApp.downloadButton")}
+                  <span className="flex items-center justify-center gap-2">
+                    <Smartphone className="w-5 h-5" />
+                    {t("landing.downloadApp.downloadButton")}
+                  </span>
                 </a>
               </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4 pt-8">
+                <div className="text-center lg:text-left">
+                  <div className="text-3xl md:text-4xl font-bold text-blue-400">
+                    5K+
+                  </div>
+                  <div className="text-sm text-gray-300">Deliveries</div>
+                </div>
+                <div className="text-center lg:text-left">
+                  <div className="text-3xl md:text-4xl font-bold text-blue-400">
+                    98%
+                  </div>
+                  <div className="text-sm text-gray-300">On-Time</div>
+                </div>
+                <div className="text-center lg:text-left">
+                  <div className="text-3xl md:text-4xl font-bold text-blue-400">
+                    24/7
+                  </div>
+                  <div className="text-sm text-gray-300">Support</div>
+                </div>
+              </div>
             </div>
-            <div id="download" className="relative flex justify-center">
-              {/* Mobile App Slider */}
-              <div className="relative max-w-sm">
-                {/* Main Slide Container */}
-                <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+
+            {/* Right Content - App Preview */}
+            <div
+              id="download"
+              className="relative flex justify-center lg:justify-end mt-8 lg:mt-0"
+            >
+              <div className="relative max-w-xs md:max-w-sm w-full px-4 md:px-0">
+                {/* Subtle Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-2xl opacity-50 animate-pulse"></div>
+
+                {/* Simple Elegant Container */}
+                <div className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl">
                   <div
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{
                       transform: `translateX(-${currentAppImageIndex * 100}%)`,
                     }}
                   >
-                    {appImages.map((appImage, index) => (
-                      <div key={appImage.id} className="w-full flex-shrink-0">
+                    {appImages.map((appImage) => (
+                      <div
+                        key={appImage.id}
+                        className="w-full flex-shrink-0 flex items-center justify-center bg-gradient-to-b from-white/5 to-white/10"
+                      >
                         <img
                           src={appImage.image}
                           alt={appImage.name}
-                          className="w-80 h-[600px] object-contain"
+                          className="w-full h-[450px] md:h-[550px] object-contain"
                         />
                       </div>
                     ))}
@@ -581,29 +701,29 @@ const LandingPage: React.FC = () => {
                 {/* Navigation Arrows */}
                 <button
                   onClick={prevAppImage}
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all duration-200 backdrop-blur-sm"
+                  className="absolute left-0 md:-left-4 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 bg-white/90 hover:bg-white text-blue-600 p-2 md:p-3 rounded-full transition-all duration-200 shadow-lg hover:scale-110 z-10"
                   aria-label="Previous app image"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
                 <button
                   onClick={nextAppImage}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all duration-200 backdrop-blur-sm"
+                  className="absolute right-0 md:-right-4 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 bg-white/90 hover:bg-white text-blue-600 p-2 md:p-3 rounded-full transition-all duration-200 shadow-lg hover:scale-110 z-10"
                   aria-label="Next app image"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
 
                 {/* Dots Indicator */}
-                <div className="flex justify-center mt-4 space-x-2">
+                <div className="flex justify-center mt-6 space-x-2">
                   {appImages.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => goToAppImage(index)}
-                      className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                      className={`h-2 rounded-full transition-all duration-300 ${
                         index === currentAppImageIndex
-                          ? "bg-blue-600 w-6"
-                          : "bg-gray-300 hover:bg-gray-400"
+                          ? "bg-white w-8"
+                          : "bg-white/40 w-2 hover:bg-white/60"
                       }`}
                       aria-label={`Go to app image ${index + 1}`}
                     />
@@ -613,187 +733,686 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce hidden md:block">
+          <ChevronDown className="w-6 h-6 text-white/60" />
+        </div>
       </section>
 
-      {/* Why Choose Us Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* Why Choose Us Section - Animated Design */}
+      <section className="py-16 md:py-28 bg-gradient-to-br from-slate-50 via-blue-50/40 to-slate-50 relative overflow-hidden">
+        {/* Animated Background */}
+        <motion.div
+          className="absolute top-0 right-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-0 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.5, 0.3, 0.5],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            className="text-center mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Star className="w-3 h-3 md:w-4 md:h-4" />
+              Why Choose Us
+            </motion.div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               {t("landing.benefits.title")}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {t("landing.benefits.subtitle")}
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">
+              Experience excellence in every delivery
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Animated Benefits Grid */}
+          <motion.div
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1,
+                },
+              },
+            }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+          >
             {benefits.map((benefit, index) => (
-              <div
+              <motion.div
                 key={index}
-                className="text-center p-6 rounded-xl hover:shadow-lg transition-shadow"
+                variants={{
+                  hidden: { opacity: 0, y: 50, scale: 0.9 },
+                  show: { opacity: 1, y: 0, scale: 1 },
+                }}
+                whileHover={{
+                  y: -8,
+                  scale: 1.02,
+                  transition: { duration: 0.3 },
+                }}
+                className="group relative bg-white/80 backdrop-blur-sm rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-200/50 shadow-lg hover:shadow-2xl transition-shadow duration-300"
               >
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
-                  {benefit.icon}
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                <div className="relative z-10 text-center">
+                  {/* Animated Icon */}
+                  <motion.div
+                    className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 text-white shadow-lg shadow-blue-500/40"
+                    whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {benefit.icon}
+                  </motion.div>
+
+                  {/* Content */}
+                  <h3 className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-2 md:mb-3">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-xs md:text-sm lg:text-base text-gray-600 leading-relaxed">
+                    {benefit.description}
+                  </p>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {benefit.title}
-                </h3>
-                <p className="text-gray-600">{benefit.description}</p>
-              </div>
+
+                {/* Number Badge */}
+                <motion.div
+                  className="absolute top-3 right-3 md:top-4 md:right-4 w-7 h-7 md:w-8 md:h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs md:text-sm font-bold"
+                  initial={{ opacity: 0, scale: 0 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 + 0.3 }}
+                  viewport={{ once: true }}
+                >
+                  {index + 1}
+                </motion.div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* How It Works Section - Animated Timeline */}
+      <section className="py-16 md:py-28 bg-gradient-to-br from-indigo-950 via-blue-950 to-slate-950 relative overflow-hidden">
+        {/* Animated Orbs */}
+        <motion.div
+          className="absolute top-10 left-10 w-56 h-56 md:w-72 md:h-72 bg-blue-500/20 rounded-full blur-3xl"
+          animate={{
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-10 right-10 w-72 h-72 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl"
+          animate={{
+            x: [0, -30, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            className="text-center mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-white/20"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Clock className="w-3 h-3 md:w-4 md:h-4" />
+              Simple Process
+            </motion.div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
               {t("landing.howItWorks.title")}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {t("landing.howItWorks.subtitle")}
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto">
+              Get started in three easy steps
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {steps.map((step, index) => (
-              <div key={index} className="text-center">
-                <div className="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold">
-                  {step.number}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  {step.title}
-                </h3>
-                <p className="text-gray-600">{step.description}</p>
-              </div>
-            ))}
+          {/* Animated Timeline */}
+          <div className="relative">
+            {/* Connection Line - Desktop */}
+            <motion.div
+              className="hidden md:block absolute top-16 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 mx-auto"
+              style={{ width: "calc(100% - 200px)", left: "100px" }}
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, delay: 0.5 }}
+            />
+
+            <motion.div
+              className="grid md:grid-cols-3 gap-6 md:gap-8 lg:gap-12"
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.2,
+                  },
+                },
+              }}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-50px" }}
+            >
+              {steps.map((step, index) => (
+                <motion.div
+                  key={index}
+                  variants={{
+                    hidden: { opacity: 0, y: 60 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  className="relative"
+                >
+                  {/* Step Card */}
+                  <motion.div
+                    className="bg-white/10 backdrop-blur-lg rounded-2xl md:rounded-3xl p-6 md:p-8 border border-white/20 shadow-2xl"
+                    whileHover={{
+                      y: -8,
+                      backgroundColor: "rgba(255, 255, 255, 0.15)",
+                      transition: { duration: 0.3 },
+                    }}
+                  >
+                    {/* Animated Number Badge */}
+                    <motion.div
+                      className="relative z-10 w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 text-xl md:text-2xl font-bold shadow-2xl"
+                      whileHover={{
+                        scale: 1.15,
+                        rotate: 360,
+                        transition: { duration: 0.6 },
+                      }}
+                    >
+                      {step.number}
+                    </motion.div>
+
+                    {/* Content */}
+                    <h3 className="text-base md:text-lg lg:text-2xl font-bold text-white mb-3 md:mb-4 text-center">
+                      {step.title}
+                    </h3>
+                    <p className="text-xs md:text-sm lg:text-base text-gray-300 text-center leading-relaxed">
+                      {step.description}
+                    </p>
+                  </motion.div>
+
+                  {/* Arrow for mobile */}
+                  {index < steps.length - 1 && (
+                    <motion.div
+                      className="md:hidden flex justify-center my-4"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <ChevronDown className="w-5 h-5 md:w-6 md:h-6 text-blue-400 animate-bounce" />
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="services" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* Services Section - Animated Cards */}
+      <section
+        id="services"
+        className="py-16 md:py-28 bg-gradient-to-b from-white via-slate-50/50 to-white relative overflow-hidden"
+      >
+        {/* Animated Dots Pattern */}
+        <motion.div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #3b82f6 2px, transparent 2px)",
+            backgroundSize: "40px 40px",
+          }}
+          animate={{
+            backgroundPosition: ["0px 0px", "40px 40px"],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            className="text-center mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Package className="w-3 h-3 md:w-4 md:h-4" />
+              Our Services
+            </motion.div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               {t("landing.services.title")}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {t("landing.services.subtitle")}
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">
+              Comprehensive logistics solutions for all your needs
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Animated Services Grid */}
+          <motion.div
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.15,
+                },
+              },
+            }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+          >
             {services.map((service, index) => (
-              <div
+              <motion.div
                 key={index}
-                className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow"
+                variants={{
+                  hidden: { opacity: 0, scale: 0.8, y: 40 },
+                  show: { opacity: 1, scale: 1, y: 0 },
+                }}
+                whileHover={{
+                  y: -12,
+                  scale: 1.03,
+                  transition: { duration: 0.4, ease: "easeOut" },
+                }}
+                className="group relative bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border-2 border-gray-100 hover:border-blue-300 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600">
-                  {service.icon}
+                <div className="relative z-10">
+                  {/* Animated Icon */}
+                  <motion.div
+                    className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mb-4 md:mb-6 text-blue-600 group-hover:shadow-xl transition-shadow duration-300"
+                    whileHover={{
+                      rotate: [0, -10, 10, -10, 0],
+                      scale: 1.1,
+                      transition: { duration: 0.5 },
+                    }}
+                  >
+                    {service.icon}
+                  </motion.div>
+
+                  {/* Content */}
+                  <h3 className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-2 md:mb-3">
+                    {service.title}
+                  </h3>
+                  <p className="text-xs md:text-sm lg:text-base text-gray-600 leading-relaxed">
+                    {service.description}
+                  </p>
+
+                  {/* Arrow with Animation */}
+                  <motion.div
+                    className="mt-4 md:mt-6 flex items-center text-blue-600 font-semibold text-xs md:text-sm"
+                    initial={{ opacity: 0, x: -10 }}
+                    whileHover={{ opacity: 1, x: 0 }}
+                  >
+                    <span>Learn more</span>
+                    <motion.div
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
+                    </motion.div>
+                  </motion.div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {service.title}
-                </h3>
-                <p className="text-gray-600">{service.description}</p>
-              </div>
+
+                {/* Corner Accent */}
+                <div className="absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full transition-colors duration-300"></div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Payment Options Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* Payment Options Section - Animated */}
+      <section className="py-16 md:py-28 bg-gradient-to-br from-emerald-50/50 via-white to-blue-50/50 relative overflow-hidden">
+        {/* Animated Decorative Elements */}
+        <motion.div
+          className="absolute top-10 right-10 w-48 h-48 md:w-64 md:h-64 bg-green-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            x: [0, 30, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-10 w-64 h-64 md:w-80 md:h-80 bg-blue-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1.3, 1, 1.3],
+            x: [0, -30, 0],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            className="text-center mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-100 via-emerald-100 to-blue-100 text-green-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <CreditCard className="w-3 h-3 md:w-4 md:h-4" />
+              Payment Methods
+            </motion.div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               {t("landing.paymentOptions.title")}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {t("landing.paymentOptions.subtitle")}
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">
+              Choose your preferred payment method
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Animated Payment Methods Grid */}
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-50px" }}
+          >
             {paymentMethods.map((method, index) => (
-              <div
+              <motion.div
                 key={index}
-                className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-shadow"
+                variants={{
+                  hidden: { opacity: 0, y: 50, rotateY: -20 },
+                  show: { opacity: 1, y: 0, rotateY: 0 },
+                }}
+                whileHover={{
+                  y: -10,
+                  scale: 1.05,
+                  transition: { duration: 0.3 },
+                }}
+                className="group relative bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl p-6 md:p-8 border-2 border-gray-100 hover:border-green-200 shadow-lg hover:shadow-2xl transition-all duration-300"
               >
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
-                  {method.icon}
+                {/* Animated Gradient Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                <div className="relative z-10 text-center">
+                  {/* Payment Logo Image */}
+                  <motion.div
+                    className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 shadow-lg p-3 md:p-4"
+                    whileHover={{
+                      scale: 1.15,
+                      rotate: [0, -5, 5, 0],
+                      transition: { duration: 0.6 },
+                    }}
+                  >
+                    <img
+                      src={method.image}
+                      alt={method.title}
+                      className="w-full h-full object-contain"
+                    />
+                  </motion.div>
+
+                  {/* Content */}
+                  <h3 className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-2 md:mb-3">
+                    {method.title}
+                  </h3>
+                  <p className="text-xs md:text-sm lg:text-base text-gray-600 leading-relaxed">
+                    {method.description}
+                  </p>
+
+                  {/* Checkmark Badge with Animation */}
+                  <motion.div
+                    className="mt-4 md:mt-6 inline-flex items-center gap-2 text-green-600 text-xs md:text-sm font-semibold"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.2 + 0.5 }}
+                    viewport={{ once: true }}
+                  >
+                    <div className="w-4 h-4 md:w-5 md:h-5 bg-green-100 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-2 h-2 md:w-3 md:h-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <span>Supported</span>
+                  </motion.div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {method.title}
-                </h3>
-                <p className="text-gray-600 text-sm">{method.description}</p>
-              </div>
+
+                {/* Shine Effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100"
+                  animate={{
+                    x: ["-100%", "100%"],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
+
+          {/* Animated Trust Badge */}
+          <motion.div
+            className="mt-12 md:mt-16 text-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-4 md:px-6 py-2 md:py-3 shadow-xl border-2 border-green-100"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Shield className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
+              <span className="text-xs md:text-sm font-semibold text-gray-700">
+                All payments are secure and encrypted
+              </span>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Vehicle Types Slider Section */}
-      <section id="vehicles" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* Vehicle Fleet Section - Animated Slider */}
+      <section
+        id="vehicles"
+        className="py-16 md:py-28 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-50 relative overflow-hidden"
+      >
+        {/* Animated Background */}
+        <motion.div
+          className="absolute top-0 left-0 w-64 h-64 md:w-96 md:h-96 bg-blue-500/5 rounded-full blur-3xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <motion.div
+            className="text-center mb-12 md:mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Truck className="w-3 h-3 md:w-4 md:h-4" />
+              Our Fleet
+            </motion.div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               {t("landing.vehicles.title")}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
               {t("landing.vehicles.subtitle")}
             </p>
-          </div>
+          </motion.div>
 
           {/* Vehicle Slider */}
-          <div className="relative max-w-4xl mx-auto">
+          <motion.div
+            className="relative max-w-5xl mx-auto"
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
             {/* Main Slide Container */}
-            <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl shadow-2xl bg-gradient-to-br from-gray-900 to-slate-900">
               <div
-                className="flex transition-transform duration-500 ease-in-out"
+                className="flex transition-transform duration-700 ease-out"
                 style={{
                   transform: `translateX(-${currentVehicleIndex * 100}%)`,
                 }}
               >
                 {vehicles.map((vehicle, index) => (
                   <div key={vehicle.id} className="w-full flex-shrink-0">
-                    <div className="relative h-96 md:h-[500px]">
+                    <div className="relative h-[400px] sm:h-[450px] md:h-[550px] lg:h-[600px]">
                       {/* Background Image */}
                       <div
-                        className="absolute inset-0 bg-cover bg-center"
+                        className="absolute inset-0 bg-cover bg-center transition-all duration-700"
                         style={{ backgroundImage: `url('${vehicle.image}')` }}
                       >
-                        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30"></div>
                       </div>
 
                       {/* Content Overlay */}
-                      <div className="relative z-10 h-full flex items-end">
-                        <div className="p-8 md:p-12 text-white w-full">
+                      <div className="relative z-10 h-full flex flex-col justify-end">
+                        <motion.div
+                          className="p-6 sm:p-8 md:p-12 text-white w-full"
+                          initial={{ opacity: 0, y: 30 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.6, delay: 0.2 }}
+                        >
                           <div className="max-w-2xl">
-                            <h3 className="text-3xl md:text-5xl font-bold mb-4">
+                            {/* Vehicle Name */}
+                            <motion.h3
+                              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4"
+                              initial={{ opacity: 0, x: -30 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.6, delay: 0.3 }}
+                            >
                               {vehicle.name}
-                            </h3>
-                            <p className="text-xl md:text-2xl font-semibold mb-6 text-blue-300">
-                              {vehicle.capacity}
-                            </p>
-                            <p className="text-lg md:text-xl mb-6 text-gray-200 leading-relaxed">
-                              {vehicle.description}
-                            </p>
-                            <div className="flex flex-col md:flex-row gap-4 md:gap-8 text-sm md:text-base">
-                              <div className="flex items-center">
-                                <Package className="w-5 h-5 mr-2 text-blue-300" />
-                                <span>{vehicle.weight}</span>
+                            </motion.h3>
+
+                            {/* Capacity Badge */}
+                            <motion.div
+                              className="inline-block bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.6, delay: 0.4 }}
+                            >
+                              <p className="text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
+                                {vehicle.capacity}
+                              </p>
+                            </motion.div>
+
+                            {/* Specs */}
+                            <motion.div
+                              className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-8"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.6, delay: 0.5 }}
+                            >
+                              <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 py-2 rounded-lg">
+                                <Package className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-400" />
+                                <span className="text-xs sm:text-sm md:text-base">
+                                  {vehicle.weight}
+                                </span>
                               </div>
-                              <div className="flex items-center">
-                                <Truck className="w-5 h-5 mr-2 text-blue-300" />
-                                <span>{vehicle.dimensions}</span>
+                              <div className="flex items-center bg-white/10 backdrop-blur-sm px-3 py-2 rounded-lg">
+                                <Truck className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-400" />
+                                <span className="text-xs sm:text-sm md:text-base">
+                                  {vehicle.dimensions}
+                                </span>
                               </div>
-                            </div>
+                            </motion.div>
                           </div>
-                        </div>
+                        </motion.div>
                       </div>
                     </div>
                   </div>
@@ -802,37 +1421,43 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Navigation Arrows */}
-            <button
+            <motion.button
               onClick={prevVehicle}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+              className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 p-2 sm:p-3 rounded-full transition-all duration-300 backdrop-blur-sm shadow-xl z-20"
+              whileHover={{ scale: 1.1, x: -5 }}
+              whileTap={{ scale: 0.95 }}
               aria-label="Previous vehicle"
             >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+            </motion.button>
+            <motion.button
               onClick={nextVehicle}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+              className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 p-2 sm:p-3 rounded-full transition-all duration-300 backdrop-blur-sm shadow-xl z-20"
+              whileHover={{ scale: 1.1, x: 5 }}
+              whileTap={{ scale: 0.95 }}
               aria-label="Next vehicle"
             >
-              <ChevronRight className="w-6 h-6" />
-            </button>
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+            </motion.button>
 
             {/* Dots Indicator */}
-            <div className="flex justify-center mt-8 space-x-3">
+            <div className="flex justify-center mt-6 md:mt-8 space-x-2">
               {vehicles.map((_, index) => (
-                <button
+                <motion.button
                   key={index}
                   onClick={() => goToVehicle(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  className={`h-2 rounded-full transition-all duration-300 ${
                     index === currentVehicleIndex
                       ? "bg-blue-600 w-8"
-                      : "bg-gray-300 hover:bg-gray-400"
+                      : "bg-gray-300 w-2 hover:bg-gray-400"
                   }`}
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.9 }}
                   aria-label={`Go to vehicle ${index + 1}`}
                 />
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -1011,13 +1636,13 @@ const LandingPage: React.FC = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={resetCalculator}
-                    className="flex-1 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors"
+                    className="flex-1 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full transition-colors"
                   >
                     Reset
                   </button>
                   <Link
                     to="/create-cargo"
-                    className="flex-1 bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors text-center"
+                    className="flex-1 bg-white text-blue-600 px-4 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors text-center"
                   >
                     Book Now
                   </Link>
@@ -1139,25 +1764,25 @@ const LandingPage: React.FC = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
             <Link
               to="/login"
-              className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors"
             >
               {t("landing.getStarted.bookNow")}
             </Link>
             <Link
               to="/create-cargo"
-              className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 transition-colors"
+              className="bg-blue-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-800 transition-colors"
             >
               {t("landing.getStarted.getQuote")}
             </Link>
             <a
               href="#download"
-              className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 transition-colors"
+              className="bg-blue-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-800 transition-colors"
             >
               {t("landing.getStarted.downloadApp")}
             </a>
             <a
               href="#contact"
-              className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 transition-colors"
+              className="bg-blue-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-800 transition-colors"
             >
               {t("landing.getStarted.contactUs")}
             </a>

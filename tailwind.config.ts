@@ -21,7 +21,7 @@ export default {
 			fontFamily: {
 				'sans': ['Inter', 'system-ui', 'sans-serif'],
 				'heading': ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
-				'mono': ['JetBrains Mono', 'Consolas', 'Monaco', 'monospace'],
+				'mono': ['JetBrains Mono', 'monospace'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

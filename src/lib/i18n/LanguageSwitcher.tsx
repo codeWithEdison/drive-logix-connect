@@ -8,6 +8,7 @@ import {
 } from "../../components/ui/dropdown-menu";
 import { useLanguageSwitcher, useAvailableLanguages } from "./LanguageContext";
 import { Language } from "../../types/shared";
+import { Globe } from "lucide-react";
 
 interface LanguageSwitcherProps {
   variant?: "default" | "outline" | "ghost";
@@ -30,19 +31,29 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant} size={size} disabled={isUpdating}>
-          {currentLang?.flag} {showLabel && currentLang?.name}
+        <Button 
+          variant={variant} 
+          size={size} 
+          disabled={isUpdating}
+          className="flex items-center gap-2 rounded-lg"
+        >
+          <Globe className="w-4 h-4" />
+          {showLabel && (
+            <span className="font-medium">{currentLang?.code.toUpperCase()}</span>
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="min-w-[160px]">
         {availableLanguages.map((language) => (
           <DropdownMenuItem
             key={language.code}
             onClick={() => switchLanguage(language.code)}
-            className={currentLanguage === language.code ? "bg-accent" : ""}
+            className={`flex items-center gap-3 cursor-pointer ${
+              currentLanguage === language.code ? "bg-accent" : ""
+            }`}
           >
-            <span className="mr-2">{language.flag}</span>
-            {language.name}
+            <span className="text-lg">{language.flag}</span>
+            <span className="font-medium">{language.name}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
