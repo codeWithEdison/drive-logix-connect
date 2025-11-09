@@ -278,6 +278,8 @@
     "rememberPassword": "Vous vous souvenez de votre mot de passe?",
     "preferredLanguage": "Langue Préférée",
     "optional": "Optionnel",
+    "cargoNumber": "Numéro de cargaison",
+    "pickupDate": "Date de ramassage",
     "verificationEmailSent": "Email de vérification envoyé ! Veuillez vérifier votre boîte de réception.",
     "verificationInstructions": "Veuillez vérifier votre boîte de réception pour le lien de vérification. Le lien expirera dans 1 heure.",
     "emailVerification": "Vérification Email",
@@ -414,7 +416,7 @@
     "insuranceExpires": "L'assurance expire",
     "currentStatus": "Statut actuel"
   },
-  
+
   "delivery": {
     "deliveryDetails": "Détails de la livraison",
     "startDelivery": "Commencer la livraison",
@@ -1179,8 +1181,11 @@
     "selectedCargoDetails": "Détails de la Cargaison Sélectionnée",
     "driverDetails": "Détails du Chauffeur",
     "vehicleDetails": "Détails du Véhicule",
+    "additionalInformation": "Informations Supplémentaires",
     "additionalNotes": "Notes Supplémentaires",
+    "notes": "Notes",
     "notesPlaceholder": "Ajouter des instructions spéciales ou des notes...",
+    "deliveries": "Livraisons",
     "assignmentInfo": "Informations sur l'Assignation",
     "creating": "Création...",
     "updating": "Mise à jour...",

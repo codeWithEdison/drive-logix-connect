@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { CargoTable } from "@/components/ui/CargoTable";
 import { CargoDetail } from "@/components/ui/CargoDetailModal";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,70 @@ const MyCargos = () => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
+
+  // Refs for input elements to calculate dropdown positions
+  const statusInputRef = useRef<HTMLInputElement>(null);
+  const priorityInputRef = useRef<HTMLInputElement>(null);
+  const pageSizeInputRef = useRef<HTMLInputElement>(null);
+
+  // Dropdown position states
+  const [statusDropdownPos, setStatusDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [priorityDropdownPos, setPriorityDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [pageSizeDropdownPos, setPageSizeDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+
+  // Function to calculate dropdown position
+  const calculateDropdownPosition = (inputRef: React.RefObject<HTMLInputElement>) => {
+    if (!inputRef.current) return { top: 0, left: 0, width: 0 };
+    const rect = inputRef.current.getBoundingClientRect();
+    // For fixed positioning, use viewport coordinates directly (no scroll offset needed)
+    return {
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    };
+  };
+
+  // Update positions when dropdowns open
+  useEffect(() => {
+    if (showStatusDropdown && statusInputRef.current) {
+      setStatusDropdownPos(calculateDropdownPosition(statusInputRef));
+    }
+  }, [showStatusDropdown]);
+
+  useEffect(() => {
+    if (showPriorityDropdown && priorityInputRef.current) {
+      setPriorityDropdownPos(calculateDropdownPosition(priorityInputRef));
+    }
+  }, [showPriorityDropdown]);
+
+  useEffect(() => {
+    if (showPageSizeDropdown && pageSizeInputRef.current) {
+      setPageSizeDropdownPos(calculateDropdownPosition(pageSizeInputRef));
+    }
+  }, [showPageSizeDropdown]);
+
+  // Handle scroll and resize for all dropdowns
+  useEffect(() => {
+    const updatePositions = () => {
+      if (showStatusDropdown && statusInputRef.current) {
+        setStatusDropdownPos(calculateDropdownPosition(statusInputRef));
+      }
+      if (showPriorityDropdown && priorityInputRef.current) {
+        setPriorityDropdownPos(calculateDropdownPosition(priorityInputRef));
+      }
+      if (showPageSizeDropdown && pageSizeInputRef.current) {
+        setPageSizeDropdownPos(calculateDropdownPosition(pageSizeInputRef));
+      }
+    };
+
+    window.addEventListener("scroll", updatePositions, true);
+    window.addEventListener("resize", updatePositions);
+
+    return () => {
+      window.removeEventListener("scroll", updatePositions, true);
+      window.removeEventListener("resize", updatePositions);
+    };
+  }, [showStatusDropdown, showPriorityDropdown, showPageSizeDropdown]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -325,6 +390,7 @@ const MyCargos = () => {
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative">
                   <input
+                    ref={statusInputRef}
                     type="text"
                     value={
                       statusSearch ||
@@ -336,7 +402,12 @@ const MyCargos = () => {
                       setStatusSearch(e.target.value);
                       setShowStatusDropdown(true);
                     }}
-                    onFocus={() => setShowStatusDropdown(true)}
+                    onFocus={() => {
+                      if (statusInputRef.current) {
+                        setStatusDropdownPos(calculateDropdownPosition(statusInputRef));
+                      }
+                      setShowStatusDropdown(true);
+                    }}
                     placeholder={t("myCargos.filters.filterByStatus")}
                     className="w-full sm:w-[160px] md:w-[180px] px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 pr-10 rounded-full text-xs sm:text-sm md:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
                   />
@@ -356,9 +427,14 @@ const MyCargos = () => {
                   </div>
 
                   {/* Dropdown */}
-                  {showStatusDropdown && (
+                  {showStatusDropdown && typeof document !== "undefined" && createPortal(
                     <motion.div
-                      className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                      className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                      style={{
+                        top: `${statusDropdownPos.top}px`,
+                        left: `${statusDropdownPos.left}px`,
+                        width: `${statusDropdownPos.width}px`,
+                      }}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -416,21 +492,24 @@ const MyCargos = () => {
                             </div>
                           </button>
                         ))}
-                    </motion.div>
+                    </motion.div>,
+                    document.body
                   )}
 
                   {/* Click outside to close */}
-                  {showStatusDropdown && (
+                  {showStatusDropdown && typeof document !== "undefined" && createPortal(
                     <div
-                      className="fixed inset-0 z-40"
+                      className="fixed inset-0 z-[9998]"
                       onClick={() => setShowStatusDropdown(false)}
-                    />
+                    />,
+                    document.body
                   )}
                 </div>
 
                 {/* Priority Filter */}
                 <div className="relative">
                   <input
+                    ref={priorityInputRef}
                     type="text"
                     value={
                       prioritySearch ||
@@ -443,7 +522,12 @@ const MyCargos = () => {
                       setPrioritySearch(e.target.value);
                       setShowPriorityDropdown(true);
                     }}
-                    onFocus={() => setShowPriorityDropdown(true)}
+                    onFocus={() => {
+                      if (priorityInputRef.current) {
+                        setPriorityDropdownPos(calculateDropdownPosition(priorityInputRef));
+                      }
+                      setShowPriorityDropdown(true);
+                    }}
                     placeholder={t("myCargos.filters.priority")}
                     className="w-full sm:w-[140px] px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 pr-10 rounded-full text-xs sm:text-sm md:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
                   />
@@ -463,9 +547,14 @@ const MyCargos = () => {
                   </div>
 
                   {/* Dropdown */}
-                  {showPriorityDropdown && (
+                  {showPriorityDropdown && typeof document !== "undefined" && createPortal(
                     <motion.div
-                      className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                      className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                      style={{
+                        top: `${priorityDropdownPos.top}px`,
+                        left: `${priorityDropdownPos.left}px`,
+                        width: `${priorityDropdownPos.width}px`,
+                      }}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -514,15 +603,17 @@ const MyCargos = () => {
                             </div>
                           </button>
                         ))}
-                    </motion.div>
+                    </motion.div>,
+                    document.body
                   )}
 
                   {/* Click outside to close */}
-                  {showPriorityDropdown && (
+                  {showPriorityDropdown && typeof document !== "undefined" && createPortal(
                     <div
-                      className="fixed inset-0 z-40"
+                      className="fixed inset-0 z-[9998]"
                       onClick={() => setShowPriorityDropdown(false)}
-                    />
+                    />,
+                    document.body
                   )}
                 </div>
               </div>
@@ -848,13 +939,19 @@ const MyCargos = () => {
               </span>
               <div className="relative">
                 <input
+                  ref={pageSizeInputRef}
                   type="text"
                   value={pageSizeSearch || pageSize.toString()}
                   onChange={(e) => {
                     setPageSizeSearch(e.target.value);
                     setShowPageSizeDropdown(true);
                   }}
-                  onFocus={() => setShowPageSizeDropdown(true)}
+                  onFocus={() => {
+                    if (pageSizeInputRef.current) {
+                      setPageSizeDropdownPos(calculateDropdownPosition(pageSizeInputRef));
+                    }
+                    setShowPageSizeDropdown(true);
+                  }}
                   placeholder={pageSize.toString()}
                   className="w-12 sm:w-16 md:w-20 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm text-center"
                 />
@@ -863,9 +960,14 @@ const MyCargos = () => {
                 </div>
 
                 {/* Dropdown */}
-                {showPageSizeDropdown && (
+                {showPageSizeDropdown && typeof document !== "undefined" && createPortal(
                   <motion.div
-                    className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                    className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                    style={{
+                      top: `${pageSizeDropdownPos.top}px`,
+                      left: `${pageSizeDropdownPos.left}px`,
+                      width: `${pageSizeDropdownPos.width}px`,
+                    }}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
@@ -901,15 +1003,17 @@ const MyCargos = () => {
                           </div>
                         </button>
                       ))}
-                  </motion.div>
+                  </motion.div>,
+                  document.body
                 )}
 
                 {/* Click outside to close */}
-                {showPageSizeDropdown && (
+                {showPageSizeDropdown && typeof document !== "undefined" && createPortal(
                   <div
-                    className="fixed inset-0 z-40"
+                    className="fixed inset-0 z-[9998]"
                     onClick={() => setShowPageSizeDropdown(false)}
-                  />
+                  />,
+                  document.body
                 )}
               </div>
             </div>

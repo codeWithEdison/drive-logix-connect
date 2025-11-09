@@ -16,7 +16,7 @@ import {
   AiOutlineAppstore,
   AiOutlineSchedule,
 } from "react-icons/ai";
-import { Home, Package, Truck } from "lucide-react";
+import { Home, Package, Truck, Receipt } from "lucide-react";
 
 const getNavigationConfig = (t: (key: string) => string) => ({
   client: [
@@ -36,6 +36,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       url: "/tracking",
       icon: AiOutlineEnvironment,
     },
+    { title: t("navigation.invoices"), url: "/invoices", icon: Receipt },
     { title: t("navigation.history"), url: "/history", icon: AiOutlineHistory },
   ],
   driver: [
@@ -111,12 +112,12 @@ export function MobileBottomNav() {
   const navigation = navigationConfig[user.role] || [];
   const isActive = (path: string) => location.pathname === path;
 
-  // Show only first 4 items on mobile for better UX
-  const mobileNavigation = navigation.slice(0, 4);
+  // Show only first 5 items on mobile for better UX (including invoices)
+  const mobileNavigation = navigation.slice(0, 5);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden">
-      <div className="flex items-center justify-around px-1 py-1">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-white via-white/95 to-white/90 backdrop-blur-md border-t border-gray-200/50 shadow-lg md:hidden">
+      <div className="flex items-center justify-around px-1 py-1.5 sm:py-2">
         {mobileNavigation.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.url);
@@ -125,18 +126,20 @@ export function MobileBottomNav() {
             <NavLink
               key={item.title}
               to={item.url}
-              className={`flex flex-col items-center justify-center gap-1 py-2 px-1 min-w-0 flex-1 transition-colors duration-200 ${
-                active ? "text-green-600" : "text-gray-500"
+              className={`flex flex-col items-center justify-center gap-0.5 sm:gap-1 py-1.5 sm:py-2 px-1 min-w-0 flex-1 transition-all duration-300 rounded-lg ${
+                active
+                  ? "text-blue-600 bg-blue-50/50"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               <Icon
-                className={`h-6 w-6 ${
-                  active ? "text-green-600" : "text-gray-500"
+                className={`h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-300 ${
+                  active ? "text-blue-600 scale-110" : "text-gray-500"
                 }`}
               />
               <span
-                className={`text-xs font-medium truncate max-w-full ${
-                  active ? "text-green-600" : "text-gray-500"
+                className={`text-[10px] sm:text-xs font-semibold truncate max-w-full ${
+                  active ? "text-blue-600" : "text-gray-500"
                 }`}
               >
                 {item.title}

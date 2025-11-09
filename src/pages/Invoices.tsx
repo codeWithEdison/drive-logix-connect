@@ -4,13 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -23,7 +16,6 @@ import {
   Download,
   Eye,
   Search,
-  Filter,
   Calendar,
   DollarSign,
   FileText,
@@ -35,7 +27,10 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  X,
+  Check,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -117,33 +112,24 @@ const mockInvoices = [
   },
 ];
 
-const statusConfig = {
+// Status config will use translations
+const getStatusConfig = (t: (key: string) => string) => ({
   draft: {
-    label: "Draft",
     className: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: FileText,
   },
   sent: {
-    label: "Sent",
     className: "bg-blue-100 text-blue-800 border-blue-200",
-    icon: Clock,
   },
   paid: {
-    label: "Paid",
     className: "bg-green-100 text-green-800 border-green-200",
-    icon: CheckCircle,
   },
   overdue: {
-    label: "Overdue",
     className: "bg-red-100 text-red-800 border-red-200",
-    icon: AlertCircle,
   },
   cancelled: {
-    label: "Cancelled",
     className: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: FileText,
   },
-};
+});
 
 export default function Invoices() {
   const { t } = useLanguage();
@@ -152,6 +138,14 @@ export default function Invoices() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+
+  // Search states for comboboxes
+  const [statusSearch, setStatusSearch] = useState("");
+  const [sortSearch, setSortSearch] = useState("");
+  const [pageSizeSearch, setPageSizeSearch] = useState("");
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -323,66 +317,56 @@ export default function Invoices() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-8">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="space-y-4 sm:space-y-6 md:space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <Skeleton className="h-8 w-32 mb-2" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-6 sm:h-8 w-32 sm:w-48 mb-1.5 sm:mb-2 rounded-lg" />
+            <Skeleton className="h-3 sm:h-4 w-48 sm:w-64 rounded-lg" />
           </div>
-          <Skeleton className="h-10 w-32" />
+          <div className="flex gap-1.5 sm:gap-2">
+            <Skeleton className="h-8 sm:h-10 w-20 sm:w-24 rounded-full" />
+            <Skeleton className="h-8 sm:h-10 w-32 sm:w-40 rounded-full" />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-3 w-20" />
-              </CardContent>
-            </Card>
+        <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-gradient-to-br from-gray-50/80 to-gray-100/60 backdrop-blur-sm rounded-xl border border-gray-200/50 p-3 sm:p-4 w-fit"
+            >
+              <div className="space-y-1.5 sm:space-y-2">
+                <Skeleton className="h-3 sm:h-4 w-16 sm:w-20 rounded-lg" />
+                <Skeleton className="h-5 sm:h-6 w-12 sm:w-16 rounded-lg" />
+              </div>
+            </div>
           ))}
         </div>
 
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <Skeleton className="h-10 flex-1" />
-              <Skeleton className="h-10 w-48" />
-              <Skeleton className="h-10 w-48" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 backdrop-blur-sm rounded-2xl border border-blue-100/50 p-3 sm:p-4 md:p-6">
+          <div className="flex flex-col md:flex-row gap-3 sm:gap-4">
+            <Skeleton className="h-10 flex-1 rounded-full" />
+            <Skeleton className="h-10 w-full sm:w-48 rounded-full" />
+            <Skeleton className="h-10 w-full sm:w-48 rounded-full" />
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-24" />
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <div className="space-y-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center space-x-4">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-6 w-16" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-8 w-8" />
-                  </div>
-                ))}
+        <div className="space-y-3 sm:space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="border border-gray-200/50 rounded-xl p-3 sm:p-4 bg-gradient-to-br from-white/80 to-gray-50/40 backdrop-blur-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Skeleton className="h-3 sm:h-4 w-24 sm:w-32 rounded-lg" />
+                  <Skeleton className="h-2.5 sm:h-3 w-28 sm:w-40 rounded-lg" />
+                </div>
+                <Skeleton className="h-5 sm:h-6 w-12 sm:w-16 rounded-lg" />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
       </div>
     );
   }
@@ -390,472 +374,895 @@ export default function Invoices() {
   // Error state
   if (error) {
     return (
-      <div className="space-y-8">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="space-y-4 sm:space-y-6 md:space-y-8">
+        <motion.div
+          className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
               {t("invoices.title")}
             </h1>
-            <p className="text-muted-foreground">{t("invoices.subtitle")}</p>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
+              {t("invoices.subtitle")}
+            </p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="w-4 h-4 mr-2" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm"
+          >
+            <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             {t("common.refresh")}
           </Button>
-        </div>
+        </motion.div>
 
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <div>
-              <h3 className="font-semibold text-red-800">
+        <motion.div
+          className="bg-gradient-to-br from-red-50/80 via-pink-50/60 to-orange-50/80 backdrop-blur-sm border border-red-200/50 rounded-2xl p-4 sm:p-6"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="flex items-start gap-2 sm:gap-3">
+            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm sm:text-base font-semibold text-red-800">
                 {t("common.error")}
               </h3>
-              <p className="text-red-600 text-sm mt-1">
+              <p className="text-xs sm:text-sm text-red-600 mt-1">
                 {error.message || t("invoices.loadError")}
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleRefresh}
-                className="mt-2"
+                className="mt-2 sm:mt-3 rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold border-red-200 hover:border-red-500 bg-white/80 backdrop-blur-sm"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 {t("common.retry")}
               </Button>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <motion.div
+        className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
             {t("invoices.title")}
           </h1>
-          <p className="text-muted-foreground">{t("invoices.subtitle")}</p>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
+            {t("invoices.subtitle")}
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={isLoading}
+            className="rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm"
           >
             <RefreshCw
-              className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+              className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${
+                isLoading ? "animate-spin" : ""
+              }`}
             />
             {t("common.refresh")}
           </Button>
           <Button
-            className="bg-gradient-primary hover:bg-primary-hover"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
             onClick={handleDownloadAll}
           >
-            <Receipt className="w-4 h-4 mr-2" />
+            <Receipt className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             {t("invoices.downloadAll")}
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("invoices.totalInvoices")}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalInvoices}
-                </p>
-              </div>
-              <Receipt className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4">
+        <motion.div
+          className="bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 backdrop-blur-sm rounded-xl border border-blue-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 w-fit"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          whileHover={{ scale: 1.05 }}
+        >
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-0.5 sm:mb-1">
+            {t("invoices.totalInvoices")}
+          </p>
+          <p className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            {totalInvoices}
+          </p>
+        </motion.div>
 
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("invoices.totalPaid")}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(totalPaid)}
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          className="bg-gradient-to-br from-green-50/80 via-emerald-50/60 to-teal-50/80 backdrop-blur-sm rounded-xl border border-green-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 w-fit"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          whileHover={{ scale: 1.05 }}
+        >
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-0.5 sm:mb-1">
+            {t("invoices.totalPaid")}
+          </p>
+          <p className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            {formatCurrency(totalPaid)}
+          </p>
+        </motion.div>
 
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("invoices.outstanding")}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(totalOutstanding)}
-                </p>
-              </div>
-              <AlertCircle className="h-8 w-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          className="bg-gradient-to-br from-red-50/80 via-orange-50/60 to-yellow-50/80 backdrop-blur-sm rounded-xl border border-red-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 w-fit"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          whileHover={{ scale: 1.05 }}
+        >
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-0.5 sm:mb-1">
+            {t("invoices.outstanding")}
+          </p>
+          <p className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+            {formatCurrency(totalOutstanding)}
+          </p>
+        </motion.div>
 
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("invoices.totalAmount")}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(totalAmount)}
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          className="bg-gradient-to-br from-purple-50/80 via-pink-50/60 to-rose-50/80 backdrop-blur-sm rounded-xl border border-purple-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 w-fit"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          whileHover={{ scale: 1.05 }}
+        >
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-0.5 sm:mb-1">
+            {t("invoices.totalAmount")}
+          </p>
+          <p className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            {formatCurrency(totalAmount)}
+          </p>
+        </motion.div>
       </div>
 
       {/* Filters and Search */}
-      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder={t("invoices.searchPlaceholder")}
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                />
-              </div>
+      <motion.div
+        className="bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 backdrop-blur-sm rounded-2xl border border-blue-100/50 p-3 sm:p-4 md:p-6 shadow-lg"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+      >
+        <div className="flex flex-col md:flex-row gap-2 sm:gap-3 md:gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
+              <Input
+                placeholder={t("invoices.searchPlaceholder")}
+                value={searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+              />
             </div>
-            <Select
-              value={statusFilter}
-              onValueChange={handleStatusFilterChange}
-            >
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder={t("invoices.filterByStatus")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("invoices.allStatus")}</SelectItem>
-                <SelectItem value="draft">{t("invoices.draft")}</SelectItem>
-                <SelectItem value="sent">{t("invoices.sent")}</SelectItem>
-                <SelectItem value="paid">{t("invoices.paid")}</SelectItem>
-                <SelectItem value="overdue">{t("invoices.overdue")}</SelectItem>
-                <SelectItem value="cancelled">
-                  {t("invoices.cancelled")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder={t("invoices.sortBy")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">
-                  {t("invoices.newestFirst")}
-                </SelectItem>
-                <SelectItem value="oldest">
-                  {t("invoices.oldestFirst")}
-                </SelectItem>
-                <SelectItem value="amount-high">
-                  {t("invoices.amountHighToLow")}
-                </SelectItem>
-                <SelectItem value="amount-low">
-                  {t("invoices.amountLowToHigh")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Invoice Table */}
-      <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-gray-900">
-            {t("invoices.allInvoices")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto w-full">
-            <Table className="w-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs font-medium text-gray-600 w-16">
-                    #
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600 w-32">
-                    {t("invoices.invoiceNumber")}
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600 w-36">
-                    {t("invoices.cargoNumber")}
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600 flex-1">
-                    {t("invoices.cargo")}
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600 w-24">
-                    {t("invoices.amount")}
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600 w-24">
-                    {t("invoices.statusLabel")}
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600 w-32">
-                    {t("invoices.dueDate")}
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-gray-600 w-20">
-                    {t("invoices.actions")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedInvoices.map((invoice: any, index: number) => {
-                  const status =
-                    statusConfig[invoice.status as keyof typeof statusConfig];
-                  return (
-                    <TableRow
-                      key={invoice.id}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors duration-200"
-                      onClick={() => handleViewInvoice(invoice)}
+          {/* Status Filter */}
+          <div className="relative">
+            <input
+              type="text"
+              value={
+                statusSearch ||
+                (statusFilter !== "all"
+                  ? t(`invoices.${statusFilter}`) || statusFilter
+                  : t("invoices.allStatus"))
+              }
+              onChange={(e) => {
+                setStatusSearch(e.target.value);
+                setShowStatusDropdown(true);
+              }}
+              onFocus={() => setShowStatusDropdown(true)}
+              placeholder={t("invoices.filterByStatus")}
+              className="w-full sm:w-[160px] md:w-[180px] px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 pr-10 rounded-full text-xs sm:text-sm md:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+            />
+            <div className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {statusSearch && (
+                <button
+                  onClick={() => {
+                    setStatusSearch("");
+                    setShowStatusDropdown(true);
+                  }}
+                  className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                  <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                </button>
+              )}
+              <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+            </div>
+
+            {/* Dropdown */}
+            {showStatusDropdown && (
+              <motion.div
+                className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {["all", "draft", "sent", "paid", "overdue", "cancelled"]
+                  .filter(
+                    (status) =>
+                      !statusSearch ||
+                      (status === "all"
+                        ? t("invoices.allStatus")
+                            .toLowerCase()
+                            .includes(statusSearch.toLowerCase())
+                        : t(`invoices.${status}`)
+                            ?.toLowerCase()
+                            .includes(statusSearch.toLowerCase()) ||
+                          status
+                            .toLowerCase()
+                            .includes(statusSearch.toLowerCase()))
+                  )
+                  .map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        handleStatusFilterChange(status);
+                        setStatusSearch("");
+                        setShowStatusDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                        statusFilter === status ? "bg-blue-50" : ""
+                      }`}
                     >
-                      <TableCell className="text-sm text-gray-500">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-sm text-gray-900">
-                          {invoice.invoice_number || invoice.id}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-mono text-sm text-gray-600">
-                          {invoice.cargo?.cargo_number ||
-                            invoice.cargo_id ||
-                            t("invoices.noCargoNumber")}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-xs">
-                          <div className="font-medium text-sm text-gray-900 mb-1">
-                            {invoice.cargo?.type || t("invoices.unknownType")}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            <div className="flex items-start gap-1">
-                              <MapPin className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span className="truncate">
-                                {invoice.cargo?.pickup_address ||
-                                  t("invoices.unknownLocation")}
-                              </span>
-                            </div>
-                            <div className="flex items-start gap-1 mt-1">
-                              <MapPin className="h-3 w-3 text-blue-500 mt-0.5 flex-shrink-0" />
-                              <span className="truncate">
-                                {invoice.cargo?.destination_address ||
-                                  t("invoices.unknownLocation")}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="text-sm font-bold text-gray-900">
-                            {formatCurrency(
-                              parseFloat(invoice.total_amount || 0)
-                            )}
-                          </div>
-                          {invoice.discount_amount &&
-                            parseFloat(invoice.discount_amount) > 0 && (
-                              <div className="text-xs text-green-600">
-                                -
-                                {formatCurrency(
-                                  parseFloat(invoice.discount_amount)
-                                )}{" "}
-                                {t("invoices.discount")}
-                              </div>
-                            )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className={status.className}>
-                          {t(`invoices.status.${invoice.status}`)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm text-gray-900">
-                          {invoice.due_date
-                            ? new Date(invoice.due_date).toLocaleDateString()
-                            : t("invoices.noDueDate")}
-                        </div>
-                        {invoice.status === "paid" && invoice.paid_at && (
-                          <div className="text-xs text-gray-500">
-                            {t("invoices.paid")}:{" "}
-                            {new Date(invoice.paid_at).toLocaleDateString()}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewInvoice(invoice);
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              {t("invoices.viewDetails")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDownloadInvoice(invoice.id);
-                              }}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              {t("invoices.downloadPdf")}
-                            </DropdownMenuItem>
-                            {invoice.status === "sent" && (
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePayNow(invoice.id);
-                                }}
-                              >
-                                <DollarSign className="h-4 w-4 mr-2" />
-                                {t("invoices.payNow")}
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                      <div className="flex items-center gap-2">
+                        <Check
+                          className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
+                            statusFilter === status
+                              ? "opacity-100 text-blue-600"
+                              : "opacity-0"
+                          }`}
+                        />
+                        <span className="text-xs sm:text-sm font-medium text-gray-900">
+                          {status === "all"
+                            ? t("invoices.allStatus")
+                            : t(`invoices.${status}`) || status}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+              </motion.div>
+            )}
+
+            {/* Click outside to close */}
+            {showStatusDropdown && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowStatusDropdown(false)}
+              />
+            )}
           </div>
 
-          {sortedInvoices.length === 0 && (
-            <div className="text-center py-12">
-              <Receipt className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-600">
-                {t("invoices.noInvoicesFound")}
-              </h3>
-              <p className="text-gray-500">
-                {t("invoices.noInvoicesDescription")}
-              </p>
+          {/* Sort Filter */}
+          <div className="relative">
+            <input
+              type="text"
+              value={
+                sortSearch ||
+                (sortBy === "newest"
+                  ? t("invoices.newestFirst")
+                  : sortBy === "oldest"
+                  ? t("invoices.oldestFirst")
+                  : sortBy === "amount-high"
+                  ? t("invoices.amountHighToLow")
+                  : sortBy === "amount-low"
+                  ? t("invoices.amountLowToHigh")
+                  : t("invoices.sortBy"))
+              }
+              onChange={(e) => {
+                setSortSearch(e.target.value);
+                setShowSortDropdown(true);
+              }}
+              onFocus={() => setShowSortDropdown(true)}
+              placeholder={t("invoices.sortBy")}
+              className="w-full sm:w-[160px] md:w-[180px] px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 pr-10 rounded-full text-xs sm:text-sm md:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+            />
+            <div className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {sortSearch && (
+                <button
+                  onClick={() => {
+                    setSortSearch("");
+                    setShowSortDropdown(true);
+                  }}
+                  className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                  <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                </button>
+              )}
+              <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {/* Dropdown */}
+            {showSortDropdown && (
+              <motion.div
+                className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {[
+                  { value: "newest", label: t("invoices.newestFirst") },
+                  { value: "oldest", label: t("invoices.oldestFirst") },
+                  {
+                    value: "amount-high",
+                    label: t("invoices.amountHighToLow"),
+                  },
+                  { value: "amount-low", label: t("invoices.amountLowToHigh") },
+                ]
+                  .filter(
+                    (option) =>
+                      !sortSearch ||
+                      option.label
+                        .toLowerCase()
+                        .includes(sortSearch.toLowerCase()) ||
+                      option.value
+                        .toLowerCase()
+                        .includes(sortSearch.toLowerCase())
+                  )
+                  .map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortBy(option.value);
+                        setSortSearch("");
+                        setShowSortDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                        sortBy === option.value ? "bg-blue-50" : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Check
+                          className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
+                            sortBy === option.value
+                              ? "opacity-100 text-blue-600"
+                              : "opacity-0"
+                          }`}
+                        />
+                        <span className="text-xs sm:text-sm font-medium text-gray-900">
+                          {option.label}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+              </motion.div>
+            )}
+
+            {/* Click outside to close */}
+            {showSortDropdown && (
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowSortDropdown(false)}
+              />
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Invoice Table - Desktop */}
+      <motion.div
+        className="bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 backdrop-blur-sm rounded-2xl border border-blue-100/50 shadow-lg overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+      >
+        <div className="p-3 sm:p-4 md:p-6 border-b border-gray-200/50">
+          <h2 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
+            {t("invoices.allInvoices")}
+          </h2>
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden lg:block overflow-x-auto">
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow className="bg-gray-50/50">
+                <TableHead className="text-[10px] sm:text-xs font-semibold text-gray-700 w-12">
+                  #
+                </TableHead>
+                <TableHead className="text-[10px] sm:text-xs font-semibold text-gray-700 w-32">
+                  {t("invoices.invoiceNumber")}
+                </TableHead>
+                <TableHead className="text-[10px] sm:text-xs font-semibold text-gray-700 w-36">
+                  {t("invoices.cargoNumber")}
+                </TableHead>
+                <TableHead className="text-[10px] sm:text-xs font-semibold text-gray-700 flex-1">
+                  {t("invoices.cargo")}
+                </TableHead>
+                <TableHead className="text-[10px] sm:text-xs font-semibold text-gray-700 w-24">
+                  {t("invoices.amount")}
+                </TableHead>
+                <TableHead className="text-[10px] sm:text-xs font-semibold text-gray-700 w-24">
+                  {t("invoices.statusLabel")}
+                </TableHead>
+                <TableHead className="text-[10px] sm:text-xs font-semibold text-gray-700 w-32">
+                  {t("invoices.dueDate")}
+                </TableHead>
+                <TableHead className="text-[10px] sm:text-xs font-semibold text-gray-700 w-20">
+                  {t("invoices.actions")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedInvoices.map((invoice: any, index: number) => {
+                const statusConfig = getStatusConfig(t);
+                const status =
+                  statusConfig[invoice.status as keyof typeof statusConfig];
+                return (
+                  <TableRow
+                    key={invoice.id}
+                    className="hover:bg-blue-50/50 cursor-pointer transition-colors duration-200 border-b border-gray-100/50"
+                    onClick={() => handleViewInvoice(invoice)}
+                  >
+                    <TableCell className="text-xs sm:text-sm text-gray-600">
+                      {index + 1}
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-xs sm:text-sm text-gray-900">
+                        {invoice.invoice_number || invoice.id}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-mono text-xs sm:text-sm text-gray-600">
+                        {invoice.cargo?.cargo_number ||
+                          invoice.cargo_id ||
+                          t("invoices.noCargoNumber")}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="max-w-xs">
+                        <div className="font-semibold text-xs sm:text-sm text-gray-900 mb-1">
+                          {invoice.cargo?.type || t("invoices.unknownType")}
+                        </div>
+                        <div className="text-xs sm:text-sm text-gray-500">
+                          <div className="flex items-start gap-1">
+                            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span className="truncate">
+                              {invoice.cargo?.pickup_address ||
+                                t("invoices.unknownLocation")}
+                            </span>
+                          </div>
+                          <div className="flex items-start gap-1 mt-1">
+                            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <span className="truncate">
+                              {invoice.cargo?.destination_address ||
+                                t("invoices.unknownLocation")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="text-xs sm:text-sm font-bold text-gray-900">
+                          {formatCurrency(
+                            parseFloat(invoice.total_amount || 0)
+                          )}
+                        </div>
+                        {invoice.discount_amount &&
+                          parseFloat(invoice.discount_amount) > 0 && (
+                            <div className="text-xs sm:text-sm text-green-600">
+                              -
+                              {formatCurrency(
+                                parseFloat(invoice.discount_amount)
+                              )}{" "}
+                              {t("invoices.discount")}
+                            </div>
+                          )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          status?.className || "bg-gray-100 text-gray-800"
+                        }
+                      >
+                        {t(`invoices.status.${invoice.status}`) ||
+                          invoice.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs sm:text-sm text-gray-900">
+                        {invoice.due_date
+                          ? new Date(invoice.due_date).toLocaleDateString()
+                          : t("invoices.noDueDate")}
+                      </div>
+                      {invoice.status === "paid" && invoice.paid_at && (
+                        <div className="text-xs sm:text-sm text-gray-500">
+                          {t("invoices.paid")}:{" "}
+                          {new Date(invoice.paid_at).toLocaleDateString()}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewInvoice(invoice);
+                            }}
+                          >
+                            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                            {t("invoices.viewDetails")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadInvoice(invoice.id);
+                            }}
+                          >
+                            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                            {t("invoices.downloadPdf")}
+                          </DropdownMenuItem>
+                          {invoice.status === "sent" && (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePayNow(invoice.id);
+                              }}
+                            >
+                              <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                              {t("invoices.payNow")}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="lg:hidden space-y-2 sm:space-y-3 p-3 sm:p-4">
+          {sortedInvoices.map((invoice: any, index: number) => {
+            const statusConfig = getStatusConfig(t);
+            const status =
+              statusConfig[invoice.status as keyof typeof statusConfig];
+            return (
+              <motion.div
+                key={invoice.id}
+                className="bg-gradient-to-br from-blue-50/40 via-white to-indigo-50/30 backdrop-blur-sm rounded-xl border border-blue-100/50 p-3 sm:p-4 cursor-pointer hover:shadow-lg transition-all duration-300"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+                onClick={() => handleViewInvoice(invoice)}
+              >
+                <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-1.5">
+                      <h3 className="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                        {invoice.invoice_number || invoice.id}
+                      </h3>
+                      <Badge
+                        variant="secondary"
+                        className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 sm:py-1 ${
+                          status?.className || "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {t(`invoices.status.${invoice.status}`) ||
+                          invoice.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 font-mono">
+                      {t("invoices.cargoNumber")}:{" "}
+                      {invoice.cargo?.cargo_number ||
+                        invoice.cargo_id ||
+                        t("invoices.noCargoNumber")}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm sm:text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                      {formatCurrency(parseFloat(invoice.total_amount || 0))}
+                    </p>
+                    {invoice.discount_amount &&
+                      parseFloat(invoice.discount_amount) > 0 && (
+                        <p className="text-xs sm:text-sm text-green-600 mt-0.5">
+                          -{formatCurrency(parseFloat(invoice.discount_amount))}
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 sm:space-y-2 mb-2 sm:mb-3">
+                  <div className="flex items-start gap-1.5 sm:gap-2">
+                    <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-500 font-semibold mb-0.5">
+                        {t("invoices.cargo")}
+                      </p>
+                      <p className="text-sm sm:text-base text-gray-700 font-medium truncate">
+                        {invoice.cargo?.type || t("invoices.unknownType")}
+                      </p>
+                      <p className="text-xs sm:text-sm text-gray-600 truncate mt-0.5">
+                        {invoice.cargo?.pickup_address ||
+                          t("invoices.unknownLocation")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-1.5 sm:gap-2">
+                    <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs sm:text-sm text-gray-600 truncate">
+                      {invoice.cargo?.destination_address ||
+                        t("invoices.unknownLocation")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-gray-200/50">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div>
+                      <p className="text-xs sm:text-sm text-gray-500 font-semibold">
+                        {t("invoices.dueDate")}
+                      </p>
+                      <p className="text-sm sm:text-base text-gray-700 font-medium">
+                        {invoice.due_date
+                          ? new Date(invoice.due_date).toLocaleDateString()
+                          : t("invoices.noDueDate")}
+                      </p>
+                      {invoice.status === "paid" && invoice.paid_at && (
+                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+                          {t("invoices.paid")}:{" "}
+                          {new Date(invoice.paid_at).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 sm:h-8 sm:w-8 p-0 rounded-full hover:bg-blue-100"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewInvoice(invoice);
+                        }}
+                      >
+                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                        {t("invoices.viewDetails")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadInvoice(invoice.id);
+                        }}
+                      >
+                        <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                        {t("invoices.downloadPdf")}
+                      </DropdownMenuItem>
+                      {invoice.status === "sent" && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePayNow(invoice.id);
+                          }}
+                        >
+                          <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                          {t("invoices.payNow")}
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {sortedInvoices.length === 0 && (
+          <div className="text-center py-8 sm:py-12 px-4">
+            <Receipt className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400 mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-600 mb-2 sm:mb-3">
+              {t("invoices.noInvoicesFound")}
+            </h3>
+            <p className="text-sm sm:text-base text-gray-500">
+              {t("invoices.noInvoicesDescription")}
+            </p>
+          </div>
+        )}
+      </motion.div>
 
       {/* Pagination Controls */}
       {pagination && (
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              {/* Page Size Selector */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">
-                  {t("invoices.showPerPage")}:
-                </span>
-                <Select
-                  value={pageSize.toString()}
-                  onValueChange={handlePageSizeChange}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
+        <motion.div
+          className="bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/20 backdrop-blur-sm rounded-2xl border border-blue-100/50 shadow-lg p-3 sm:p-4 md:p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+        >
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            {/* Page Size Selector */}
+            <div className="relative w-full sm:w-auto">
+              <input
+                type="text"
+                value={pageSizeSearch || pageSize.toString()}
+                onChange={(e) => {
+                  setPageSizeSearch(e.target.value);
+                  setShowPageSizeDropdown(true);
+                }}
+                onFocus={() => setShowPageSizeDropdown(true)}
+                placeholder={t("invoices.showPerPage")}
+                className="w-full sm:w-[100px] px-3 sm:px-4 py-2 sm:py-2.5 pr-10 rounded-full text-xs sm:text-sm font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+              />
+              <div className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {pageSizeSearch && (
+                  <button
+                    onClick={() => {
+                      setPageSizeSearch("");
+                      setShowPageSizeDropdown(true);
+                    }}
+                    className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                  >
+                    <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
+                  </button>
+                )}
+                <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
               </div>
 
-              {/* Pagination Info */}
-              <div className="text-sm text-gray-600">
+              {/* Dropdown */}
+              {showPageSizeDropdown && (
+                <motion.div
+                  className="absolute z-50 w-full sm:w-[100px] mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  {["5", "10", "20", "50"]
+                    .filter(
+                      (size) =>
+                        !pageSizeSearch ||
+                        size.includes(pageSizeSearch) ||
+                        t("invoices.showPerPage")
+                          .toLowerCase()
+                          .includes(pageSizeSearch.toLowerCase())
+                    )
+                    .map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => {
+                          handlePageSizeChange(size);
+                          setPageSizeSearch("");
+                          setShowPageSizeDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                          pageSize.toString() === size ? "bg-blue-50" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Check
+                            className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
+                              pageSize.toString() === size
+                                ? "opacity-100 text-blue-600"
+                                : "opacity-0"
+                            }`}
+                          />
+                          <span className="text-xs sm:text-sm font-medium text-gray-900">
+                            {size}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                </motion.div>
+              )}
+
+              {/* Click outside to close */}
+              {showPageSizeDropdown && (
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowPageSizeDropdown(false)}
+                />
+              )}
+            </div>
+
+            {/* Pagination Info */}
+            <div className="text-[10px] sm:text-xs md:text-sm text-gray-600 font-medium text-center sm:text-left">
+              <span className="hidden sm:inline">
                 {t("invoices.showing")} {(currentPage - 1) * pageSize + 1} -{" "}
                 {Math.min(currentPage * pageSize, pagination.total || 0)}{" "}
                 {t("invoices.of")} {pagination.total || 0}{" "}
                 {t("invoices.results")}
-              </div>
-
-              {/* Pagination Controls */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage <= 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  {t("common.previous")}
-                </Button>
-
-                {/* Page Numbers */}
-                <div className="flex items-center gap-1">
-                  {Array.from(
-                    { length: Math.min(5, pagination.totalPages || 1) },
-                    (_, i) => {
-                      const pageNum = i + 1;
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={
-                            currentPage === pageNum ? "default" : "outline"
-                          }
-                          size="sm"
-                          onClick={() => handlePageChange(pageNum)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {pageNum}
-                        </Button>
-                      );
-                    }
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage >= (pagination.totalPages || 1)}
-                >
-                  {t("common.next")}
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              </span>
+              <span className="sm:hidden">
+                {(currentPage - 1) * pageSize + 1}-
+                {Math.min(currentPage * pageSize, pagination.total || 0)} /{" "}
+                {pagination.total || 0}
+              </span>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+                className="rounded-full px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-semibold border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm disabled:opacity-50"
+              >
+                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
+                <span className="hidden sm:inline">{t("common.previous")}</span>
+              </Button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {Array.from(
+                  { length: Math.min(5, pagination.totalPages || 1) },
+                  (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={
+                          currentPage === pageNum ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 p-0 rounded-full text-[10px] sm:text-xs font-semibold ${
+                          currentPage === pageNum
+                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0"
+                            : "border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm"
+                        }`}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= (pagination.totalPages || 1)}
+                className="rounded-full px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs font-semibold border-gray-200 hover:border-blue-500 bg-white/80 backdrop-blur-sm disabled:opacity-50"
+              >
+                <span className="hidden sm:inline">{t("common.next")}</span>
+                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5 sm:ml-1" />
+              </Button>
+            </div>
+          </div>
+        </motion.div>
       )}
 
       {/* Invoice Detail Modal */}
