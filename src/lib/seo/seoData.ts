@@ -8,7 +8,7 @@ export const DEFAULT_SEO = {
   title: "Lovely Cargo - Best Logistics Solutions in Rwanda | Cargo Tracking & Delivery Services",
   description: "Leading logistics and cargo delivery services in Rwanda. Real-time tracking, fleet management, and reliable transportation solutions across Kigali and all districts. Fast, secure, and affordable cargo delivery in Rwanda.",
   keywords: "logistics Rwanda, cargo delivery Rwanda, freight services Rwanda, transportation Rwanda, cargo tracking Rwanda, delivery services Kigali, logistics company Rwanda, cargo management Rwanda, fleet management Rwanda, shipping Rwanda, courier services Rwanda, express delivery Rwanda, cargo transport Rwanda, logistics solutions Rwanda, freight forwarding Rwanda, parcel delivery Rwanda, same day delivery Rwanda, intercity delivery Rwanda, cargo tracking system Rwanda, transport services Rwanda",
-  image: `${BASE_URL}/lovewaylogistic.png`,
+  image: `${BASE_URL}/logo-text.png`,
 };
 
 // Page-specific SEO configurations
@@ -81,7 +81,7 @@ export const generateOrganizationSchema = () => ({
   name: "Lovely Cargo",
   alternateName: "Lovely Cargo Platform",
   url: BASE_URL,
-  logo: `${BASE_URL}/lovewaylogistic.png`,
+  logo: `${BASE_URL}/logo-text.png`,
   description: "Leading logistics and cargo delivery services in Rwanda. Real-time tracking, fleet management, and reliable transportation solutions across Kigali and all districts of Rwanda.",
   foundingDate: "2024",
   industry: "Logistics and Transportation",
