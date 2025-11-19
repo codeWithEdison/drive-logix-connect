@@ -282,7 +282,21 @@
     "verificationSuccess": "Imeli yawe yemejwe neza!",
     "verificationFailed": "Kwemeza imeli byanze. Gerageza nanone.",
     "verificationToken": "Ikimenyetso cyo Kwemeza",
-    "enterVerificationToken": "Andika ikimenyetso cyo kwemeza"
+    "enterVerificationToken": "Andika ikimenyetso cyo kwemeza",
+    "backToHome": "Subira mu Nzu",
+    "securePasswordReset": "Gusubira Ijambo banga Bitunganye",
+    "securePasswordResetDescription": "Tuzohereza umuyoboro utunganye wo gusubira ijambo banga ryawe",
+    "safeAndProtected": "Bitunganye kandi Bwite",
+    "safeAndProtectedDescription": "Umutekano w'akonti yawe ni intego yacu",
+    "quickRecovery": "Kugaruka Vuba",
+    "quickRecoveryDescription": "Subira kuri konti yawe mu minota mike",
+    "securePassword": "Ijambo banga Bitunganye",
+    "securePasswordDescription": "Kurema ijambo banga rihagije kugira ngo urinde konti yawe",
+    "accountSecurity": "Umutekano w'Akonti",
+    "accountSecurityDescription": "Konti yawe izarindwa n'ijambo banga ryawe rishya",
+    "quickAccess": "Kujya Vuba",
+    "quickAccessDescription": "Injira ubwanyuma wongeyeho ijambo banga ryawe",
+    "minimumPasswordLength": "Bihuzwe: Inyuguti 6 zuzuye"
   },
   "navigation": {
     "dashboard": "Ikibaho",

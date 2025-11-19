@@ -1,14 +1,60 @@
+# Robots.txt for Lovely Cargo - Logistics Solutions in Rwanda
+# https://lovelycargo.rw
+
+# Allow all search engines
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /tracking
+Allow: /create-cargo
+Allow: /my-cargos
+Allow: /history
+Allow: /payment
+Allow: /invoices
+
+# Disallow private/admin areas
+Disallow: /admin
+Disallow: /driver
+Disallow: /super-admin
+Disallow: /superadmin
+Disallow: /profile
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Sitemap location
+Sitemap: https://lovelycargo.rw/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Specific rules for major search engines
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 0
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 0
 
+User-agent: Slurp
+Allow: /
+Crawl-delay: 1
+
+# Social media crawlers
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
+User-agent: LinkedInBot
 Allow: /
+
+# Block bad bots
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10

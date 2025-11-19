@@ -8,6 +8,8 @@ import {
   WebsiteStatisticsService,
 } from "@/lib/api/services/cargoService";
 import { CargoCategory } from "@/types/shared";
+import { SEO } from "@/components/seo/SEO";
+import { PAGE_SEO, generateFAQSchema, generateWebPageSchema, generateOrganizationSchema } from "@/lib/seo/seoData";
 import {
   Truck,
   MapPin,
@@ -498,8 +500,24 @@ const LandingPage: React.FC = () => {
     },
   ];
 
+  // Generate FAQ schema for SEO
+  const faqSchema = generateFAQSchema(faqs);
+  const webPageSchema = generateWebPageSchema(
+    PAGE_SEO.home.title,
+    PAGE_SEO.home.description,
+    PAGE_SEO.home.path
+  );
+  const organizationSchema = generateOrganizationSchema();
+
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title={PAGE_SEO.home.title}
+        description={PAGE_SEO.home.description}
+        keywords={PAGE_SEO.home.keywords}
+        url={PAGE_SEO.home.path}
+        structuredData={[organizationSchema, webPageSchema, faqSchema]}
+      />
       {/* Modern Navigation Header */}
       <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

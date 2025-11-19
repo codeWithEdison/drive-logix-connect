@@ -288,7 +288,21 @@
     "verificationSuccess": "Votre email a été vérifié avec succès !",
     "verificationFailed": "La vérification de l'email a échoué. Veuillez réessayer.",
     "verificationToken": "Jeton de Vérification",
-    "enterVerificationToken": "Entrez le jeton de vérification"
+    "enterVerificationToken": "Entrez le jeton de vérification",
+    "backToHome": "Retour à l'accueil",
+    "securePasswordReset": "Réinitialisation Sécurisée du Mot de Passe",
+    "securePasswordResetDescription": "Nous vous enverrons un lien sécurisé pour réinitialiser votre mot de passe",
+    "safeAndProtected": "Sûr et Protégé",
+    "safeAndProtectedDescription": "La sécurité de votre compte est notre priorité",
+    "quickRecovery": "Récupération Rapide",
+    "quickRecoveryDescription": "Revenez sur votre compte en quelques minutes",
+    "securePassword": "Mot de Passe Sécurisé",
+    "securePasswordDescription": "Créez un mot de passe fort pour protéger votre compte",
+    "accountSecurity": "Sécurité du Compte",
+    "accountSecurityDescription": "Votre compte sera protégé avec votre nouveau mot de passe",
+    "quickAccess": "Accès Rapide",
+    "quickAccessDescription": "Connectez-vous immédiatement après avoir réinitialisé votre mot de passe",
+    "minimumPasswordLength": "Minimum 6 caractères requis"
   },
   "navigation": {
     "dashboard": "Tableau de bord",

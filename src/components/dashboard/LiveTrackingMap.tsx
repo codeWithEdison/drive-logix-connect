@@ -27,8 +27,8 @@ import {
   useInTransitCargo,
   useLiveCargoTracking,
   useLiveCargoTrackingByNumber,
-  useLiveRouteProgress,
   useOptimisticTrackingUpdate,
+  useCargoGPSTracking,
 } from "@/lib/api/hooks/trackingHooks";
 import { MapService } from "@/lib/api/services/mapService";
 import { trackingWebSocket } from "@/lib/api/services/websocketService";
@@ -146,13 +146,19 @@ export const LiveTrackingMap: React.FC = () => {
     }
   );
 
-  // Fetch route progress
-  const { data: progressData, refetch: refetchProgress } = useLiveRouteProgress(
-    selectedCargo?.cargo_number || selectedCargo?.id || "",
-    {
-      refetchInterval: 30000,
-    }
-  );
+  // Extract cargo ID from tracking data or selected cargo
+  const cargoIdForGPS =
+    (trackingData as any)?.cargo?.id || selectedCargo?.id || "";
+
+  // Fetch GPS location for selected cargo (polls every 7 seconds)
+  const {
+    data: gpsData,
+    isLoading: gpsLoading,
+    refetch: refetchGPS,
+  } = useCargoGPSTracking(cargoIdForGPS, {
+    refetchInterval: 7000, // Poll every 7 seconds (between 5-10 seconds)
+    enabled: !!cargoIdForGPS,
+  });
 
   const updateTrackingMutation = useOptimisticTrackingUpdate();
 
@@ -263,10 +269,13 @@ export const LiveTrackingMap: React.FC = () => {
 
     const unsubscribeLocation = trackingWebSocket.onLocationUpdate((data) => {
       const cargoIdentifier = selectedCargo.cargo_number || selectedCargo.id;
-      if (data.cargo_id === cargoIdentifier) {
+      if (
+        data.cargo_id === cargoIdentifier ||
+        data.cargo_id === selectedCargo.id
+      ) {
         setLastUpdate(new Date().toISOString());
         refetchTracking();
-        refetchProgress();
+        refetchGPS(); // Also refetch GPS data when location updates
       }
     });
 
@@ -292,7 +301,7 @@ export const LiveTrackingMap: React.FC = () => {
     selectedCargo?.id,
     isConnected,
     refetchTracking,
-    refetchProgress,
+    refetchGPS,
   ]);
 
   // Initialize map when component mounts
@@ -300,19 +309,40 @@ export const LiveTrackingMap: React.FC = () => {
     initializeMap();
   }, [initializeMap]);
 
+  // Vehicle marker ref for GPS updates
+  const vehicleMarkerRef = useRef<google.maps.Marker | null>(null);
+
   // Update map when cargo is selected
   const updateMapForSelectedCargo = useCallback(
-    (cargo: CargoWithTracking) => {
-      if (!mapLoaded || !cargo?.tracking) return;
+    (cargo: CargoWithTracking, gpsLocation?: any) => {
+      if (!mapLoaded) return;
 
       MapService.clearMarkers();
       MapService.clearPolylines();
+      vehicleMarkerRef.current = null;
 
       const tracking = cargo.tracking;
-      const locationHistory = tracking.location_history || [];
+      const locationHistory = tracking?.location_history || [];
 
-      // Add pickup marker
-      if (locationHistory.length > 0) {
+      // Get pickup and destination from cargo data or tracking
+      const cargoAny = cargo as any;
+      const pickupLat = cargoAny.pickup_latitude || cargoAny.pickup_address_lat;
+      const pickupLng =
+        cargoAny.pickup_longitude || cargoAny.pickup_address_lng;
+      const destLat =
+        cargoAny.destination_latitude || cargoAny.destination_address_lat;
+      const destLng =
+        cargoAny.destination_longitude || cargoAny.destination_address_lng;
+
+      // Add pickup marker (from cargo data or first history point)
+      if (pickupLat && pickupLng) {
+        MapService.addMarker({
+          id: "pickup",
+          position: { lat: pickupLat, lng: pickupLng },
+          title: "Pickup Location",
+          icon: MapService.createMarkerIcon("#EF4444", "pickup"),
+        });
+      } else if (locationHistory.length > 0) {
         const pickupPoint = locationHistory[0];
         MapService.addMarker({
           id: "pickup",
@@ -322,9 +352,16 @@ export const LiveTrackingMap: React.FC = () => {
         });
       }
 
-      // Add destination marker (last point or current location)
-      const destinationPoint = locationHistory[locationHistory.length - 1];
-      if (destinationPoint) {
+      // Add destination marker
+      if (destLat && destLng) {
+        MapService.addMarker({
+          id: "destination",
+          position: { lat: destLat, lng: destLng },
+          title: "Destination",
+          icon: MapService.createMarkerIcon("#10B981", "delivery"),
+        });
+      } else if (locationHistory.length > 0) {
+        const destinationPoint = locationHistory[locationHistory.length - 1];
         MapService.addMarker({
           id: "destination",
           position: {
@@ -336,8 +373,58 @@ export const LiveTrackingMap: React.FC = () => {
         });
       }
 
-      // Add current location marker if available
-      if (locationHistory.length > 1) {
+      // Add vehicle marker from GPS location (priority) or tracking history
+      if (
+        gpsLocation?.gps_location?.latitude &&
+        gpsLocation?.gps_location?.longitude
+      ) {
+        const vehiclePosition = {
+          lat: gpsLocation.gps_location.latitude,
+          lng: gpsLocation.gps_location.longitude,
+        };
+
+        const vehicleMarker = MapService.addMarker({
+          id: "vehicle",
+          position: vehiclePosition,
+          title: "Vehicle Location",
+          icon: {
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 6,
+            fillColor: "#3B82F6",
+            fillOpacity: 1,
+            strokeColor: "#ffffff",
+            strokeWeight: 2,
+            rotation: gpsLocation.gps_location.heading_degrees || 0,
+          } as any,
+        });
+        vehicleMarkerRef.current = vehicleMarker;
+
+        // Draw route from pickup to vehicle if we have both
+        if (pickupLat && pickupLng) {
+          const routePath = [
+            { lat: pickupLat, lng: pickupLng },
+            vehiclePosition,
+          ];
+          if (destLat && destLng) {
+            routePath.push({ lat: destLat, lng: destLng });
+          }
+          MapService.drawRouteFromTracking(
+            "route",
+            routePath.map((p, index) => ({
+              id: `route-${index}`,
+              latitude: p.lat,
+              longitude: p.lng,
+              recorded_at: new Date().toISOString(),
+            })),
+            {
+              strokeColor: "#3B82F6",
+              strokeOpacity: 0.6,
+              strokeWeight: 3,
+            }
+          );
+        }
+      } else if (locationHistory.length > 1) {
+        // Fallback to tracking history if GPS not available
         const currentPoint = locationHistory[locationHistory.length - 1];
         MapService.addMarker({
           id: "current",
@@ -346,7 +433,7 @@ export const LiveTrackingMap: React.FC = () => {
           icon: MapService.createMarkerIcon("#3B82F6", "current"),
         });
 
-        // Draw route
+        // Draw route from history
         MapService.drawRouteFromTracking("route", locationHistory, {
           strokeColor: "#3B82F6",
           strokeOpacity: 0.8,
@@ -355,18 +442,60 @@ export const LiveTrackingMap: React.FC = () => {
       }
 
       // Fit map to show all markers
-      MapService.fitMapToMarkers(["pickup", "destination", "current"], 50);
+      const markerIds = ["pickup", "destination", "vehicle", "current"];
+      MapService.fitMapToMarkers(markerIds, 50);
     },
     [mapLoaded]
   );
 
-  // Update map when tracking data changes
+  // Update vehicle marker position when GPS location changes
   useEffect(() => {
-    if (selectedCargo && trackingData) {
-      // trackingData is the full cargo with tracking data
-      updateMapForSelectedCargo(trackingData as CargoWithTracking);
+    if (!mapLoaded || !gpsData?.gps_location || !selectedCargo) return;
+
+    const gpsLocation = gpsData.gps_location;
+    if (!gpsLocation.latitude || !gpsLocation.longitude) return;
+
+    const position = {
+      lat: gpsLocation.latitude,
+      lng: gpsLocation.longitude,
+    };
+
+    if (vehicleMarkerRef.current) {
+      // Update existing marker position
+      vehicleMarkerRef.current.setPosition(position);
+      if (gpsLocation.heading_degrees !== undefined) {
+        const icon = vehicleMarkerRef.current.getIcon();
+        if (typeof icon === "object" && icon !== null) {
+          vehicleMarkerRef.current.setIcon({
+            ...icon,
+            rotation: gpsLocation.heading_degrees,
+          } as google.maps.Symbol);
+        }
+      }
+      // Center map on vehicle
+      MapService.centerMapOnLocation(position);
+      setLastUpdate(new Date().toISOString());
+    } else {
+      // Create new marker if it doesn't exist
+      updateMapForSelectedCargo(selectedCargo, gpsData);
     }
-  }, [selectedCargo, trackingData, updateMapForSelectedCargo]);
+  }, [gpsData, mapLoaded, selectedCargo, updateMapForSelectedCargo]);
+
+  // Update map when tracking data changes (initial load)
+  useEffect(() => {
+    if (selectedCargo && trackingData && mapLoaded) {
+      // trackingData structure: { cargo: {...}, delivery_assignment: {...}, status_updates: [...] }
+      // Use the cargo from trackingData if available, otherwise use selectedCargo
+      const cargoToUse = (trackingData as any)?.cargo || selectedCargo;
+      updateMapForSelectedCargo(cargoToUse as CargoWithTracking, gpsData);
+    }
+  }, [
+    selectedCargo,
+    trackingData,
+    mapLoaded,
+    gpsData,
+    updateMapForSelectedCargo,
+  ]);
 
   const handleCargoSelect = (cargo: CargoWithTracking) => {
     setSelectedCargo(cargo);
@@ -671,25 +800,52 @@ export const LiveTrackingMap: React.FC = () => {
                                 <span className="text-xs font-medium text-gray-600">
                                   {isDriver
                                     ? (
+                                        cargo as any
+                                      )?.client?.user?.full_name?.charAt(0) ||
+                                      (
                                         cargo as CargoWithTracking
-                                      ).client?.full_name?.charAt(0) || "C"
+                                      ).client?.full_name?.charAt(0) ||
+                                      (
+                                        cargo as CargoWithTracking
+                                      ).client?.user?.full_name?.charAt(0) ||
+                                      "C"
                                     : (
+                                        cargo as any
+                                      )?.delivery_assignments?.[0]?.driver?.user?.full_name?.charAt(
+                                        0
+                                      ) ||
+                                      (
+                                        cargo as any
+                                      )?.delivery_assignment?.driver?.user?.full_name?.charAt(
+                                        0
+                                      ) ||
+                                      (
                                         cargo?.tracking as
                                           | TrackingWithRelations
                                           | undefined
-                                      )?.driver?.full_name?.charAt(0) || "D"}
+                                      )?.driver?.full_name?.charAt(0) ||
+                                      "D"}
                                 </span>
                               </div>
                               <div className="min-w-0 flex-1">
                                 <p className="text-xs font-medium truncate">
                                   {isDriver
-                                    ? (cargo as CargoWithTracking).client
-                                        ?.full_name || "Client"
-                                    : (
-                                        selectedCargo?.tracking as
+                                    ? (cargo as any)?.client?.user?.full_name ||
+                                      (cargo as CargoWithTracking).client
+                                        ?.full_name ||
+                                      (cargo as CargoWithTracking).client?.user
+                                        ?.full_name ||
+                                      "Client"
+                                    : (cargo as any)?.delivery_assignments?.[0]
+                                        ?.driver?.user?.full_name ||
+                                      (cargo as any)?.delivery_assignment
+                                        ?.driver?.user?.full_name ||
+                                      (
+                                        cargo?.tracking as
                                           | TrackingWithRelations
                                           | undefined
-                                      )?.driver?.full_name || "Driver"}
+                                      )?.driver?.full_name ||
+                                      "Driver"}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {isDriver ? "Customer" : "Driver"}
@@ -698,11 +854,15 @@ export const LiveTrackingMap: React.FC = () => {
                             </div>
                             <div className="flex gap-0.5 sm:gap-1">
                               {isClient &&
-                                (
-                                  cargo?.tracking as
-                                    | TrackingWithRelations
-                                    | undefined
-                                )?.driver?.phone && (
+                                ((cargo as any)?.delivery_assignments?.[0]
+                                  ?.driver?.user?.phone ||
+                                  (cargo as any)?.delivery_assignment?.driver
+                                    ?.user?.phone ||
+                                  (
+                                    cargo?.tracking as
+                                      | TrackingWithRelations
+                                      | undefined
+                                  )?.driver?.phone) && (
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -711,6 +871,11 @@ export const LiveTrackingMap: React.FC = () => {
                                       e.stopPropagation();
                                       window.open(
                                         `tel:${
+                                          (cargo as any)
+                                            ?.delivery_assignments?.[0]?.driver
+                                            ?.user?.phone ||
+                                          (cargo as any)?.delivery_assignment
+                                            ?.driver?.user?.phone ||
                                           (
                                             cargo?.tracking as TrackingWithRelations
                                           )?.driver?.phone
@@ -724,7 +889,9 @@ export const LiveTrackingMap: React.FC = () => {
                                 )}
                               {isDriver && (
                                 <>
-                                  {cargo.pickup_phone && (
+                                  {((cargo as any)?.client?.user?.phone ||
+                                    (cargo as CargoWithTracking).client
+                                      ?.phone) && (
                                     <Button
                                       size="sm"
                                       variant="ghost"
@@ -732,7 +899,12 @@ export const LiveTrackingMap: React.FC = () => {
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         window.open(
-                                          `tel:${cargo.pickup_phone}`,
+                                          `tel:${
+                                            (cargo as any)?.client?.user
+                                              ?.phone ||
+                                            (cargo as CargoWithTracking).client
+                                              ?.phone
+                                          }`,
                                           "_self"
                                         );
                                       }}
@@ -758,13 +930,63 @@ export const LiveTrackingMap: React.FC = () => {
                                   )}
                                 </>
                               )}
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-5 w-5 sm:h-6 sm:w-6 p-0"
-                              >
-                                <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                              </Button>
+                              {isClient &&
+                                ((cargo as any)?.delivery_assignments?.[0]
+                                  ?.driver?.user?.phone ||
+                                  (cargo as any)?.delivery_assignment?.driver
+                                    ?.user?.phone ||
+                                  (
+                                    cargo?.tracking as
+                                      | TrackingWithRelations
+                                      | undefined
+                                  )?.driver?.phone) && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-5 w-5 sm:h-6 sm:w-6 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(
+                                        `tel:${
+                                          (cargo as any)
+                                            ?.delivery_assignments?.[0]?.driver
+                                            ?.user?.phone ||
+                                          (cargo as any)?.delivery_assignment
+                                            ?.driver?.user?.phone ||
+                                          (
+                                            cargo?.tracking as TrackingWithRelations
+                                          )?.driver?.phone
+                                        }`,
+                                        "_self"
+                                      );
+                                    }}
+                                  >
+                                    <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                  </Button>
+                                )}
+                              {isDriver &&
+                                ((cargo as any)?.client?.user?.phone ||
+                                  (cargo as CargoWithTracking).client
+                                    ?.phone) && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-5 w-5 sm:h-6 sm:w-6 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(
+                                        `tel:${
+                                          (cargo as any)?.client?.user?.phone ||
+                                          (cargo as CargoWithTracking).client
+                                            ?.phone
+                                        }`,
+                                        "_self"
+                                      );
+                                    }}
+                                  >
+                                    <Phone className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                  </Button>
+                                )}
                             </div>
                           </div>
                         </CardContent>
@@ -802,7 +1024,7 @@ export const LiveTrackingMap: React.FC = () => {
                     />
 
                     {/* Map overlay info */}
-                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 sm:p-3 shadow-lg">
+                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 sm:p-3 shadow-lg z-10">
                       <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                         <Navigation className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                         <span className="font-medium">Live Tracking</span>
@@ -816,6 +1038,23 @@ export const LiveTrackingMap: React.FC = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* GPS Status Message */}
+                    {gpsData && !gpsData.gps_location && gpsData.message && (
+                      <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-yellow-50/95 backdrop-blur-sm border border-yellow-200 rounded-lg p-2 sm:p-3 shadow-lg z-10 max-w-xs sm:max-w-sm">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm font-medium text-yellow-800 mb-0.5">
+                              GPS Status
+                            </p>
+                            <p className="text-xs text-yellow-700 break-words">
+                              {gpsData.message}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -933,7 +1172,12 @@ export const LiveTrackingMap: React.FC = () => {
                             <div>
                               <span className="text-gray-500">Cost:</span>
                               <span className="ml-2 font-medium">
-                                ${selectedCargo.estimated_cost || "N/A"}
+                                RWF{" "}
+                                {selectedCargo.estimated_cost
+                                  ? Number(
+                                      selectedCargo.estimated_cost
+                                    ).toLocaleString()
+                                  : "N/A"}
                               </span>
                             </div>
                             <div>
@@ -953,6 +1197,143 @@ export const LiveTrackingMap: React.FC = () => {
                               </span>
                             </div>
                           </div>
+
+                          {/* Client Portal: Show Driver Phone and ETA */}
+                          {isClient && (
+                            <div className="space-y-2 pt-2 border-t border-gray-200">
+                              {(trackingData as any)?.delivery_assignment
+                                ?.driver?.user?.phone && (
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 text-xs sm:text-sm">
+                                    <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+                                    <span className="text-gray-600">
+                                      Driver:
+                                    </span>
+                                    <span className="font-medium">
+                                      {
+                                        (trackingData as any)
+                                          .delivery_assignment.driver.user
+                                          .full_name
+                                      }
+                                    </span>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white h-6 sm:h-7 px-2 sm:px-3 text-xs"
+                                    onClick={() =>
+                                      window.open(
+                                        `tel:${
+                                          (trackingData as any)
+                                            .delivery_assignment.driver.user
+                                            .phone
+                                        }`,
+                                        "_self"
+                                      )
+                                    }
+                                  >
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    Call Driver
+                                  </Button>
+                                </div>
+                              )}
+                              {((trackingData as any)?.cargo?.tracking
+                                ?.estimated_delivery_time ||
+                                (trackingData as any)?.cargo
+                                  ?.delivery_date) && (
+                                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span className="text-gray-600">ETA:</span>
+                                  <span className="font-medium">
+                                    {new Date(
+                                      (trackingData as any)?.cargo?.tracking
+                                        ?.estimated_delivery_time ||
+                                        (trackingData as any)?.cargo
+                                          ?.delivery_date ||
+                                        ""
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Driver Portal: Show Client Phone and Destination Phone */}
+                          {isDriver && (
+                            <div className="space-y-2 pt-2 border-t border-gray-200">
+                              {((trackingData as any)?.cargo?.client?.user
+                                ?.phone ||
+                                selectedCargo.client?.phone ||
+                                selectedCargo.client?.user?.phone) && (
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 text-xs sm:text-sm">
+                                    <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+                                    <span className="text-gray-600">
+                                      Client:
+                                    </span>
+                                    <span className="font-medium">
+                                      {(trackingData as any)?.cargo?.client
+                                        ?.user?.full_name ||
+                                        selectedCargo.client?.full_name ||
+                                        selectedCargo.client?.user?.full_name}
+                                    </span>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 hover:bg-green-700 text-white h-6 sm:h-7 px-2 sm:px-3 text-xs"
+                                    onClick={() =>
+                                      window.open(
+                                        `tel:${
+                                          (trackingData as any)?.cargo?.client
+                                            ?.user?.phone ||
+                                          selectedCargo.client?.phone ||
+                                          selectedCargo.client?.user?.phone
+                                        }`,
+                                        "_self"
+                                      )
+                                    }
+                                  >
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    Call Client
+                                  </Button>
+                                </div>
+                              )}
+                              {(selectedCargo.destination_phone ||
+                                (trackingData as any)?.cargo
+                                  ?.destination_phone) && (
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 text-xs sm:text-sm">
+                                    <Phone className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
+                                    <span className="text-gray-600">
+                                      Destination:
+                                    </span>
+                                    <span className="font-medium truncate">
+                                      {selectedCargo.destination_contact ||
+                                        (trackingData as any)?.cargo
+                                          ?.destination_contact ||
+                                        "Contact"}
+                                    </span>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white h-6 sm:h-7 px-2 sm:px-3 text-xs"
+                                    onClick={() =>
+                                      window.open(
+                                        `tel:${
+                                          selectedCargo.destination_phone ||
+                                          (trackingData as any)?.cargo
+                                            ?.destination_phone
+                                        }`,
+                                        "_self"
+                                      )
+                                    }
+                                  >
+                                    <Phone className="h-3 w-3 mr-1" />
+                                    Call Destination
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -961,32 +1342,31 @@ export const LiveTrackingMap: React.FC = () => {
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
                               {(
-                                selectedCargo?.tracking as
-                                  | TrackingWithRelations
-                                  | undefined
-                              )?.driver?.full_name?.charAt(0) || "D"}
+                                trackingData as any
+                              )?.delivery_assignment?.driver?.user?.full_name?.charAt(
+                                0
+                              ) ||
+                                selectedCargo?.tracking?.driver?.full_name?.charAt(
+                                  0
+                                ) ||
+                                "D"}
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="font-semibold text-sm sm:text-base">
-                                {(
-                                  selectedCargo?.tracking as
-                                    | TrackingWithRelations
-                                    | undefined
-                                )?.driver?.full_name || "Driver"}
+                                {(trackingData as any)?.delivery_assignment
+                                  ?.driver?.user?.full_name ||
+                                  selectedCargo?.tracking?.driver?.full_name ||
+                                  "Driver"}
                               </h3>
-                              {(
-                                selectedCargo?.tracking as
-                                  | TrackingWithRelations
-                                  | undefined
-                              )?.driver?.phone && (
+                              {((trackingData as any)?.delivery_assignment
+                                ?.driver?.user?.phone ||
+                                selectedCargo?.tracking?.driver?.phone) && (
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Phone className="h-3 w-3" />
                                   <span className="truncate">
-                                    {
-                                      (
-                                        selectedCargo?.tracking as TrackingWithRelations
-                                      )?.driver?.phone
-                                    }
+                                    {(trackingData as any)?.delivery_assignment
+                                      ?.driver?.user?.phone ||
+                                      selectedCargo?.tracking?.driver?.phone}
                                   </span>
                                   <Button
                                     size="sm"
@@ -994,9 +1374,10 @@ export const LiveTrackingMap: React.FC = () => {
                                     onClick={() =>
                                       window.open(
                                         `tel:${
-                                          (
-                                            selectedCargo?.tracking as TrackingWithRelations
-                                          )?.driver?.phone
+                                          (trackingData as any)
+                                            ?.delivery_assignment?.driver?.user
+                                            ?.phone ||
+                                          selectedCargo?.tracking?.driver?.phone
                                         }`,
                                         "_self"
                                       )
@@ -1016,29 +1397,23 @@ export const LiveTrackingMap: React.FC = () => {
                           <div className="flex items-center gap-2 sm:gap-3">
                             <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
                             <h3 className="font-semibold text-sm sm:text-base">
-                              {(
-                                selectedCargo?.tracking as
-                                  | TrackingWithRelations
-                                  | undefined
-                              )?.vehicle?.license_plate || "Vehicle"}
+                              {(trackingData as any)?.delivery_assignment
+                                ?.vehicle?.plate_number ||
+                                selectedCargo?.tracking?.vehicle
+                                  ?.license_plate ||
+                                "Vehicle"}
                             </h3>
                           </div>
-                          {(
-                            selectedCargo?.tracking as
-                              | TrackingWithRelations
-                              | undefined
-                          )?.vehicle?.make && (
+                          {((trackingData as any)?.delivery_assignment?.vehicle
+                            ?.make ||
+                            selectedCargo?.tracking?.vehicle?.make) && (
                             <div className="text-xs sm:text-sm text-gray-600">
-                              {
-                                (
-                                  selectedCargo?.tracking as TrackingWithRelations
-                                )?.vehicle?.make
-                              }{" "}
-                              {
-                                (
-                                  selectedCargo?.tracking as TrackingWithRelations
-                                )?.vehicle?.model
-                              }
+                              {(trackingData as any)?.delivery_assignment
+                                ?.vehicle?.make ||
+                                selectedCargo?.tracking?.vehicle?.make}{" "}
+                              {(trackingData as any)?.delivery_assignment
+                                ?.vehicle?.model ||
+                                selectedCargo?.tracking?.vehicle?.model}
                             </div>
                           )}
                         </div>
@@ -1048,31 +1423,62 @@ export const LiveTrackingMap: React.FC = () => {
                         <div className="space-y-2 sm:space-y-3">
                           <div className="flex items-center gap-2 sm:gap-3">
                             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base">
-                              {selectedCargo.client?.full_name?.charAt(0) ||
+                              {(
+                                trackingData as any
+                              )?.cargo?.client?.user?.full_name?.charAt(0) ||
+                                selectedCargo.client?.full_name?.charAt(0) ||
+                                selectedCargo.client?.user?.full_name?.charAt(
+                                  0
+                                ) ||
                                 "C"}
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="font-semibold text-sm sm:text-base">
-                                {selectedCargo.client?.full_name || "Customer"}
+                                {(trackingData as any)?.cargo?.client?.user
+                                  ?.full_name ||
+                                  selectedCargo.client?.full_name ||
+                                  selectedCargo.client?.user?.full_name ||
+                                  "Customer"}
                               </h3>
-                              {selectedCargo.client?.phone && (
+                              {((trackingData as any)?.cargo?.client?.user
+                                ?.phone ||
+                                selectedCargo.client?.phone ||
+                                selectedCargo.client?.user?.phone) && (
                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                                   <Phone className="h-3 w-3" />
                                   <span className="truncate">
-                                    {selectedCargo.client.phone}
+                                    {(trackingData as any)?.cargo?.client?.user
+                                      ?.phone ||
+                                      selectedCargo.client?.phone ||
+                                      selectedCargo.client?.user?.phone}
                                   </span>
                                   <Button
                                     size="sm"
                                     className="bg-green-600 hover:bg-green-700 text-white h-5 sm:h-6 px-2 text-xs"
                                     onClick={() =>
                                       window.open(
-                                        `tel:${selectedCargo.client.phone}`,
+                                        `tel:${
+                                          (trackingData as any)?.cargo?.client
+                                            ?.user?.phone ||
+                                          selectedCargo.client?.phone ||
+                                          selectedCargo.client?.user?.phone
+                                        }`,
                                         "_self"
                                       )
                                     }
                                   >
                                     Call
                                   </Button>
+                                </div>
+                              )}
+                              {(trackingData as any)?.cargo?.client
+                                ?.company_name && (
+                                <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                                  Company:{" "}
+                                  {
+                                    (trackingData as any).cargo.client
+                                      .company_name
+                                  }
                                 </div>
                               )}
                             </div>
@@ -1096,8 +1502,10 @@ export const LiveTrackingMap: React.FC = () => {
                     </div>
 
                     {/* Progress and ETA */}
-                    {(progressData ||
-                      selectedCargo?.tracking?.progress_percentage) && (
+                    {((trackingData as any)?.cargo?.tracking
+                      ?.progress_percentage !== undefined ||
+                      selectedCargo?.tracking?.progress_percentage !==
+                        undefined) && (
                       <>
                         <Separator className="my-2 sm:my-3" />
                         <div className="space-y-2 sm:space-y-3">
@@ -1107,7 +1515,8 @@ export const LiveTrackingMap: React.FC = () => {
                             </h4>
                             <span className="text-xs sm:text-sm font-medium text-blue-600">
                               {Math.round(
-                                progressData?.progress_percentage ||
+                                (trackingData as any)?.cargo?.tracking
+                                  ?.progress_percentage ||
                                   selectedCargo?.tracking
                                     ?.progress_percentage ||
                                   0
@@ -1121,7 +1530,8 @@ export const LiveTrackingMap: React.FC = () => {
                               className="bg-blue-600 h-1.5 sm:h-2 rounded-full transition-all duration-500"
                               style={{
                                 width: `${
-                                  progressData?.progress_percentage ||
+                                  (trackingData as any)?.cargo?.tracking
+                                    ?.progress_percentage ||
                                   selectedCargo?.tracking
                                     ?.progress_percentage ||
                                   0
@@ -1130,23 +1540,34 @@ export const LiveTrackingMap: React.FC = () => {
                             />
                           </div>
 
-                          {progressData?.estimated_arrival && (
+                          {((trackingData as any)?.cargo?.tracking
+                            ?.estimated_delivery_time ||
+                            (trackingData as any)?.cargo?.delivery_date ||
+                            selectedCargo?.delivery_date) && (
                             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                               <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                               <span className="truncate">
                                 ETA:{" "}
                                 {new Date(
-                                  progressData.estimated_arrival
+                                  (trackingData as any)?.cargo?.tracking
+                                    ?.estimated_delivery_time ||
+                                    (trackingData as any)?.cargo
+                                      ?.delivery_date ||
+                                    selectedCargo?.delivery_date ||
+                                    ""
                                 ).toLocaleString()}
                               </span>
                             </div>
                           )}
 
-                          {progressData?.current_location && (
+                          {(trackingData as any)?.status_updates?.[0] && (
                             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                               <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
                               <span className="truncate">
-                                Current: {progressData.current_location}
+                                Status:{" "}
+                                {(
+                                  trackingData as any
+                                ).status_updates[0].status.replace("_", " ")}
                               </span>
                             </div>
                           )}

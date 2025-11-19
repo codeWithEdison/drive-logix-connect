@@ -6,6 +6,8 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { SEO } from "@/components/seo/SEO";
+import { PAGE_SEO, generateWebPageSchema, generateServiceSchema } from "@/lib/seo/seoData";
 
 const TrackingPage = () => {
   const { t } = useLanguage();
@@ -21,8 +23,25 @@ const TrackingPage = () => {
     }
   };
 
+  const webPageSchema = generateWebPageSchema(
+    PAGE_SEO.tracking.title,
+    PAGE_SEO.tracking.description,
+    PAGE_SEO.tracking.path
+  );
+  const trackingServiceSchema = generateServiceSchema(
+    "Real-time Cargo Tracking",
+    "Track your cargo in real-time across Rwanda. Get live updates on your shipment location, delivery status, and estimated arrival time."
+  );
+
   return (
     <div className="space-y-8">
+      <SEO
+        title={PAGE_SEO.tracking.title}
+        description={PAGE_SEO.tracking.description}
+        keywords={PAGE_SEO.tracking.keywords}
+        url={PAGE_SEO.tracking.path}
+        structuredData={[webPageSchema, trackingServiceSchema]}
+      />
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TrackingService } from "../services";
+import { GPSService } from "../services/gpsService";
 import { queryKeys } from "../queryClient";
 import { CargoStatus } from "../../../types/shared";
 
@@ -244,6 +245,25 @@ export const useTrackingAnalytics = (params?: {
     queryKey: queryKeys.tracking.analytics(params),
     queryFn: () => TrackingService.getTrackingAnalytics(params),
     select: (data) => data.data,
+  });
+};
+
+// Get cargo GPS tracking (for live vehicle location)
+export const useCargoGPSTracking = (
+  cargoId: string,
+  options?: {
+    refetchInterval?: number;
+    enabled?: boolean;
+  }
+) => {
+  return useQuery({
+    queryKey: ["gps", "cargo", "tracking", cargoId],
+    queryFn: () => GPSService.getCargoTracking(cargoId),
+    select: (data) => data.data,
+    enabled: !!cargoId && options?.enabled !== false,
+    refetchInterval: options?.refetchInterval || 7000, // 7 seconds default (between 5-10 seconds)
+    refetchIntervalInBackground: true,
+    staleTime: 3000, // 3 seconds
   });
 };
 
