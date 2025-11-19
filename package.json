@@ -8,6 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "build:mobile": "vite build --mode native && npx cap sync android",
+    "build:prod": "vite build --mode production",
+    "deploy:server": "npm run build:prod && rm -rf /var/www/lovewaylogistics/* && cp -r dist/* /var/www/lovewaylogistics/ && sudo chown -R deploy:deploy /var/www/lovewaylogistics",
     "lint": "eslint .",
     "preview": "vite preview",
     "android:dev": "npm run build:mobile && npx cap run android",
