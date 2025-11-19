@@ -4,33 +4,33 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [react(), mode === "development" && componentTagger()].filter(
-    Boolean
-  ),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+export default defineConfig(({ mode }) => {
+  const isNativeBuild = mode === "native";
+
+  return {
+    server: {
+      host: "::",
+      port: 8080,
     },
-  },
-  build: {
-    rollupOptions: {
-      external: (id) => {
-        // Externalize Capacitor plugins for web builds
-        if (id.startsWith("@capacitor/") && !id.includes("@capacitor/core")) {
-          return true;
-        }
-        // Don't externalize Firebase for web builds
-        return false;
+    plugins: [react(), mode === "development" && componentTagger()].filter(
+      Boolean
+    ),
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
       },
     },
-  },
-  define: {
-    // Define Capacitor environment variables
-    global: "globalThis",
-  },
-}));
+    build: {
+      rollupOptions: isNativeBuild
+        ? {
+            external: (id) =>
+              id.startsWith("@capacitor/") && !id.includes("@capacitor/core"),
+          }
+        : {},
+    },
+    define: {
+      // Define Capacitor environment variables
+      global: "globalThis",
+    },
+  };
+});
