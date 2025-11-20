@@ -1,298 +1,297 @@
 # Loveway Logistics Platform
 
-## User Acceptance Test (UAT) – Full Role & Route Coverage
+## User Acceptance Test (UAT) – Clear Tester Playbook
 
 **Test window:** November 2025  **Test type:** Guided UAT dry-run  
-**Scope:** Validate every page and critical component wired through `App.tsx`, role-based navigation in `DynamicSidebar.tsx`, and cargo lifecycle controls surfaced in `CargoDetailModal.tsx`.
+**Goal:** Give every tester a simple checklist so they know which screen to open, what action to perform, and what result to confirm—no technical background required.  
+**Entry page for every run:** [http://lovewaylogistics.com/](http://lovewaylogistics.com/)
 
-**Pre-flight checklist**
+**Before you start**
 
-1. Fill in `Tester Name`, `Role`, `Date`, `Environment` (e.g., `uat.lovewaylogistics.africa`) and `Device/Browser`.
-2. Use fresh seeded data where possible; otherwise log referenced IDs.
-3. Capture evidence (screenshots/video + browser console logs) for every failed or flaky step.
-4. After completing all suites, export this Markdown to PDF, sign, and store in the QA share.
+1. Open the shared issue & evidence tracker (Google Sheet): [Loveway UAT Issues](https://docs.google.com/spreadsheets/d/1xurnnZPgICBx8sns1GNRmcjJmKyDc4TSxL3I3D8wVWA/edit?usp=sharing).
+2. In the sheet’s “Tester Info” tab, record your `Name`, `Role`, `Date`, `Environment` (`http://lovewaylogistics.com`), and `Device/Browser`.
+3. For every step you execute, log the outcome in the “Test Runs” tab—include cargo IDs, invoice IDs, and attach screenshot links for anything that fails or looks odd.
+4. After you complete your assigned scenarios, set the “Status” column for those rows to `Done`, then export this AUT.md as PDF, sign it, and upload it to the QA folder.
 
-| Tester | Role | Date | Environment | Browser / Device |
-| ------ | ---- | ---- | ----------- | ---------------- |
-|        |      |      |             |                  |
 
 ---
 
-## Route & Feature Coverage Matrix
+## Quick Reference – Who Tests What
 
-This matrix maps every route declared in `App.tsx` and the sidebar entries per role to the test IDs below.
+Use this table to know which visible buttons or menu items each role must click. Every row links to a detailed test later in the document.
 
-| Role        | Route(s) / Nav label                                                                                        | Feature focus                                     | Linked Test |
-| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------- |
-| Public      | `/`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`                          | Marketing + auth flows                            | P1, P2      |
-| Client      | `/` (Dashboard)                                                                                             | Widgets, stats, quick actions                     | C1          |
-| Client      | `/create-cargo`                                                                                             | `CreateCargoForm`                                 | C2          |
-| Client      | `/my-cargos`, `/tracking`, `/history`                                                                       | Cargo list, tracking, audit trail                 | C3, C4      |
-| Client      | `/payment/:invoiceId`, `/payment-success`, `/payment/callback`, `/invoices`                                 | Payment + billing                                 | C5          |
-| Client      | `/profile`                                                                                                  | Shared profile & logout                           | X1          |
-| Driver      | `/driver`, `/driver/cargos`, `/driver/deliveries`, `/driver/history`                                        | Assignment board + workflow                       | D1–D4       |
-| Admin       | `/admin`, `/admin/cargos`, `/admin/assignments`                                                             | Ops dashboard + `CargoDetailModal` admin controls | A1–A3       |
-| Admin       | `/admin/drivers`, `/admin/trucks`                                                                           | Resource admin                                    | A4          |
-| Admin       | `/admin/fleet-monitor`, `/admin/vehicles/:vehicleId/live`                                                   | Live tracking                                     | A5          |
-| Admin       | `/admin/payment-verifications`, `/admin/invoices`, `/admin/reports`                                         | Finance & reporting                               | A6, A7      |
-| Super Admin | `/super-admin`, `/super-admin/users`, `/super-admin/settings`, `/super-admin/logs`                          | Platform governance                               | S1–S3       |
-| Super Admin | `/superadmin/branches`, `/superadmin/branches/:id`, `/superadmin/districts`, `/superadmin/cargo-categories` | Master data                                       | S4, S5      |
-| Super Admin | Access to admin routes (per App.tsx)                                                                        | Ensure elevated visibility                        | S6          |
+| Role        | How to reach the screens                                                               | Feature focus                         | Linked Test |
+| ----------- | -------------------------------------------------------------------------------------- | ------------------------------------- | ----------- |
+| Public      | Home page primary CTAs + top-right Login/Register/Forgot Password links                | Marketing + auth flows                | P1, P2      |
+| Client      | Left sidebar → Dashboard                                                               | Widgets, stats, quick actions         | C1          |
+| Client      | Left sidebar → Create Cargo                                                            | Create Cargo page                     | C2          |
+| Client      | Left sidebar → My Cargos / Track / History tabs                                        | Cargo list, tracking, audit trail     | C3, C4      |
+| Client      | Cargo card → Proceed to Payment + Invoices button in header                            | Payment + billing                     | C5          |
+| Client      | Top-right avatar → Profile                                                             | Shared profile & logout               | X1          |
+| Driver      | Driver sidebar → Dashboard / Assigned Cargos / My Deliveries / History                 | Assignment board + workflow           | D1–D4       |
+| Admin       | Admin sidebar → Dashboard / All Cargos / Assignments                                   | Ops dashboard + cargo detail controls | A1–A3       |
+| Admin       | Admin sidebar → Drivers / Trucks                                                       | Resource admin                        | A4          |
+| Admin       | Admin sidebar → Fleet Monitor / any Vehicle card                                       | Live tracking                         | A5          |
+| Admin       | Admin sidebar → Payment Verifications / Invoices / Reports                             | Finance & reporting                   | A6, A7      |
+| Super Admin | Super Admin sidebar → Dashboard / Users / Settings / Logs                              | Platform governance                   | S1–S3       |
+| Super Admin | Super Admin sidebar → Branches / Branch Details / Districts / Cargo Categories         | Master data                           | S4, S5      |
+| Super Admin | Super Admin sidebar → Admin modules shortcut buttons (All Cargos, Assignments, Trucks) | Ensure elevated visibility            | S6          |
 
 ---
 
 ## Public Entry Flows
 
-### Test P1 – Landing Page & Localized Marketing (`/`)
+### Test P1 – Landing Page & Language Switch (Home page)
 
-**Goal:** Validate `LandingPage` content, SEO tags, and language switch.
+**Goal:** Make sure the public home page looks correct in every language.
 
-1. Visit `/` unauthenticated; ensure hero, statistics, FAQ, and CTA buttons render without console errors.
-2. Toggle language via `LanguageSwitcher`; verify translations update.
-3. Scroll to footer; confirm contact info and social links open correctly.
-4. Hit primary CTA → redirect to `/register`.
-   **Validation:** Working? IDs/notes, Screenshots, Other observations.
+1. From [http://lovewaylogistics.com/](http://lovewaylogistics.com/) (not logged in), check that the hero banner, statistics, FAQ, and buttons show up.
+2. Click the language switcher and confirm the visible text changes.
+3. Scroll to the footer and test each contact or social link.
+4. Click the main “Get Started” button and confirm the registration form opens.
+   **Validation checklist:** Working? Notes? Screenshot?
 
-### Test P2 – Authentication Lifecycle (`/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`)
+### Test P2 – Login, Register, and Password Reset (top-right auth links)
 
-**Goal:** Ensure all auth routes from `App.tsx` function.
+**Goal:** Confirm every public authentication flow works end to end.
 
-1. Register a new user, capture verification email (Mailtrap), and complete `/verify-email`.
-2. Attempt login before verification → expect error.
-3. Login after verification; ensure redirect to role default route (`getDefaultRoute`).
-4. Trigger Forgot Password flow, receive reset link, update password, and log in again.
-   **Validation:** Working? Tokens/IDs, Evidence, Other observations.
+1. Register a new user from the **Register** button, open the verification email (Mailtrap/inbox), and click the verification link to complete activation.
+2. Try logging in before verifying to ensure the system shows the expected warning.
+3. Log in after verification and confirm you land on the correct dashboard for that role.
+4. Use “Forgot Password”, open the reset link, choose a new password, and log in again.
+   **Validation checklist:** Working? Reference IDs? Screenshot?
 
 ---
 
 ## Client Suite
 
-### Test C1 – Dashboard & Dynamic Sidebar (`/`)
+### Test C1 – Dashboard & Sidebar (Client Dashboard)
 
-**Goal:** Confirm client sees correct sidebar entries from `DynamicSidebar.tsx` and widgets load.
+**Goal:** Confirm clients see the right menu shortcuts and live stats.
 
-1. Log in as client; ensure sidebar shows Dashboard, Create Cargo, My Cargos, Live Tracking, Invoices.
-2. Validate widgets (total deliveries, quick actions) load from APIs without errors.
-3. Collapse sidebar → verify tooltip labels for icons.
-   **Validation:** Working? Widget data references, Evidence, Notes.
+1. Log in as a client; the left sidebar should show Dashboard, Create Cargo, My Cargos, Live Tracking, and Invoices.
+2. Check the dashboard cards (totals, quick actions) and make sure numbers load within a few seconds.
+3. Collapse the sidebar and hover the icons to confirm the tooltips display the menu names.
+   **Validation checklist:** Working? Widget data noted? Screenshot?
 
-### Test C2 – Create Cargo (`/create-cargo`)
+### Test C2 – Create Cargo (`Create Cargo` menu)
 
-**Goal:** Exercise `CreateCargoForm` including document uploads and validation.
+**Goal:** Make sure a client can request a shipment with all required details.
 
-1. Launch form via nav or dashboard CTA.
-2. Enter pickup/destination, schedule, cargo metadata; upload docs.
-3. Submit; capture Cargo Reference number shown in toast/modal.
-4. Confirm entry appears under `My Cargos` with status `pending`.
-   **Validation:** Cargo ID, Evidence, Errors/observations.
+1. Click **Create Cargo** from the dashboard or sidebar.
+2. Enter pickup and drop-off addresses, the desired schedule, cargo size/weight, and upload any required documents.
+3. Submit the form and note the Cargo Reference shown in the confirmation message.
+4. Go to **My Cargos** and confirm the new record is listed as `Pending`.
+   **Validation checklist:** Cargo reference? Issues seen? Screenshot?
 
-### Test C3 – Cargo Management & Tracking (`/my-cargos`, `/tracking/:id`, `/tracking`)
+### Test C3 – Cargo List & Tracking (`My Cargos`, `Tracking`)
 
-**Goal:** Ensure lists + tracking map operate.
+**Goal:** Ensure clients can review cargo status and track a shipment on the map.
 
-1. On `My Cargos`, filter by status, open detail row, and launch `TrackingPage`.
-2. Validate `LiveTrackingMap` renders, handles offline fallback, and updates ETA.
-3. Use search to locate cargo by reference.
-   **Validation:** Cargo IDs, Map evidence, Notes.
+1. In **My Cargos**, filter by status, open a record, and click **Track**.
+2. On the tracking screen, confirm the map loads, the driver location updates, and offline mode shows the fallback message.
+3. Use the search bar to find a cargo by reference.
+   **Validation checklist:** Cargo IDs? Map behavior? Screenshot?
 
-### Test C4 – History & Audit Trail (`/history`)
+### Test C4 – Cargo History (`History`)
 
-**Goal:** Validate completed cargo history and CSV export.
+**Goal:** Confirm past deliveries remain accessible with export capability.
 
-1. Navigate to History, apply date filters, sort columns.
-2. Export table; ensure downloaded CSV contains expected rows.
-3. Click a record → confirm read-only modal renders.
-   **Validation:** Export filename, Evidence, Notes.
+1. Open **History**, set a date range, and sort the table.
+2. Click **Export** and verify the downloaded CSV includes the filtered rows.
+3. Open any record in read-only mode to confirm all details display.
+   **Validation checklist:** Export filename? Notes? Screenshot?
 
-### Test C5 – Payments & Billing (`/payment/:invoiceId`, `/payment-success`, `/payment/callback`, `/invoices`)
+### Test C5 – Payments & Invoices (`Payment`, `Invoices`)
 
-**Goal:** Verify Flutterwave flow plus invoice center.
+**Goal:** Verify the online payment flow and access to invoices.
 
-1. From cargo detail, click `Proceed to Payment`, land on `/payment/:invoiceId`.
-2. Complete mock payment; ensure redirect to `/payment-success` and callback updates invoice status.
-3. Visit `/invoices`, verify new invoice shows Paid status and PDF download works.
-   **Validation:** Payment reference, Invoice ID, Evidence, Notes.
+1. From a cargo that is ready for payment, click **Proceed to Payment**.
+2. Complete the Flutterwave mock payment and wait for the success page.
+3. Open **Invoices**, confirm the related invoice now shows `Paid`, and download the PDF.
+   **Validation checklist:** Payment reference? Invoice ID? Screenshot?
 
-### Test C6 – Notifications & Rating (`CargoDetailModal`, `DeliveryConfirmationForm`)
+### Test C6 – Notifications & Delivery Rating (Cargo detail drawer)
 
-**Goal:** Cover client-side interactions tied to `CargoDetailModal`.
+**Goal:** Ensure clients can download receipts and rate the delivery.
 
-1. Open cargo detail after delivery; use `Download Receipt`.
-2. Trigger `Rate Delivery`; submit review and ensure rating badge updates.
-3. Confirm toast + email notification for rating received.
-   **Validation:** Cargo ID, Evidence, Notes.
+1. Open a completed cargo, click **Download Receipt**, and confirm the file opens.
+2. Click **Rate Delivery**, give a score and comment, and make sure the badge updates.
+3. Check for a notification or email confirming the feedback submission.
+   **Validation checklist:** Cargo ID? Rating noted? Screenshot?
 
 ---
 
 ## Driver Suite
 
-### Test D1 – Driver Dashboard & Sidebar (`/driver`)
+### Test D1 – Driver Dashboard & Availability (`Driver Dashboard`)
 
-**Goal:** Ensure driver sees dashboard cards, availability, and sidebar entries (Dashboard, Assigned Cargos, My Deliveries).
+**Goal:** Confirm drivers can view KPIs and set their availability.
 
-1. Login as driver; confirm KPIs load.
-2. Toggle availability/offline state if supported and ensure persistence.
-   **Validation:** Driver ID, Evidence, Notes.
+1. Log in as a driver and review the dashboard cards (today’s jobs, earnings, etc.).
+2. Toggle the availability/offline switch (if visible) and refresh the page to ensure the status persists.
+   **Validation checklist:** Driver ID? Availability result? Screenshot?
 
-### Test D2 – Assignment Inbox (`/driver/cargos`) & `CargoDetailModal`
+### Test D2 – Assignment Decisions (`Assigned Cargos`)
 
-**Goal:** Test accept/reject with countdown logic.
+**Goal:** Make sure drivers can accept or reject new jobs.
 
-1. Open a pending assignment; verify countdown timer from modal.
-2. Accept assignment; ensure status transitions and success toast.
-3. For another assignment, reject using reason modal; confirm admin sees update.
-   **Validation:** Assignment IDs, Evidence, Notes.
+1. Open **Assigned Cargos** and pick a cargo that is waiting for driver action.
+2. Review the countdown timer, then tap **Accept** and confirm the success message.
+3. Open another pending assignment, tap **Reject**, provide a reason, and verify the job moves out of the queue.
+   **Validation checklist:** Assignment IDs? Outcome? Screenshot?
 
-### Test D3 – Active Deliveries & Status Updates (`/driver/deliveries`)
+### Test D3 – Full Delivery Workflow (`My Deliveries`)
 
-**Goal:** Cover pickup/delivery photo uploads and status changes.
+**Goal:** Cover every driver step from pickup to delivery confirmation.
 
-1. Choose active cargo → tap `Mark Picked Up`, upload photos (CargoImageType.PICKUP).
-2. After in-transit, tap `Mark Delivered`, upload POD images.
-3. Confirm statuses propagate to client view.
-   **Validation:** Cargo IDs, Image references, Notes.
+1. Open an accepted cargo in **My Deliveries** and tap **Mark Picked Up**; upload at least one pickup photo.
+2. Start the trip (if a start button exists) so the cargo status moves to `In Transit`.
+3. Upon arrival, tap **Mark Delivered**, upload proof-of-delivery photos, and submit.
+4. Return to the list and confirm the cargo now shows `Delivered`; ask the client tester to verify they also see the update.
+   **Validation checklist:** Cargo ID? Photos uploaded? Screenshot?
 
-### Test D4 – Driver History & Profile (`/driver/history`, `/profile`)
+### Test D4 – Driver History & Profile (`Driver History`, `Profile`)
 
-**Goal:** Ensure completed jobs list, filtering, and shared profile route function.
+**Goal:** Ensure drivers can review past jobs and update their profile.
 
-1. Visit driver history, filter by month, export if available.
-2. Open `/profile`, update contact info, and log out via sidebar footer (`logout` from `useAuth`).
-   **Validation:** Profile change diff, Evidence, Notes.
+1. Open **Driver History**, apply a date filter, and export if the button is available.
+2. Visit **Profile**, change one editable field (phone, avatar, etc.), save, and log out using the sidebar button.
+   **Validation checklist:** Profile change noted? Evidence? Screenshot?
 
 ---
 
 ## Admin Suite
 
-### Test A1 – Admin Dashboard (`/admin`)
+### Test A1 – Admin Dashboard (`Admin Dashboard`)
 
-**Goal:** Validate widgets, alerts, and sidebar entries (Dashboard, All Cargos, Assignments, Drivers, Vehicles, Fleet Monitor, Invoices, Payment Verifications, Reports).
+**Goal:** Make sure operations staff see the correct totals and alerts.
 
-1. Log in as admin; ensure summary stats + alerts match backend data.
-2. Collapse sidebar and verify tooltip labels.
-   **Validation:** Evidence, Notes.
+1. Log in as an admin; confirm the summary cards (pending cargos, assignments, etc.) show data.
+2. Collapse the sidebar and hover the icons to ensure labels appear.
+   **Validation checklist:** Notes? Screenshot?
 
-### Test A2 – All Cargos + `CargoDetailModal` Admin Actions (`/admin/cargos`)
+### Test A2 – Manage Cargos (`Admin → All Cargos`)
 
-**Goal:** Exercise manual status transitions, cancellation, and cost visibility.
+**Goal:** Check that admins can review details, approve, or cancel cargos.
 
-1. Open cargo detail; verify cost info displays (admin role).
-2. Trigger `Review and Invoicing`, `Mark as Accepted`, and `Cancel` flows.
-3. Confirm toast responses and status updates.
-   **Validation:** Cargo IDs, Actions taken, Notes.
+1. Open an item in **All Cargos**, review the cost information, and note the current status.
+2. Use the available buttons to run through **Review & Invoice**, **Mark as Accepted**, and **Cancel** actions (use different cargos if needed).
+3. Confirm the status line updates and toast messages appear after each action.
+   **Validation checklist:** Cargo IDs? Actions taken? Screenshot?
 
-### Test A3 – Assignment Board (`/admin/assignments`)
+### Test A3 – Driver Assignments (`Admin → Assignments`)
 
-**Goal:** Validate creation and reassignment flows, ensuring parity with modal logic.
+**Goal:** Ensure admins can assign, reassign, or cancel jobs.
 
-1. Use `Assign Driver` to open `TruckAssignmentModal`, select driver/vehicle, set ETA.
-2. Edit assignment (change vehicle) and cancel one assignment.
-3. Ensure driver notifications fire (check Notification Center or API).
-   **Validation:** Assignment IDs, Evidence, Notes.
+1. Click **Assign Driver**, pick any available driver and truck, set an ETA, and send the assignment.
+2. Edit the same assignment to change the truck, then cancel another assignment to confirm the workflow.
+3. Check that the driver receives a notification (ask the driver tester or verify in the notification panel).
+   **Validation checklist:** Assignment IDs? Notes? Screenshot?
 
-### Test A4 – Resource Management (`/admin/drivers`, `/admin/trucks`)
+### Test A4 – Drivers & Trucks (`Admin → Drivers`, `Admin → Trucks`)
 
-**Goal:** Manage driver status, onboarding, and truck records.
+**Goal:** Keep the resource lists up to date.
 
-1. Add/edit driver; verify validations and persistence.
-2. Update truck capacity/status; ensure `VehicleSyncModal` (if triggered) works.
-   **Validation:** Driver/vehicle IDs, Evidence, Notes.
+1. In **Drivers**, add or edit a driver record and save the changes.
+2. In **Trucks**, update a truck’s capacity or status and verify the list refreshes.
+   **Validation checklist:** Driver/truck IDs? Notes? Screenshot?
 
-### Test A5 – Fleet Monitor & Live Tracking (`/admin/fleet-monitor`, `/admin/vehicles/:vehicleId/live`)
+### Test A5 – Fleet Monitor & Live Vehicle View (`Admin → Fleet Monitor`, `Vehicle Live View`)
 
-**Goal:** Ensure real-time telemetry renders on both board and per-vehicle page.
+**Goal:** Confirm live location data appears on both overview and detail screens.
 
-1. Open Fleet Monitor; filter by region, ensure map markers respond.
-2. Drill into a vehicle; confirm telemetry stream updates and reconnects after simulated offline event (`OfflineIndicator`).
-   **Validation:** Vehicle IDs, Evidence, Notes.
+1. Open **Fleet Monitor**, filter by area or status, and make sure the map markers respond.
+2. Click a vehicle card to open the live view and watch for location updates or reconnect prompts if you toggle offline mode.
+   **Validation checklist:** Vehicle IDs? Map behavior? Screenshot?
 
-### Test A6 – Financial Controls (`/admin/payment-verifications`, `/admin/invoices`)
+### Test A6 – Payments & Invoices (`Admin → Payment Verifications`, `Admin → Invoices`)
 
-**Goal:** Cover invoice review and external payments.
+**Goal:** Verify finance workflows for admins.
 
-1. Verify pending payment, approve/reject with reason.
-2. Generate manual invoice, send to client, ensure PDF renders correctly.
-   **Validation:** Invoice IDs, Evidence, Notes.
+1. In **Payment Verifications**, review a pending payment and either approve or reject it with a note.
+2. In **Invoices**, generate or edit an invoice, send it to the client, and download the PDF for accuracy.
+   **Validation checklist:** Invoice IDs? Decision noted? Screenshot?
 
-### Test A7 – Reporting & Incident Follow-up (`/admin/reports`, System Alerts)
+### Test A7 – Reports & Incident Follow-up (`Admin → Reports`, Alerts/Notifications)
 
-**Goal:** Validate exports and incident management (ties to client Test C7).
+**Goal:** Make sure reporting and customer issue tracking are covered.
 
-1. Export weekly delivery report; ensure file includes incident metadata.
-2. Check `System Alerts` (if surfaced) or notifications area for reported issues, mark resolved.
-   **Validation:** Report filename, Ticket IDs, Notes.
+1. Export the weekly delivery report and confirm the file includes the latest cargos and incidents.
+2. Open the alerts or support-tickets view (if enabled) and change one ticket from `Open` to `Resolved`, adding a resolution note.
+   **Validation checklist:** Report filename? Ticket ID? Screenshot?
 
 ---
 
 ## Super Admin Suite
 
-### Test S1 – Super Admin Dashboard & Sidebar (`/super-admin`)
+### Test S1 – Super Admin Dashboard Overview (`Super Admin Dashboard`)
 
-**Goal:** Confirm elevated metrics and sidebar items (Users, Settings, Logs, Branches, Districts, Cargo Categories).
+**Goal:** Make sure top-level metrics and shortcuts load for platform owners.
 
-1. Log in; ensure KPI cards reflect system-wide data.
-2. Verify ability to jump into admin modules via nav shortcuts.
-   **Validation:** Evidence, Notes.
+1. Log in as a super admin and confirm KPI cards (users, cargos, revenue, etc.) show realistic numbers.
+2. Click a few quick links on the dashboard to verify they open the expected pages.
+   **Validation checklist:** Metrics reasonable? Notes? Screenshot?
 
-### Test S2 – User Management (`/super-admin/users`)
+### Test S2 – Manage Users & Roles (`Super Admin → Users`)
 
-**Goal:** CRUD and role assignment.
+**Goal:** Confirm super admins can add, edit, and suspend accounts.
 
-1. Create a new admin user, assign permissions, trigger password reset email.
-2. Suspend/reactivate a user; confirm they lose/gain access.
-   **Validation:** User IDs, Evidence, Notes.
+1. Create a new admin user, assign the correct role, and send the invite/reset email.
+2. Suspend an existing user, log in with that user in another browser to confirm access is blocked, then reactivate them.
+   **Validation checklist:** User IDs? Outcome? Screenshot?
 
-### Test S3 – Platform Settings & Logs (`/super-admin/settings`, `/super-admin/logs`)
+### Test S3 – Global Settings & Activity Logs (`Super Admin → Settings`, `Super Admin → Logs`)
 
-**Goal:** Validate configuration panels and audit logs.
+**Goal:** Ensure configuration changes stick and audit logs capture activity.
 
-1. Update global config (e.g., default currency or SLA thresholds); ensure save sticks.
-2. Open logs, filter by event type, and export if available.
-   **Validation:** Setting diff, Evidence, Notes.
+1. Update one global setting (example: default currency or SLA hours) and save; refresh to confirm it persists.
+2. Open **Logs**, filter by event type or user, and export the log if the option exists.
+   **Validation checklist:** Setting changed? Log file? Screenshot?
 
-### Test S4 – Branch & District Management (`/superadmin/branches`, `/superadmin/branches/:id`, `/superadmin/districts`)
+### Test S4 – Branches & Districts (`Super Admin → Branches`, `Branch Details`, `Districts`)
 
-**Goal:** CRUD master data.
+**Goal:** Cover all master-data screens for branch operations.
 
-1. Add branch, edit details, view branch detail page.
-2. Assign districts to branch; ensure data reflects on detail view.
-   **Validation:** Branch IDs, Evidence, Notes.
+1. Add a new branch, edit its contact info, and open the branch detail page to verify the change.
+2. Assign one or more districts to that branch using the **Districts** page and confirm the relationship appears in both places.
+   **Validation checklist:** Branch/district IDs? Notes? Screenshot?
 
-### Test S5 – Cargo Categories Catalog (`/superadmin/cargo-categories`)
+### Test S5 – Cargo Categories (`Super Admin → Cargo Categories`)
 
-**Goal:** Ensure categories drive client cargo form dropdowns.
+**Goal:** Keep the cargo category list in sync with the client booking form.
 
-1. Add/disable category; confirm change appears on client `Create Cargo` page.
-2. Attempt to delete category in use → expect guard message.
-   **Validation:** Category IDs, Evidence, Notes.
+1. Add a new category and check (with a client tester) that it appears in the **Create Cargo** dropdown.
+2. Try to disable or delete a category that is in use and confirm the system shows the proper warning.
+   **Validation checklist:** Category names? Result? Screenshot?
 
-### Test S6 – Elevated Access to Admin Modules
+### Test S6 – Access to Admin Screens (Spot Check)
 
-**Goal:** Confirm super admins can access admin routes defined in `App.tsx`.
+**Goal:** Confirm super admins can open every admin page for oversight.
 
-1. From super admin session, open `/admin/cargos`, `/admin/assignments`, `/admin/trucks`.
-2. Ensure navigation works and admin controls display.
-   **Validation:** Screenshots, Notes.
+1. While still logged in as super admin, open **Admin → Cargos**, **Admin → Assignments**, and **Admin → Trucks** using the sidebar or quick links.
+2. Make sure each page loads fully and controls are interactive (no permission errors).
+   **Validation checklist:** Pages visited? Notes? Screenshot?
 
 ---
 
 ## Cross-Role Shared Tests
 
-### Test X1 – Profile & Logout (`/profile`)
+### Test X1 – Profile & Logout (`Profile`)
 
-**Goal:** Ensure shared profile page works for all roles and logout clears session.
+**Goal:** Ensure the shared profile page works for every role and logout clears the session.
 
-1. For each role, open `/profile`, edit contact info or avatar.
-2. Trigger logout via sidebar footer (`logout` in `DynamicSidebar.tsx`), verify redirect to `/login`.
-   **Validation:** Role, Evidence, Notes.
+1. For each role, open **Profile**, edit one field (phone, language, avatar, etc.), and save.
+2. Click the **Logout** button at the bottom of the sidebar and make sure you are returned to the login page.
+   **Validation checklist:** Role tested? Change saved? Screenshot?
 
-### Test X2 – Notification & Offline Handling (Capacitor build only)
+### Test X2 – Notification & Offline Handling (mobile build only)
 
-**Goal:** Validate `UpdatePrompt` and `OfflineIndicator`.
+**Goal:** Ensure the mobile shell shows offline warnings and push alerts.
 
-1. On native build, toggle airplane mode; ensure offline banner appears.
-2. Trigger push notification (via NotificationProvider) and confirm in-app toast.
-   **Validation:** Device info, Evidence, Notes.
+1. On the mobile build, turn on airplane mode and confirm the offline banner appears, then turn connectivity back on.
+2. Send yourself a push notification (or use the in-app test button) and make sure the toast/alert appears even if the app was in the background.
+   **Validation checklist:** Device info? Notification received? Screenshot?
 
 ---
 
@@ -306,4 +305,4 @@ This matrix maps every route declared in `App.tsx` and the sidebar entries per r
 | ----------- | ----- | --------- | ---- |
 |             |       |           |      |
 
-_Document reference: Derived from IRIMS UAT flow, expanded to cover all Loveway Logistics Platform routes and sidebar-driven functionalities._
+_Document reference: Derived from Loveway UAT flow, expanded to cover all Loveway Logistics Platform routes and sidebar-driven functionalities._
