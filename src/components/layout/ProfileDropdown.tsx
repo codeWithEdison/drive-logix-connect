@@ -234,11 +234,7 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
         {/* Actions */}
         <DropdownMenuItem onClick={() => navigate("/profile")}>
           <User className="mr-2 h-4 w-4" />
-          {t("profile.viewProfile")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/profile?tab=settings")}>
-          <Settings className="mr-2 h-4 w-4" />
-          {t("profile.settings")}
+          {t("profile.profileAndSettings")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="text-red-600">
