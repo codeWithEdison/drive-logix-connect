@@ -11,7 +11,7 @@
 1. Open the shared issue & evidence tracker (Google Sheet): [Loveway UAT Issues](https://docs.google.com/spreadsheets/d/1xurnnZPgICBx8sns1GNRmcjJmKyDc4TSxL3I3D8wVWA/edit?usp=sharing).
 2. In the sheet’s “Tester Info” tab, record your `Name`, `Role`, `Date`, `Environment` (`http://lovewaylogistics.com`), and `Device/Browser`.
 3. For every step you execute, log the outcome in the “Test Runs” tab—include cargo IDs, invoice IDs, and attach screenshot links for anything that fails or looks odd.
-4. After you complete your assigned scenarios, set the “Status” column for those rows to `Done`, then export this AUT.md as PDF, sign it, and upload it to the QA folder.
+4. After you complete your assigned scenarios, set the “Status” column for those rows to `Done`, 
 
 
 ---
