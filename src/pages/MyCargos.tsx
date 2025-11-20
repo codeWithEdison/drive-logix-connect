@@ -281,9 +281,9 @@ const MyCargos = () => {
         !error &&
         transformedCargos &&
         transformedCargos.length > 0 && (
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3 w-full">
             <motion.div
-              className="bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 backdrop-blur-sm rounded-xl border border-blue-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 w-fit"
+              className="bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 backdrop-blur-sm rounded-xl border border-blue-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 flex-1 min-w-[140px] sm:min-w-[160px]"
               onClick={handleTotalCargosClick}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -299,7 +299,7 @@ const MyCargos = () => {
             </motion.div>
 
             <motion.div
-              className="bg-gradient-to-br from-green-50/80 via-emerald-50/60 to-teal-50/80 backdrop-blur-sm rounded-xl border border-green-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 w-fit"
+              className="bg-gradient-to-br from-green-50/80 via-emerald-50/60 to-teal-50/80 backdrop-blur-sm rounded-xl border border-green-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 flex-1 min-w-[140px] sm:min-w-[160px]"
               onClick={handleInTransitClick}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -319,7 +319,7 @@ const MyCargos = () => {
             </motion.div>
 
             <motion.div
-              className="bg-gradient-to-br from-emerald-50/80 via-green-50/60 to-blue-50/80 backdrop-blur-sm rounded-xl border border-emerald-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 w-fit"
+              className="bg-gradient-to-br from-emerald-50/80 via-green-50/60 to-blue-50/80 backdrop-blur-sm rounded-xl border border-emerald-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 flex-1 min-w-[140px] sm:min-w-[160px]"
               onClick={handleDeliveredClick}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -338,7 +338,7 @@ const MyCargos = () => {
             </motion.div>
 
             <motion.div
-              className="bg-gradient-to-br from-yellow-50/80 via-amber-50/60 to-orange-50/80 backdrop-blur-sm rounded-xl border border-yellow-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 w-fit"
+              className="bg-gradient-to-br from-yellow-50/80 via-amber-50/60 to-orange-50/80 backdrop-blur-sm rounded-xl border border-yellow-100/50 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 flex-1 min-w-[140px] sm:min-w-[160px]"
               onClick={handlePendingClick}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
