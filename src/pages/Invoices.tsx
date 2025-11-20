@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { createPortal } from "react-dom";
 import {
   Table,
   TableBody,
@@ -146,6 +147,78 @@ export default function Invoices() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
+
+  const statusInputRef = useRef<HTMLInputElement>(null);
+  const sortInputRef = useRef<HTMLInputElement>(null);
+  const pageSizeInputRef = useRef<HTMLInputElement>(null);
+
+  const [statusDropdownPos, setStatusDropdownPos] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+  const [sortDropdownPos, setSortDropdownPos] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+  const [pageSizeDropdownPos, setPageSizeDropdownPos] = useState({
+    top: 0,
+    left: 0,
+    width: 0,
+  });
+
+  const calculateDropdownPosition = (
+    inputRef: React.RefObject<HTMLInputElement>
+  ) => {
+    if (!inputRef.current) return { top: 0, left: 0, width: 0 };
+    const rect = inputRef.current.getBoundingClientRect();
+    return {
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    };
+  };
+
+  useEffect(() => {
+    if (showStatusDropdown && statusInputRef.current) {
+      setStatusDropdownPos(calculateDropdownPosition(statusInputRef));
+    }
+  }, [showStatusDropdown]);
+
+  useEffect(() => {
+    if (showSortDropdown && sortInputRef.current) {
+      setSortDropdownPos(calculateDropdownPosition(sortInputRef));
+    }
+  }, [showSortDropdown]);
+
+  useEffect(() => {
+    if (showPageSizeDropdown && pageSizeInputRef.current) {
+      setPageSizeDropdownPos(calculateDropdownPosition(pageSizeInputRef));
+    }
+  }, [showPageSizeDropdown]);
+
+  useEffect(() => {
+    const updatePositions = () => {
+      if (showStatusDropdown && statusInputRef.current) {
+        setStatusDropdownPos(calculateDropdownPosition(statusInputRef));
+      }
+      if (showSortDropdown && sortInputRef.current) {
+        setSortDropdownPos(calculateDropdownPosition(sortInputRef));
+      }
+      if (showPageSizeDropdown && pageSizeInputRef.current) {
+        setPageSizeDropdownPos(calculateDropdownPosition(pageSizeInputRef));
+      }
+    };
+
+    window.addEventListener("scroll", updatePositions, true);
+    window.addEventListener("resize", updatePositions);
+
+    return () => {
+      window.removeEventListener("scroll", updatePositions, true);
+      window.removeEventListener("resize", updatePositions);
+    };
+  }, [showStatusDropdown, showSortDropdown, showPageSizeDropdown]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -559,6 +632,7 @@ export default function Invoices() {
           {/* Status Filter */}
           <div className="relative">
             <input
+              ref={statusInputRef}
               type="text"
               value={
                 statusSearch ||
@@ -570,7 +644,14 @@ export default function Invoices() {
                 setStatusSearch(e.target.value);
                 setShowStatusDropdown(true);
               }}
-              onFocus={() => setShowStatusDropdown(true)}
+              onFocus={() => {
+                if (statusInputRef.current) {
+                  setStatusDropdownPos(
+                    calculateDropdownPosition(statusInputRef)
+                  );
+                }
+                setShowStatusDropdown(true);
+              }}
               placeholder={t("invoices.filterByStatus")}
               className="w-full sm:w-[160px] md:w-[180px] px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 pr-10 rounded-full text-xs sm:text-sm md:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
             />
@@ -590,13 +671,20 @@ export default function Invoices() {
             </div>
 
             {/* Dropdown */}
-            {showStatusDropdown && (
-              <motion.div
-                className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
+            {showStatusDropdown &&
+              typeof document !== "undefined" &&
+              createPortal(
+                <motion.div
+                  className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
+                  style={{
+                    top: `${statusDropdownPos.top}px`,
+                    left: `${statusDropdownPos.left}px`,
+                    width: `${statusDropdownPos.width}px`,
+                  }}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
                 {["all", "draft", "sent", "paid", "overdue", "cancelled"]
                   .filter(
                     (status) =>
@@ -640,21 +728,26 @@ export default function Invoices() {
                       </div>
                     </button>
                   ))}
-              </motion.div>
-            )}
+                </motion.div>,
+                document.body
+              )}
 
             {/* Click outside to close */}
-            {showStatusDropdown && (
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowStatusDropdown(false)}
-              />
-            )}
+            {showStatusDropdown &&
+              typeof document !== "undefined" &&
+              createPortal(
+                <div
+                  className="fixed inset-0 z-[9998]"
+                  onClick={() => setShowStatusDropdown(false)}
+                />,
+                document.body
+              )}
           </div>
 
           {/* Sort Filter */}
           <div className="relative">
             <input
+              ref={sortInputRef}
               type="text"
               value={
                 sortSearch ||
@@ -672,7 +765,12 @@ export default function Invoices() {
                 setSortSearch(e.target.value);
                 setShowSortDropdown(true);
               }}
-              onFocus={() => setShowSortDropdown(true)}
+              onFocus={() => {
+                if (sortInputRef.current) {
+                  setSortDropdownPos(calculateDropdownPosition(sortInputRef));
+                }
+                setShowSortDropdown(true);
+              }}
               placeholder={t("invoices.sortBy")}
               className="w-full sm:w-[160px] md:w-[180px] px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 pr-10 rounded-full text-xs sm:text-sm md:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
             />
@@ -692,13 +790,20 @@ export default function Invoices() {
             </div>
 
             {/* Dropdown */}
-            {showSortDropdown && (
-              <motion.div
-                className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
+            {showSortDropdown &&
+              typeof document !== "undefined" &&
+              createPortal(
+                <motion.div
+                  className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
+                  style={{
+                    top: `${sortDropdownPos.top}px`,
+                    left: `${sortDropdownPos.left}px`,
+                    width: `${sortDropdownPos.width}px`,
+                  }}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
                 {[
                   { value: "newest", label: t("invoices.newestFirst") },
                   { value: "oldest", label: t("invoices.oldestFirst") },
@@ -744,16 +849,20 @@ export default function Invoices() {
                       </div>
                     </button>
                   ))}
-              </motion.div>
-            )}
+                </motion.div>,
+                document.body
+              )}
 
             {/* Click outside to close */}
-            {showSortDropdown && (
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowSortDropdown(false)}
-              />
-            )}
+            {showSortDropdown &&
+              typeof document !== "undefined" &&
+              createPortal(
+                <div
+                  className="fixed inset-0 z-[9998]"
+                  onClick={() => setShowSortDropdown(false)}
+                />,
+                document.body
+              )}
           </div>
         </div>
       </motion.div>
@@ -1115,13 +1224,21 @@ export default function Invoices() {
             {/* Page Size Selector */}
             <div className="relative w-full sm:w-auto">
               <input
+                ref={pageSizeInputRef}
                 type="text"
                 value={pageSizeSearch || pageSize.toString()}
                 onChange={(e) => {
                   setPageSizeSearch(e.target.value);
                   setShowPageSizeDropdown(true);
                 }}
-                onFocus={() => setShowPageSizeDropdown(true)}
+                onFocus={() => {
+                  if (pageSizeInputRef.current) {
+                    setPageSizeDropdownPos(
+                      calculateDropdownPosition(pageSizeInputRef)
+                    );
+                  }
+                  setShowPageSizeDropdown(true);
+                }}
                 placeholder={t("invoices.showPerPage")}
                 className="w-full sm:w-[100px] px-3 sm:px-4 py-2 sm:py-2.5 pr-10 rounded-full text-xs sm:text-sm font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
               />
@@ -1141,13 +1258,20 @@ export default function Invoices() {
               </div>
 
               {/* Dropdown */}
-              {showPageSizeDropdown && (
-                <motion.div
-                  className="absolute z-50 w-full sm:w-[100px] mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
+              {showPageSizeDropdown &&
+                typeof document !== "undefined" &&
+                createPortal(
+                  <motion.div
+                    className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
+                    style={{
+                      top: `${pageSizeDropdownPos.top}px`,
+                      left: `${pageSizeDropdownPos.left}px`,
+                      width: `${pageSizeDropdownPos.width}px`,
+                    }}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
                   {["5", "10", "20", "50"]
                     .filter(
                       (size) =>
@@ -1183,16 +1307,20 @@ export default function Invoices() {
                         </div>
                       </button>
                     ))}
-                </motion.div>
-              )}
+                  </motion.div>,
+                  document.body
+                )}
 
               {/* Click outside to close */}
-              {showPageSizeDropdown && (
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowPageSizeDropdown(false)}
-                />
-              )}
+              {showPageSizeDropdown &&
+                typeof document !== "undefined" &&
+                createPortal(
+                  <div
+                    className="fixed inset-0 z-[9998]"
+                    onClick={() => setShowPageSizeDropdown(false)}
+                  />,
+                  document.body
+                )}
             </div>
 
             {/* Pagination Info */}

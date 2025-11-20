@@ -860,7 +860,7 @@ export default function AssignmentModal({
                       typeof document !== "undefined" &&
                       createPortal(
                         <motion.div
-                          className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                          className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                           style={{
                             top: `${cargoDropdownPos.top}px`,
                             left: `${cargoDropdownPos.left}px`,
@@ -1416,7 +1416,7 @@ export default function AssignmentModal({
                     typeof document !== "undefined" &&
                     createPortal(
                       <motion.div
-                        className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                        className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                         style={{
                           top: `${assignmentTypeDropdownPos.top}px`,
                           left: `${assignmentTypeDropdownPos.left}px`,
@@ -1598,7 +1598,7 @@ export default function AssignmentModal({
                       typeof document !== "undefined" &&
                       createPortal(
                         <motion.div
-                          className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                          className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                           style={{
                             top: `${driverDropdownPos.top}px`,
                             left: `${driverDropdownPos.left}px`,
@@ -1847,7 +1847,7 @@ export default function AssignmentModal({
                       typeof document !== "undefined" &&
                       createPortal(
                         <motion.div
-                          className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                          className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                           style={{
                             top: `${vehicleDropdownPos.top}px`,
                             left: `${vehicleDropdownPos.left}px`,
@@ -2352,7 +2352,7 @@ export default function AssignmentModal({
                                   typeof document !== "undefined" &&
                                   createPortal(
                                     <motion.div
-                                      className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                                      className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                                       style={{
                                         top: `${
                                           splitDriverDropdownPos[index]?.top ||
@@ -2551,7 +2551,7 @@ export default function AssignmentModal({
                                 typeof document !== "undefined"
                                   ? createPortal(
                                       <motion.div
-                                        className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                                        className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                                         style={{
                                           top: `${
                                             splitVehicleDropdownPos[index]

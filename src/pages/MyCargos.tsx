@@ -429,7 +429,7 @@ const MyCargos = () => {
                   {/* Dropdown */}
                   {showStatusDropdown && typeof document !== "undefined" && createPortal(
                     <motion.div
-                      className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                      className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                       style={{
                         top: `${statusDropdownPos.top}px`,
                         left: `${statusDropdownPos.left}px`,
@@ -549,7 +549,7 @@ const MyCargos = () => {
                   {/* Dropdown */}
                   {showPriorityDropdown && typeof document !== "undefined" && createPortal(
                     <motion.div
-                      className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                      className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                       style={{
                         top: `${priorityDropdownPos.top}px`,
                         left: `${priorityDropdownPos.left}px`,
@@ -962,7 +962,7 @@ const MyCargos = () => {
                 {/* Dropdown */}
                 {showPageSizeDropdown && typeof document !== "undefined" && createPortal(
                   <motion.div
-                    className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto"
+                    className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
                     style={{
                       top: `${pageSizeDropdownPos.top}px`,
                       left: `${pageSizeDropdownPos.left}px`,
