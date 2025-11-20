@@ -338,9 +338,72 @@ export default function Invoices() {
     }).format(amount);
   };
 
+  const downloadInvoicesCsv = (invoices: any[]) => {
+    if (typeof document === "undefined" || typeof window === "undefined") {
+      toast.error(t("common.error"));
+      return;
+    }
+
+    if (!invoices.length) {
+      toast.error(t("invoices.noInvoicesFound"));
+      return;
+    }
+
+    const headers = [
+      "Invoice Number",
+      "Cargo Number",
+      "Status",
+      "Total Amount",
+      "Currency",
+      "Due Date",
+      "Paid At",
+      "Created At",
+      "Cargo Type",
+      "Pickup Address",
+      "Destination Address",
+    ];
+
+    const escapeValue = (value: any) =>
+      `"${(value ?? "").toString().replace(/"/g, '""')}"`;
+
+    const rows = invoices.map((invoice) => [
+      invoice.invoice_number || invoice.id || "",
+      invoice.cargo?.cargo_number || invoice.cargo_id || "",
+      invoice.status || "",
+      invoice.total_amount || "",
+      invoice.currency || "RWF",
+      invoice.due_date
+        ? new Date(invoice.due_date).toLocaleDateString()
+        : "",
+      invoice.paid_at ? new Date(invoice.paid_at).toLocaleDateString() : "",
+      invoice.created_at
+        ? new Date(invoice.created_at).toLocaleDateString()
+        : "",
+      invoice.cargo?.type || "",
+      invoice.cargo?.pickup_address || "",
+      invoice.cargo?.destination_address || "",
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map(escapeValue).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `invoices-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(t("invoices.downloadAllInfo") || "CSV download started");
+  };
+
   const handleDownloadAll = () => {
-    toast.info(t("invoices.downloadAllInfo"));
-    // In real app, this would download all invoices as a zip file
+    downloadInvoicesCsv(sortedInvoices);
   };
 
   // Filter and sort invoices (client-side filtering for search only)
