@@ -1,4 +1,4 @@
-# SEO Quick Reference - Lovely Cargo
+# SEO Quick Reference - Loveway Logistics
 
 ## 🚀 Quick Start
 
@@ -12,7 +12,7 @@ function MyNewPage() {
   return (
     <>
       <SEO
-        title="My Page Title | Lovely Cargo"
+        title="My Page Title | Loveway Logistics"
         description="Page description for search engines"
         keywords="keyword1, keyword2, keyword3"
         url="/my-page"

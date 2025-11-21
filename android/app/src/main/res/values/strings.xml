@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Lovely Cargo</string>
-    <string name="title_activity_main">Lovely Cargo</string>
+    <string name="app_name">Loveway Logistics</string>
+    <string name="title_activity_main">Loveway Logistics</string>
     <string name="package_name">com.lovelycargo.app</string>
     <string name="custom_url_scheme">com.lovelycargo.app</string>
 </resources>

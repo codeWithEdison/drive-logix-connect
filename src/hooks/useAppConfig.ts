@@ -113,7 +113,7 @@ export const useAppConfig = (): UseAppConfigReturn => {
   const getAppInfo = useCallback((): AppConfig["app_info"] => {
     if (!config) {
       return {
-        name: "Lovely Cargo Platform",
+        name: "Loveway Logistics",
         version: "1.0.0",
         min_android_version: "1.0.0",
         min_ios_version: "1.0.0",

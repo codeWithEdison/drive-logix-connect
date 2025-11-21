@@ -1570,7 +1570,7 @@ export default function SuperAdminUsers() {
                 type="email"
                 value={adminFormData.email}
                 onChange={(e) => handleAdminFormChange("email", e.target.value)}
-                placeholder="admin@lovelycargo.com"
+                placeholder="admin@lovewaylogistics.com"
                 required
               />
             </div>
@@ -2060,7 +2060,7 @@ export default function SuperAdminUsers() {
               <label className="text-sm font-medium">{t("common.email")}</label>
               <Input
                 type="email"
-                placeholder="email@lovelycargo.rw"
+                placeholder="email@lovewaylogistics.com"
                 defaultValue={editingAdmin?.email || ""}
               />
             </div>
@@ -2206,7 +2206,7 @@ export default function SuperAdminUsers() {
                 </label>
                 <Input
                   type="email"
-                  placeholder="email@lovelycargo.rw"
+                  placeholder="email@lovewaylogistics.com"
                   value={formData.email}
                   onChange={(e) => handleFormChange("email", e.target.value)}
                   className="w-full"

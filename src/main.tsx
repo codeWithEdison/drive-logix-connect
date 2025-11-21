@@ -14,32 +14,57 @@ import { appStateService } from "./lib/services/appStateService";
 import { deviceService } from "./lib/services/deviceService";
 import { AppConfigService } from "./lib/api/services/appConfigService";
 
-// Initialize services
+// Initialize services with error handling
 const initializeServices = async () => {
   try {
     // Initialize app configuration first
     console.log("Initializing app configuration...");
-    await AppConfigService.initialize();
-    console.log("App configuration initialized successfully");
+    try {
+      await AppConfigService.initialize();
+      console.log("App configuration initialized successfully");
+    } catch (error) {
+      console.warn("App configuration initialization failed, continuing:", error);
+    }
 
     // Initialize offline storage
-    await offlineStorageService.initialize();
+    try {
+      await offlineStorageService.initialize();
+    } catch (error) {
+      console.warn("Offline storage initialization failed, continuing:", error);
+    }
 
     // Initialize device service
-    await deviceService.initialize();
+    try {
+      await deviceService.initialize();
+    } catch (error) {
+      console.warn("Device service initialization failed, continuing:", error);
+    }
 
     // Initialize network monitoring
-    await networkService.initialize();
+    try {
+      await networkService.initialize();
+    } catch (error) {
+      console.warn("Network service initialization failed, continuing:", error);
+    }
 
     // Initialize app state management
-    await appStateService.initialize();
+    try {
+      await appStateService.initialize();
+    } catch (error) {
+      console.warn("App state service initialization failed, continuing:", error);
+    }
 
     // Initialize push notifications
-    await pushNotificationService.initialize();
+    try {
+      await pushNotificationService.initialize();
+    } catch (error) {
+      console.warn("Push notification service initialization failed, continuing:", error);
+    }
 
-    console.log("All Capacitor services initialized successfully");
+    console.log("Capacitor services initialization completed");
   } catch (error) {
-    console.error("Failed to initialize some services:", error);
+    console.error("Critical error during service initialization:", error);
+    // App should still be able to render even if services fail
   }
 };
 

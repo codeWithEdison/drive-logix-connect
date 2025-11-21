@@ -191,7 +191,7 @@ class AppConfigService {
     } catch (error) {
       console.error("Error getting app info:", error);
       return {
-        name: "Lovely Cargo Platform",
+        name: "Loveway Logistics",
         version: "1.0.0",
         min_android_version: "1.0.0",
         min_ios_version: "1.0.0",

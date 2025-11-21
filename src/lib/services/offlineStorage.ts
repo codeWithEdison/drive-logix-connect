@@ -15,7 +15,7 @@ export interface CacheConfig {
 }
 
 class OfflineStorageService {
-  private dbName = "LovelyCargoOfflineDB";
+  private dbName = "LovewayLogisticsOfflineDB";
   private dbVersion = 1;
   private db: IDBDatabase | null = null;
   private config: CacheConfig = {

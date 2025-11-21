@@ -359,10 +359,10 @@ class DeviceService {
    */
   async shareApp(): Promise<boolean> {
     return await this.shareContent({
-      title: "Lovely Cargo",
-      text: "Download Lovely Cargo app for easy cargo tracking and logistics management.",
+      title: "Loveway Logistics",
+      text: "Download Loveway Logistics app for easy cargo tracking and logistics management.",
       url: "https://play.google.com/store/apps/details?id=com.lovelycargo.app",
-      dialogTitle: "Share Lovely Cargo",
+      dialogTitle: "Share Loveway Logistics",
     });
   }
 

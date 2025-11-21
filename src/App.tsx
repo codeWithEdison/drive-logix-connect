@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -19,46 +19,56 @@ import { UpdatePrompt } from "@/components/mobile/UpdatePrompt";
 import { OfflineIndicator } from "@/components/mobile/OfflineIndicator";
 import { Capacitor } from "@capacitor/core";
 
-// Pages
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
-import VerifyEmail from "@/pages/VerifyEmail";
-import Index from "@/pages/Index";
-import CreateCargo from "@/pages/CreateCargo";
-import MyCargos from "@/pages/MyCargos";
-import TrackingPage from "@/pages/TrackingPage";
-import History from "@/pages/History";
-import PaymentPage from "@/pages/PaymentPage";
-import PaymentSuccess from "@/pages/PaymentSuccess";
-import PaymentCallback from "@/pages/PaymentCallback";
-import Invoices from "@/pages/Invoices";
-import DriverDashboard from "@/pages/DriverDashboard";
-import AdminDashboard from "@/pages/AdminDashboard";
-import DriverDeliveries from "@/pages/driver/DriverDeliveries";
-import DriverHistory from "@/pages/driver/DriverHistory";
-import { AssignedCargosPage } from "@/pages/AssignedCargosPage";
-import AdminCargos from "@/pages/admin/AdminCargos";
-import AdminDrivers from "@/pages/admin/AdminDrivers";
-import AdminTrucks from "@/pages/admin/AdminTrucks";
-import VehicleLiveTracking from "@/pages/admin/VehicleLiveTracking";
-import FleetMonitor from "@/pages/admin/FleetMonitor";
-import AdminReports from "@/pages/admin/AdminReports";
-import AdminAssignments from "@/pages/admin/AdminAssignments";
-import AdminPaymentVerifications from "@/pages/admin/AdminPaymentVerifications";
-import AdminInvoices from "@/pages/admin/AdminInvoices";
-import SuperAdminUsers from "@/pages/superadmin/SuperAdminUsers";
-import SuperAdminSettings from "@/pages/superadmin/SuperAdminSettings";
-import SuperAdminLogs from "@/pages/superadmin/SuperAdminLogs";
-import BranchManagement from "@/pages/superadmin/BranchManagement";
-import BranchDetails from "@/pages/superadmin/BranchDetails";
-import DistrictManagement from "@/pages/superadmin/DistrictManagement";
-import CargoCategoriesPage from "@/pages/superadmin/CargoCategories";
-import NotFound from "@/pages/NotFound";
-import SuperAdminDashboard from "@/pages/superadmin/SuperAdminDashboard";
-import { ProfilePage } from "@/pages/Profile";
-import LandingPage from "@/pages/LandingPage";
+// Lazy load pages for better performance
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const VerifyEmail = lazy(() => import("@/pages/VerifyEmail"));
+const Index = lazy(() => import("@/pages/Index"));
+const CreateCargo = lazy(() => import("@/pages/CreateCargo"));
+const MyCargos = lazy(() => import("@/pages/MyCargos"));
+const TrackingPage = lazy(() => import("@/pages/TrackingPage"));
+const History = lazy(() => import("@/pages/History"));
+const PaymentPage = lazy(() => import("@/pages/PaymentPage"));
+const PaymentSuccess = lazy(() => import("@/pages/PaymentSuccess"));
+const PaymentCallback = lazy(() => import("@/pages/PaymentCallback"));
+const Invoices = lazy(() => import("@/pages/Invoices"));
+const DriverDashboard = lazy(() => import("@/pages/DriverDashboard"));
+const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
+const DriverDeliveries = lazy(() => import("@/pages/driver/DriverDeliveries"));
+const DriverHistory = lazy(() => import("@/pages/driver/DriverHistory"));
+const AssignedCargosPage = lazy(() => import("@/pages/AssignedCargosPage").then(m => ({ default: m.AssignedCargosPage })));
+const AdminCargos = lazy(() => import("@/pages/admin/AdminCargos"));
+const AdminDrivers = lazy(() => import("@/pages/admin/AdminDrivers"));
+const AdminTrucks = lazy(() => import("@/pages/admin/AdminTrucks"));
+const VehicleLiveTracking = lazy(() => import("@/pages/admin/VehicleLiveTracking"));
+const FleetMonitor = lazy(() => import("@/pages/admin/FleetMonitor"));
+const AdminReports = lazy(() => import("@/pages/admin/AdminReports"));
+const AdminAssignments = lazy(() => import("@/pages/admin/AdminAssignments"));
+const AdminPaymentVerifications = lazy(() => import("@/pages/admin/AdminPaymentVerifications"));
+const AdminInvoices = lazy(() => import("@/pages/admin/AdminInvoices"));
+const SuperAdminUsers = lazy(() => import("@/pages/superadmin/SuperAdminUsers"));
+const SuperAdminSettings = lazy(() => import("@/pages/superadmin/SuperAdminSettings"));
+const SuperAdminLogs = lazy(() => import("@/pages/superadmin/SuperAdminLogs"));
+const BranchManagement = lazy(() => import("@/pages/superadmin/BranchManagement"));
+const BranchDetails = lazy(() => import("@/pages/superadmin/BranchDetails"));
+const DistrictManagement = lazy(() => import("@/pages/superadmin/DistrictManagement"));
+const CargoCategoriesPage = lazy(() => import("@/pages/superadmin/CargoCategories"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const SuperAdminDashboard = lazy(() => import("@/pages/superadmin/SuperAdminDashboard"));
+const ProfilePage = lazy(() => import("@/pages/Profile").then(m => ({ default: m.ProfilePage })));
+const LandingPage = lazy(() => import("@/pages/LandingPage"));
+
+// Loading component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
 
 function AppContent() {
   const { isAuthenticated, user, getDefaultRoute, isInitialized } = useAuth();
@@ -81,7 +91,8 @@ function AppContent() {
   if (!isAuthenticated) {
     return (
       <>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -91,6 +102,7 @@ function AppContent() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
 
         {/* Mobile-specific components */}
         {Capacitor.isNativePlatform() && (
@@ -114,7 +126,8 @@ function AppContent() {
   return (
     <>
       <AppLayout>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           {/* Client Routes */}
           <Route
             path="/"
@@ -416,6 +429,7 @@ function AppContent() {
           {/* Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </AppLayout>
 
       {/* Mobile-specific components */}

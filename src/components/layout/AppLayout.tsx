@@ -58,7 +58,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               />
               <div>
                 <h1 className="font-bold text-base text-gray-900">
-                  Loveway Logistic
+                  Loveway Logistics
                 </h1>
               </div>
             </div>

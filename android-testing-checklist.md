@@ -1,10 +1,10 @@
-# Android Testing Checklist for Lovely Cargo Mobile App
+# Android Testing Checklist for Loveway Logistics Mobile App
 
 ## 🚀 Pre-Testing Setup
 
 ### Android Studio Setup
 
-- [ ] Android Studio is open with the Lovely Cargo project
+- [ ] Android Studio is open with the Loveway Logistics project
 - [ ] Select an emulator (Pixel 6 Pro or Pixel 8 recommended)
 - [ ] Build and run the app (click the green play button)
 - [ ] Wait for app to install and launch

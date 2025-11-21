@@ -1,7 +1,7 @@
-# SEO Implementation Guide - Lovely Cargo Rwanda
+# SEO Implementation Guide - Loveway Logistics Rwanda
 
 ## Overview
-This document outlines the comprehensive SEO implementation for Lovely Cargo, optimized for the Rwanda logistics market.
+This document outlines the comprehensive SEO implementation for Loveway Logistics, optimized for the Rwanda logistics market.
 
 ## ✅ Implemented Features
 
@@ -130,7 +130,7 @@ function MyPage() {
 ### With Custom SEO
 ```tsx
 <SEO
-  title="Custom Page Title | Lovely Cargo"
+  title="Custom Page Title | Loveway Logistics"
   description="Custom page description for SEO"
   keywords="custom, keywords, for, this, page"
   url="/custom-path"
@@ -159,7 +159,7 @@ const faqs = [
 export const PAGE_SEO: Record<string, {...}> = {
   // ... existing pages
   newPage: {
-    title: "New Page Title | Lovely Cargo",
+    title: "New Page Title | Loveway Logistics",
     description: "Page description for SEO",
     keywords: "relevant, keywords, here",
     path: "/new-page",

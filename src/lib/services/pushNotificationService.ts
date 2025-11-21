@@ -200,7 +200,7 @@ class PushNotificationService {
   private handleWebNotification(payload: any): void {
     // Show browser notification
     if (Notification.permission === "granted") {
-      new Notification(payload.notification?.title || "Lovely Cargo", {
+      new Notification(payload.notification?.title || "Loveway Logistics", {
         body: payload.notification?.body,
         icon: "/logo.png",
         tag: payload.data?.cargoId || "general",

@@ -27,7 +27,7 @@ const sampleUsers = {
     driver: {
         id: 'DRV-001',
         name: 'Sarah Mukamana',
-        email: 'sarah.mukamana@lovelycargo.rw',
+        email: 'sarah.mukamana@lovewaylogistics.com',
         phone: '+250 789 456 789',
         role: 'driver' as const,
         status: 'active' as const,
@@ -55,7 +55,7 @@ const sampleUsers = {
     admin: {
         id: 'ADM-001',
         name: 'Emmanuel Gasana',
-        email: 'emmanuel.gasana@lovelycargo.rw',
+        email: 'emmanuel.gasana@lovewaylogistics.com',
         phone: '+250 787 789 123',
         role: 'admin' as const,
         status: 'active' as const,
@@ -75,7 +75,7 @@ const sampleUsers = {
     superAdmin: {
         id: 'SUP-001',
         name: 'Alice Uwimana',
-        email: 'alice.uwimana@lovelycargo.rw',
+        email: 'alice.uwimana@lovewaylogistics.com',
         phone: '+250 786 321 654',
         role: 'super_admin' as const,
         status: 'active' as const,

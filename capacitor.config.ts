@@ -2,12 +2,10 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.lovelycargo.app",
-  appName: "Lovely Cargo",
+  appName: "Loveway Logistics",
   webDir: "dist",
   server: {
     androidScheme: "https",
-    // url: "https://loveway-logistics-backends.onrender.com",
-    url: "https://localhost:3000",
     cleartext: false,
   },
   plugins: {

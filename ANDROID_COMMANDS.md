@@ -1,6 +1,6 @@
 # Android Mobile App - Build & Run Commands
 
-This guide contains all commands to build and run the Lovely Cargo mobile app on Android.
+This guide contains all commands to build and run the Loveway Logistics mobile app on Android.
 
 ## 📱 Quick Start
 

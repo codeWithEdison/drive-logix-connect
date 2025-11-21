@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-This document summarizes the implementation of new API features for the Lovely Cargo Platform frontend, including:
+This document summarizes the implementation of new API features for the Loveway Logistics Platform frontend, including:
 
 - **Branch Management** - Complete CRUD operations
 - **District Management** - Complete CRUD operations
