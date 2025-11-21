@@ -1,0 +1,318 @@
+# Loveway Logistics Platform - AI Reference Guide
+
+## Site Information
+
+**Domain**: https://lovewaylogistics.com
+**Brand Name**: Loveway Logistics
+**Industry**: Logistics and Transportation
+**Location**: Rwanda (Kigali and all districts)
+**Languages Supported**: English, Kinyarwanda, French
+**Founded**: 2024
+
+## About the Platform
+
+Loveway Logistics is a comprehensive logistics and cargo delivery platform serving Rwanda. The platform connects clients, drivers, and fleet management with real-time tracking, secure payments, and reliable transportation solutions. We provide fast, secure, and affordable cargo delivery services across Kigali and all districts of Rwanda.
+
+## Contact Information
+
+**Phone**: +250 788 123 456 (Primary), +250 789 123 456 (Secondary)
+**Email**: 
+- info@lovewaylogistics.com
+- support@lovewaylogistics.com
+**Address**: KG 123 St, Kigali, Rwanda
+**Social Media**:
+- Twitter: @lovewaylogistics
+- Facebook: /lovewaylogistics
+- LinkedIn: /company/lovewaylogistics
+
+## Technical Stack
+
+**Frontend Framework**: React 18.3.1 with TypeScript
+**Build Tool**: Vite 5.4.19
+**UI Framework**: 
+- shadcn-ui components
+- Tailwind CSS 3.4.17
+- Radix UI primitives
+- Framer Motion for animations
+**State Management**: 
+- React Query (TanStack Query) for server state
+- React Context for global state (Auth, Notifications)
+**Routing**: React Router DOM 6.30.1
+**HTTP Client**: Axios 1.11.0
+**Forms**: React Hook Form with Zod validation
+**Maps**: Google Maps JavaScript API
+**Real-time**: Socket.IO Client 4.8.1
+**Internationalization**: i18next with react-i18next
+**Payment**: Flutterwave integration
+**Mobile**: Capacitor 7.4.4 (Android support)
+
+## Key Features & Services
+
+### 1. Cargo Management
+- Create cargo shipments with detailed information
+- Track cargo status in real-time
+- View cargo history and delivery records
+- Manage multiple cargo types and categories
+- Cargo assignment to drivers and vehicles
+
+### 2. Real-Time Tracking
+- Live GPS tracking with Google Maps integration
+- Real-time location updates every 15-30 seconds
+- Route visualization with progress tracking
+- WebSocket-based live updates
+- ETA calculations and status updates
+- Interactive map with custom markers
+
+### 3. Fleet Management
+- Vehicle registration and management
+- Driver assignment to vehicles
+- Fleet status monitoring
+- Vehicle maintenance tracking
+- Fuel level monitoring
+- JIMI GPS device integration for vehicle tracking
+
+### 4. Payment System
+- Secure payment processing via Flutterwave
+- Multiple payment methods
+- Invoice generation and management
+- Payment verification system
+- Transaction history
+
+### 5. User Management
+- Multi-role system (Client, Driver, Admin, Super Admin)
+- User registration and approval workflow
+- Profile management
+- Document verification
+- Role-based access control
+
+### 6. Delivery Management
+- Delivery assignment system
+- Delivery status tracking
+- Photo proof of delivery
+- Delivery history
+- Issue reporting
+
+### 7. Reporting & Analytics
+- Dashboard with statistics and KPIs
+- Delivery reports
+- Financial reports
+- User activity logs
+- Performance metrics
+
+## User Roles & Access
+
+### Client
+- Create cargo shipments
+- Track cargo in real-time
+- View delivery history
+- Make payments
+- View invoices
+- Manage profile
+
+**Key Pages**:
+- Dashboard (`/`)
+- Create Cargo (`/create-cargo`)
+- My Cargos (`/my-cargos`)
+- Tracking (`/tracking`)
+- History (`/history`)
+- Payment (`/payment`)
+- Invoices (`/invoices`)
+- Profile (`/profile`)
+
+### Driver
+- View assigned cargos
+- Accept/reject cargo assignments
+- Start and complete deliveries
+- Upload delivery proof photos
+- View delivery history
+- Real-time navigation
+
+**Key Pages**:
+- Driver Dashboard (`/driver/dashboard`)
+- Assigned Cargos (`/assigned-cargos`)
+- My Deliveries (`/driver/deliveries`)
+- Driver History (`/driver/history`)
+
+### Admin
+- Manage all cargos
+- Assign drivers and vehicles
+- Monitor fleet status
+- Verify payments
+- Manage drivers and trucks
+- View reports
+- Live fleet tracking
+
+**Key Pages**:
+- Admin Dashboard (`/admin/dashboard`)
+- All Cargos (`/admin/cargos`)
+- Assignments (`/admin/assignments`)
+- Drivers (`/admin/drivers`)
+- Trucks (`/admin/trucks`)
+- Fleet Monitor (`/admin/fleet-monitor`)
+- Payment Verifications (`/admin/payment-verifications`)
+- Invoices (`/admin/invoices`)
+- Reports (`/admin/reports`)
+
+### Super Admin
+- Platform governance
+- User management (all roles)
+- Branch management
+- District management
+- Cargo category management
+- System settings
+- Activity logs
+- Vehicle sync with JIMI GPS
+
+**Key Pages**:
+- Super Admin Dashboard (`/super-admin/dashboard`)
+- Users (`/super-admin/users`)
+- Branches (`/super-admin/branches`)
+- Districts (`/super-admin/districts`)
+- Cargo Categories (`/super-admin/cargo-categories`)
+- Settings (`/super-admin/settings`)
+- Logs (`/super-admin/logs`)
+
+## Public Pages
+
+- Landing Page (`/`) - Marketing page with features, pricing, FAQ
+- Login (`/login`)
+- Register (`/register`)
+- Forgot Password (`/forgot-password`)
+- Reset Password (`/reset-password`)
+- Verify Email (`/verify-email`)
+
+## API Integration
+
+**Base URL**: Configured via environment variables
+**API Version**: v1
+**Authentication**: Bearer token (JWT)
+**Key Endpoints**:
+- `/v1/auth/*` - Authentication
+- `/v1/cargos/*` - Cargo management
+- `/v1/tracking/*` - Tracking operations
+- `/v1/vehicles/*` - Vehicle management
+- `/v1/drivers/*` - Driver management
+- `/v1/payments/*` - Payment processing
+- `/v1/deliveries/*` - Delivery management
+- `/v1/users/*` - User management
+
+**WebSocket**: Real-time updates via Socket.IO
+- Connection: `/ws/tracking`
+- Events: cargo updates, location updates, status changes
+
+## SEO & Marketing
+
+**Primary Keywords**: 
+- logistics Rwanda
+- cargo delivery Rwanda
+- freight services Rwanda
+- transportation Rwanda
+- cargo tracking Rwanda
+- delivery services Kigali
+- logistics company Rwanda
+
+**Sitemap**: https://lovewaylogistics.com/sitemap.xml
+**Robots.txt**: https://lovewaylogistics.com/robots.txt
+**Logo**: https://lovewaylogistics.com/logo-text.png
+
+**Structured Data**: 
+- Organization schema
+- LocalBusiness schema
+- SoftwareApplication schema
+- Service schema
+- WebPage schema
+- FAQ schema
+
+## Cargo Categories
+
+The platform supports various cargo categories including:
+- Standard cargo
+- Fragile items
+- Express delivery
+- Scheduled delivery
+- Same-day delivery
+- Business shipping
+- Intercity transportation
+
+## Pricing Model
+
+- Base rate: 500 RWF per KM
+- Weight-based pricing: Additional charges per KG
+- Category-based surcharges (fragile, express, etc.)
+- Distance-based calculations
+- Real-time price calculator on landing page
+
+## Mobile Support
+
+- Android app via Capacitor
+- Responsive web design
+- Mobile-optimized interfaces
+- Push notifications
+- Offline capability
+- Biometric authentication
+
+## Key Integrations
+
+1. **Google Maps API**
+   - Maps JavaScript API
+   - Geocoding API
+   - Directions API
+   - Distance Matrix API
+
+2. **JIMI GPS**
+   - Vehicle device integration
+   - Real-time GPS tracking
+   - Device synchronization
+
+3. **Flutterwave**
+   - Payment processing
+   - Multiple payment methods
+   - Transaction management
+
+4. **Firebase**
+   - Push notifications
+   - Analytics (optional)
+
+## Development & Deployment
+
+**Build Commands**:
+- `npm run dev` - Development server
+- `npm run build` - Production build
+- `npm run build:prod` - Production build with optimizations
+- `npm run build:mobile` - Mobile build with Capacitor sync
+
+**Deployment**: 
+- Production server: `/var/www/lovewaylogistics/`
+- Vercel configuration available
+- Static site deployment
+
+## Important Notes for AI Models
+
+1. **Brand Consistency**: Always use "Loveway Logistics" (not "Lovely Cargo")
+2. **Domain**: Always reference https://lovewaylogistics.com
+3. **Location Focus**: Services are primarily for Rwanda, especially Kigali
+4. **Multi-language**: Content should consider English, Kinyarwanda, and French
+5. **Role-based Access**: Different features are available based on user role
+6. **Real-time Features**: Many features use WebSocket for live updates
+7. **Mobile-first**: Platform is designed for both web and mobile use
+
+## Common User Flows
+
+1. **Client Flow**: Register → Create Cargo → Track → Pay → Receive Delivery
+2. **Driver Flow**: Register → Get Assigned → Accept → Start Delivery → Complete → Upload Proof
+3. **Admin Flow**: Monitor → Assign → Verify → Report
+4. **Super Admin Flow**: Configure → Manage → Monitor → Optimize
+
+## Support & Documentation
+
+- FAQ section on landing page
+- Help center (planned)
+- Contact support via email or phone
+- Multi-language support available
+
+---
+
+**Last Updated**: 2024
+**Platform Version**: 1.0
+**Status**: Production
+

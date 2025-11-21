@@ -11,10 +11,13 @@ export interface SEOProps {
   structuredData?: object | object[];
 }
 
-const BASE_URL = "https://lovelycargo.rw";
-const DEFAULT_TITLE = "Lovely Cargo - Best Logistics Solutions in Rwanda | Cargo Tracking & Delivery Services";
-const DEFAULT_DESCRIPTION = "Leading logistics and cargo delivery services in Rwanda. Real-time tracking, fleet management, and reliable transportation solutions across Kigali and all districts. Fast, secure, and affordable cargo delivery in Rwanda.";
-const DEFAULT_KEYWORDS = "logistics Rwanda, cargo delivery Rwanda, freight services Rwanda, transportation Rwanda, cargo tracking Rwanda, delivery services Kigali, logistics company Rwanda, cargo management Rwanda, fleet management Rwanda, shipping Rwanda, courier services Rwanda, express delivery Rwanda, cargo transport Rwanda, logistics solutions Rwanda, freight forwarding Rwanda, parcel delivery Rwanda, same day delivery Rwanda, intercity delivery Rwanda, cargo tracking system Rwanda, transport services Rwanda";
+const BASE_URL = "https://lovewaylogistics.com";
+const DEFAULT_TITLE =
+  "Loveway Logistics - Best Logistics Solutions in Rwanda | Cargo Tracking & Delivery Services";
+const DEFAULT_DESCRIPTION =
+  "Leading logistics and cargo delivery services in Rwanda. Real-time tracking, fleet management, and reliable transportation solutions across Kigali and all districts. Fast, secure, and affordable cargo delivery in Rwanda.";
+const DEFAULT_KEYWORDS =
+  "logistics Rwanda, cargo delivery Rwanda, freight services Rwanda, transportation Rwanda, cargo tracking Rwanda, delivery services Kigali, logistics company Rwanda, cargo management Rwanda, fleet management Rwanda, shipping Rwanda, courier services Rwanda, express delivery Rwanda, cargo transport Rwanda, logistics solutions Rwanda, freight forwarding Rwanda, parcel delivery Rwanda, same day delivery Rwanda, intercity delivery Rwanda, cargo tracking system Rwanda, transport services Rwanda";
 const DEFAULT_IMAGE = `${BASE_URL}/logo-text.png`;
 
 export function SEO({
@@ -29,7 +32,7 @@ export function SEO({
 }: SEOProps) {
   useEffect(() => {
     const fullTitle = title
-      ? `${title} | Lovely Cargo - Logistics Solutions in Rwanda`
+      ? `${title} | Loveway Logistics - Logistics Solutions in Rwanda`
       : DEFAULT_TITLE;
     const fullDescription = description || DEFAULT_DESCRIPTION;
     const fullKeywords = keywords || DEFAULT_KEYWORDS;
@@ -40,8 +43,14 @@ export function SEO({
     document.title = fullTitle;
 
     // Update or create meta tags
-    const updateMetaTag = (name: string, content: string, attribute: string = "name") => {
-      let element = document.querySelector(`meta[${attribute}="${name}"]`) as HTMLMetaElement;
+    const updateMetaTag = (
+      name: string,
+      content: string,
+      attribute: string = "name"
+    ) => {
+      let element = document.querySelector(
+        `meta[${attribute}="${name}"]`
+      ) as HTMLMetaElement;
       if (!element) {
         element = document.createElement("meta");
         element.setAttribute(attribute, name);
@@ -67,7 +76,7 @@ export function SEO({
     updatePropertyTag("og:image", fullImage);
     updatePropertyTag("og:url", fullUrl);
     updatePropertyTag("og:type", type);
-    updatePropertyTag("og:site_name", "Lovely Cargo");
+    updatePropertyTag("og:site_name", "Loveway Logistics");
     updatePropertyTag("og:locale", "en_RW");
 
     // Twitter Card tags
@@ -77,7 +86,9 @@ export function SEO({
     updateMetaTag("twitter:image", fullImage);
 
     // Canonical URL
-    let canonical = document.querySelector("link[rel='canonical']") as HTMLLinkElement;
+    let canonical = document.querySelector(
+      "link[rel='canonical']"
+    ) as HTMLLinkElement;
     if (!canonical) {
       canonical = document.createElement("link");
       canonical.setAttribute("rel", "canonical");
@@ -88,13 +99,17 @@ export function SEO({
     // Structured Data
     if (structuredData) {
       // Remove existing structured data scripts
-      const existingScripts = document.querySelectorAll('script[type="application/ld+json"]');
+      const existingScripts = document.querySelectorAll(
+        'script[type="application/ld+json"]'
+      );
       existingScripts.forEach((script) => {
         // Only remove if it's not in the base index.html (we'll keep those)
         const scriptContent = script.textContent || "";
-        if (scriptContent.includes('"@type": "Organization"') || 
-            scriptContent.includes('"@type": "LocalBusiness"') ||
-            scriptContent.includes('"@type": "SoftwareApplication"')) {
+        if (
+          scriptContent.includes('"@type": "Organization"') ||
+          scriptContent.includes('"@type": "LocalBusiness"') ||
+          scriptContent.includes('"@type": "SoftwareApplication"')
+        ) {
           // Keep base structured data
           return;
         }
@@ -102,7 +117,9 @@ export function SEO({
       });
 
       // Add new structured data
-      const dataArray = Array.isArray(structuredData) ? structuredData : [structuredData];
+      const dataArray = Array.isArray(structuredData)
+        ? structuredData
+        : [structuredData];
       dataArray.forEach((data) => {
         const script = document.createElement("script");
         script.type = "application/ld+json";
@@ -114,4 +131,3 @@ export function SEO({
 
   return null;
 }
-

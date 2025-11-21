@@ -1,5 +1,5 @@
-# Robots.txt for Lovely Cargo - Logistics Solutions in Rwanda
-# https://lovelycargo.rw
+# Robots.txt for Loveway Logistics - Logistics Solutions in Rwanda
+# https://lovewaylogistics.com
 
 # Allow all search engines
 User-agent: *
@@ -24,7 +24,7 @@ Disallow: /_next/
 Disallow: /static/
 
 # Sitemap location
-Sitemap: https://lovelycargo.rw/sitemap.xml
+Sitemap: https://lovewaylogistics.com/sitemap.xml
 
 # Crawl-delay for respectful crawling
 Crawl-delay: 1
