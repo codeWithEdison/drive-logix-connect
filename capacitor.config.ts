@@ -4,10 +4,7 @@ const config: CapacitorConfig = {
   appId: "com.lovelycargo.app",
   appName: "Loveway Logistics",
   webDir: "dist",
-  server: {
-    androidScheme: "https",
-    cleartext: false,
-  },
+  // Removed server block to use bundled web assets (required for mobile apps)
   plugins: {
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],
