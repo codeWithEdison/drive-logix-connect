@@ -10,6 +10,7 @@ interface ModernModelProps {
   loading?: boolean;
   children?: React.ReactNode;
   zIndex?: number;
+  className?: string;
 }
 
 const ModernModel: React.FC<ModernModelProps> = ({

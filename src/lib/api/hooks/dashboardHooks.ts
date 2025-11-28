@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardService } from "../services/dashboardService";
 import { queryKeys } from "../queryClient";
+import { DashboardFilters } from "@/types/shared";
 
 // ===========================================
 // DASHBOARD HOOKS
@@ -265,13 +266,13 @@ export const useApplyDashboardFilters = () => {
         start_date: string;
         end_date: string;
       };
-      period?: string;
+      period?: "today" | "week" | "month" | "quarter" | "year";
       user_role?: string;
       driver_status?: string;
       vehicle_type?: string;
       cargo_status?: string;
       payment_method?: string;
-    }) => DashboardService.applyDashboardFilters(filters),
+    }) => DashboardService.applyDashboardFilters(filters as DashboardFilters),
     onSuccess: () => {
       // Invalidate all dashboard queries to refresh with new filters
       queryClient.invalidateQueries({

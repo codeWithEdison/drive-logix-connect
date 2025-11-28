@@ -167,7 +167,7 @@ export default function History() {
 
   // Filter cargos based on search and filters
   const filteredCargos =
-    (cargosData as any[])?.filter((cargo: any) => {
+    (cargosData?.cargos || [])?.filter((cargo: any) => {
       const matchesSearch =
         searchQuery === "" ||
         cargo.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
