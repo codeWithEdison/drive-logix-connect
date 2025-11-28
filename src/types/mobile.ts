@@ -358,13 +358,8 @@ export type MobilePlatform = "android" | "ios" | "web";
 
 export type SyncAction = "create" | "update" | "delete";
 
-export type NotificationCategory =
-  | "delivery_update"
-  | "payment_update"
-  | "system"
-  | "promotion";
-
-export type NotificationType = "push" | "in_app" | "email" | "sms";
+// Re-export from shared to avoid conflicts
+export { NotificationCategory, NotificationType } from "./shared";
 
 // ===========================================
 // MOBILE RESPONSE HELPERS
@@ -375,8 +370,17 @@ export interface MobileApiResponse<T> extends ApiResponse<T> {
     timestamp: string;
     version: string;
     language: string;
+    requestId: string;
     mobile_optimized?: boolean;
     offline_capable?: boolean;
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
   };
 }
 

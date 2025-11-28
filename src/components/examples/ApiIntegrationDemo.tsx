@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { UserRole } from "@/types/shared";
 import { Label } from "@/components/ui/label";
 import { useLogin, useRegister } from "@/lib/api/hooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -43,10 +44,10 @@ export const ApiIntegrationDemo: React.FC = () => {
     e.preventDefault();
     try {
       const result = await registerMutation.mutateAsync({
-        name,
+        full_name: name,
         email,
         password,
-        role: "client",
+        role: UserRole.CLIENT,
       });
 
       if (result.success) {

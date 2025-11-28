@@ -330,44 +330,44 @@ export interface StatusConfig {
 
 export const STATUS_CONFIGS: Record<string, StatusConfig> = {
   // Cargo Status
-  [CargoStatus.PENDING]: { label: "Pending", color: "yellow" },
-  [CargoStatus.QUOTED]: { label: "Quoted", color: "blue" },
-  [CargoStatus.ACCEPTED]: { label: "Accepted", color: "green" },
-  [CargoStatus.PARTIALLY_ASSIGNED]: {
+  "cargo_pending": { label: "Pending", color: "yellow" },
+  "cargo_quoted": { label: "Quoted", color: "blue" },
+  "cargo_accepted": { label: "Accepted", color: "green" },
+  "cargo_partially_assigned": {
     label: "Partially Assigned",
     color: "orange",
   },
-  [CargoStatus.FULLY_ASSIGNED]: { label: "Fully Assigned", color: "blue" },
-  [CargoStatus.PICKED_UP]: { label: "Picked Up", color: "green" },
-  [CargoStatus.IN_TRANSIT]: { label: "In Transit", color: "blue" },
-  [CargoStatus.DELIVERED]: { label: "Delivered", color: "green" },
-  [CargoStatus.CANCELLED]: { label: "Cancelled", color: "red" },
-  [CargoStatus.DISPUTED]: { label: "Disputed", color: "red" },
+  "cargo_fully_assigned": { label: "Fully Assigned", color: "blue" },
+  "cargo_picked_up": { label: "Picked Up", color: "green" },
+  "cargo_in_transit": { label: "In Transit", color: "blue" },
+  "cargo_delivered": { label: "Delivered", color: "green" },
+  "cargo_cancelled": { label: "Cancelled", color: "red" },
+  "cargo_disputed": { label: "Disputed", color: "red" },
 
   // Driver Status
-  [DriverStatus.AVAILABLE]: { label: "Available", color: "green" },
-  [DriverStatus.ON_DUTY]: { label: "On Duty", color: "blue" },
-  [DriverStatus.UNAVAILABLE]: { label: "Unavailable", color: "gray" },
-  [DriverStatus.SUSPENDED]: { label: "Suspended", color: "red" },
+  "driver_available": { label: "Available", color: "green" },
+  "driver_on_duty": { label: "On Duty", color: "blue" },
+  "driver_unavailable": { label: "Unavailable", color: "gray" },
+  "driver_suspended": { label: "Suspended", color: "red" },
 
   // Vehicle Status
-  [VehicleStatus.ACTIVE]: { label: "Active", color: "green" },
-  [VehicleStatus.MAINTENANCE]: { label: "Maintenance", color: "yellow" },
-  [VehicleStatus.RETIRED]: { label: "Retired", color: "gray" },
-  [VehicleStatus.SUSPENDED]: { label: "Suspended", color: "red" },
+  "vehicle_active": { label: "Active", color: "green" },
+  "vehicle_maintenance": { label: "Maintenance", color: "yellow" },
+  "vehicle_retired": { label: "Retired", color: "gray" },
+  "vehicle_suspended": { label: "Suspended", color: "red" },
 
   // Invoice Status
-  [InvoiceStatus.DRAFT]: { label: "Draft", color: "gray" },
-  [InvoiceStatus.SENT]: { label: "Sent", color: "blue" },
-  [InvoiceStatus.PAID]: { label: "Paid", color: "green" },
-  [InvoiceStatus.OVERDUE]: { label: "Overdue", color: "red" },
-  [InvoiceStatus.CANCELLED]: { label: "Cancelled", color: "red" },
+  "invoice_draft": { label: "Draft", color: "gray" },
+  "invoice_sent": { label: "Sent", color: "blue" },
+  "invoice_paid": { label: "Paid", color: "green" },
+  "invoice_overdue": { label: "Overdue", color: "red" },
+  "invoice_cancelled": { label: "Cancelled", color: "red" },
 
   // Payment Status
-  [PaymentStatus.PENDING]: { label: "Pending", color: "yellow" },
-  [PaymentStatus.COMPLETED]: { label: "Completed", color: "green" },
-  [PaymentStatus.FAILED]: { label: "Failed", color: "red" },
-  [PaymentStatus.REFUNDED]: { label: "Refunded", color: "blue" },
+  "payment_pending": { label: "Pending", color: "yellow" },
+  "payment_completed": { label: "Completed", color: "green" },
+  "payment_failed": { label: "Failed", color: "red" },
+  "payment_refunded": { label: "Refunded", color: "blue" },
 };
 
 // ===========================================

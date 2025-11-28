@@ -84,14 +84,10 @@ export class MapService {
     };
 
     return {
-      path: iconMap[type],
-      fillColor: color,
-      fillOpacity: 1,
-      strokeColor: "#ffffff",
-      strokeWeight: 2,
-      scale: 1.5,
-      anchor: new google.maps.Point(12, 24),
-    };
+      url: `data:image/svg+xml;base64,${btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}"><path d="${iconMap[type]}"/></svg>`)}`,
+      scaledSize: new google.maps.Size(32, 32),
+      anchor: new google.maps.Point(16, 32),
+    } as google.maps.Icon;
   }
 
   // Add marker to map

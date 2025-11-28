@@ -1,5 +1,5 @@
 import axiosInstance from "../axios";
-import { ApiResponse, UUID } from "../../types/shared";
+import { ApiResponse, UUID } from "../../../types/shared";
 import {
   MobileCargo,
   MobileCargoDetails,
@@ -11,7 +11,7 @@ import {
   DeviceDeregistrationRequest,
   DeviceDeregistrationResponse,
   MobilePlatform,
-} from "../../types/mobile";
+} from "../../../types/mobile";
 
 /**
  * MobileApiService handles mobile-optimized API endpoints

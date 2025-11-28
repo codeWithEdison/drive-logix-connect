@@ -10,6 +10,9 @@ import {
 import { customToast } from "@/lib/utils/toast";
 import { storage } from "@/lib/services/secureStorage";
 
+// Re-export UserRole for components that need it
+export { UserRole };
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;

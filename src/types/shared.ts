@@ -939,6 +939,12 @@ export interface CargoTracking {
   delivery_assignments: DeliveryAssignment[];
   current_location?: string;
   progress_percentage?: number;
+  driver?: {
+    driver_id: UUID;
+    full_name: string;
+    phone: string;
+    vehicle_number?: string;
+  };
 }
 
 // ===========================================

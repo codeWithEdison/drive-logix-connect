@@ -78,11 +78,11 @@ const mockCargoList: CargoWithTracking[] = [
       status_updates: [],
       estimated_delivery_time: "2024-08-21T20:00:00Z",
       last_updated: "2024-08-18T13:40:00Z",
+      delivery_assignments: [],
       driver: {
-        id: "driver-1",
+        driver_id: "driver-1",
         full_name: "David Martinez",
         phone: "+1 (555) 123-4567",
-        rating: 4.8,
       },
     },
     client: {
@@ -129,11 +129,11 @@ const mockCargoList: CargoWithTracking[] = [
       status_updates: [],
       estimated_delivery_time: "2024-08-21T20:00:00Z",
       last_updated: "2024-08-18T13:40:00Z",
+      delivery_assignments: [],
       driver: {
-        id: "driver-2",
+        driver_id: "driver-2",
         full_name: "Jessica Turner",
         phone: "+1 (555) 987-6543",
-        rating: 4.9,
       },
     },
     client: {
@@ -174,11 +174,11 @@ const mockCargoList: CargoWithTracking[] = [
       status_updates: [],
       estimated_delivery_time: "2024-08-25T16:00:00Z",
       last_updated: "2024-08-22T08:00:00Z",
+      delivery_assignments: [],
       driver: {
-        id: "driver-3",
+        driver_id: "driver-3",
         full_name: "Michael Johnson",
         phone: "+1 (555) 456-7890",
-        rating: 4.7,
       },
     },
     client: {
@@ -195,7 +195,7 @@ const statusColors = {
   [CargoStatus.PENDING]: "bg-yellow-100 text-yellow-800",
   [CargoStatus.QUOTED]: "bg-blue-100 text-blue-800",
   [CargoStatus.ACCEPTED]: "bg-blue-100 text-blue-800",
-  [CargoStatus.ASSIGNED]: "bg-blue-100 text-blue-800",
+  [CargoStatus.FULLY_ASSIGNED]: "bg-blue-100 text-blue-800",
   [CargoStatus.PICKED_UP]: "bg-blue-100 text-blue-800",
   [CargoStatus.IN_TRANSIT]: "bg-blue-100 text-blue-800",
   [CargoStatus.DELIVERED]: "bg-green-100 text-green-800",
