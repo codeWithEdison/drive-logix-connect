@@ -4,6 +4,7 @@ const config: CapacitorConfig = {
   appId: "com.lovelycargo.app",
   appName: "Loveway Logistics",
   webDir: "dist",
+  bundledWebRuntime: false,
   server: {
     androidScheme: "https",
     cleartext: false,
