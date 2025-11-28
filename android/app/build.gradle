@@ -3,12 +3,6 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.lovelycargo.app"
     compileSdk rootProject.ext.compileSdkVersion
-    
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    
     defaultConfig {
         applicationId "com.lovelycargo.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -49,28 +43,6 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
-
-// Override Java version set by capacitor.build.gradle
-android {
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-}
-
-// Configure Kotlin JVM target
-afterEvaluate {
-    try {
-        def kotlinCompile = Class.forName('org.jetbrains.kotlin.gradle.tasks.KotlinCompile')
-        tasks.withType(kotlinCompile).configureEach {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
-        }
-    } catch (ClassNotFoundException e) {
-        // Kotlin not used in this module
-    }
-}
 
 try {
     def servicesJSON = file('google-services.json')

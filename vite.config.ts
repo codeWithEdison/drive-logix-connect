@@ -26,11 +26,15 @@ export default defineConfig(({ mode }) => {
         ? {
             external: (id) =>
               id.startsWith("@capacitor/") && !id.includes("@capacitor/core"),
+            output: {
+              // For mobile builds, use simpler chunking to avoid circular dependencies
+              manualChunks: undefined, // Let Vite handle chunking automatically
+            },
           }
         : {
             output: {
               manualChunks: (id) => {
-                // Split vendor chunks
+                // Split vendor chunks for web builds
                 if (id.includes('node_modules')) {
                   if (id.includes('react') || id.includes('react-dom')) {
                     return 'react-vendor';

@@ -20,43 +20,43 @@ const initializeServices = async () => {
     // Initialize app configuration first
     console.log("Initializing app configuration...");
     try {
-      await AppConfigService.initialize();
-      console.log("App configuration initialized successfully");
+    await AppConfigService.initialize();
+    console.log("App configuration initialized successfully");
     } catch (error) {
       console.warn("App configuration initialization failed, continuing:", error);
     }
 
     // Initialize offline storage
     try {
-      await offlineStorageService.initialize();
+    await offlineStorageService.initialize();
     } catch (error) {
       console.warn("Offline storage initialization failed, continuing:", error);
     }
 
     // Initialize device service
     try {
-      await deviceService.initialize();
+    await deviceService.initialize();
     } catch (error) {
       console.warn("Device service initialization failed, continuing:", error);
     }
 
     // Initialize network monitoring
     try {
-      await networkService.initialize();
+    await networkService.initialize();
     } catch (error) {
       console.warn("Network service initialization failed, continuing:", error);
     }
 
     // Initialize app state management
     try {
-      await appStateService.initialize();
+    await appStateService.initialize();
     } catch (error) {
       console.warn("App state service initialization failed, continuing:", error);
     }
 
     // Initialize push notifications
     try {
-      await pushNotificationService.initialize();
+    await pushNotificationService.initialize();
     } catch (error) {
       console.warn("Push notification service initialization failed, continuing:", error);
     }

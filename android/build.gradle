@@ -7,7 +7,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.5.2'
+        classpath 'com.android.tools.build:gradle:8.7.2'
         classpath 'com.google.gms:google-services:4.4.2'
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -21,54 +21,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-    }
-}
-
-subprojects { project ->
-    afterEvaluate {
-        // Configure Java version for Android modules (override any existing settings)
-        if (project.hasProperty('android')) {
-            project.android {
-                compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_17
-                    targetCompatibility JavaVersion.VERSION_17
-                }
-            }
-        }
-        
-        // Configure Java version for all Java compilation tasks
-        project.tasks.withType(JavaCompile).configureEach {
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
-        }
-    }
-}
-
-// Configure Kotlin JVM target for all subprojects
-subprojects { project ->
-    // Configure as tasks are created
-    project.tasks.whenTaskAdded { task ->
-        if (task.class.name.contains('KotlinCompile') && task.hasProperty('kotlinOptions')) {
-            task.kotlinOptions {
-                jvmTarget = "17"
-            }
-        }
-    }
-}
-
-// Also configure after all projects are evaluated
-gradle.projectsEvaluated {
-    subprojects { project ->
-        try {
-            def kotlinCompileClass = Class.forName('org.jetbrains.kotlin.gradle.tasks.KotlinCompile')
-            project.tasks.withType(kotlinCompileClass).configureEach { task ->
-                task.kotlinOptions {
-                    jvmTarget = "17"
-                }
-            }
-        } catch (ClassNotFoundException e) {
-            // Kotlin not available in this project
-        }
     }
 }
 
