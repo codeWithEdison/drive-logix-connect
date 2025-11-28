@@ -14,7 +14,7 @@ export const useCreateRoute = () => {
   return useMutation({
     mutationFn: (data: CreateRouteRequest) => RouteService.createRoute(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.routes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.routes.all() });
     },
   });
 };
@@ -45,7 +45,7 @@ export const useUpdateRouteWaypoint = () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.routes.detail(routeId),
       });
-      queryClient.invalidateQueries({ queryKey: queryKeys.routes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.routes.all() });
     },
   });
 };
@@ -66,7 +66,7 @@ export const useAllRoutes = (params?: {
   limit?: number;
 }) => {
   return useQuery({
-    queryKey: queryKeys.routes.list(params),
+    queryKey: queryKeys.routes.all(params),
     queryFn: () => RouteService.getAllRoutes(params),
     select: (data) => data.data,
   });
@@ -78,7 +78,7 @@ export const useDeleteRoute = () => {
   return useMutation({
     mutationFn: (routeId: string) => RouteService.deleteRoute(routeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.routes.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.routes.all() });
     },
   });
 };

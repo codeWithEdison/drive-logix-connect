@@ -1,12 +1,12 @@
 import axiosInstance from "../axios";
-import { ApiResponse } from "../../types/shared";
+import { ApiResponse } from "../../../types/shared";
 import {
   SyncItem,
   SyncPushRequest,
   SyncPushResponse,
   SyncPullResponse,
   SyncTriggerResponse,
-} from "../../types/mobile";
+} from "../../../types/mobile";
 
 /**
  * SyncService handles offline synchronization with backend

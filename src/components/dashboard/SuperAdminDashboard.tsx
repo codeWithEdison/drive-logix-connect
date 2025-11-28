@@ -90,7 +90,7 @@ export function SuperAdminDashboard() {
   const applyFilters = useApplyDashboardFilters();
 
   React.useEffect(() => {
-    applyFilters.mutate({ period: selectedPeriod });
+    applyFilters.mutate({ period: selectedPeriod as "today" | "week" | "month" | "quarter" | "year" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod]);
 

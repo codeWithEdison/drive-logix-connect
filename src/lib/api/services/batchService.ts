@@ -1,5 +1,5 @@
 import axiosInstance from "../axios";
-import { ApiResponse, UUID } from "../../types/shared";
+import { ApiResponse, UUID } from "../../../types/shared";
 import {
   BatchCargoRequest,
   BatchCargoResponse,
@@ -7,7 +7,7 @@ import {
   BatchDeliveryStatusResponse,
   BatchGPSLocationRequest,
   BatchGPSLocationResponse,
-} from "../../types/mobile";
+} from "../../../types/mobile";
 
 /**
  * BatchService handles batch operations for improved performance

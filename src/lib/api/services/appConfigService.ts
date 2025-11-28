@@ -1,6 +1,6 @@
 import axiosInstance from "../axios";
-import { ApiResponse } from "../../types/shared";
-import { AppConfig, AppConfigResponse } from "../../types/mobile";
+import { ApiResponse } from "../../../types/shared";
+import { AppConfig, AppConfigResponse } from "../../../types/mobile";
 import { storage } from "../../services/secureStorage";
 
 /**
