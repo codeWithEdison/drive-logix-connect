@@ -58,15 +58,109 @@ export default function SuperAdminSettings() {
     name: "",
     base_rate_per_km: 0,
     rate_per_kg: 0,
-    minimum_fare: null,
-    surcharge_type: null,
-    surcharge_amount: null,
+    minimum_fare: 0,
+    surcharge_type: "fixed",
+    surcharge_amount: 0,
     surcharge_description: "",
-    discount_percent: null,
+    discount_percent: 0,
     is_active: true,
     valid_from: null,
     valid_until: null,
   });
+
+  const validatePricingPolicy = (data: CreatePricingPolicyRequest) => {
+    const errors: string[] = [];
+
+    const trimmedName = (data.name || "").trim();
+    if (!trimmedName) {
+      errors.push("Name is required.");
+    } else if (trimmedName.length > 100) {
+      errors.push("Name must be at most 100 characters.");
+    }
+
+    if (data.base_rate_per_km === null || data.base_rate_per_km === undefined) {
+      errors.push("Base rate per km is required.");
+    } else if (
+      typeof data.base_rate_per_km !== "number" ||
+      isNaN(data.base_rate_per_km) ||
+      data.base_rate_per_km <= 0
+    ) {
+      errors.push("Base rate per km must be a positive number.");
+    }
+
+    if (data.rate_per_kg === null || data.rate_per_kg === undefined) {
+      errors.push("Rate per kg is required.");
+    } else if (
+      typeof data.rate_per_kg !== "number" ||
+      isNaN(data.rate_per_kg) ||
+      data.rate_per_kg < 0
+    ) {
+      errors.push("Rate per kg must be a number greater than or equal to 0.");
+    }
+
+    if (data.minimum_fare !== null && data.minimum_fare !== undefined) {
+      if (
+        typeof data.minimum_fare !== "number" ||
+        isNaN(data.minimum_fare) ||
+        data.minimum_fare < 0
+      ) {
+        errors.push(
+          "Minimum fare must be a number greater than or equal to 0."
+        );
+      }
+    }
+
+    if (
+      data.surcharge_type &&
+      !["fixed", "percent"].includes(data.surcharge_type)
+    ) {
+      errors.push("Surcharge type must be either 'fixed' or 'percent'.");
+    }
+
+    if (data.surcharge_amount !== null && data.surcharge_amount !== undefined) {
+      if (
+        typeof data.surcharge_amount !== "number" ||
+        isNaN(data.surcharge_amount) ||
+        data.surcharge_amount < 0
+      ) {
+        errors.push(
+          "Surcharge amount must be a number greater than or equal to 0."
+        );
+      }
+    }
+
+    if (data.surcharge_description && data.surcharge_description.length > 255) {
+      errors.push("Surcharge description must be at most 255 characters.");
+    }
+
+    if (data.discount_percent !== null && data.discount_percent !== undefined) {
+      if (
+        typeof data.discount_percent !== "number" ||
+        isNaN(data.discount_percent) ||
+        !Number.isInteger(data.discount_percent) ||
+        data.discount_percent < 0 ||
+        data.discount_percent > 100
+      ) {
+        errors.push("Discount percent must be an integer between 0 and 100.");
+      }
+    }
+
+    if (data.valid_from) {
+      const d = new Date(data.valid_from);
+      if (isNaN(d.getTime())) {
+        errors.push("Valid from must be a valid date.");
+      }
+    }
+
+    if (data.valid_until) {
+      const d = new Date(data.valid_until);
+      if (isNaN(d.getTime())) {
+        errors.push("Valid until must be a valid date.");
+      }
+    }
+
+    return errors;
+  };
 
   const fetchPricingPolicies = async () => {
     try {
@@ -94,11 +188,11 @@ export default function SuperAdminSettings() {
       name: "",
       base_rate_per_km: 0,
       rate_per_kg: 0,
-      minimum_fare: null,
-      surcharge_type: null,
-      surcharge_amount: null,
+      minimum_fare: 0,
+      surcharge_type: "fixed",
+      surcharge_amount: 0,
       surcharge_description: "",
-      discount_percent: null,
+      discount_percent: 0,
       is_active: true,
       valid_from: null,
       valid_until: null,
@@ -125,6 +219,16 @@ export default function SuperAdminSettings() {
   };
 
   const savePolicy = async () => {
+    const validationErrors = validatePricingPolicy(policyForm);
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Validation error",
+        description: validationErrors.join(" "),
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsSavingPolicy(true);
       const payload: any = { ...policyForm } as CreatePricingPolicyRequest;
@@ -161,7 +265,11 @@ export default function SuperAdminSettings() {
       const description = Array.isArray(e?.error?.details)
         ? e.error.details.map((d: any) => `${d.field}: ${d.message}`).join("; ")
         : e?.error?.message || "Failed to save pricing policy";
-      toast({ title: "Pricing policy error", description });
+      toast({
+        title: "Pricing policy error",
+        description,
+        variant: "destructive",
+      });
     } finally {
       setIsSavingPolicy(false);
     }
@@ -455,7 +563,7 @@ export default function SuperAdminSettings() {
                   <Label>Surcharge Type</Label>
                   <select
                     className="border rounded h-10 px-3"
-                    value={policyForm.surcharge_type ?? "none"}
+                    value={policyForm.surcharge_type ?? "fixed"}
                     onChange={(e) =>
                       setPolicyForm({
                         ...policyForm,

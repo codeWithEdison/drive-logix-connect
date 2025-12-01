@@ -170,18 +170,6 @@ export function UsersDistributionChart() {
                 onMouseEnter={onPieEnter}
                 onMouseLeave={onPieLeave}
                 activeIndex={activeIndex}
-                activeShape={(props: any) => (
-                  <g>
-                    <circle
-                      cx={props.cx}
-                      cy={props.cy}
-                      r={110}
-                      fill={props.fill}
-                      stroke="#fff"
-                      strokeWidth={2}
-                    />
-                  </g>
-                )}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
