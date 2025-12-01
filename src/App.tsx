@@ -257,6 +257,14 @@ function AppContent() {
             }
           />
           <Route
+            path="/admin/cargos/new"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                <CreateCargo />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/drivers"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>

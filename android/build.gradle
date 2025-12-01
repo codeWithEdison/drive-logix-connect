@@ -7,7 +7,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.2'
+        classpath 'com.android.tools.build:gradle:8.6.0'
         classpath 'com.google.gms:google-services:4.4.2'
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -21,6 +21,38 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+    
+    // Configure Java toolchain to use Java 21 for all projects
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_21
+                    targetCompatibility JavaVersion.VERSION_21
+                }
+            }
+        }
+        
+        // Force all Java compilation to use Java 21 toolchain
+        tasks.withType(JavaCompile).configureEach {
+            javaCompiler = javaToolchains.compilerFor {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+        }
+        
+        // Configure Kotlin to use JVM target 21 to match Java
+        // Use reflection to safely access KotlinCompile tasks
+        tasks.matching { task ->
+            task.class.simpleName == 'KotlinCompile' || 
+            task.class.name.contains('KotlinCompile')
+        }.configureEach { task ->
+            if (task.hasProperty('kotlinOptions')) {
+                task.kotlinOptions {
+                    jvmTarget = "21"
+                }
+            }
+        }
     }
 }
 

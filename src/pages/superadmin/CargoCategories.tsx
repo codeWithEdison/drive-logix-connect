@@ -32,6 +32,7 @@ export default function CargoCategoriesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CargoCategory | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -94,13 +95,18 @@ export default function CargoCategoriesPage() {
       special_handling_required: !!form.special_handling_required,
       is_active: !!form.is_active,
     };
-    if (editing) {
-      await axiosInstance.put(`/cargo-categories/${editing.id}`, payload);
-    } else {
-      await axiosInstance.post("/cargo-categories", payload);
+    try {
+      setIsSaving(true);
+      if (editing) {
+        await axiosInstance.put(`/cargo-categories/${editing.id}`, payload);
+      } else {
+        await axiosInstance.post("/cargo-categories", payload);
+      }
+      setShowModal(false);
+      await fetchCategories();
+    } finally {
+      setIsSaving(false);
     }
-    setShowModal(false);
-    await fetchCategories();
   };
 
   const deleteCategory = async (id: string) => {
@@ -302,8 +308,15 @@ export default function CargoCategoriesPage() {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button onClick={saveCategory}>
-              {editing ? "Update" : "Create"}
+            <Button onClick={saveCategory} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  {editing ? "Updating..." : "Creating..."}
+                </>
+              ) : (
+                <>{editing ? "Update" : "Create"}</>
+              )}
             </Button>
             <Button variant="outline" onClick={() => setShowModal(false)}>
               Cancel
