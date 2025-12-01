@@ -511,6 +511,238 @@ export function CargoTable({
   };
 
   const renderActions = (cargo: CargoDetail) => {
+    const exportCargoAsExcel = (cargoToExport: CargoDetail) => {
+      const htmlEscape = (value: any): string => {
+        if (value === null || value === undefined) return "";
+        const str =
+          typeof value === "object" ? JSON.stringify(value) : String(value);
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      };
+
+      const safeCargoNumber =
+        cargoToExport.cargo_number || cargoToExport.cargo_number || "cargo";
+
+      const headerHtml = (() => {
+        const logoUrl = `${window.location.origin}/logo.png`;
+        return `
+          <div class="report-header">
+            <div class="report-brand">
+              <img src="${logoUrl}" alt="Lovely Cargo" class="logo" />
+              <div class="brand-text">
+                <div class="brand-name">Lovely Cargo Platform</div>
+                <div class="brand-subtitle">Cargo Detail Report</div>
+              </div>
+            </div>
+            <div class="report-meta">
+              <div><span class="label">Generated At:</span> ${htmlEscape(
+                new Date().toLocaleString()
+              )}</div>
+              <div><span class="label">Cargo Number:</span> ${htmlEscape(
+                safeCargoNumber
+              )}</div>
+              <div><span class="label">Status:</span> ${htmlEscape(
+                getStatusLabel(cargoToExport.status)
+              )}</div>
+            </div>
+          </div>
+        `;
+      })();
+
+      const infoRows: Array<{ label: string; value: string }> = [
+        {
+          label: "Client",
+          value:
+            (cargoToExport.clientCompany as string) ||
+            (cargoToExport.client as string) ||
+            "",
+        },
+        {
+          label: "Driver",
+          value: cargoToExport.driverName || "",
+        },
+        {
+          label: "From",
+          value: cargoToExport.from,
+        },
+        {
+          label: "To",
+          value: cargoToExport.to,
+        },
+        {
+          label: "Type",
+          value: cargoToExport.type,
+        },
+        {
+          label: "Priority",
+          value: cargoToExport.priority,
+        },
+        {
+          label: "Cost",
+          value:
+            typeof cargoToExport.cost === "number"
+              ? formatFRW(cargoToExport.cost)
+              : "",
+        },
+        {
+          label: "Weight",
+          value: cargoToExport.weight,
+        },
+        {
+          label: "Distance",
+          value: cargoToExport.distance,
+        },
+        {
+          label: "Created Date",
+          value: cargoToExport.createdDate || "",
+        },
+        {
+          label: "Estimated Time",
+          value: cargoToExport.estimatedTime || "",
+        },
+      ];
+
+      const detailsTable = `
+        <h2 class="section-title">Cargo Overview</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${infoRows
+              .filter((row) => row.value && row.value !== "undefined")
+              .map(
+                (row) => `
+                  <tr>
+                    <td>${htmlEscape(row.label)}</td>
+                    <td>${htmlEscape(row.value)}</td>
+                  </tr>
+                `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `;
+
+      const descriptionSection = cargoToExport.description
+        ? `
+        <h2 class="section-title">Description</h2>
+        <table class="data-table">
+          <tbody>
+            <tr>
+              <td>${htmlEscape(cargoToExport.description)}</td>
+            </tr>
+          </tbody>
+        </table>
+      `
+        : "";
+
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <title>Cargo Report</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                font-size: 13px;
+                color: #111827;
+                background-color: #ffffff;
+              }
+              .report-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px 16px 8px 16px;
+                border-radius: 12px;
+                background: linear-gradient(90deg, #4f46e5, #7c3aed, #0ea5e9);
+                color: #ffffff;
+                margin-bottom: 16px;
+              }
+              .report-brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+              }
+              .logo {
+                width: 40px;
+                height: 40px;
+                border-radius: 999px;
+                border: 2px solid rgba(255,255,255,0.6);
+                object-fit: contain;
+                background-color: #ffffff;
+              }
+              .brand-name {
+                font-size: 16px;
+                font-weight: 700;
+              }
+              .brand-subtitle {
+                font-size: 13px;
+                opacity: 0.9;
+              }
+              .report-meta {
+                text-align: right;
+                font-size: 11px;
+                line-height: 1.4;
+              }
+              .report-meta .label {
+                font-weight: 600;
+              }
+              .section-title {
+                margin: 18px 0 6px 0;
+                font-size: 14px;
+                font-weight: 600;
+                color: #111827;
+              }
+              table.data-table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 12px;
+              }
+              table.data-table th,
+              table.data-table td {
+                border: 1px solid #e5e7eb;
+                padding: 6px 8px;
+                text-align: left;
+                vertical-align: top;
+              }
+              table.data-table th {
+                background-color: #f3f4f6;
+                font-weight: 600;
+              }
+              table.data-table tr:nth-child(even) td {
+                background-color: #fafafa;
+              }
+            </style>
+          </head>
+          <body>
+            ${headerHtml}
+            ${detailsTable}
+            ${descriptionSection}
+          </body>
+        </html>
+      `;
+
+      const blob = new Blob([fullHtml], {
+        type: "application/vnd.ms-excel",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cargo-report-${safeCargoNumber}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
     const actions = getCustomActions
       ? getCustomActions(cargo)
       : getRoleBasedActions(cargo);
@@ -541,6 +773,15 @@ export function CargoTable({
               {action.label}
             </DropdownMenuItem>
           ))}
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              exportCargoAsExcel(cargo);
+            }}
+          >
+            <Download className="h-3 w-3 mr-1" />
+            {t("cargoTable.actions.downloadExcel") || "Download Excel"}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );

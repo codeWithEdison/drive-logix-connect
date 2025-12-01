@@ -737,7 +737,7 @@ const AdminTrucks = () => {
                   Loading...
                 </>
               ) : (
-                <>PUSH vehicles</>
+                <>Sync JIMI</> 
               )}
             </Button>
           )}
