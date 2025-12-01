@@ -78,6 +78,47 @@ export function SuperAdminDashboard() {
   const { user } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = React.useState("yearly");
 
+  const mapUiPeriodToApi = (period: string): "day" | "week" | "month" | "year" => {
+    switch (period) {
+      case "daily":
+        return "day";
+      case "weekly":
+        return "week";
+      case "monthly":
+        return "month";
+      case "yearly":
+      default:
+        return "year";
+    }
+  };
+
+  const getPeriodDateRange = (period: "day" | "week" | "month" | "year") => {
+    const end = new Date();
+    const start = new Date();
+
+    switch (period) {
+      case "day":
+        // Same day
+        break;
+      case "week":
+        start.setDate(end.getDate() - 6);
+        break;
+      case "month":
+        start.setMonth(end.getMonth() - 1);
+        break;
+      case "year":
+        start.setFullYear(end.getFullYear() - 1);
+        break;
+    }
+
+    const format = (d: Date) => d.toISOString().split("T")[0];
+
+    return {
+      start: format(start),
+      end: format(end),
+    };
+  };
+
   // API hooks
   const {
     data: dashboardData,
@@ -85,12 +126,12 @@ export function SuperAdminDashboard() {
     error: dashboardError,
     refetch: refetchDashboard,
   } = useSuperAdminDashboard({
-    period: selectedPeriod === "yearly" ? "year" : selectedPeriod,
+    period: mapUiPeriodToApi(selectedPeriod),
   });
   const applyFilters = useApplyDashboardFilters();
 
   React.useEffect(() => {
-    applyFilters.mutate({ period: selectedPeriod as "today" | "week" | "month" | "quarter" | "year" });
+    applyFilters.mutate({ period: mapUiPeriodToApi(selectedPeriod) as "week" | "month" | "year" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod]);
 
@@ -168,31 +209,396 @@ export function SuperAdminDashboard() {
 
   const handleExportReport = () => {
     try {
-      const reportData = {
-        timestamp: new Date().toISOString(),
-        stats: superAdminStats,
-        dashboardData: dashboardData,
-        generatedBy: user?.full_name || "Super Admin",
-        language: t("common.language"),
+      // Build a styled HTML report that Excel can open with full formatting
+      const sections: string[] = [];
+
+      const htmlEscape = (value: any): string => {
+        if (value === null || value === undefined) return "";
+        const str =
+          typeof value === "object" ? JSON.stringify(value) : String(value);
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
       };
 
-      const blob = new Blob([JSON.stringify(reportData, null, 2)], {
-        type: "application/json",
+      const pushTableSection = (title: string, data: any[]) => {
+        if (!data || !data.length) return;
+
+        // Remove technical IDs and internal references to keep the report human-friendly
+        const hiddenKeys = new Set([
+          "id",
+          "cargo_id",
+          "branch_id",
+          "district_id",
+          "entity_id",
+          "user_id",
+          "vehicle_id",
+          "invoice_id",
+          "invoice_number",
+          "requestId",
+        ]);
+
+        const headers = Object.keys(data[0]).filter(
+          (key) => !hiddenKeys.has(key)
+        );
+
+        if (!headers.length) return;
+
+        sections.push(`<h2 class="section-title">${htmlEscape(title)}</h2>`);
+        sections.push('<table class="data-table">');
+        sections.push("<thead><tr>");
+        headers.forEach((header) => {
+          sections.push(
+            `<th>${htmlEscape(
+              header
+                .toString()
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (c) => c.toUpperCase())
+            )}</th>`
+          );
+        });
+        sections.push("</tr></thead>");
+        sections.push("<tbody>");
+
+        data.forEach((row) => {
+          sections.push("<tr>");
+          headers.forEach((header) => {
+            const cell = (row as any)[header];
+            sections.push(`<td>${htmlEscape(cell)}</td>`);
+          });
+          sections.push("</tr>");
+        });
+
+        sections.push("</tbody></table>");
+      };
+
+      const apiPeriod = mapUiPeriodToApi(selectedPeriod);
+      const range = getPeriodDateRange(apiPeriod);
+
+      const charts: any = (dashboardData?.data as any)?.charts || {};
+      const tables: any = (dashboardData?.data as any)?.tables || {};
+      const recentLogs: any[] =
+        (dashboardData?.data as any)?.recent_logs || [];
+
+      // Header / branding block
+      const logoUrl = `${window.location.origin}/logo.png`;
+
+      const headerHtml = `
+        <div class="report-header">
+          <div class="report-brand">
+            <img src="${logoUrl}" alt="Lovely Cargo" class="logo" />
+            <div class="brand-text">
+              <div class="brand-name">Lovely Cargo Platform</div>
+              <div class="brand-subtitle">Super Admin Dashboard Report</div>
+            </div>
+          </div>
+          <div class="report-meta">
+            <div><span class="label">Generated At:</span> ${htmlEscape(
+              new Date().toLocaleString()
+            )}</div>
+            <div><span class="label">Generated By:</span> ${htmlEscape(
+              user?.full_name || "Super Admin"
+            )}</div>
+            <div><span class="label">Report Period:</span> ${htmlEscape(
+              `${range.start} → ${range.end} (${getPeriodLabel(
+                selectedPeriod
+              )})`
+            )}</div>
+          </div>
+        </div>
+      `;
+
+      // Key metrics as a compact summary table
+      const metricsTableRows = superAdminStats
+        .map(
+          (stat) => `
+            <tr>
+              <td>${htmlEscape(stat.title)}</td>
+              <td class="metric-value">${htmlEscape(stat.value)}</td>
+              <td>${htmlEscape(stat.description)}</td>
+            </tr>
+          `
+        )
+        .join("");
+
+      const keyMetricsHtml = `
+        <h2 class="section-title">Key Metrics Summary</h2>
+        <table class="data-table metrics-table">
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Value</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${metricsTableRows}
+          </tbody>
+        </table>
+      `;
+
+      // =======================
+      // Charts & analytics data
+      // =======================
+
+      // Revenue trends (daily & monthly)
+      if (charts.revenue_trends?.daily_revenue?.length) {
+        pushTableSection(
+          "Revenue Trends - Daily",
+          charts.revenue_trends.daily_revenue
+        );
+      }
+
+      if (charts.revenue_trends?.monthly_revenue?.length) {
+        pushTableSection(
+          "Revenue Trends - Monthly",
+          charts.revenue_trends.monthly_revenue
+        );
+      }
+
+      if (charts.revenue_trends?.revenue_by_payment_method) {
+        const paymentData = Object.entries(
+          charts.revenue_trends.revenue_by_payment_method
+        ).map(([method, revenue]) => ({
+          payment_method: method,
+          revenue,
+        }));
+        pushTableSection("Revenue by Payment Method", paymentData);
+      }
+
+      // Usage trends
+      if (charts.usage_trends?.user_registrations?.length) {
+        pushTableSection(
+          "Usage Trends - User Registrations",
+          charts.usage_trends.user_registrations
+        );
+      }
+
+      if (charts.usage_trends?.system_usage?.length) {
+        pushTableSection(
+          "Usage Trends - System Usage",
+          charts.usage_trends.system_usage
+        );
+      }
+
+      // Users distribution
+      if (charts.users_distribution?.users_by_role) {
+        const roleData = Object.entries(
+          charts.users_distribution.users_by_role
+        ).map(([role, count]) => ({
+          role,
+          count,
+        }));
+        pushTableSection("Users by Role", roleData);
+      }
+
+      if (charts.users_distribution?.users_by_status) {
+        const statusData = Object.entries(
+          charts.users_distribution.users_by_status
+        ).map(([status, count]) => ({
+          status,
+          count,
+        }));
+        pushTableSection("Users by Status", statusData);
+      }
+
+      if (charts.users_distribution?.users_by_business_type) {
+        const businessData = Object.entries(
+          charts.users_distribution.users_by_business_type
+        ).map(([type, count]) => ({
+          business_type: type,
+          count,
+        }));
+        pushTableSection("Users by Business Type", businessData);
+      }
+
+      // Cargo & districts
+      if (charts.cargo_by_branch?.length) {
+        pushTableSection("Cargo by Branch", charts.cargo_by_branch);
+      }
+
+      if (charts.cargo_status_distribution) {
+        const statusData = Object.entries(
+          charts.cargo_status_distribution
+        ).map(([status, value]) => ({
+          status: String(status).replace(/_/g, " "),
+          total: value,
+        }));
+        pushTableSection("Cargo Status Distribution", statusData);
+      }
+
+      if (charts.top_districts?.length) {
+        pushTableSection("Top Districts", charts.top_districts);
+      }
+
+      // Vehicles by branch
+      if (charts.vehicles_by_branch?.length) {
+        pushTableSection("Vehicles by Branch", charts.vehicles_by_branch);
+      }
+
+      // =======================
+      // Tables & logs
+      // =======================
+
+      if (tables.pending_approvals?.length) {
+        pushTableSection("Pending Approvals", tables.pending_approvals);
+      }
+
+      // NOTE: System alerts intentionally not exported per requirement
+
+      if (tables.recent_deliveries?.length) {
+        pushTableSection("Recent Deliveries", tables.recent_deliveries);
+      }
+
+      if (tables.financial_transactions?.length) {
+        pushTableSection(
+          "Financial Transactions",
+          tables.financial_transactions
+        );
+      }
+
+      if (recentLogs.length) {
+        pushTableSection("Recent Logs / Activities", recentLogs);
+      }
+
+      // =======================
+      // System health & meta
+      // =======================
+
+      const systemHealth: any = (dashboardData?.data as any)?.system_health;
+      if (systemHealth?.api_performance) {
+        pushTableSection("System Health - API Performance", [
+          systemHealth.api_performance,
+        ]);
+      }
+      if (systemHealth?.database_metrics) {
+        pushTableSection("System Health - Database Metrics", [
+          systemHealth.database_metrics,
+        ]);
+      }
+      if (systemHealth?.server_resources) {
+        pushTableSection("System Health - Server Resources", [
+          systemHealth.server_resources,
+        ]);
+      }
+
+      const meta: any = (dashboardData as any)?.meta;
+      if (meta) {
+        pushTableSection("Meta", [meta]);
+      }
+
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <title>Super Admin Dashboard Report</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                font-size: 13px;
+                color: #111827;
+                background-color: #ffffff;
+              }
+              .report-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px 16px 8px 16px;
+                border-radius: 12px;
+                background: linear-gradient(90deg, #4f46e5, #7c3aed, #0ea5e9);
+                color: #ffffff;
+                margin-bottom: 16px;
+              }
+              .report-brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+              }
+              .logo {
+                width: 40px;
+                height: 40px;
+                border-radius: 999px;
+                border: 2px solid rgba(255,255,255,0.6);
+                object-fit: contain;
+                background-color: #ffffff;
+              }
+              .brand-name {
+                font-size: 16px;
+                font-weight: 700;
+              }
+              .brand-subtitle {
+                font-size: 13px;
+                opacity: 0.9;
+              }
+              .report-meta {
+                text-align: right;
+                font-size: 11px;
+                line-height: 1.4;
+              }
+              .report-meta .label {
+                font-weight: 600;
+              }
+              .section-title {
+                margin: 18px 0 6px 0;
+                font-size: 14px;
+                font-weight: 600;
+                color: #111827;
+              }
+              table.data-table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 12px;
+              }
+              table.data-table th,
+              table.data-table td {
+                border: 1px solid #e5e7eb;
+                padding: 6px 8px;
+                text-align: left;
+                vertical-align: top;
+              }
+              table.data-table th {
+                background-color: #f3f4f6;
+                font-weight: 600;
+              }
+              table.data-table tr:nth-child(even) td {
+                background-color: #fafafa;
+              }
+              table.metrics-table th:nth-child(2),
+              table.metrics-table td.metric-value {
+                text-align: right;
+                font-weight: 600;
+                color: #047857;
+              }
+            </style>
+          </head>
+          <body>
+            ${headerHtml}
+            ${keyMetricsHtml}
+            ${sections.join("")}
+          </body>
+        </html>
+      `;
+
+      const blob = new Blob([fullHtml], {
+        type: "application/vnd.ms-excel",
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `super-admin-report-${
         new Date().toISOString().split("T")[0]
-      }.json`;
+      }.xls`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      customToast.success("System report exported successfully");
+      customToast.success("Styled Excel report exported successfully");
     } catch (error) {
-      customToast.error("Failed to export report");
+      customToast.error("Failed to export Excel report");
     }
   };
 
