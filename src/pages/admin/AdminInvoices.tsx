@@ -30,10 +30,8 @@ import {
   Clock,
   AlertCircle,
   MoreHorizontal,
-  MapPin,
   ChevronLeft,
   ChevronRight,
-  Plus,
   Edit,
 } from "lucide-react";
 import {
@@ -44,15 +42,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  useAllInvoices,
-  useUpdateInvoiceStatus,
-  useGenerateInvoice,
-} from "@/lib/api/hooks/invoiceHooks";
+import { useAllInvoices, useUpdateInvoiceStatus } from "@/lib/api/hooks/invoiceHooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import ModernModel from "@/components/modal/ModernModel";
-import NewInvoiceModal from "@/components/modals/NewInvoiceModal";
 import EditInvoiceStatusModal from "@/components/modals/EditInvoiceStatusModal";
 import { InvoiceStatus, PaymentMethod } from "@/types/shared";
 import { InvoiceDetailModal } from "@/components/ui/InvoiceDetailModal";
@@ -108,7 +101,6 @@ export default function AdminInvoices() {
   const [pageSize, setPageSize] = useState(10);
 
   // Modal states
-  const [isNewInvoiceModalOpen, setIsNewInvoiceModalOpen] = useState(false);
   const [isEditStatusModalOpen, setIsEditStatusModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isInvoiceDetailModalOpen, setIsInvoiceDetailModalOpen] =
@@ -127,7 +119,6 @@ export default function AdminInvoices() {
   });
 
   const updateInvoiceStatusMutation = useUpdateInvoiceStatus();
-  const generateInvoiceMutation = useGenerateInvoice();
 
   // Extract data and pagination
   const invoices = useMemo(() => {
@@ -218,10 +209,6 @@ export default function AdminInvoices() {
   const handleEditStatus = (invoice: any) => {
     setSelectedInvoice(invoice);
     setIsEditStatusModalOpen(true);
-  };
-
-  const handleCreateNewInvoice = () => {
-    setIsNewInvoiceModalOpen(true);
   };
 
   const formatCurrency = (amount: number, currency: string = "RWF") => {
@@ -411,13 +398,6 @@ export default function AdminInvoices() {
               className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
             />
             Refresh
-          </Button>
-          <Button
-            className="bg-gradient-primary hover:bg-primary-hover"
-            onClick={handleCreateNewInvoice}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Invoice
           </Button>
         </div>
       </div>
@@ -784,23 +764,6 @@ export default function AdminInvoices() {
           </CardContent>
         </Card>
       )}
-
-      {/* New Invoice Modal */}
-      <ModernModel
-        isOpen={isNewInvoiceModalOpen}
-        onClose={() => setIsNewInvoiceModalOpen(false)}
-        title="Create New Invoice"
-        loading={generateInvoiceMutation.isPending}
-      >
-        <NewInvoiceModal
-          isOpen={isNewInvoiceModalOpen}
-          onClose={() => setIsNewInvoiceModalOpen(false)}
-          onSuccess={(invoice) => {
-            toast.success("Invoice created successfully!");
-            refetch();
-          }}
-        />
-      </ModernModel>
 
       {/* Invoice Detail Modal */}
       <InvoiceDetailModal
