@@ -325,6 +325,16 @@
     </script>
 
     <!-- Microsoft Clarity User Journey Tracking -->
+    <!--
+      Disabled because the external Clarity script was throwing
+      'The deferred DOM Node could not be resolved to a valid node'
+      and 'Cannot read properties of null (reading "addEventListener")'
+      errors in production (inside share-modal.js / vendor bundle),
+      which are outside of our application code.
+
+      To re‑enable Clarity after they fix the issue, remove this comment
+      block and restore the script tag below.
+
     <script type="text/javascript">
       (function (c, l, a, r, i, t, y) {
         c[a] =
@@ -339,6 +349,7 @@
         y.parentNode.insertBefore(t, y);
       })(window, document, "clarity", "script", "tjdsuu3jy4");
     </script>
+    -->
   </head>
 
   <body>
