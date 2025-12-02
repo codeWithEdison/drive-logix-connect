@@ -90,7 +90,19 @@ type CargoWithTracking = CargoWithClient & {
   tracking?: TrackingWithRelations;
 };
 
-export const LiveTrackingMap: React.FC = () => {
+export const LiveTrackingMap = () => {
+  // Helper to validate coordinates before passing them to Google Maps
+  const isValidLatLng = (lat: any, lng: any): boolean => {
+    const latNum = typeof lat === "string" ? parseFloat(lat) : lat;
+    const lngNum = typeof lng === "string" ? parseFloat(lng) : lng;
+    return (
+      typeof latNum === "number" &&
+      typeof lngNum === "number" &&
+      Number.isFinite(latNum) &&
+      Number.isFinite(lngNum)
+    );
+  };
+
   const { user } = useAuth();
   const mapRef = useRef<HTMLDivElement>(null);
   const [selectedCargo, setSelectedCargo] = useState<CargoWithTracking | null>(
@@ -326,16 +338,34 @@ export const LiveTrackingMap: React.FC = () => {
 
       // Get pickup and destination from cargo data or tracking
       const cargoAny = cargo as any;
-      const pickupLat = cargoAny.pickup_latitude || cargoAny.pickup_address_lat;
-      const pickupLng =
+      const rawPickupLat =
+        cargoAny.pickup_latitude || cargoAny.pickup_address_lat;
+      const rawPickupLng =
         cargoAny.pickup_longitude || cargoAny.pickup_address_lng;
-      const destLat =
+      const rawDestLat =
         cargoAny.destination_latitude || cargoAny.destination_address_lat;
-      const destLng =
+      const rawDestLng =
         cargoAny.destination_longitude || cargoAny.destination_address_lng;
 
+      const pickupLat =
+        rawPickupLat !== undefined && rawPickupLat !== null
+          ? parseFloat(rawPickupLat)
+          : undefined;
+      const pickupLng =
+        rawPickupLng !== undefined && rawPickupLng !== null
+          ? parseFloat(rawPickupLng)
+          : undefined;
+      const destLat =
+        rawDestLat !== undefined && rawDestLat !== null
+          ? parseFloat(rawDestLat)
+          : undefined;
+      const destLng =
+        rawDestLng !== undefined && rawDestLng !== null
+          ? parseFloat(rawDestLng)
+          : undefined;
+
       // Add pickup marker (from cargo data or first history point)
-      if (pickupLat && pickupLng) {
+      if (isValidLatLng(pickupLat, pickupLng)) {
         MapService.addMarker({
           id: "pickup",
           position: { lat: pickupLat, lng: pickupLng },
@@ -344,16 +374,21 @@ export const LiveTrackingMap: React.FC = () => {
         });
       } else if (locationHistory.length > 0) {
         const pickupPoint = locationHistory[0];
-        MapService.addMarker({
-          id: "pickup",
-          position: { lat: pickupPoint.latitude, lng: pickupPoint.longitude },
-          title: "Pickup Location",
-          icon: MapService.createMarkerIcon("#EF4444", "pickup"),
-        });
+        if (isValidLatLng(pickupPoint.latitude, pickupPoint.longitude)) {
+          MapService.addMarker({
+            id: "pickup",
+            position: {
+              lat: pickupPoint.latitude,
+              lng: pickupPoint.longitude,
+            },
+            title: "Pickup Location",
+            icon: MapService.createMarkerIcon("#EF4444", "pickup"),
+          });
+        }
       }
 
       // Add destination marker
-      if (destLat && destLng) {
+      if (isValidLatLng(destLat, destLng)) {
         MapService.addMarker({
           id: "destination",
           position: { lat: destLat, lng: destLng },
@@ -362,15 +397,19 @@ export const LiveTrackingMap: React.FC = () => {
         });
       } else if (locationHistory.length > 0) {
         const destinationPoint = locationHistory[locationHistory.length - 1];
-        MapService.addMarker({
-          id: "destination",
-          position: {
-            lat: destinationPoint.latitude,
-            lng: destinationPoint.longitude,
-          },
-          title: "Destination",
-          icon: MapService.createMarkerIcon("#10B981", "delivery"),
-        });
+        if (
+          isValidLatLng(destinationPoint.latitude, destinationPoint.longitude)
+        ) {
+          MapService.addMarker({
+            id: "destination",
+            position: {
+              lat: destinationPoint.latitude,
+              lng: destinationPoint.longitude,
+            },
+            title: "Destination",
+            icon: MapService.createMarkerIcon("#10B981", "delivery"),
+          });
+        }
       }
 
       // Add vehicle marker from GPS location (priority) or tracking history
@@ -378,67 +417,86 @@ export const LiveTrackingMap: React.FC = () => {
         gpsLocation?.gps_location?.latitude &&
         gpsLocation?.gps_location?.longitude
       ) {
-        const vehiclePosition = {
-          lat: gpsLocation.gps_location.latitude,
-          lng: gpsLocation.gps_location.longitude,
-        };
+        const gpsLat = gpsLocation.gps_location.latitude;
+        const gpsLng = gpsLocation.gps_location.longitude;
+        if (!isValidLatLng(gpsLat, gpsLng)) {
+          console.warn("Skipping vehicle marker due to invalid GPS coords", {
+            gpsLat,
+            gpsLng,
+          });
+        } else {
+          const vehiclePosition = {
+            lat: gpsLat,
+            lng: gpsLng,
+          };
 
-        const vehicleMarker = MapService.addMarker({
-          id: "vehicle",
-          position: vehiclePosition,
-          title: "Vehicle Location",
-          icon: {
-            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            scale: 6,
-            fillColor: "#3B82F6",
-            fillOpacity: 1,
-            strokeColor: "#ffffff",
-            strokeWeight: 2,
-            rotation: gpsLocation.gps_location.heading_degrees || 0,
-          } as any,
-        });
-        vehicleMarkerRef.current = vehicleMarker;
+          const vehicleMarker = MapService.addMarker({
+            id: "vehicle",
+            position: vehiclePosition,
+            title: "Vehicle Location",
+            icon: {
+              path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+              scale: 6,
+              fillColor: "#3B82F6",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 2,
+              rotation: gpsLocation.gps_location.heading_degrees || 0,
+            } as any,
+          });
+          vehicleMarkerRef.current = vehicleMarker;
 
-        // Draw route from pickup to vehicle if we have both
-        if (pickupLat && pickupLng) {
-          const routePath = [
-            { lat: pickupLat, lng: pickupLng },
-            vehiclePosition,
-          ];
-          if (destLat && destLng) {
-            routePath.push({ lat: destLat, lng: destLng });
-          }
-          MapService.drawRouteFromTracking(
-            "route",
-            routePath.map((p, index) => ({
-              id: `route-${index}`,
-              latitude: p.lat,
-              longitude: p.lng,
-              recorded_at: new Date().toISOString(),
-            })),
-            {
-              strokeColor: "#3B82F6",
-              strokeOpacity: 0.6,
-              strokeWeight: 3,
+          // Draw route from pickup to vehicle if we have both
+          if (isValidLatLng(pickupLat, pickupLng)) {
+            const routePath: { lat: number; lng: number }[] = [
+              { lat: pickupLat!, lng: pickupLng! },
+              vehiclePosition,
+            ];
+            if (isValidLatLng(destLat, destLng)) {
+              routePath.push({ lat: destLat!, lng: destLng! });
             }
-          );
+            MapService.drawRouteFromTracking(
+              "route",
+              routePath.map((p, index) => ({
+                id: `route-${index}`,
+                latitude: p.lat,
+                longitude: p.lng,
+                recorded_at: new Date().toISOString(),
+              })),
+              {
+                strokeColor: "#3B82F6",
+                strokeOpacity: 0.6,
+                strokeWeight: 3,
+              }
+            );
+          }
         }
       } else if (locationHistory.length > 1) {
         // Fallback to tracking history if GPS not available
         const currentPoint = locationHistory[locationHistory.length - 1];
-        MapService.addMarker({
-          id: "current",
-          position: { lat: currentPoint.latitude, lng: currentPoint.longitude },
-          title: "Current Location",
-          icon: MapService.createMarkerIcon("#3B82F6", "current"),
-        });
+        if (isValidLatLng(currentPoint.latitude, currentPoint.longitude)) {
+          MapService.addMarker({
+            id: "current",
+            position: {
+              lat: currentPoint.latitude,
+              lng: currentPoint.longitude,
+            },
+            title: "Current Location",
+            icon: MapService.createMarkerIcon("#3B82F6", "current"),
+          });
+        }
 
-        // Draw route from history
-        MapService.drawRouteFromTracking("route", locationHistory, {
-          strokeColor: "#3B82F6",
-          strokeOpacity: 0.8,
-          strokeWeight: 4,
-        });
+        // Draw route from history, but only keep valid points
+        const cleanedHistory = locationHistory.filter((p: any) =>
+          isValidLatLng(p.latitude, p.longitude)
+        );
+        if (cleanedHistory.length > 1) {
+          MapService.drawRouteFromTracking("route", cleanedHistory, {
+            strokeColor: "#3B82F6",
+            strokeOpacity: 0.8,
+            strokeWeight: 4,
+          });
+        }
       }
 
       // Fit map to show all markers

@@ -260,10 +260,17 @@ export class MapService {
     if (markersToFit.length === 0) return;
 
     markersToFit.forEach((marker) => {
-      bounds.extend(marker!.getPosition()!);
+      const pos = marker!.getPosition();
+      // Guard against markers without a valid position to avoid InvalidValueError
+      if (pos) {
+        bounds.extend(pos);
+      }
     });
 
-    this.mapInstance.fitBounds(bounds, padding);
+    // Only fit bounds if we actually extended them with at least one position
+    if (!bounds.isEmpty()) {
+      this.mapInstance.fitBounds(bounds, padding);
+    }
   }
 
   // Center map on location
