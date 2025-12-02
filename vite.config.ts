@@ -22,41 +22,16 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 1000,
+      // Use Vite's default chunking strategy for both web and native builds.
+      // Custom manualChunks can sometimes introduce circular evaluation order
+      // issues in complex apps, leading to runtime errors like
+      // "Cannot access 'X' before initialization" in vendor bundles.
       rollupOptions: isNativeBuild
         ? {
             external: (id) =>
               id.startsWith("@capacitor/") && !id.includes("@capacitor/core"),
-            output: {
-              // For mobile builds, use simpler chunking to avoid circular dependencies
-              manualChunks: undefined, // Let Vite handle chunking automatically
-            },
           }
-        : {
-            output: {
-              manualChunks: (id) => {
-                // Split vendor chunks for web builds
-                if (id.includes('node_modules')) {
-                  if (id.includes('react') || id.includes('react-dom')) {
-                    return 'react-vendor';
-                  }
-                  if (id.includes('@tanstack/react-query')) {
-                    return 'query-vendor';
-                  }
-                  if (id.includes('@radix-ui')) {
-                    return 'radix-vendor';
-                  }
-                  if (id.includes('framer-motion')) {
-                    return 'motion-vendor';
-                  }
-                  if (id.includes('socket.io')) {
-                    return 'socket-vendor';
-                  }
-                  // Other node_modules
-                  return 'vendor';
-                }
-              },
-            },
-          },
+        : {},
     },
     define: {
       // Define Capacitor environment variables
