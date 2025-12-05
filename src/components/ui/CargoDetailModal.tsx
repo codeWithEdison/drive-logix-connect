@@ -7,6 +7,7 @@ import { RejectAssignmentModal } from "@/components/modals/RejectAssignmentModal
 import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
 import { RatingModal } from "@/components/ui/RatingModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { UserRole, CargoImageType, CargoStatus } from "@/types/shared";
 import {
   useBulkUploadImages,
@@ -246,6 +247,7 @@ export function CargoDetailModal({
 }: CargoDetailModalProps) {
   // Get user from auth context to compare roles
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   // Use auth context role as the primary role, fallback to prop if needed
   const effectiveRole = user?.role || userRole;
@@ -358,7 +360,7 @@ export function CargoDetailModal({
       const diffMs = expiry.getTime() - now.getTime();
 
       if (diffMs <= 0) {
-        setCountdown("Expired");
+        setCountdown(t("assignment.expired") || "Expired");
         return;
       }
 
@@ -457,18 +459,18 @@ export function CargoDetailModal({
         cargo.delivery_assignment?.id || cargo.assignmentId || cargo.id,
         reason
       );
-      
+
       // Invalidate queries
       invalidateCargoQueries(cargo.id);
-      
+
       toast({
-        title: "Assignment Rejected",
-        description: "The assignment has been rejected successfully.",
+        title: t("assignment.rejectedSuccessfully"),
+        description: t("assignment.assignmentRejected"),
         variant: "default",
       });
-      
+
       setIsRejectModalOpen(false);
-      
+
       // Close modal if configured
       if (closeOnSuccess) {
         setTimeout(() => {
@@ -478,7 +480,7 @@ export function CargoDetailModal({
     } catch (error: any) {
       console.error("Failed to reject assignment:", error);
       toast({
-        title: "Rejection Failed",
+        title: t("assignment.failedToReject"),
         description:
           error?.response?.data?.message ||
           error?.message ||
@@ -515,15 +517,17 @@ export function CargoDetailModal({
       await updateCargoStatus.mutateAsync({
         id: data.cargoId,
         status: CargoStatus.PICKED_UP,
-        notes: "Cargo picked up successfully",
+        notes: t("delivery.pickupConfirmed") || "Cargo picked up successfully",
       });
 
       // Invalidate queries to refresh data
       invalidateCargoQueries(data.cargoId);
 
       toast({
-        title: "Pickup Confirmed",
-        description: "Cargo has been marked as picked up successfully.",
+        title: t("delivery.pickupConfirmed"),
+        description:
+          t("delivery.pickupConfirmedDescription") ||
+          "Cargo has been marked as picked up successfully.",
         variant: "default",
       });
 
@@ -543,11 +547,12 @@ export function CargoDetailModal({
         error?.response?.data?.error?.message ||
         error?.response?.data?.message ||
         error?.message ||
+        t("errors.uploadFailed") ||
         "Failed to upload images or update cargo status";
 
       // Show user-friendly error message using toast
       toast({
-        title: "Upload Failed",
+        title: t("errors.uploadFailed"),
         description: errorMessage,
         variant: "destructive",
       });
@@ -579,8 +584,9 @@ export function CargoDetailModal({
       effectiveRole !== UserRole.SUPER_ADMIN
     ) {
       toast({
-        title: "Permission Denied",
+        title: t("common.permissionDenied") || "Permission Denied",
         description:
+          t("delivery.ratingPermissionDenied") ||
           "Only clients, admins, and super admins can rate deliveries.",
         variant: "destructive",
       });
@@ -597,8 +603,9 @@ export function CargoDetailModal({
       invalidateCargoQueries(cargo.id);
 
       toast({
-        title: "Rating Submitted",
-        description: "Thank you for your feedback!",
+        title: t("delivery.ratingSubmitted") || "Rating Submitted",
+        description:
+          t("delivery.thankYouForFeedback") || "Thank you for your feedback!",
         variant: "default",
       });
 
@@ -617,10 +624,11 @@ export function CargoDetailModal({
         error?.response?.data?.error?.message ||
         error?.response?.data?.message ||
         error?.message ||
+        t("delivery.ratingFailed") ||
         "Failed to submit rating";
 
       toast({
-        title: "Rating Failed",
+        title: t("delivery.ratingFailed"),
         description: errorMessage,
         variant: "destructive",
       });
@@ -652,15 +660,18 @@ export function CargoDetailModal({
       await updateCargoStatus.mutateAsync({
         id: data.cargoId,
         status: CargoStatus.DELIVERED,
-        notes: "Cargo delivered successfully",
+        notes:
+          t("delivery.deliveryCompleted") || "Cargo delivered successfully",
       });
 
       // Invalidate queries to refresh data
       invalidateCargoQueries(data.cargoId);
 
       toast({
-        title: "Delivery Confirmed",
-        description: "Cargo has been marked as delivered successfully.",
+        title: t("delivery.deliveryConfirmed") || "Delivery Confirmed",
+        description:
+          t("delivery.deliveryConfirmedDescription") ||
+          "Cargo has been marked as delivered successfully.",
         variant: "default",
       });
 
@@ -683,11 +694,12 @@ export function CargoDetailModal({
         error?.response?.data?.error?.message ||
         error?.response?.data?.message ||
         error?.message ||
+        t("errors.uploadFailed") ||
         "Failed to upload images or update cargo status";
 
       // Show user-friendly error message using toast
       toast({
-        title: "Upload Failed",
+        title: t("errors.uploadFailed"),
         description: errorMessage,
         variant: "destructive",
       });
@@ -703,8 +715,10 @@ export function CargoDetailModal({
         // Invalidate queries to refresh data
         invalidateCargoQueries(cargo.id);
         toast({
-          title: "Invoice Generated",
-          description: "Invoice has been generated successfully.",
+          title: t("invoice.generated") || "Invoice Generated",
+          description:
+            t("invoice.generatedSuccessfully") ||
+            "Invoice has been generated successfully.",
           variant: "default",
         });
         // Close modal if configured
@@ -720,10 +734,11 @@ export function CargoDetailModal({
       }
     } catch (error: any) {
       toast({
-        title: "Failed to Generate Invoice",
+        title: t("invoice.generationFailed") || "Failed to Generate Invoice",
         description:
           error?.response?.data?.message ||
           error?.message ||
+          t("invoice.generationFailedDescription") ||
           "Failed to generate invoice. Please try again.",
         variant: "destructive",
       });
@@ -735,18 +750,22 @@ export function CargoDetailModal({
       await updateCargoStatus.mutateAsync({
         id: cargo.id,
         status: newStatus as CargoStatus,
-        notes: `Status changed to ${newStatus}`,
+        notes:
+          t("cargo.statusChanged", { status: newStatus }) ||
+          `Status changed to ${newStatus}`,
       });
-      
+
       // Invalidate queries to refresh data
       invalidateCargoQueries(cargo.id);
-      
+
       toast({
-        title: "Status Updated",
-        description: `Cargo status has been updated to ${newStatus}.`,
+        title: t("cargo.statusUpdated"),
+        description:
+          t("cargo.statusUpdatedDescription", { status: newStatus }) ||
+          `Cargo status has been updated to ${newStatus}.`,
         variant: "default",
       });
-      
+
       // Close modal if configured
       if (closeOnSuccess) {
         setTimeout(() => {
@@ -756,10 +775,11 @@ export function CargoDetailModal({
     } catch (error: any) {
       console.error(`Failed to change status to ${newStatus}:`, error);
       toast({
-        title: "Status Update Failed",
+        title: t("cargo.statusUpdateFailed") || "Status Update Failed",
         description:
           error?.response?.data?.message ||
           error?.message ||
+          t("cargo.statusUpdateFailedDescription") ||
           "Failed to update status. Please try again.",
         variant: "destructive",
       });
@@ -776,24 +796,29 @@ export function CargoDetailModal({
         actions.push(
           {
             key: "generate-invoice",
-            label: "Review and Invoicing",
-            description: " review and invoicing",
+            label: t("cargo.reviewAndInvoicing") || "Review and Invoicing",
+            description:
+              t("cargo.reviewAndInvoicingDescription") ||
+              "Review and invoicing",
             icon: <Package className="h-4 w-4 mr-2" />,
             variant: "default" as const,
             onClick: () => handleGenerateInvoice(),
           },
           {
             key: "mark-accepted",
-            label: "Mark as Accepted",
-            description: "Manually mark cargo as accepted",
+            label: t("cargo.markAsAccepted") || "Mark as Accepted",
+            description:
+              t("cargo.markAsAcceptedDescription") ||
+              "Manually mark cargo as accepted",
             icon: <CheckCircle className="h-4 w-4 mr-2" />,
             variant: "outline" as const,
             onClick: () => handleStatusChange("accepted"),
           },
           {
             key: "cancel-cargo",
-            label: "Cancel Cargo",
-            description: "Cancel this cargo request",
+            label: t("cargo.cancelCargo"),
+            description:
+              t("cargo.cancelCargoDescription") || "Cancel this cargo request",
             icon: <X className="h-4 w-4 mr-2" />,
             variant: "outline" as const,
             className:
@@ -820,16 +845,19 @@ export function CargoDetailModal({
         actions.push(
           {
             key: "assign-driver",
-            label: "Assign Driver",
-            description: "Assign driver and vehicle to this cargo",
+            label: t("cargo.assignDriver") || "Assign Driver",
+            description:
+              t("cargo.assignDriverDescription") ||
+              "Assign driver and vehicle to this cargo",
             icon: <User className="h-4 w-4 mr-2" />,
             variant: "default" as const,
             onClick: () => onOpenAssignmentModal?.(cargo.id),
           },
           {
             key: "cancel-cargo",
-            label: "Cancel Cargo",
-            description: "Cancel this cargo request",
+            label: t("cargo.cancelCargo"),
+            description:
+              t("cargo.cancelCargoDescription") || "Cancel this cargo request",
             icon: <X className="h-4 w-4 mr-2" />,
             variant: "outline" as const,
             className:
@@ -1069,31 +1097,31 @@ export function CargoDetailModal({
   const getStatusDescription = (status: string) => {
     switch (status) {
       case "pending":
-        return "pending";
+        return t("cargoTable.status.pending");
       case "quoted":
-        return "Invoice Sent";
+        return t("cargoTable.status.quoted");
       case "accepted":
-        return "Invoice Paid";
+        return t("cargoTable.status.accepted");
       case "assigned":
-        return "Driver Assigned";
+        return t("cargoTable.status.assigned");
       case "picked_up":
-        return "Cargo Collected";
+        return t("cargoTable.status.pickedUp");
       case "in_transit":
-        return "In Transit";
+        return t("cargoTable.status.inTransit");
       case "delivered":
-        return "Delivered";
+        return t("cargoTable.status.delivered");
       case "cancelled":
-        return "Cancelled";
+        return t("cargoTable.status.cancelled");
       case "disputed":
-        return "Disputed";
+        return t("cargoTable.status.disputed");
       case "active":
-        return "Active";
+        return t("status.active") || "Active";
       case "completed":
-        return "Completed";
+        return t("status.completed");
       case "transit":
-        return "In Transit";
+        return t("cargoTable.status.inTransit");
       default:
-        return status;
+        return t(`cargoTable.status.${status}`) || status;
     }
   };
 
@@ -1104,7 +1132,7 @@ export function CargoDetailModal({
     <ModernModel
       isOpen={isOpen}
       onClose={onClose}
-      title={`Cargo ${cargo.cargo_number || cargo.id}`}
+      title={t("cargo.cargoDetails") + ` - ${cargo.cargo_number || cargo.id}`}
     >
       <div className="space-y-6">
         {/* Header Info */}
@@ -1126,7 +1154,8 @@ export function CargoDetailModal({
               countdown && (
                 <div className="mt-2">
                   <p className="text-xs text-gray-500">
-                    Response required within:{" "}
+                    {t("assignment.responseRequiredWithin") ||
+                      "Response required within:"}{" "}
                     <span
                       className={`font-semibold ${
                         countdown === "Expired" || isAssignmentExpired()
@@ -1160,12 +1189,15 @@ export function CargoDetailModal({
                 <div className="flex items-center gap-3 mb-4">
                   <Clock className="h-5 w-5 text-orange-600" />
                   <h4 className="font-semibold text-orange-900">
-                    Assignment Response Required
+                    {t("assignment.responseRequired") ||
+                      "Assignment Response Required"}
                   </h4>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700">Status:</span>
+                    <span className="text-sm text-gray-700">
+                      {t("common.status")}:
+                    </span>
                     {getAssignmentStatusBadge(
                       cargo.delivery_assignment?.assignment_status ||
                         cargo.assignmentStatus
@@ -1176,11 +1208,11 @@ export function CargoDetailModal({
                     countdown && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">
-                          Time Remaining:
+                          {t("assignment.timeRemaining") || "Time Remaining"}:
                         </span>
                         <span
                           className={`text-sm font-semibold ${
-                            countdown === "Expired"
+                            countdown === (t("assignment.expired") || "Expired")
                               ? "text-red-600"
                               : "text-orange-600"
                           }`}
@@ -1193,7 +1225,7 @@ export function CargoDetailModal({
                     cargo.assignmentNotes) && (
                     <div>
                       <p className="text-xs text-gray-600 font-medium mb-1">
-                        Assignment Notes:
+                        {t("assignment.notes") || "Assignment Notes"}:
                       </p>
                       <p className="text-sm text-gray-800 bg-white p-2 rounded border">
                         {cargo.delivery_assignment?.notes ||
@@ -1215,7 +1247,7 @@ export function CargoDetailModal({
               </div>
               <div>
                 <h4 className="text-sm font-bold text-blue-900 mb-1">
-                  Current Status
+                  {t("dashboard.currentStatus")}
                 </h4>
                 <p className="text-sm text-blue-800 leading-relaxed">
                   {getStatusDescription(cargo.status)}
@@ -1232,7 +1264,7 @@ export function CargoDetailModal({
               <div className="flex items-center gap-3 mb-3">
                 <User className="h-5 w-5 text-blue-600" />
                 <h4 className="font-semibold text-gray-900">
-                  Client Information
+                  {t("cargo.clientInformation") || "Client Information"}
                 </h4>
               </div>
               <div className="space-y-3">
@@ -1242,7 +1274,7 @@ export function CargoDetailModal({
                     <div className="flex items-center gap-2 mb-1">
                       <Building className="h-4 w-4 text-blue-600" />
                       <span className="text-xs font-medium text-blue-600">
-                        COMPANY
+                        {t("common.company") || "COMPANY"}
                       </span>
                     </div>
                     <p className="text-sm font-semibold text-gray-900">
@@ -1254,10 +1286,10 @@ export function CargoDetailModal({
                 {/* Client Name */}
                 <div>
                   <p className="text-xs text-gray-500 font-medium">
-                    Client Name
+                    {t("common.client")} {t("common.name")}
                   </p>
                   <p className="text-sm font-semibold text-gray-900">
-                    {cargo.clientCompany || "N/A"}
+                    {cargo.clientCompany || t("common.notAvailable")}
                   </p>
                 </div>
 
@@ -1293,21 +1325,21 @@ export function CargoDetailModal({
                 <div className="flex items-center gap-3 mb-3">
                   <Truck className="h-5 w-5 text-green-600" />
                   <h4 className="font-semibold text-gray-900">
-                    Driver Information
+                    {t("driver.driverDetails")}
                   </h4>
                 </div>
                 <div className="space-y-3">
                   {/* Driver Name */}
                   <div>
                     <p className="text-xs text-gray-500 font-medium">
-                      Driver Name
+                      {t("common.driver")} {t("common.name")}
                     </p>
                     <p className="text-sm font-semibold text-gray-900">
                       {(cargo as any).delivery_assignment?.driver?.user
                         ?.full_name ||
                         cargo.driverName ||
                         cargo.driver ||
-                        "N/A"}
+                        t("common.notAvailable")}
                     </p>
                   </div>
 
@@ -1330,7 +1362,7 @@ export function CargoDetailModal({
                       ?.license_number) && (
                     <div>
                       <p className="text-xs text-gray-500 font-medium">
-                        License Number
+                        {t("driver.licenseNumber")}
                       </p>
                       <p className="text-sm text-gray-900">
                         {(cargo as any).delivery_assignment?.driver
@@ -1406,7 +1438,7 @@ export function CargoDetailModal({
               <div className="flex items-center gap-3 mb-3">
                 <Truck className="h-5 w-5 text-purple-600" />
                 <h4 className="font-semibold text-gray-900">
-                  Vehicle Information
+                  {t("dashboard.vehicleInformation")}
                 </h4>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -1415,7 +1447,7 @@ export function CargoDetailModal({
                     ?.plate_number) && (
                   <div>
                     <p className="text-xs text-gray-500 font-medium">
-                      Plate Number
+                      {t("vehicle.plateNumber")}
                     </p>
                     <p className="text-sm font-semibold text-gray-900">
                       {(cargo as any).delivery_assignment?.vehicle
@@ -1447,7 +1479,9 @@ export function CargoDetailModal({
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <Navigation className="h-5 w-5 text-green-600" />
-              <h4 className="font-semibold text-gray-900">Route Details</h4>
+              <h4 className="font-semibold text-gray-900">
+                {t("cargo.routeDetails") || "Route Details"}
+              </h4>
             </div>
             <div className="space-y-4">
               {/* Pickup Location */}
@@ -1455,7 +1489,7 @@ export function CargoDetailModal({
                 <div className="w-3 h-3 bg-green-500 rounded-full mt-1.5"></div>
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 font-medium">
-                    PICKUP LOCATION
+                    {t("tracking.from")}
                   </p>
                   <p className="text-sm font-semibold text-gray-900">
                     {cargo.pickup_location?.name ||
@@ -1472,7 +1506,7 @@ export function CargoDetailModal({
                   {cargo.pickup_location?.operating_hours && (
                     <div className="mt-2 p-2 bg-green-50 rounded-lg">
                       <p className="text-xs text-green-600 font-medium">
-                        Operating Hours:
+                        {t("cargo.operatingHours") || "Operating Hours:"}
                       </p>
                       <p className="text-xs text-green-800">
                         {formatOperatingHours(
@@ -1491,7 +1525,7 @@ export function CargoDetailModal({
                     cargo.pickupContactPhone) && (
                     <div className="mt-2 p-2 bg-green-50 rounded-lg">
                       <p className="text-xs text-gray-600 font-medium">
-                        Contact Person:
+                        {t("common.contactPerson") || "Contact Person:"}
                       </p>
                       <p className="text-xs text-gray-900">
                         {cargo.pickup_location?.contact_person ||
@@ -1526,7 +1560,7 @@ export function CargoDetailModal({
                             }
                           >
                             <Phone className="h-3 w-3" />
-                            Call
+                            {t("common.call")}
                           </Button>
                         </div>
                       )}
@@ -1537,7 +1571,7 @@ export function CargoDetailModal({
                   {cargo.pickup_instructions && (
                     <div className="mt-2 p-2 bg-blue-50 rounded-lg">
                       <p className="text-xs text-blue-600 font-medium">
-                        Instructions:
+                        {t("cargo.pickupInstructions") || "Instructions:"}
                       </p>
                       <p className="text-xs text-blue-800">
                         {cargo.pickup_instructions}
@@ -1556,7 +1590,7 @@ export function CargoDetailModal({
                 <div className="w-3 h-3 bg-red-500 rounded-full mt-1.5"></div>
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 font-medium">
-                    DELIVERY LOCATION
+                    {t("tracking.to")}
                   </p>
                   <p className="text-sm font-semibold text-gray-900">
                     {cargo.destination_location?.name ||
@@ -1573,7 +1607,7 @@ export function CargoDetailModal({
                   {cargo.destination_location?.operating_hours && (
                     <div className="mt-2 p-2 bg-red-50 rounded-lg">
                       <p className="text-xs text-red-600 font-medium">
-                        Operating Hours:
+                        {t("cargo.operatingHours") || "Operating Hours:"}
                       </p>
                       <p className="text-xs text-red-800">
                         {formatOperatingHours(
@@ -1592,7 +1626,7 @@ export function CargoDetailModal({
                     cargo.deliveryContactPhone) && (
                     <div className="mt-2 p-2 bg-red-50 rounded-lg">
                       <p className="text-xs text-gray-600 font-medium">
-                        Contact Person:
+                        {t("common.contactPerson") || "Contact Person:"}
                       </p>
                       <p className="text-xs text-gray-900">
                         {cargo.destination_location?.contact_person ||
@@ -1627,7 +1661,7 @@ export function CargoDetailModal({
                             }
                           >
                             <Phone className="h-3 w-3" />
-                            Call
+                            {t("common.call")}
                           </Button>
                         </div>
                       )}
@@ -1638,7 +1672,7 @@ export function CargoDetailModal({
                   {cargo.delivery_instructions && (
                     <div className="mt-2 p-2 bg-blue-50 rounded-lg">
                       <p className="text-xs text-blue-600 font-medium">
-                        Instructions:
+                        {t("cargo.pickupInstructions") || "Instructions:"}
                       </p>
                       <p className="text-xs text-blue-800">
                         {cargo.delivery_instructions}
@@ -1651,11 +1685,12 @@ export function CargoDetailModal({
               <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
                 <MapPin className="h-4 w-4 text-gray-500" />
                 <span className="text-sm text-gray-600">
-                  Distance: {cargo.distance_km || cargo.distance} km
+                  {t("common.distance")}: {cargo.distance_km || cargo.distance}{" "}
+                  km
                 </span>
                 {cargo.vehicleType && (
                   <span className="text-sm text-gray-600">
-                    • Vehicle: {cargo.vehicleType}
+                    • {t("common.vehicle")}: {cargo.vehicleType}
                   </span>
                 )}
               </div>
@@ -1670,7 +1705,8 @@ export function CargoDetailModal({
               <div className="flex items-center gap-3 mb-4">
                 <ImageIcon className="h-5 w-5 text-indigo-600" />
                 <h4 className="font-semibold text-gray-900">
-                  Cargo Images ({cargoImages.images.length})
+                  {t("cargo.cargoImages") || "Cargo Images"} (
+                  {cargoImages.images.length})
                 </h4>
               </div>
 
@@ -1678,7 +1714,7 @@ export function CargoDetailModal({
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                   <span className="ml-2 text-sm text-gray-600">
-                    Loading images...
+                    {t("common.loadingImages") || "Loading images..."}
                   </span>
                 </div>
               ) : (
@@ -1690,7 +1726,11 @@ export function CargoDetailModal({
                     >
                       <img
                         src={image.image_url}
-                        alt={image.description || "Cargo image"}
+                        alt={
+                          image.description ||
+                          t("cargo.cargoImage") ||
+                          "Cargo image"
+                        }
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
                         loading="lazy"
                       />
@@ -1702,7 +1742,9 @@ export function CargoDetailModal({
                             <p className="font-medium truncate">
                               {image.image_type
                                 ?.replace("_", " ")
-                                .toUpperCase() || "IMAGE"}
+                                .toUpperCase() ||
+                                t("common.image") ||
+                                "IMAGE"}
                             </p>
                             {image.description && (
                               <p className="text-gray-200 truncate text-xs">
@@ -1711,7 +1753,7 @@ export function CargoDetailModal({
                             )}
                             {image.is_primary && (
                               <Badge className="bg-blue-500 text-white text-xs mt-1">
-                                Primary
+                                {t("common.primary") || "Primary"}
                               </Badge>
                             )}
                           </div>
@@ -1738,8 +1780,11 @@ export function CargoDetailModal({
               {cargoImages.total > cargoImages.images.length && (
                 <div className="mt-4 text-center">
                   <p className="text-sm text-gray-500">
-                    Showing {cargoImages.images.length} of {cargoImages.total}{" "}
-                    images
+                    {t("cargo.showingImages", {
+                      current: cargoImages.images.length,
+                      total: cargoImages.total,
+                    }) ||
+                      `Showing ${cargoImages.images.length} of ${cargoImages.total} images`}
                   </p>
                 </div>
               )}
@@ -1755,18 +1800,18 @@ export function CargoDetailModal({
               <div className="flex items-center gap-3 mb-4">
                 <Package className="h-5 w-5 text-orange-600" />
                 <h4 className="font-semibold text-gray-900">
-                  Cargo Information
+                  {t("cargo.cargoDetails")}
                 </h4>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500">Type</p>
+                  <p className="text-xs text-gray-500">{t("common.type")}</p>
                   <p className="text-sm font-semibold text-gray-900">
                     {cargo.category?.name || cargo.type}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Weight</p>
+                  <p className="text-xs text-gray-500">{t("common.weight")}</p>
                   <p className="text-sm font-semibold text-gray-900">
                     {cargo.weight_kg ? `${cargo.weight_kg} kg` : cargo.weight}
                   </p>
@@ -1774,7 +1819,9 @@ export function CargoDetailModal({
                 {canViewCostInfo() && (
                   <div>
                     <p className="text-xs text-gray-500">
-                      {isDriverCargo ? "Earnings" : "Cost"}
+                      {isDriverCargo
+                        ? t("dashboard.earnings") || "Earnings"
+                        : t("common.cost")}
                     </p>
                     <p className="text-sm font-bold text-green-600">
                       {isDriverCargo
@@ -1797,14 +1844,14 @@ export function CargoDetailModal({
                   </div>
                 )}
                 <div>
-                  <p className="text-xs text-gray-500">Status</p>
+                  <p className="text-xs text-gray-500">{t("common.status")}</p>
                   <p className="text-sm font-semibold text-gray-900 capitalize">
                     {cargo.status}
                   </p>
                 </div>
                 {cargo.volume && (
                   <div>
-                    <p className="text-xs text-gray-500">Volume</p>
+                    <p className="text-xs text-gray-500">{t("cargo.volume")}</p>
                     <p className="text-sm font-semibold text-gray-900">
                       {cargo.volume} m³
                     </p>
@@ -1812,7 +1859,9 @@ export function CargoDetailModal({
                 )}
                 {cargo.dimensions && (
                   <div>
-                    <p className="text-xs text-gray-500">Dimensions</p>
+                    <p className="text-xs text-gray-500">
+                      {t("cargo.dimensions")}
+                    </p>
                     <p className="text-sm font-semibold text-gray-900">
                       {cargo.dimensions.length}×{cargo.dimensions.width}×
                       {cargo.dimensions.height} cm
@@ -1821,7 +1870,9 @@ export function CargoDetailModal({
                 )}
                 {cargo.insurance_required && (
                   <div>
-                    <p className="text-xs text-gray-500">Insurance</p>
+                    <p className="text-xs text-gray-500">
+                      {t("cargo.insuranceRequired")}
+                    </p>
                     <p className="text-sm font-semibold text-blue-600">
                       Required
                       {cargo.insurance_amount &&
@@ -1831,7 +1882,9 @@ export function CargoDetailModal({
                 )}
                 {cargo.fragile && (
                   <div>
-                    <p className="text-xs text-gray-500">Special Handling</p>
+                    <p className="text-xs text-gray-500">
+                      {t("cargo.specialHandling") || "Special Handling"}
+                    </p>
                     <p className="text-sm font-semibold text-orange-600">
                       Fragile
                     </p>
@@ -1839,16 +1892,18 @@ export function CargoDetailModal({
                 )}
                 {cargo.temperature_controlled && (
                   <div>
-                    <p className="text-xs text-gray-500">Special Handling</p>
+                    <p className="text-xs text-gray-500">
+                      {t("cargo.specialHandling") || "Special Handling"}
+                    </p>
                     <p className="text-sm font-semibold text-blue-600">
-                      Temperature Controlled
+                      {t("cargo.temperatureControlled")}
                     </p>
                   </div>
                 )}
                 {cargo.delivery_instructions && (
                   <div className="col-span-2">
                     <p className="text-xs text-gray-500">
-                      Delivery Instructions
+                      {t("cargo.deliveryInstructions")}
                     </p>
                     <p className="text-sm font-semibold text-gray-900 bg-blue-50 p-2 rounded border">
                       {cargo.delivery_instructions}
@@ -1864,7 +1919,9 @@ export function CargoDetailModal({
               )}
               {cargo.specialInstructions && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">Special Instructions</p>
+                  <p className="text-xs text-gray-500">
+                    {t("cargo.specialInstructions")}
+                  </p>
                   <p className="text-sm text-gray-900">
                     {cargo.specialInstructions}
                   </p>
@@ -1872,7 +1929,9 @@ export function CargoDetailModal({
               )}
               {cargo.estimatedTime && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">Estimated Time</p>
+                  <p className="text-xs text-gray-500">
+                    {t("cargo.estimatedTime") || "Estimated Time"}
+                  </p>
                   <p className="text-sm text-gray-900">{cargo.estimatedTime}</p>
                 </div>
               )}
@@ -1885,25 +1944,32 @@ export function CargoDetailModal({
               <div className="flex items-center gap-3 mb-4">
                 <Calendar className="h-5 w-5 text-purple-600" />
                 <h4 className="font-semibold text-gray-900">
-                  Additional Information
+                  {t("common.additionalInformation") ||
+                    "Additional Information"}
                 </h4>
               </div>
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-gray-500">Cargo Number</p>
+                  <p className="text-xs text-gray-500">
+                    {t("cargo.cargoNumber") || "Cargo Number"}
+                  </p>
                   <p className="text-sm font-semibold text-gray-900">
                     {cargo.cargo_number || cargo.id}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Distance</p>
+                  <p className="text-xs text-gray-500">
+                    {t("common.distance")}
+                  </p>
                   <p className="text-sm font-semibold text-gray-900">
                     {cargo.distance}
                   </p>
                 </div>
                 {cargo.vehicleType && (
                   <div>
-                    <p className="text-xs text-gray-500">Vehicle Type</p>
+                    <p className="text-xs text-gray-500">
+                      {t("vehicle.vehicleType")}
+                    </p>
                     <p className="text-sm font-semibold text-gray-900">
                       {cargo.vehicleType}
                     </p>
@@ -1929,7 +1995,9 @@ export function CargoDetailModal({
                 </div>
                 {cargo.pickupDate && (
                   <div>
-                    <p className="text-xs text-gray-500">Pickup Date</p>
+                    <p className="text-xs text-gray-500">
+                      {t("cargo.pickupDate")}
+                    </p>
                     <p className="text-sm font-semibold text-gray-900">
                       {new Date(cargo.pickupDate).toLocaleDateString("en-US", {
                         year: "numeric",
@@ -1943,7 +2011,9 @@ export function CargoDetailModal({
                 )}
                 {cargo.deliveryDate && (
                   <div>
-                    <p className="text-xs text-gray-500">Delivery Date</p>
+                    <p className="text-xs text-gray-500">
+                      {t("cargo.deliveryDate")}
+                    </p>
                     <p className="text-sm font-semibold text-gray-900">
                       {new Date(cargo.deliveryDate).toLocaleDateString(
                         "en-US",
@@ -1975,8 +2045,12 @@ export function CargoDetailModal({
                     Assignment Response Required
                   </p>
                   <p className="text-xs text-yellow-700">
-                    You have {countdown || getTimeUntilExpiry()} to respond to
-                    this assignment.
+                    {t("assignment.responseTimeRemaining", {
+                      time: countdown || getTimeUntilExpiry(),
+                    }) ||
+                      `You have ${
+                        countdown || getTimeUntilExpiry()
+                      } to respond to this assignment.`}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1992,8 +2066,10 @@ export function CargoDetailModal({
                         // Invalidate queries to refresh data
                         invalidateCargoQueries(cargo.id);
                         toast({
-                          title: "Assignment Accepted",
-                          description: "You have successfully accepted this assignment.",
+                          title: t("assignment.acceptedSuccessfully"),
+                          description:
+                            t("assignment.acceptedSuccessfullyDescription") ||
+                            "You have successfully accepted this assignment.",
                           variant: "default",
                         });
                         // Close modal if configured
@@ -2004,10 +2080,11 @@ export function CargoDetailModal({
                         }
                       } catch (error: any) {
                         toast({
-                          title: "Failed to Accept Assignment",
+                          title: t("assignment.failedToAccept"),
                           description:
                             error?.response?.data?.message ||
                             error?.message ||
+                            t("assignment.failedToAcceptDescription") ||
                             "Failed to accept assignment. Please try again.",
                           variant: "destructive",
                         });
@@ -2015,7 +2092,7 @@ export function CargoDetailModal({
                     }}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Accept Assignment
+                    {t("assignment.acceptAssignment") || "Accept Assignment"}
                   </Button>
                   <Button
                     variant="outline"
@@ -2023,7 +2100,7 @@ export function CargoDetailModal({
                     onClick={() => setIsRejectModalOpen(true)}
                   >
                     <X className="h-4 w-4 mr-2" />
-                    Reject Assignment
+                    {t("assignment.rejectAssignment")}
                   </Button>
                 </div>
               </div>
@@ -2035,11 +2112,11 @@ export function CargoDetailModal({
             isAssignmentExpired() && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                 <p className="text-sm text-red-800 font-medium">
-                  Assignment Expired
+                  {t("assignment.expired") || "Assignment Expired"}
                 </p>
                 <p className="text-xs text-red-700">
-                  This assignment has expired and will be automatically
-                  rejected.
+                  {t("assignment.expiredDescription") ||
+                    "This assignment has expired and will be automatically rejected."}
                 </p>
               </div>
             )}
@@ -2049,7 +2126,7 @@ export function CargoDetailModal({
             <div className="space-y-2">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800 font-medium mb-2">
-                  Assignment Management
+                  {t("assignment.management") || "Assignment Management"}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -2057,7 +2134,9 @@ export function CargoDetailModal({
                   variant="outline"
                   className="w-full"
                   onClick={async () => {
-                    const vehicleId = prompt("Enter new vehicle ID:");
+                    const vehicleId = prompt(
+                      t("assignment.enterVehicleId") || "Enter new vehicle ID:"
+                    );
                     if (vehicleId) {
                       try {
                         await onChangeVehicle?.(
@@ -2069,8 +2148,11 @@ export function CargoDetailModal({
                         // Invalidate queries to refresh data
                         invalidateCargoQueries(cargo.id);
                         toast({
-                          title: "Vehicle Changed",
-                          description: "The vehicle has been changed successfully.",
+                          title:
+                            t("assignment.vehicleChanged") || "Vehicle Changed",
+                          description:
+                            t("assignment.vehicleChangedDescription") ||
+                            "The vehicle has been changed successfully.",
                           variant: "default",
                         });
                         // Close modal if configured
@@ -2081,10 +2163,13 @@ export function CargoDetailModal({
                         }
                       } catch (error: any) {
                         toast({
-                          title: "Failed to Change Vehicle",
+                          title:
+                            t("assignment.vehicleChangeFailed") ||
+                            "Failed to Change Vehicle",
                           description:
                             error?.response?.data?.message ||
                             error?.message ||
+                            t("assignment.vehicleChangeFailedDescription") ||
                             "Failed to change vehicle. Please try again.",
                           variant: "destructive",
                         });
@@ -2093,7 +2178,7 @@ export function CargoDetailModal({
                   }}
                 >
                   <Truck className="h-4 w-4 mr-2" />
-                  Change Vehicle
+                  {t("assignment.changeVehicle") || "Change Vehicle"}
                 </Button>
                 <Button
                   variant="outline"
@@ -2108,8 +2193,10 @@ export function CargoDetailModal({
                       // Invalidate queries to refresh data
                       invalidateCargoQueries(cargo.id);
                       toast({
-                        title: "Assignment Cancelled",
-                        description: "The assignment has been cancelled successfully.",
+                        title: t("assignment.cancelledSuccessfully"),
+                        description:
+                          t("assignment.cancelledSuccessfullyDescription") ||
+                          "The assignment has been cancelled successfully.",
                         variant: "default",
                       });
                       // Close modal if configured
@@ -2120,10 +2207,13 @@ export function CargoDetailModal({
                       }
                     } catch (error: any) {
                       toast({
-                        title: "Failed to Cancel Assignment",
+                        title:
+                          t("assignment.cancelFailed") ||
+                          "Failed to Cancel Assignment",
                         description:
                           error?.response?.data?.message ||
                           error?.message ||
+                          t("assignment.cancelFailedDescription") ||
                           "Failed to cancel assignment. Please try again.",
                         variant: "destructive",
                       });
@@ -2131,7 +2221,7 @@ export function CargoDetailModal({
                   }}
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Cancel Assignment
+                  {t("assignment.cancelAssignment") || "Cancel Assignment"}
                 </Button>
               </div>
             </div>
@@ -2189,8 +2279,10 @@ export function CargoDetailModal({
                         // Invalidate queries to refresh data
                         invalidateCargoQueries(cargo.id);
                         toast({
-                          title: "Cargo Accepted",
-                          description: "You have successfully accepted this cargo.",
+                          title: t("cargo.accepted") || "Cargo Accepted",
+                          description:
+                            t("cargo.acceptedDescription") ||
+                            "You have successfully accepted this cargo.",
                           variant: "default",
                         });
                         // Close modal if configured
@@ -2212,19 +2304,17 @@ export function CargoDetailModal({
                     }}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Accept Cargo
+                    {t("cargoTable.actions.acceptCargo")}
                   </Button>
                 )}
 
-              {["assigned", "fully_assigned", "partially_assigned"].includes(
-                cargo.status
-              ) && (
+              {cargo.status === "assigned" && (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   onClick={handleMarkPickedUp}
                 >
                   <Package className="h-4 w-4 mr-2" />
-                  Mark Picked Up
+                  {t("cargoTable.actions.markPickedUp")}
                 </Button>
               )}
 
@@ -2238,7 +2328,8 @@ export function CargoDetailModal({
                       invalidateCargoQueries(cargo.id);
                       toast({
                         title: "Transit Started",
-                        description: "Cargo is now in transit. You can track it in real-time.",
+                        description:
+                          "Cargo is now in transit. You can track it in real-time.",
                         variant: "default",
                       });
                       // Navigate to tracking page
@@ -2251,10 +2342,13 @@ export function CargoDetailModal({
                       }
                     } catch (error: any) {
                       toast({
-                        title: "Failed to Start Transit",
+                        title:
+                          t("delivery.transitFailed") ||
+                          "Failed to Start Transit",
                         description:
                           error?.response?.data?.message ||
                           error?.message ||
+                          t("delivery.transitFailedDescription") ||
                           "Failed to start transit. Please try again.",
                         variant: "destructive",
                       });
@@ -2265,12 +2359,12 @@ export function CargoDetailModal({
                   {isStartingDelivery ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Starting Transit...
+                      {t("delivery.startingTransit") || "Starting Transit..."}
                     </>
                   ) : (
                     <>
                       <Navigation className="h-4 w-4 mr-2" />
-                      Start Transit
+                      {t("delivery.startTransit")}
                     </>
                   )}
                 </Button>
@@ -2285,12 +2379,12 @@ export function CargoDetailModal({
                   {isUploadingDeliveryImages ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Marking Delivered...
+                      {t("delivery.markingDelivered") || "Marking Delivered..."}
                     </>
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Mark Delivered
+                      {t("cargoTable.actions.markDelivered")}
                     </>
                   )}
                 </Button>
@@ -2329,7 +2423,7 @@ export function CargoDetailModal({
                     }
                   >
                     <Phone className="h-4 w-4 mr-2" />
-                    Call Driver
+                    {t("cargoTable.actions.callDriver")}
                   </Button>
                 )}
 
@@ -2351,8 +2445,10 @@ export function CargoDetailModal({
                       // Invalidate queries to refresh data
                       invalidateCargoQueries(cargo.id);
                       toast({
-                        title: "Cargo Cancelled",
-                        description: "The cargo has been cancelled successfully.",
+                        title: t("cargo.cargoCancelled"),
+                        description:
+                          t("cargo.cancelledSuccessfullyDescription") ||
+                          "The cargo has been cancelled successfully.",
                         variant: "default",
                       });
                       // Close modal if configured
@@ -2374,7 +2470,7 @@ export function CargoDetailModal({
                   }}
                 >
                   <X className="h-4 w-4 mr-2" />
-                  Cancel Cargo
+                  {t("cargoTable.actions.cancelCargo")}
                 </Button>
               )}
 
@@ -2405,7 +2501,7 @@ export function CargoDetailModal({
                     onClick={() => onDownloadReceipt?.(cargo.id)}
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Download Receipt
+                    {t("cargoTable.actions.downloadReceipt")}
                   </Button>
 
                   {/* Rating Button - Show if not rated yet and user has permission */}
@@ -2430,7 +2526,8 @@ export function CargoDetailModal({
                         <div className="flex items-center space-x-2">
                           <Star className="h-5 w-5 text-yellow-500 fill-current" />
                           <span className="text-sm font-medium text-gray-800">
-                            Your Rating: {cargo.rating}/5
+                            {t("delivery.yourRating") || "Your Rating"}:{" "}
+                            {cargo.rating}/5
                           </span>
                         </div>
                         <Badge className="bg-green-100 text-green-700">
@@ -2476,7 +2573,7 @@ export function CargoDetailModal({
         cargoNumber={cargo.cargo_number}
         uploadType="loading"
         onUpload={handlePickupImageUpload}
-        submitButtonText="Confirm Pickup"
+        submitButtonText={t("delivery.confirmPickup")}
       />
 
       {/* Delivery Image Upload Modal */}
@@ -2487,7 +2584,7 @@ export function CargoDetailModal({
         cargoNumber={cargo.cargo_number}
         uploadType="delivery"
         onUpload={handleDeliveryImageUpload}
-        submitButtonText="Confirm Delivery"
+        submitButtonText={t("delivery.confirmDelivery")}
       />
 
       {/* Rating Modal */}
