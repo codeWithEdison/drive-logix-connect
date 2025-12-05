@@ -484,6 +484,37 @@ export const usePerformanceReports = (params?: {
   });
 };
 
+export const useTransportationReports = (params?: {
+  start_date?: string;
+  end_date?: string;
+  branch_id?: string;
+}) => {
+  return useQuery({
+    queryKey: queryKeys.admin.transportationReports(params),
+    queryFn: () => AdminService.getTransportationReports(params),
+    select: (data) => {
+      // The API returns data nested in meta.language.report
+      if (data?.meta?.language?.report) {
+        return {
+          report: data.meta.language.report,
+          total_records: data.meta.language.report.length,
+          filters: data.meta.language.filters || {},
+        };
+      }
+      // Fallback to standard structure if available
+      if (data?.data?.report) {
+        return data.data;
+      }
+      // Return empty structure if no data
+      return {
+        report: [],
+        total_records: 0,
+        filters: {},
+      };
+    },
+  });
+};
+
 export const useApproveEntity = () => {
   const queryClient = useQueryClient();
 

@@ -233,4 +233,26 @@ export class AdminService {
     const response = await axiosInstance.put("/admin/approvals", data);
     return response.data;
   }
+
+  // Get transportation reports
+  static async getTransportationReports(params?: {
+    start_date?: string;
+    end_date?: string;
+    branch_id?: string;
+  }): Promise<
+    ApiResponse<{
+      report: any[];
+      total_records: number;
+      filters: {
+        start_date?: string;
+        end_date?: string;
+        branch_id?: string | null;
+      };
+    }>
+  > {
+    const response = await axiosInstance.get("/admin/reports/transportation", {
+      params,
+    });
+    return response.data;
+  }
 }

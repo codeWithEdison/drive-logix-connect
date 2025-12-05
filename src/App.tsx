@@ -38,27 +38,52 @@ const DriverDashboard = lazy(() => import("@/pages/DriverDashboard"));
 const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
 const DriverDeliveries = lazy(() => import("@/pages/driver/DriverDeliveries"));
 const DriverHistory = lazy(() => import("@/pages/driver/DriverHistory"));
-const AssignedCargosPage = lazy(() => import("@/pages/AssignedCargosPage").then(m => ({ default: m.AssignedCargosPage })));
+const AssignedCargosPage = lazy(() =>
+  import("@/pages/AssignedCargosPage").then((m) => ({
+    default: m.AssignedCargosPage,
+  }))
+);
 const AdminCargos = lazy(() => import("@/pages/admin/AdminCargos"));
 const AdminDrivers = lazy(() => import("@/pages/admin/AdminDrivers"));
 const AdminClients = lazy(() => import("@/pages/admin/AdminClients"));
 const AdminTrucks = lazy(() => import("@/pages/admin/AdminTrucks"));
-const VehicleLiveTracking = lazy(() => import("@/pages/admin/VehicleLiveTracking"));
+const VehicleLiveTracking = lazy(
+  () => import("@/pages/admin/VehicleLiveTracking")
+);
 const FleetMonitor = lazy(() => import("@/pages/admin/FleetMonitor"));
 const AdminReports = lazy(() => import("@/pages/admin/AdminReports"));
+const TransportationReports = lazy(
+  () => import("@/pages/admin/TransportationReports")
+);
 const AdminAssignments = lazy(() => import("@/pages/admin/AdminAssignments"));
-const AdminPaymentVerifications = lazy(() => import("@/pages/admin/AdminPaymentVerifications"));
+const AdminPaymentVerifications = lazy(
+  () => import("@/pages/admin/AdminPaymentVerifications")
+);
 const AdminInvoices = lazy(() => import("@/pages/admin/AdminInvoices"));
-const SuperAdminUsers = lazy(() => import("@/pages/superadmin/SuperAdminUsers"));
-const SuperAdminSettings = lazy(() => import("@/pages/superadmin/SuperAdminSettings"));
+const SuperAdminUsers = lazy(
+  () => import("@/pages/superadmin/SuperAdminUsers")
+);
+const SuperAdminSettings = lazy(
+  () => import("@/pages/superadmin/SuperAdminSettings")
+);
 const SuperAdminLogs = lazy(() => import("@/pages/superadmin/SuperAdminLogs"));
-const BranchManagement = lazy(() => import("@/pages/superadmin/BranchManagement"));
+const BranchManagement = lazy(
+  () => import("@/pages/superadmin/BranchManagement")
+);
 const BranchDetails = lazy(() => import("@/pages/superadmin/BranchDetails"));
-const DistrictManagement = lazy(() => import("@/pages/superadmin/DistrictManagement"));
-const CargoCategoriesPage = lazy(() => import("@/pages/superadmin/CargoCategories"));
+const DistrictManagement = lazy(
+  () => import("@/pages/superadmin/DistrictManagement")
+);
+const CargoCategoriesPage = lazy(
+  () => import("@/pages/superadmin/CargoCategories")
+);
 const NotFound = lazy(() => import("@/pages/NotFound"));
-const SuperAdminDashboard = lazy(() => import("@/pages/superadmin/SuperAdminDashboard"));
-const ProfilePage = lazy(() => import("@/pages/Profile").then(m => ({ default: m.ProfilePage })));
+const SuperAdminDashboard = lazy(
+  () => import("@/pages/superadmin/SuperAdminDashboard")
+);
+const ProfilePage = lazy(() =>
+  import("@/pages/Profile").then((m) => ({ default: m.ProfilePage }))
+);
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 
 // Loading component
@@ -94,15 +119,15 @@ function AppContent() {
       <>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </Suspense>
 
         {/* Mobile-specific components */}
@@ -129,323 +154,339 @@ function AppContent() {
       <AppLayout>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-          {/* Client Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <Index />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/create-cargo"
-            element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <CreateCargo />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/my-cargos"
-            element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <MyCargos />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tracking"
-            element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <TrackingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/history"
-            element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <History />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payment/:invoiceId?"
-            element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <PaymentPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/invoices"
-            element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <Invoices />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payment-success"
-            element={
-              <ProtectedRoute allowedRoles={["client"]}>
-                <PaymentSuccess />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/payment/callback" element={<PaymentCallback />} />
+            {/* Client Routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <Index />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/create-cargo"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <CreateCargo />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-cargos"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <MyCargos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tracking"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <TrackingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/history"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <History />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment/:invoiceId?"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PaymentPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/invoices"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <Invoices />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <ProtectedRoute allowedRoles={["client"]}>
+                  <PaymentSuccess />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/payment/callback" element={<PaymentCallback />} />
 
-          {/* Profile Route - Available to all authenticated users */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Profile Route - Available to all authenticated users */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Driver Routes */}
-          <Route
-            path="/driver"
-            element={
-              <ProtectedRoute allowedRoles={["driver"]}>
-                <DriverDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/driver/cargos"
-            element={
-              <ProtectedRoute allowedRoles={["driver"]}>
-                <AssignedCargosPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/driver/deliveries"
-            element={
-              <ProtectedRoute allowedRoles={["driver"]}>
-                <DriverDeliveries />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/driver/history"
-            element={
-              <ProtectedRoute allowedRoles={["driver"]}>
-                <DriverHistory />
-              </ProtectedRoute>
-            }
-          />
+            {/* Driver Routes */}
+            <Route
+              path="/driver"
+              element={
+                <ProtectedRoute allowedRoles={["driver"]}>
+                  <DriverDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/cargos"
+              element={
+                <ProtectedRoute allowedRoles={["driver"]}>
+                  <AssignedCargosPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/deliveries"
+              element={
+                <ProtectedRoute allowedRoles={["driver"]}>
+                  <DriverDeliveries />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/driver/history"
+              element={
+                <ProtectedRoute allowedRoles={["driver"]}>
+                  <DriverHistory />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/cargos"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminCargos />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/cargos/new"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                <CreateCargo />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/drivers"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminDrivers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/clients"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminClients />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/trucks"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminTrucks />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/vehicles/:vehicleId/live"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <VehicleLiveTracking />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/fleet-monitor"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                <FleetMonitor />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/reports"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminReports />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/assignments"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminAssignments />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/payment-verifications"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                <AdminPaymentVerifications />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/invoices"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                <AdminInvoices />
-              </ProtectedRoute>
-            }
-          />
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cargos"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminCargos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cargos/new"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <CreateCargo />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/drivers"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminDrivers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/clients"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminClients />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/trucks"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminTrucks />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/vehicles/:vehicleId/live"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <VehicleLiveTracking />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/fleet-monitor"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <FleetMonitor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reports"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminReports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/transportation-reports"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <TransportationReports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/assignments"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminAssignments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/payment-verifications"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminPaymentVerifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/invoices"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminInvoices />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Super Admin Routes */}
-          <Route
-            path="/super-admin"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <SuperAdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/super-admin/users"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <SuperAdminUsers />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/super-admin/settings"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <SuperAdminSettings />
-              </ProtectedRoute>
-            }
-          />
-          {/* Redirect any old admin settings route to super-admin settings */}
-          <Route
-            path="/admin/settings"
-            element={<Navigate to="/super-admin/settings" replace />}
-          />
-          <Route
-            path="/super-admin/logs"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <SuperAdminLogs />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/super-admin/invoices"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminInvoices />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/superadmin/branches"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <BranchManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/superadmin/branches/:id"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <BranchDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/superadmin/districts"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <DistrictManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/superadmin/cargo-categories"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <CargoCategoriesPage />
-              </ProtectedRoute>
-            }
-          />
+            {/* Super Admin Routes */}
+            <Route
+              path="/super-admin"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <SuperAdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/users"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <SuperAdminUsers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/settings"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <SuperAdminSettings />
+                </ProtectedRoute>
+              }
+            />
+            {/* Redirect any old admin settings route to super-admin settings */}
+            <Route
+              path="/admin/settings"
+              element={<Navigate to="/super-admin/settings" replace />}
+            />
+            <Route
+              path="/super-admin/logs"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <SuperAdminLogs />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/invoices"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <AdminInvoices />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/superadmin/branches"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <BranchManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/superadmin/branches/:id"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <BranchDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/superadmin/districts"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <DistrictManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/superadmin/cargo-categories"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <CargoCategoriesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/transportation-reports"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <TransportationReports />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Super Admin access to Admin pages */}
-          <Route
-            path="/super-admin/cargos"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminCargos />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/super-admin/assignments"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminAssignments />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/super-admin/trucks"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <AdminTrucks />
-              </ProtectedRoute>
-            }
-          />
+            {/* Super Admin access to Admin pages */}
+            <Route
+              path="/super-admin/cargos"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <AdminCargos />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/assignments"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <AdminAssignments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/trucks"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <AdminTrucks />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Fallback */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* Fallback */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </Suspense>
       </AppLayout>
 

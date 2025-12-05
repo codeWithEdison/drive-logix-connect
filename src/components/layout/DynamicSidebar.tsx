@@ -35,6 +35,7 @@ import {
   Map,
   CreditCard,
   Navigation,
+  FileSpreadsheet,
 } from "lucide-react";
 
 const getNavigationConfig = (t: (key: string) => string) => ({
@@ -83,6 +84,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: CreditCard,
     },
     { title: t("navigation.reports"), url: "/admin/reports", icon: BarChart3 },
+    {
+      title: "Transportation Reports",
+      url: "/admin/transportation-reports",
+      icon: FileSpreadsheet,
+    },
   ],
   super_admin: [
     { title: t("navigation.dashboard"), url: "/super-admin", icon: Home },
@@ -141,6 +147,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       title: t("navigation.systemLogs"),
       url: "/super-admin/logs",
       icon: Activity,
+    },
+    {
+      title: "Transportation Reports",
+      url: "/super-admin/transportation-reports",
+      icon: FileSpreadsheet,
     },
   ],
 });
