@@ -53,9 +53,9 @@ export function UsageTrendsChart() {
 
   const getXAxisKey = () => {
     switch (selectedPeriod) {
-      case "weekly":
+      case "week":
         return "week";
-      case "monthly":
+      case "month":
         return "month";
       default:
         return "date";
@@ -79,7 +79,7 @@ export function UsageTrendsChart() {
   };
 
   const getYAxisFormatter = (value: number) => {
-    if (selectedPeriod === "monthly") {
+    if (selectedPeriod === "month") {
       return value >= 1000000
         ? `${(value / 1000000).toFixed(0)}M`
         : value.toString();

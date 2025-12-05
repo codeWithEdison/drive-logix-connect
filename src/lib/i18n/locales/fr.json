@@ -435,6 +435,7 @@
     "deliveryDetails": "Détails de la livraison",
     "startDelivery": "Commencer la livraison",
     "updateStatus": "Mettre à jour le statut",
+    "confirmPickup": "Confirmer la collecte",
     "confirmDelivery": "Confirmer la livraison",
     "completeDelivery": "Terminer la livraison",
     "rateDelivery": "Évaluer la livraison",

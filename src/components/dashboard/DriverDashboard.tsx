@@ -538,7 +538,11 @@ export function DriverDashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-green-500/20 text-green-200 border-green-400/30 text-xs">
-                      {dashboard?.driver_info?.status || driverStatus}
+                      {statusConfig[
+                        dashboard?.driver_info?.status || driverStatus
+                      ]?.label ||
+                        dashboard?.driver_info?.status ||
+                        driverStatus}
                     </Badge>
                   </div>
                 </div>
@@ -1305,7 +1309,7 @@ export function DriverDashboard() {
             cargoNumber={activeDelivery.cargo_number}
             uploadType="loading"
             onUpload={handlePickupImageUpload}
-            submitButtonText="Confirm Pickup"
+            submitButtonText={t("delivery.confirmPickup")}
           />
           <PhotoUploadModal
             isOpen={isDeliveryImageModalOpen}
@@ -1314,7 +1318,7 @@ export function DriverDashboard() {
             cargoNumber={activeDelivery.cargo_number}
             uploadType="delivery"
             onUpload={handleDeliveryImageUpload}
-            submitButtonText="Confirm Delivery"
+            submitButtonText={t("delivery.confirmDelivery")}
           />
         </>
       )}

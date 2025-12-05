@@ -525,6 +525,7 @@
     "markPickedUp": "Mark Picked Up",
     "markDelivered": "Mark Delivered",
     "updateStatus": "Update Status",
+    "confirmPickup": "Confirm Pickup",
     "confirmDelivery": "Confirm Delivery",
     "completeDelivery": "Complete Delivery",
     "rateDelivery": "Rate Delivery",

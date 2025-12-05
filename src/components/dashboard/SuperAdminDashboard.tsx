@@ -79,18 +79,34 @@ export function SuperAdminDashboard() {
   const [selectedPeriod, setSelectedPeriod] = React.useState("yearly");
 
   // API hooks
+  const apiPeriod = React.useMemo(() => {
+    switch (selectedPeriod) {
+      case "daily":
+        return "day";
+      case "weekly":
+        return "week";
+      case "monthly":
+        return "month";
+      case "yearly":
+      default:
+        return "year";
+    }
+  }, [selectedPeriod]);
+
   const {
     data: dashboardData,
     isLoading: dashboardLoading,
     error: dashboardError,
     refetch: refetchDashboard,
   } = useSuperAdminDashboard({
-    period: selectedPeriod === "yearly" ? "year" : selectedPeriod,
+    period: apiPeriod,
   });
   const applyFilters = useApplyDashboardFilters();
 
   React.useEffect(() => {
-    applyFilters.mutate({ period: selectedPeriod as "today" | "week" | "month" | "quarter" | "year" });
+    applyFilters.mutate({
+      period: selectedPeriod as "today" | "week" | "month" | "quarter" | "year",
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPeriod]);
 
