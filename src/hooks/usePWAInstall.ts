@@ -59,23 +59,40 @@ export function usePWAInstall() {
     if (!deferredPrompt) {
       // Fallback for browsers that don't support beforeinstallprompt
       // Show instructions for manual installation
-      if (
-        /iPhone|iPad|iPod/.test(navigator.userAgent) &&
-        !(window.navigator as any).standalone
-      ) {
-        alert(
-          "To install this app on your iOS device, tap the Share button and then 'Add to Home Screen'."
-        );
+      const userAgent = navigator.userAgent;
+      const isIOS = /iPhone|iPad|iPod/.test(userAgent);
+      const isAndroid = /Android/.test(userAgent);
+      const isStandalone = (window.navigator as any).standalone === true;
+
+      if (isIOS && !isStandalone) {
+        const message =
+          "To install this app:\n1. Tap the Share button (square with arrow)\n2. Scroll down and tap 'Add to Home Screen'\n3. Tap 'Add' to confirm";
+        alert(message);
         return false;
-      } else if (/Android/.test(navigator.userAgent)) {
-        alert(
-          "To install this app on your Android device, tap the menu button (three dots) and select 'Add to Home Screen' or 'Install App'."
-        );
+      } else if (isAndroid) {
+        const message =
+          "To install this app:\n1. Tap the menu button (three dots) in your browser\n2. Select 'Add to Home Screen' or 'Install App'\n3. Follow the prompts to install";
+        alert(message);
         return false;
       } else {
-        alert(
-          "Your browser doesn't support PWA installation. Please use Chrome, Edge, or Safari."
-        );
+        // Desktop browsers
+        const isChrome = /Chrome/.test(userAgent) && !/Edge/.test(userAgent);
+        const isEdge = /Edge/.test(userAgent);
+        const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+
+        if (isChrome || isEdge) {
+          const message =
+            "To install this app:\n1. Look for the install icon in your browser's address bar\n2. Click it and select 'Install'\n3. Or use the menu (three dots) > 'Install Loveway Logistics'";
+          alert(message);
+        } else if (isSafari) {
+          const message =
+            "To install this app:\n1. Click 'File' in the menu bar\n2. Select 'Add to Dock' or use Share > 'Add to Home Screen'";
+          alert(message);
+        } else {
+          const message =
+            "To install this app, please use Chrome, Edge, or Safari browser. Look for the install icon in your browser's address bar.";
+          alert(message);
+        }
         return false;
       }
     }
@@ -97,6 +114,17 @@ export function usePWAInstall() {
       }
     } catch (error) {
       console.error("Error installing PWA:", error);
+      // If prompt fails, show fallback instructions
+      const userAgent = navigator.userAgent;
+      if (/Android/.test(userAgent)) {
+        alert(
+          "Please use your browser menu to install the app: Menu (three dots) > 'Add to Home Screen' or 'Install App'"
+        );
+      } else if (/iPhone|iPad|iPod/.test(userAgent)) {
+        alert(
+          "Please use Safari's Share button to add this app to your home screen."
+        );
+      }
       return false;
     }
   };

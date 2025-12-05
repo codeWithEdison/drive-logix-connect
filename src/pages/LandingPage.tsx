@@ -3,13 +3,19 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
 import { motion } from "framer-motion";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import {
   CargoCategoryService,
   WebsiteStatisticsService,
 } from "@/lib/api/services/cargoService";
 import { CargoCategory } from "@/types/shared";
 import { SEO } from "@/components/seo/SEO";
-import { PAGE_SEO, generateFAQSchema, generateWebPageSchema, generateOrganizationSchema } from "@/lib/seo/seoData";
+import {
+  PAGE_SEO,
+  generateFAQSchema,
+  generateWebPageSchema,
+  generateOrganizationSchema,
+} from "@/lib/seo/seoData";
 import {
   Truck,
   MapPin,
@@ -59,6 +65,7 @@ import {
 
 const LandingPage: React.FC = () => {
   const { t } = useTranslation();
+  const { installPWA, isInstallable, isInstalled } = usePWAInstall();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
   const [currentVehicleIndex, setCurrentVehicleIndex] = useState(0);
@@ -78,6 +85,18 @@ const LandingPage: React.FC = () => {
   });
   const [loadingStatistics, setLoadingStatistics] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
+
+  const handleInstallClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const installed = await installPWA();
+    if (!installed && !isInstallable) {
+      // Scroll to download section if PWA is not installable
+      const downloadSection = document.getElementById("download");
+      if (downloadSection) {
+        downloadSection.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -750,15 +769,26 @@ const LandingPage: React.FC = () => {
                     {t("landing.hero.ctaPrimary")}
                   </span>
                 </Link>
-                <a
-                  href="#download"
-                  className="group border-2 border-white/50 text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-white hover:text-blue-900 transition-all duration-300 text-center backdrop-blur-sm hover:scale-105"
+                <button
+                  id="download"
+                  onClick={handleInstallClick}
+                  className="group border-2 border-white/50 text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-white hover:text-blue-900 transition-all duration-300 text-center backdrop-blur-sm hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-transparent"
+                  disabled={isInstalled}
+                  title={
+                    isInstalled
+                      ? "App is already installed"
+                      : isInstallable
+                      ? "Click to install the app"
+                      : "Click for installation instructions"
+                  }
                 >
                   <span className="flex items-center justify-center gap-2">
                     <Smartphone className="w-5 h-5" />
-                    {t("landing.downloadApp.downloadButton")}
+                    {isInstalled
+                      ? t("landing.downloadApp.installed") || "App Installed"
+                      : t("landing.downloadApp.downloadButton")}
                   </span>
-                </a>
+                </button>
               </div>
 
               {/* Stats */}
@@ -2481,16 +2511,25 @@ const LandingPage: React.FC = () => {
                   show: { opacity: 1, y: 0 },
                 }}
               >
-                <a href="#download">
-                  <motion.button
-                    className="bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white px-6 md:px-10 py-3 md:py-4 rounded-full font-bold text-sm md:text-base hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Smartphone className="w-4 h-4 md:w-5 md:h-5" />
-                    {t("landing.getStarted.downloadApp")}
-                  </motion.button>
-                </a>
+                <motion.button
+                  onClick={handleInstallClick}
+                  className="bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white px-6 md:px-10 py-3 md:py-4 rounded-full font-bold text-sm md:text-base hover:bg-white/20 transition-all duration-300 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                  whileHover={isInstalled ? {} : { scale: 1.05, y: -2 }}
+                  whileTap={isInstalled ? {} : { scale: 0.95 }}
+                  disabled={isInstalled}
+                  title={
+                    isInstalled
+                      ? "App is already installed"
+                      : isInstallable
+                      ? "Click to install the app"
+                      : "Click for installation instructions"
+                  }
+                >
+                  <Smartphone className="w-4 h-4 md:w-5 md:h-5" />
+                  {isInstalled
+                    ? t("landing.downloadApp.installed") || "App Installed"
+                    : t("landing.getStarted.downloadApp")}
+                </motion.button>
               </motion.div>
             </motion.div>
 

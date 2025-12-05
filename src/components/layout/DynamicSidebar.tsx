@@ -144,11 +144,6 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: Settings,
     },
     {
-      title: t("navigation.systemLogs"),
-      url: "/super-admin/logs",
-      icon: Activity,
-    },
-    {
       title: "Transportation Reports",
       url: "/super-admin/transportation-reports",
       icon: FileSpreadsheet,
