@@ -2323,6 +2323,7 @@
       "title": "Download Our App",
       "subtitle": "Get the full Loveway Logistics experience on your mobile device",
       "downloadButton": "Download App",
+      "installed": "App Installed",
       "available": "Available on iOS and Android",
       "androidOnly": "Available on Android",
       "features": {

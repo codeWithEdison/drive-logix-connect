@@ -1686,6 +1686,7 @@
       "title": "Télécharger Notre App",
       "subtitle": "Obtenez l'expérience complète Loveway Logistics sur votre appareil mobile",
       "downloadButton": "Télécharger l'App",
+      "installed": "App Installée",
       "available": "Disponible sur iOS et Android",
       "androidOnly": "Disponible sur Android",
       "features": {

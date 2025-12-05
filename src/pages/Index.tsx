@@ -3,9 +3,11 @@ import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Button } from "@/components/ui/button";
 import { Download, Check } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const Index = () => {
   const { installPWA, isInstallable, isInstalled } = usePWAInstall();
+  const { t } = useLanguage();
   const [showInstallButton, setShowInstallButton] = useState(false);
 
   useEffect(() => {
@@ -48,7 +50,9 @@ const Index = () => {
             disabled
           >
             <Check className="h-5 w-5" />
-            <span className="font-semibold">App Installed</span>
+            <span className="font-semibold">
+              {t("landing.downloadApp.installed")}
+            </span>
           </Button>
         </div>
       )}
