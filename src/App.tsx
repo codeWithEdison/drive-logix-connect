@@ -41,6 +41,7 @@ const DriverHistory = lazy(() => import("@/pages/driver/DriverHistory"));
 const AssignedCargosPage = lazy(() => import("@/pages/AssignedCargosPage").then(m => ({ default: m.AssignedCargosPage })));
 const AdminCargos = lazy(() => import("@/pages/admin/AdminCargos"));
 const AdminDrivers = lazy(() => import("@/pages/admin/AdminDrivers"));
+const AdminClients = lazy(() => import("@/pages/admin/AdminClients"));
 const AdminTrucks = lazy(() => import("@/pages/admin/AdminTrucks"));
 const VehicleLiveTracking = lazy(() => import("@/pages/admin/VehicleLiveTracking"));
 const FleetMonitor = lazy(() => import("@/pages/admin/FleetMonitor"));
@@ -269,6 +270,14 @@ function AppContent() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDrivers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/clients"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminClients />
               </ProtectedRoute>
             }
           />

@@ -73,6 +73,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       icon: Activity,
     },
     { title: t("navigation.drivers"), url: "/admin/drivers", icon: Users },
+    { title: "Clients", url: "/admin/clients", icon: Users },
     { title: t("navigation.vehicles"), url: "/admin/trucks", icon: Truck },
     { title: "Fleet Monitor", url: "/admin/fleet-monitor", icon: Navigation },
     { title: t("navigation.invoices"), url: "/admin/invoices", icon: Receipt },

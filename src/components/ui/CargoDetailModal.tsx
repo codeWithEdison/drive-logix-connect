@@ -15,6 +15,9 @@ import {
 import { useUpdateCargoStatus } from "@/lib/api/hooks/cargoHooks";
 import { useRateDelivery } from "@/lib/api/hooks/deliveryHooks";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/queryClient";
+import { useNavigate } from "react-router-dom";
 import {
   MapPin,
   Phone,
@@ -211,6 +214,10 @@ interface CargoDetailModalProps {
   onOpenAssignmentModal?: (cargoId: string) => void;
   // Review and invoice functionality
   onReviewAndInvoice?: (cargoId: string) => void;
+  // Callback when cargo data is updated (for parent components to refresh)
+  onCargoUpdated?: (cargoId: string) => void;
+  // Whether to close modal after successful actions (default: true)
+  closeOnSuccess?: boolean;
 }
 
 export function CargoDetailModal({
@@ -234,12 +241,50 @@ export function CargoDetailModal({
   onCallContact,
   onOpenAssignmentModal,
   onReviewAndInvoice,
+  onCargoUpdated,
+  closeOnSuccess = true,
 }: CargoDetailModalProps) {
   // Get user from auth context to compare roles
   const { user } = useAuth();
 
   // Use auth context role as the primary role, fallback to prop if needed
   const effectiveRole = user?.role || userRole;
+
+  // Query client for invalidating queries
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Helper function to invalidate all cargo-related queries
+  const invalidateCargoQueries = (cargoId: string) => {
+    // Invalidate cargo detail
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.cargos.detail(cargoId),
+    });
+    // Invalidate cargo tracking
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.cargos.tracking(cargoId),
+    });
+    // Invalidate all cargo lists
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.cargos.all(),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.cargos.clientCargos(),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.cargos.driverCargos(),
+    });
+    // Invalidate delivery assignments
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.deliveryAssignments.all(),
+    });
+    // Invalidate tracking data
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.tracking.cargoDetail(cargoId),
+    });
+    // Notify parent component
+    onCargoUpdated?.(cargoId);
+  };
 
   // Debug logging for all props and auth context
   console.log("CargoDetailModal Debug Info:", {
@@ -412,9 +457,34 @@ export function CargoDetailModal({
         cargo.delivery_assignment?.id || cargo.assignmentId || cargo.id,
         reason
       );
+      
+      // Invalidate queries
+      invalidateCargoQueries(cargo.id);
+      
+      toast({
+        title: "Assignment Rejected",
+        description: "The assignment has been rejected successfully.",
+        variant: "default",
+      });
+      
       setIsRejectModalOpen(false);
-    } catch (error) {
+      
+      // Close modal if configured
+      if (closeOnSuccess) {
+        setTimeout(() => {
+          onClose();
+        }, 1000);
+      }
+    } catch (error: any) {
       console.error("Failed to reject assignment:", error);
+      toast({
+        title: "Rejection Failed",
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to reject assignment. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsRejecting(false);
     }
@@ -448,7 +518,23 @@ export function CargoDetailModal({
         notes: "Cargo picked up successfully",
       });
 
+      // Invalidate queries to refresh data
+      invalidateCargoQueries(data.cargoId);
+
+      toast({
+        title: "Pickup Confirmed",
+        description: "Cargo has been marked as picked up successfully.",
+        variant: "default",
+      });
+
       setIsPickupImageModalOpen(false);
+
+      // Close modal if configured
+      if (closeOnSuccess) {
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      }
     } catch (error: any) {
       console.error("Failed to upload pickup images or update status:", error);
 
@@ -507,6 +593,9 @@ export function CargoDetailModal({
         data,
       });
 
+      // Invalidate queries to refresh data
+      invalidateCargoQueries(cargo.id);
+
       toast({
         title: "Rating Submitted",
         description: "Thank you for your feedback!",
@@ -515,8 +604,12 @@ export function CargoDetailModal({
 
       setIsRatingModalOpen(false);
 
-      // Refresh the page to show updated rating
-      window.location.reload();
+      // Close modal if configured
+      if (closeOnSuccess) {
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      }
     } catch (error: any) {
       console.error("Failed to submit rating:", error);
 
@@ -562,7 +655,23 @@ export function CargoDetailModal({
         notes: "Cargo delivered successfully",
       });
 
+      // Invalidate queries to refresh data
+      invalidateCargoQueries(data.cargoId);
+
+      toast({
+        title: "Delivery Confirmed",
+        description: "Cargo has been marked as delivered successfully.",
+        variant: "default",
+      });
+
       setIsDeliveryImageModalOpen(false);
+
+      // Close modal if configured
+      if (closeOnSuccess) {
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      }
     } catch (error: any) {
       console.error(
         "Failed to upload delivery images or update status:",
@@ -587,19 +696,74 @@ export function CargoDetailModal({
     }
   };
 
-  const handleGenerateInvoice = () => {
-    if (onReviewAndInvoice) {
-      onReviewAndInvoice(cargo.id);
-    } else {
-      // Fallback to navigation if no handler provided
-      window.location.href = `/admin/invoices/create?cargoId=${cargo.id}`;
+  const handleGenerateInvoice = async () => {
+    try {
+      if (onReviewAndInvoice) {
+        await onReviewAndInvoice(cargo.id);
+        // Invalidate queries to refresh data
+        invalidateCargoQueries(cargo.id);
+        toast({
+          title: "Invoice Generated",
+          description: "Invoice has been generated successfully.",
+          variant: "default",
+        });
+        // Close modal if configured
+        if (closeOnSuccess) {
+          setTimeout(() => {
+            onClose();
+          }, 1500);
+        }
+      } else {
+        // Fallback to navigation if no handler provided
+        navigate(`/admin/invoices/create?cargoId=${cargo.id}`);
+        onClose();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to Generate Invoice",
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to generate invoice. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleStatusChange = (newStatus: string) => {
-    // This would typically call a status change API
-    console.log(`Changing status to: ${newStatus}`);
-    // You can implement the actual API call here
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      await updateCargoStatus.mutateAsync({
+        id: cargo.id,
+        status: newStatus as CargoStatus,
+        notes: `Status changed to ${newStatus}`,
+      });
+      
+      // Invalidate queries to refresh data
+      invalidateCargoQueries(cargo.id);
+      
+      toast({
+        title: "Status Updated",
+        description: `Cargo status has been updated to ${newStatus}.`,
+        variant: "default",
+      });
+      
+      // Close modal if configured
+      if (closeOnSuccess) {
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      }
+    } catch (error: any) {
+      console.error(`Failed to change status to ${newStatus}:`, error);
+      toast({
+        title: "Status Update Failed",
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update status. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Get available admin actions based on status transition matrix
@@ -1818,13 +1982,37 @@ export function CargoDetailModal({
                 <div className="grid grid-cols-2 gap-3">
                   <Button
                     className="w-full bg-green-600 hover:bg-green-700"
-                    onClick={() =>
-                      onAcceptAssignment?.(
-                        cargo.delivery_assignment?.id ||
-                          cargo.assignmentId ||
-                          cargo.id
-                      )
-                    }
+                    onClick={async () => {
+                      try {
+                        await onAcceptAssignment?.(
+                          cargo.delivery_assignment?.id ||
+                            cargo.assignmentId ||
+                            cargo.id
+                        );
+                        // Invalidate queries to refresh data
+                        invalidateCargoQueries(cargo.id);
+                        toast({
+                          title: "Assignment Accepted",
+                          description: "You have successfully accepted this assignment.",
+                          variant: "default",
+                        });
+                        // Close modal if configured
+                        if (closeOnSuccess) {
+                          setTimeout(() => {
+                            onClose();
+                          }, 1500);
+                        }
+                      } catch (error: any) {
+                        toast({
+                          title: "Failed to Accept Assignment",
+                          description:
+                            error?.response?.data?.message ||
+                            error?.message ||
+                            "Failed to accept assignment. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Accept Assignment
@@ -1868,15 +2056,39 @@ export function CargoDetailModal({
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => {
+                  onClick={async () => {
                     const vehicleId = prompt("Enter new vehicle ID:");
                     if (vehicleId) {
-                      onChangeVehicle?.(
-                        cargo.delivery_assignment?.id ||
-                          cargo.assignmentId ||
-                          cargo.id,
-                        vehicleId
-                      );
+                      try {
+                        await onChangeVehicle?.(
+                          cargo.delivery_assignment?.id ||
+                            cargo.assignmentId ||
+                            cargo.id,
+                          vehicleId
+                        );
+                        // Invalidate queries to refresh data
+                        invalidateCargoQueries(cargo.id);
+                        toast({
+                          title: "Vehicle Changed",
+                          description: "The vehicle has been changed successfully.",
+                          variant: "default",
+                        });
+                        // Close modal if configured
+                        if (closeOnSuccess) {
+                          setTimeout(() => {
+                            onClose();
+                          }, 1500);
+                        }
+                      } catch (error: any) {
+                        toast({
+                          title: "Failed to Change Vehicle",
+                          description:
+                            error?.response?.data?.message ||
+                            error?.message ||
+                            "Failed to change vehicle. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
                     }
                   }}
                 >
@@ -1886,13 +2098,37 @@ export function CargoDetailModal({
                 <Button
                   variant="outline"
                   className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
-                  onClick={() =>
-                    onCancelAssignment?.(
-                      cargo.delivery_assignment?.id ||
-                        cargo.assignmentId ||
-                        cargo.id
-                    )
-                  }
+                  onClick={async () => {
+                    try {
+                      await onCancelAssignment?.(
+                        cargo.delivery_assignment?.id ||
+                          cargo.assignmentId ||
+                          cargo.id
+                      );
+                      // Invalidate queries to refresh data
+                      invalidateCargoQueries(cargo.id);
+                      toast({
+                        title: "Assignment Cancelled",
+                        description: "The assignment has been cancelled successfully.",
+                        variant: "default",
+                      });
+                      // Close modal if configured
+                      if (closeOnSuccess) {
+                        setTimeout(() => {
+                          onClose();
+                        }, 1500);
+                      }
+                    } catch (error: any) {
+                      toast({
+                        title: "Failed to Cancel Assignment",
+                        description:
+                          error?.response?.data?.message ||
+                          error?.message ||
+                          "Failed to cancel assignment. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 >
                   <X className="h-4 w-4 mr-2" />
                   Cancel Assignment
@@ -1947,7 +2183,33 @@ export function CargoDetailModal({
                 ) && (
                   <Button
                     className="w-full bg-green-600 hover:bg-green-700"
-                    onClick={() => onAccept?.(cargo.id)}
+                    onClick={async () => {
+                      try {
+                        await onAccept?.(cargo.id);
+                        // Invalidate queries to refresh data
+                        invalidateCargoQueries(cargo.id);
+                        toast({
+                          title: "Cargo Accepted",
+                          description: "You have successfully accepted this cargo.",
+                          variant: "default",
+                        });
+                        // Close modal if configured
+                        if (closeOnSuccess) {
+                          setTimeout(() => {
+                            onClose();
+                          }, 1500);
+                        }
+                      } catch (error: any) {
+                        toast({
+                          title: "Failed to Accept Cargo",
+                          description:
+                            error?.response?.data?.message ||
+                            error?.message ||
+                            "Failed to accept cargo. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Accept Cargo
@@ -1969,7 +2231,35 @@ export function CargoDetailModal({
               {cargo.status === "picked_up" && (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={() => onStartDelivery?.(cargo.id)}
+                  onClick={async () => {
+                    try {
+                      await onStartDelivery?.(cargo.id);
+                      // Invalidate queries to refresh data
+                      invalidateCargoQueries(cargo.id);
+                      toast({
+                        title: "Transit Started",
+                        description: "Cargo is now in transit. You can track it in real-time.",
+                        variant: "default",
+                      });
+                      // Navigate to tracking page
+                      navigate(`/tracking/${cargo.id}`);
+                      // Close modal
+                      if (closeOnSuccess) {
+                        setTimeout(() => {
+                          onClose();
+                        }, 1000);
+                      }
+                    } catch (error: any) {
+                      toast({
+                        title: "Failed to Start Transit",
+                        description:
+                          error?.response?.data?.message ||
+                          error?.message ||
+                          "Failed to start transit. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                   disabled={isStartingDelivery}
                 >
                   {isStartingDelivery ? (
@@ -2055,7 +2345,33 @@ export function CargoDetailModal({
                 <Button
                   variant="outline"
                   className="w-full text-red-600 border-red-600 hover:bg-red-600 hover:text-white"
-                  onClick={() => onCancelCargo?.(cargo.id)}
+                  onClick={async () => {
+                    try {
+                      await onCancelCargo?.(cargo.id);
+                      // Invalidate queries to refresh data
+                      invalidateCargoQueries(cargo.id);
+                      toast({
+                        title: "Cargo Cancelled",
+                        description: "The cargo has been cancelled successfully.",
+                        variant: "default",
+                      });
+                      // Close modal if configured
+                      if (closeOnSuccess) {
+                        setTimeout(() => {
+                          onClose();
+                        }, 1500);
+                      }
+                    } catch (error: any) {
+                      toast({
+                        title: "Failed to Cancel Cargo",
+                        description:
+                          error?.response?.data?.message ||
+                          error?.message ||
+                          "Failed to cancel cargo. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
                 >
                   <X className="h-4 w-4 mr-2" />
                   Cancel Cargo
@@ -2071,7 +2387,9 @@ export function CargoDetailModal({
                   className="w-full"
                   onClick={() => {
                     // Navigate to tracking page
-                    window.location.href = `/tracking/${cargo.id}`;
+                    navigate(`/tracking/${cargo.id}`);
+                    // Close modal
+                    onClose();
                   }}
                 >
                   <Navigation className="h-4 w-4 mr-2" />

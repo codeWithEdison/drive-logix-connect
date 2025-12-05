@@ -136,12 +136,24 @@ axiosInstance.interceptors.response.use(
 
     // Transform error response to match our ApiError interface
     if (error.response?.data) {
+      const responseData = error.response.data;
+      
+      // Handle when error is a string (e.g., "User with this email or phone already exists")
+      let errorMessage = error.message;
+      if (typeof responseData.error === "string") {
+        errorMessage = responseData.error;
+      } else if (responseData.error?.message) {
+        errorMessage = responseData.error.message;
+      } else if (responseData.message) {
+        errorMessage = responseData.message;
+      }
+      
       const apiError: ApiError = {
         success: false,
         error: {
-          code: error.response.data.error?.code || "UNKNOWN_ERROR",
-          message: error.response.data.error?.message || error.message,
-          details: error.response.data.error?.details || null,
+          code: responseData.error?.code || "UNKNOWN_ERROR",
+          message: errorMessage,
+          details: responseData.error?.details || null,
         },
         timestamp: new Date().toISOString(),
       };
