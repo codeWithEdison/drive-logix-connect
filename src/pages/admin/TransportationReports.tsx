@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,10 @@ import {
   Filter,
   AlertCircle,
   FileSpreadsheet,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { useTransportationReports } from "@/lib/api/hooks/utilityHooks";
 import { useBranches } from "@/lib/api/hooks/branchHooks";
@@ -74,7 +78,9 @@ export default function TransportationReports() {
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
-  const [selectedBranchId, setSelectedBranchId] = useState<string>("");
+  const [selectedBranchId, setSelectedBranchId] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   // Fetch branches for super admin
   const { data: branchesData } = useBranches();
@@ -88,11 +94,22 @@ export default function TransportationReports() {
   } = useTransportationReports({
     start_date: startDate,
     end_date: endDate,
-    branch_id: selectedBranchId || undefined,
+    branch_id: selectedBranchId === "all" ? undefined : selectedBranchId,
   });
 
   const reports: TransportationReportData[] = reportsData?.report || [];
   const totalRecords = reportsData?.total_records || 0;
+
+  // Pagination calculations
+  const totalPages = Math.ceil(reports.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedReports = reports.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [startDate, endDate, selectedBranchId]);
 
   // Format number with commas
   const formatNumber = (value: number | null | undefined): string => {
@@ -258,7 +275,7 @@ export default function TransportationReports() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto p-4 space-y-6 max-w-full overflow-x-hidden">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Transportation Reports</h1>
@@ -269,7 +286,7 @@ export default function TransportationReports() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
@@ -277,7 +294,7 @@ export default function TransportationReports() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
             <div className="space-y-2">
               <Label htmlFor="start-date">Start Date</Label>
               <Input
@@ -285,6 +302,7 @@ export default function TransportationReports() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                className="w-full"
               />
             </div>
             <div className="space-y-2">
@@ -294,6 +312,7 @@ export default function TransportationReports() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                className="w-full"
               />
             </div>
             {isSuperAdmin && (
@@ -303,12 +322,12 @@ export default function TransportationReports() {
                   value={selectedBranchId}
                   onValueChange={setSelectedBranchId}
                 >
-                  <SelectTrigger id="branch">
+                  <SelectTrigger id="branch" className="w-full">
                     <SelectValue placeholder="All Branches" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Branches</SelectItem>
-                    {branchesData?.map((branch: any) => (
+                    <SelectItem value="all">All Branches</SelectItem>
+                    {branchesData?.branches?.map((branch: any) => (
                       <SelectItem key={branch.id} value={branch.id}>
                         {branch.name}
                       </SelectItem>
@@ -317,22 +336,43 @@ export default function TransportationReports() {
                 </Select>
               </div>
             )}
-            <div className="flex items-end gap-2">
+            <div className="space-y-2">
+              <Label htmlFor="items-per-page">Items per page</Label>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => {
+                  setItemsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger id="items-per-page" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1 xl:col-span-1 w-full">
               <Button
                 onClick={handleRefresh}
                 variant="outline"
-                className="w-full"
+                className="flex-1 min-w-0 shrink"
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+                <RefreshCw className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
               <Button
                 onClick={downloadExcel}
-                className="w-full"
+                className="flex-1 min-w-0 shrink"
                 disabled={reports.length === 0}
               >
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Download Excel
+                <FileSpreadsheet className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Download</span>
+                <span className="hidden lg:inline"> Excel</span>
               </Button>
             </div>
           </div>
@@ -414,7 +454,7 @@ export default function TransportationReports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reports.map((report) => (
+                  {paginatedReports.map((report) => (
                     <TableRow key={report.serial_number}>
                       <TableCell>{report.serial_number}</TableCell>
                       <TableCell className="font-mono text-sm">
@@ -433,6 +473,77 @@ export default function TransportationReports() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {!isLoading && reports.length > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-between border-t pt-4 mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, reports.length)}{" "}
+                of {reports.length} results
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={
+                          currentPage === pageNum ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage >= totalPages}
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
