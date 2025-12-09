@@ -1194,7 +1194,7 @@ export function DriverDashboard() {
                         {dashboard.vehicle_info.model}
                       </p>
                       <p className="text-xs text-gray-500 capitalize">
-                        {dashboard.vehicle_info.type} •{" "}
+                        {t(`vehicleType.${dashboard.vehicle_info.type}`) || dashboard.vehicle_info.type} •{" "}
                         {t("dashboard.insuranceExpires")}:{" "}
                         {dashboard.vehicle_info.insurance_expiry
                           ? new Date(
