@@ -600,7 +600,7 @@ const LandingPage: React.FC = () => {
                   className="group flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 hover:-translate-y-0.5"
                 >
                   <LogIn className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  Login
+                  {t("navigation.login")}
                 </Link>
               </div>
             </div>
@@ -613,7 +613,7 @@ const LandingPage: React.FC = () => {
                 className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 text-xs font-semibold shadow-lg shadow-blue-600/30"
               >
                 <LogIn className="w-3.5 h-3.5" />
-                Login
+                {t("navigation.login")}
               </Link>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}

@@ -175,7 +175,7 @@ export default function Register() {
                 className="flex items-center gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-4 py-2 rounded-full transition-all duration-300 group"
               >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                <span className="text-sm font-medium">Back to Home</span>
+                <span className="text-sm font-medium">{t("auth.backToHome")}</span>
               </Link>
             </motion.div>
             <motion.div
@@ -222,7 +222,7 @@ export default function Register() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              Professional Logistics Management Platform
+              {t("auth.professionalLogisticsPlatform")}
             </motion.p>
           </motion.div>
 
@@ -352,7 +352,7 @@ export default function Register() {
               className="flex items-center gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-4 py-2 rounded-full transition-all duration-300 group"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-sm font-medium">Back to Home</span>
+              <span className="text-sm font-medium">{t("auth.backToHome")}</span>
             </Link>
           </motion.div>
           <motion.div
@@ -399,7 +399,7 @@ export default function Register() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            Professional Logistics Management Platform
+            {t("auth.professionalLogisticsPlatform")}
           </motion.p>
         </motion.div>
 
@@ -422,9 +422,9 @@ export default function Register() {
                   <UserPlus className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Join Our Platform</h3>
+                  <h3 className="font-semibold text-lg">{t("auth.joinOurPlatform")}</h3>
                   <p className="text-blue-200 text-sm">
-                    Start managing your cargo today
+                    {t("auth.startManagingCargoToday")}
                   </p>
                 </div>
               </div>
@@ -433,9 +433,9 @@ export default function Register() {
                   <Truck className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Fast & Reliable</h3>
+                  <h3 className="font-semibold text-lg">{t("auth.fastAndReliable")}</h3>
                   <p className="text-blue-200 text-sm">
-                    Quick delivery services
+                    {t("auth.quickDeliveryServices")}
                   </p>
                 </div>
               </div>
@@ -444,9 +444,9 @@ export default function Register() {
                   <Sparkles className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Real-time Tracking</h3>
+                  <h3 className="font-semibold text-lg">{t("auth.realTimeTracking")}</h3>
                   <p className="text-blue-200 text-sm">
-                    Monitor your cargo 24/7
+                    {t("auth.monitorCargo24/7")}
                   </p>
                 </div>
               </div>
@@ -455,9 +455,9 @@ export default function Register() {
                   <Shield className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Secure & Safe</h3>
+                  <h3 className="font-semibold text-lg">{t("auth.secureAndSafe")}</h3>
                   <p className="text-blue-200 text-sm">
-                    Your data is protected
+                    {t("auth.yourDataIsProtected")}
                   </p>
                 </div>
               </div>
@@ -591,7 +591,7 @@ export default function Register() {
                             />
                           </div>
                           <p className="text-xs text-gray-500 pl-1">
-                            Format: +250788240301, 250788240301, or 0788240399
+                            {t("auth.phoneFormat")}
                           </p>
                         </div>
 

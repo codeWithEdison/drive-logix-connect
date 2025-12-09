@@ -104,7 +104,7 @@ export default function Login() {
             className="flex items-center gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-4 py-2 rounded-full transition-all duration-300 group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span className="text-sm font-medium">Back to Home</span>
+            <span className="text-sm font-medium">{t("auth.backToHome")}</span>
           </Link>
         </motion.div>
         <motion.div
@@ -153,7 +153,7 @@ export default function Login() {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.4 }}
                 >
-                  Professional Logistics Management Platform
+                  {t("auth.professionalLogisticsPlatform")}
                 </motion.p>
               </div>
             </div>
@@ -169,9 +169,9 @@ export default function Login() {
                   <Truck className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Fast & Reliable</h3>
+                  <h3 className="font-semibold text-lg">{t("auth.fastAndReliable")}</h3>
                   <p className="text-blue-200 text-sm">
-                    Quick delivery services
+                    {t("auth.quickDeliveryServices")}
                   </p>
                 </div>
               </div>
@@ -180,9 +180,9 @@ export default function Login() {
                   <Sparkles className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Real-time Tracking</h3>
+                  <h3 className="font-semibold text-lg">{t("auth.realTimeTracking")}</h3>
                   <p className="text-blue-200 text-sm">
-                    Monitor your cargo 24/7
+                    {t("auth.monitorCargo24/7")}
                   </p>
                 </div>
               </div>
@@ -216,7 +216,7 @@ export default function Login() {
                 </h1>
               </div>
               <p className="text-blue-200 text-sm">
-                Professional Logistics Management Platform
+                {t("auth.professionalLogisticsPlatform")}
               </p>
             </motion.div>
 
@@ -360,8 +360,7 @@ export default function Login() {
               transition={{ duration: 0.5, delay: 0.7 }}
             >
               <p className="text-sm text-white/80 mb-3">
-                © 2024 Loveway Logistics. Professional logistics management made
-                simple.
+                {t("auth.copyright")}
               </p>
               <Link
                 to="/register"
