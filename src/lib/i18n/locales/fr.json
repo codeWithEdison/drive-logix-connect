@@ -318,7 +318,9 @@
     "secureAndSafe": "Sécurisé et Protégé",
     "yourDataIsProtected": "Vos données sont protégées",
     "copyright": "© 2024 Loveway Logistics. Gestion logistique professionnelle simplifiée.",
-    "phoneFormat": "Format : +250788240301, 250788240301 ou 0788240399"
+    "phoneFormat": "Format : +250788240301, 250788240301 ou 0788240399",
+    "invalidPhoneNumber": "Numéro de téléphone invalide",
+    "invalidPhoneNumberDescription": "Le numéro de téléphone doit être dans un format valide (ex. : +250788240301, 250788240301 ou 0788240399)"
   },
   "navigation": {
     "login": "Connexion",

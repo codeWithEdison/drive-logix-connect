@@ -74,8 +74,8 @@ export default function Register() {
     // Validate phone number format
     if (formData.phone && !validatePhone(formData.phone)) {
       customToast.error(
-        "Invalid Phone Number",
-        "Phone number must be a valid format (e.g., +250788240301, 250788240301, or 0788240399)"
+        t("auth.invalidPhoneNumber"),
+        t("auth.invalidPhoneNumberDescription")
       );
       return;
     }
@@ -175,7 +175,9 @@ export default function Register() {
                 className="flex items-center gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-4 py-2 rounded-full transition-all duration-300 group"
               >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                <span className="text-sm font-medium">{t("auth.backToHome")}</span>
+                <span className="text-sm font-medium">
+                  {t("auth.backToHome")}
+                </span>
               </Link>
             </motion.div>
             <motion.div
@@ -227,69 +229,69 @@ export default function Register() {
           </motion.div>
 
           <div className="w-full max-w-md mx-auto">
-          <motion.div
-            className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 overflow-hidden"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Card className="border-0 shadow-none bg-transparent">
-              <CardContent className="pt-8 pb-8">
-                <div className="text-center space-y-6">
-                  <motion.div
-                    className="mx-auto w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.5, type: "spring" }}
-                  >
-                    <CheckCircle className="h-10 w-10 text-white" />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                  >
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {t("auth.registrationSuccessful")}
-                    </h2>
-                    <p className="text-gray-600 mt-2">
-                      {t("auth.verificationEmailSent", { email: userEmail })}
-                    </p>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="space-y-3"
-                  >
-                    <p className="text-sm text-gray-600">
-                      {t("auth.verificationInstructions")}
-                    </p>
-                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                      <p className="text-sm text-blue-800 font-medium">
-                        💡 {t("auth.checkSpamFolder")}
+            <motion.div
+              className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 overflow-hidden"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="border-0 shadow-none bg-transparent">
+                <CardContent className="pt-8 pb-8">
+                  <div className="text-center space-y-6">
+                    <motion.div
+                      className="mx-auto w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.5, type: "spring" }}
+                    >
+                      <CheckCircle className="h-10 w-10 text-white" />
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        {t("auth.registrationSuccessful")}
+                      </h2>
+                      <p className="text-gray-600 mt-2">
+                        {t("auth.verificationEmailSent", { email: userEmail })}
                       </p>
-                    </div>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                    className="pt-4"
-                  >
-                    <Link to="/login">
-                      <Button
-                        variant="outline"
-                        className="w-full rounded-full py-6 text-base font-semibold border-2 hover:bg-gray-50 transition-all duration-300"
-                      >
-                        {t("auth.backToLogin")}
-                      </Button>
-                    </Link>
-                  </motion.div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                      className="space-y-3"
+                    >
+                      <p className="text-sm text-gray-600">
+                        {t("auth.verificationInstructions")}
+                      </p>
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <p className="text-sm text-blue-800 font-medium">
+                          💡 {t("auth.checkSpamFolder")}
+                        </p>
+                      </div>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
+                      className="pt-4"
+                    >
+                      <Link to="/login">
+                        <Button
+                          variant="outline"
+                          className="w-full rounded-full py-6 text-base font-semibold border-2 hover:bg-gray-50 transition-all duration-300"
+                        >
+                          {t("auth.backToLogin")}
+                        </Button>
+                      </Link>
+                    </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -352,7 +354,9 @@ export default function Register() {
               className="flex items-center gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-4 py-2 rounded-full transition-all duration-300 group"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-sm font-medium">{t("auth.backToHome")}</span>
+              <span className="text-sm font-medium">
+                {t("auth.backToHome")}
+              </span>
             </Link>
           </motion.div>
           <motion.div
@@ -422,7 +426,9 @@ export default function Register() {
                   <UserPlus className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{t("auth.joinOurPlatform")}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {t("auth.joinOurPlatform")}
+                  </h3>
                   <p className="text-blue-200 text-sm">
                     {t("auth.startManagingCargoToday")}
                   </p>
@@ -433,7 +439,9 @@ export default function Register() {
                   <Truck className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{t("auth.fastAndReliable")}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {t("auth.fastAndReliable")}
+                  </h3>
                   <p className="text-blue-200 text-sm">
                     {t("auth.quickDeliveryServices")}
                   </p>
@@ -444,7 +452,9 @@ export default function Register() {
                   <Sparkles className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{t("auth.realTimeTracking")}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {t("auth.realTimeTracking")}
+                  </h3>
                   <p className="text-blue-200 text-sm">
                     {t("auth.monitorCargo24/7")}
                   </p>
@@ -455,7 +465,9 @@ export default function Register() {
                   <Shield className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{t("auth.secureAndSafe")}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {t("auth.secureAndSafe")}
+                  </h3>
                   <p className="text-blue-200 text-sm">
                     {t("auth.yourDataIsProtected")}
                   </p>
@@ -471,7 +483,6 @@ export default function Register() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
           >
-
             {/* Registration Card */}
             <motion.div
               className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 overflow-hidden"

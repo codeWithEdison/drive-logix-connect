@@ -223,7 +223,7 @@
     "personalInformation": "Amakuru y'umuntu",
     "businessInformation": "Amakuru y'ubucuruzi",
     "security": "Umutekano",
-    "agreeToTerms": "Nemeye Amategeko n’Amabwiriza na politike By'ibanga",
+    "agreeToTerms": "Nemeye Amategeko n’Amabwiriza ",
     "alreadyHaveAccount": "Urafite konti? Injira hano",
     "dontHaveAccount": "Nta konti ufite? Iyandikishe hano",
     "demoAccounts": "Konti z'ikigeragezo",
@@ -269,7 +269,7 @@
     "verificationLinkInvalid": "Ihuza ry'ikwemeza ntirikora. Nyamuneka gerageza kwiyandikisha nanone.",
     "emailRequiredForResend": "Aderesi ya imeli irikenewe kugira ngo usubire ikwemeza.",
     "emailNotVerified": "Nyamuneka wemeze imeli yawe mbere yo kwinjira. Reba mu inbox yawe kugira ngo ubone imeli yo kwemeza.",
-    "registrationSuccessful": "Kwiyandikisha Kwashobotse !",
+    "registrationSuccessful": "Kwiyandikisha byarangiye !",
     "enterEmailToReset": "Andika imeli yawe kugira ngo usubire Ijambo banga",
     "passwordResetDescription": "Tuzohereza imeli yo gusubira Ijambo banga",
     "sending": "Urakira...",
@@ -280,7 +280,7 @@
     "cargoNumber": "Nimero y'umuzigo",
     "pickupDate": "Itariki yo gufatiraho umuzigo",
     "verificationEmailSent": "Imeli yo kwemeza yoherejwe! Nyamuneka reba mu inbox yawe.",
-    "verificationInstructions": "Nyamuneka reba mu inbox yawe kugira ngo ubone imeli yo kwemeza. Uwo murongo uzagaruka mu isaha imwe.",
+    "verificationInstructions": "reba mu inbox  ya emeli yawe kugira ngo ubone imeli yo kwemeza.",
     "emailVerification": "Kwemeza Imeli",
     "verifyEmailTitle": "Emeza Imeli Yawe",
     "verifyEmailDescription": "Nyamuneka wemeze aderesi yawe ya imeli kugira ngo urangize kwiyandikisha",
@@ -302,7 +302,7 @@
     "quickAccess": "byoroshye kandi byihuse",
     "quickAccessDescription": "Injira ubwanyuma wongeyeho ijambo banga ryawe",
     "minimumPasswordLength": "Bihuzwe: Inyuguti 6 zuzuye",
-    "professionalLogisticsPlatform": "Urubuga rwo Gucunga Ubwikorezi rw'Abunyamwuga",
+    "professionalLogisticsPlatform": "Urubuga rwo  Gutwara imizigo cyinyamwuga",
     "fastAndReliable": "Byihuta kandi Birizewe",
     "quickDeliveryServices": "Serivisi zo Kohereza vuba",
     "realTimeTracking": "Kurikirana  uko imizigo yawe iza live",
@@ -312,7 +312,9 @@
     "secureAndSafe": "umutekano uhagije",
     "yourDataIsProtected": "Amakuru yawe ararizwe",
     "copyright": "© 2024 Loveway Logistics. Gucunga ubwikorezi byoroshye.",
-    "phoneFormat": "Urugero: +250788240301, 250788240301, cyangwa 0788240399"
+    "phoneFormat": "Urugero: +250788240301, 250788240301, cyangwa 0788240399",
+    "invalidPhoneNumber": "Nimero ya telefone itemewe",
+    "invalidPhoneNumberDescription": "Nimero ya telefone igomba kuba ikurikije format yemewe (Urugero: +250788240301, 250788240301, cyangwa 0788240399)"
   },
   "navigation": {
     "login": "Injira",
@@ -781,6 +783,11 @@
     "normal": "Bisanzwe",
     "high": "Hejuru",
     "urgent": "Byihutirwa"
+  },
+  "businessType": {
+    "individual": "Umuntu ku giti cye",
+    "corporate": "sosiyete",
+    "government": "Guverinoma"
   },
   "vehicleType": {
     "truck": "Ikamyo",

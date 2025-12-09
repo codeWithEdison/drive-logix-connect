@@ -174,8 +174,12 @@ export const validateEmail = (email: string): boolean => {
 };
 
 export const validatePhone = (phone: string): boolean => {
-  const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ""));
+  // Allow formats: +250788240301, 250788240301, or 0788240399
+  // Remove all spaces before validation
+  const cleanedPhone = phone.replace(/\s/g, "");
+  // Pattern allows: optional +, then digits (can start with 0 for local format)
+  const phoneRegex = /^[+]?[0-9]{7,15}$/;
+  return phoneRegex.test(cleanedPhone);
 };
 
 export const validatePassword = (
