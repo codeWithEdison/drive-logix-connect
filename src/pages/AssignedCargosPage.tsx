@@ -410,13 +410,13 @@ export function AssignedCargosPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Total Assigned
+                  {t("dashboard.totalAssigned")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {stats.total}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  All cargos
+                  {t("dashboard.allCargos")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
@@ -431,13 +431,13 @@ export function AssignedCargosPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Pending
+                  {t("dashboard.pendingAssignments")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {stats.pending}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  Awaiting pickup
+                  {t("dashboard.awaitingPickup")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
@@ -452,13 +452,13 @@ export function AssignedCargosPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  In Transit
+                  {t("status.inTransit")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {stats.inTransit}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  Currently moving
+                  {t("dashboard.currentlyMoving")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
@@ -473,13 +473,13 @@ export function AssignedCargosPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Completed
+                  {t("status.completed")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {stats.completed}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  Successfully delivered
+                  {t("dashboard.successfullyDelivered")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">

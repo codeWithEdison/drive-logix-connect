@@ -411,7 +411,15 @@
     "performance": "Performance",
     "vehicleInformation": "Informations du véhicule",
     "insuranceExpires": "L'assurance expire",
-    "currentStatus": "Statut actuel"
+    "currentStatus": "Statut actuel",
+    "totalAssigned": "Total Assigné",
+    "allCargos": "Toutes les cargaisons",
+    "awaitingPickup": "En attente de ramassage",
+    "currentlyMoving": "En cours de transport",
+    "successfullyDelivered": "Livré avec succès",
+    "totalDeliveries": "Total des livraisons",
+    "allDeliveries": "Toutes les livraisons",
+    "inProgress": "En cours"
   },
   "cargo": {
     "createCargo": "Créer une cargaison",

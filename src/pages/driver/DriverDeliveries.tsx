@@ -647,13 +647,13 @@ export default function DriverDeliveries() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Total Deliveries
+                  {t("dashboard.totalDeliveries")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {activeCargoDetails.length + completedCargoDetails.length}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  All deliveries
+                  {t("dashboard.allDeliveries")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
@@ -668,13 +668,13 @@ export default function DriverDeliveries() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Active
+                  {t("status.active")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {activeCargoDetails.length}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  In progress
+                  {t("dashboard.inProgress")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
@@ -689,13 +689,13 @@ export default function DriverDeliveries() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
               <div className="space-y-1 sm:space-y-2">
                 <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  Completed
+                  {t("status.completed")}
                 </p>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {completedCargoDetails.length}
                 </p>
                 <p className="text-xs text-gray-500 hidden sm:block">
-                  Successfully delivered
+                  {t("dashboard.successfullyDelivered")}
                 </p>
               </div>
               <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">

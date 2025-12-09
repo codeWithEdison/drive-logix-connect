@@ -401,7 +401,15 @@
     "performance": "Imikorere",
     "vehicleInformation": "Amakuru y'ibinyabiziga",
     "insuranceExpires": "Ubwishingizi burangira",
-    "currentStatus": "Imiterere y'ubu"
+    "currentStatus": "Imiterere y'ubu",
+    "totalAssigned": "Ibyahawe byose",
+    "allCargos": "Imizigo yose",
+    "awaitingPickup": "Bitegereje gufatira",
+    "currentlyMoving": "Birimo gutwarwa",
+    "successfullyDelivered": "Byatanzwe neza",
+    "totalDeliveries": "Kohereza byose",
+    "allDeliveries": "Kohereza byose",
+    "inProgress": "Biri gukorwa"
   },
   "cargo": {
     "createCargo": " umuzigo mushya",
