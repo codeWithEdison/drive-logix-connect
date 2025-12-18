@@ -12,3 +12,4 @@ echo.
 adb -s emulator-5554 logcat -c
 adb -s emulator-5554 logcat | findstr /i "API REQUEST API RESPONSE API ERROR"
 
+

@@ -69,3 +69,4 @@ Each API call will show:
 - Save logs to file: `adb -s emulator-5554 logcat > api-logs.txt`
 - Filter by specific endpoint: `adb -s emulator-5554 logcat | grep "app-config"`
 
+

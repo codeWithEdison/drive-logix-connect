@@ -15,3 +15,4 @@ adb -s emulator-5554 logcat -c
 # Show logs filtered for API calls
 adb -s emulator-5554 logcat | grep --line-buffered -i "API REQUEST\|API RESPONSE\|API ERROR\|Capacitor/Console.*API"
 
+
