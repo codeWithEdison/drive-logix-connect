@@ -6,6 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const androidPath = path.join(__dirname, "android");
+const iosPath = path.join(__dirname, "ios");
 
 function removeLinesContaining(content, substring) {
   const eol = content.includes("\r\n") ? "\r\n" : "\n";
@@ -36,6 +37,67 @@ if (fs.existsSync(settingsGradlePath)) {
 }
 
 console.log("Push notifications plugin removed from Android build");
+
+// ===========================================
+// iOS: Remove push notifications plugin
+// ===========================================
+if (fs.existsSync(iosPath)) {
+  // Remove from capacitor.plugins.json (iOS)
+  const iosPluginsJsonPath = path.join(
+    iosPath,
+    "App",
+    "App",
+    "capacitor.plugins.json"
+  );
+  if (fs.existsSync(iosPluginsJsonPath)) {
+    try {
+      const raw = fs.readFileSync(iosPluginsJsonPath, "utf8");
+      const plugins = JSON.parse(raw);
+      if (Array.isArray(plugins)) {
+        const filtered = plugins.filter(
+          (p) =>
+            p?.pkg !== "@capacitor/push-notifications" &&
+            p?.classpath !==
+              "CAPPushNotificationsPlugin"
+        );
+        fs.writeFileSync(iosPluginsJsonPath, JSON.stringify(filtered, null, "\t") + "\n");
+        console.log("✓ Removed push-notifications from iOS capacitor.plugins.json");
+      }
+    } catch (e) {
+      console.warn("! Could not update iOS capacitor.plugins.json:", e?.message || e);
+    }
+  }
+
+  // Remove PWA service worker assets from iOS
+  try {
+    const iosPublicDir = path.join(iosPath, "App", "public");
+    const candidates = ["sw.js", "registerSW.js"];
+
+    for (const filename of candidates) {
+      const p = path.join(iosPublicDir, filename);
+      if (fs.existsSync(p)) {
+        fs.unlinkSync(p);
+        console.log(`✓ Removed ${filename} from iOS web assets`);
+      }
+    }
+
+    if (fs.existsSync(iosPublicDir)) {
+      const entries = fs.readdirSync(iosPublicDir);
+      for (const name of entries) {
+        if (name.startsWith("workbox-") && name.endsWith(".js")) {
+          fs.unlinkSync(path.join(iosPublicDir, name));
+          console.log(`✓ Removed ${name} from iOS web assets`);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("! Could not remove PWA service worker assets from iOS:", e?.message || e);
+  }
+
+  console.log("Push notifications plugin removed from iOS build");
+} else {
+  console.log("ℹ iOS folder not found, skipping iOS push notification removal");
+}
 
 // Also remove from capacitor.plugins.json so Capacitor doesn't try to load the class at runtime.
 const pluginsJsonPath = path.join(

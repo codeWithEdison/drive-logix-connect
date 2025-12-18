@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "build:mobile": "vite build --mode native && npx cap sync android && node remove-push-plugin.js",
+    "build:mobile": "vite build --mode native && npx cap sync android && npx cap sync ios && node remove-push-plugin.js",
     "build:prod": "vite build --mode production",
     "deploy:server": "npm run build:prod && rm -rf /var/www/lovewaylogistics/* && cp -r dist/* /var/www/lovewaylogistics/ && sudo chown -R deploy:deploy /var/www/lovewaylogistics",
     "lint": "eslint .",
@@ -15,12 +15,16 @@
     "android:dev": "npm run build:mobile && npx cap run android",
     "android:build": "npm run build:mobile && npx cap build android",
     "android:open": "npx cap open android",
-    "android:sync": "npx cap sync android"
+    "android:sync": "npx cap sync android",
+    "ios:dev": "npm run build:mobile && npx cap run ios",
+    "ios:open": "npx cap open ios",
+    "ios:sync": "npx cap sync ios"
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^9.1.2",
     "@capacitor-community/http": "^1.4.1",
     "@capacitor/android": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
     "@capacitor/app": "^7.1.0",
     "@capacitor/camera": "^7.0.2",
     "@capacitor/cli": "^7.4.4",
