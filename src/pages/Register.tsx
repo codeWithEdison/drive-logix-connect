@@ -815,12 +815,29 @@ export default function Register() {
                         }
                         className="mt-1"
                       />
-                      <Label
-                        htmlFor="agreeToTerms"
-                        className="text-sm text-gray-700 leading-relaxed cursor-pointer"
-                      >
-                        {t("auth.agreeToTerms")}
-                      </Label>
+                      <div className="space-y-1">
+                        <Label
+                          htmlFor="agreeToTerms"
+                          className="text-sm text-gray-700 leading-relaxed cursor-pointer"
+                        >
+                          {t("auth.agreeToTerms")}
+                        </Label>
+                        <div className="text-xs text-gray-600">
+                          <Link
+                            to="/terms"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            Terms
+                          </Link>{" "}
+                          ·{" "}
+                          <Link
+                            to="/privacy"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            Privacy Policy
+                          </Link>
+                        </div>
+                      </div>
                     </motion.div>
 
                     <motion.div

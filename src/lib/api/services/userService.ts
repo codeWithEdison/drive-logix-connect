@@ -32,6 +32,27 @@ export class UserService {
     return response.data;
   }
 
+  /**
+   * Delete the currently authenticated user's account.
+   *
+   * Backend should:
+   * - authenticate the user via the access token
+   * - optionally verify current_password (recommended)
+   * - delete/disable the account and revoke tokens/sessions
+   */
+  static async deleteAccount(data?: {
+    currentPassword?: string;
+    reason?: string;
+    confirmation?: string;
+  }): Promise<ApiResponse<null>> {
+    const response = await axiosInstance.post("/users/delete-account", {
+      current_password: data?.currentPassword,
+      reason: data?.reason,
+      confirmation: data?.confirmation,
+    });
+    return response.data;
+  }
+
   // Get all users (Admin only)
   static async getUsers(
     params?: UserSearchParams

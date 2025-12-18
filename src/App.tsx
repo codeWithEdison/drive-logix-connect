@@ -85,6 +85,10 @@ const ProfilePage = lazy(() =>
   import("@/pages/Profile").then((m) => ({ default: m.ProfilePage }))
 );
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
+const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
+const Terms = lazy(() => import("@/pages/Terms"));
+const Cookies = lazy(() => import("@/pages/Cookies"));
+const DeleteAccount = lazy(() => import("@/pages/DeleteAccount"));
 
 // Loading component
 const PageLoader = () => (
@@ -120,6 +124,10 @@ function AppContent() {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/cookies" element={<Cookies />} />
+            <Route path="/delete-account" element={<DeleteAccount />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -230,6 +238,12 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Public policy pages (available while logged in too) */}
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/cookies" element={<Cookies />} />
+            <Route path="/delete-account" element={<DeleteAccount />} />
 
             {/* Driver Routes */}
             <Route

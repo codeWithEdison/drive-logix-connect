@@ -5,6 +5,7 @@ import {
   useUserProfile,
   useUpdateProfile,
   useChangePassword,
+  useDeleteAccount,
 } from "@/lib/api/hooks/userHooks";
 import {
   useClientProfile,
@@ -16,7 +17,7 @@ import {
 } from "@/lib/api/hooks/driverHooks";
 import { useUploadFile } from "@/lib/api/hooks/utilityHooks";
 import { useToast } from "@/hooks/use-toast";
-import { useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -46,13 +57,15 @@ import {
   CreditCard,
   MapPin,
   Briefcase,
+  Trash2,
 } from "lucide-react";
 import { Driver, Client, BusinessType } from "@/types/shared";
 
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") || "profile"
@@ -70,6 +83,7 @@ export function ProfilePage() {
   const updateClientProfileMutation = useUpdateClientProfile();
   const updateDriverProfileMutation = useUpdateDriverProfile();
   const changePasswordMutation = useChangePassword();
+  const deleteAccountMutation = useDeleteAccount();
   const uploadFileMutation = useUploadFile();
 
   // Get the appropriate profile based on role
@@ -128,6 +142,11 @@ export function ProfilePage() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -304,6 +323,56 @@ export function ProfilePage() {
       toast({
         title: t("common.error"),
         description: t("profile.passwordChangeError"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetDeleteDialog = () => {
+    setDeleteConfirmText("");
+    setDeletePassword("");
+    setDeleteReason("");
+  };
+
+  const canDelete =
+    deleteConfirmText.trim().toUpperCase() === "DELETE" &&
+    !deleteAccountMutation.isPending;
+
+  const handleDeleteAccount = async (
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    // Prevent AlertDialog default close while we process.
+    e?.preventDefault();
+
+    if (!user) return;
+    if (deleteConfirmText.trim().toUpperCase() !== "DELETE") return;
+
+    try {
+      await deleteAccountMutation.mutateAsync({
+        currentPassword: deletePassword || undefined,
+        reason: deleteReason || undefined,
+        confirmation: "DELETE",
+      });
+
+      toast({
+        title: "Account deleted",
+        description:
+          "Your account deletion request has been processed. You will now be logged out.",
+      });
+
+      // Clear local session and navigate out.
+      await logout();
+      setDeleteDialogOpen(false);
+      resetDeleteDialog();
+      navigate("/");
+    } catch (error: any) {
+      const msg =
+        error?.error?.message ||
+        error?.message ||
+        "Failed to delete account. Please try again.";
+      toast({
+        title: "Delete failed",
+        description: msg,
         variant: "destructive",
       });
     }
@@ -947,6 +1016,120 @@ export function ProfilePage() {
                   ? t("common.loading")
                   : t("profile.changePassword")}
               </Button>
+
+              <Separator className="my-6" />
+
+              <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-red-700 flex items-center gap-2">
+                      <Trash2 className="h-4 w-4" />
+                      Danger Zone
+                    </h3>
+                    <p className="text-sm text-red-700/80 mt-1">
+                      Deleting your account is permanent. This will remove your
+                      account access and associated data, subject to legal and
+                      operational requirements.
+                    </p>
+                    <p className="text-xs text-red-700/70 mt-2">
+                      Need the public deletion instructions? Visit{" "}
+                      <Link
+                        to="/delete-account"
+                        className="underline underline-offset-2"
+                      >
+                        /delete-account
+                      </Link>
+                      .
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      resetDeleteDialog();
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    Delete account
+                  </Button>
+                </div>
+              </div>
+
+              <AlertDialog
+                open={deleteDialogOpen}
+                onOpenChange={(open) => {
+                  // Don't allow closing while request is in-flight.
+                  if (deleteAccountMutation.isPending) return;
+                  setDeleteDialogOpen(open);
+                  if (!open) resetDeleteDialog();
+                }}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. Type <strong>DELETE</strong>{" "}
+                      to confirm. For security, we recommend entering your
+                      current password.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="delete-confirm-text">
+                        Type DELETE to confirm
+                      </Label>
+                      <Input
+                        id="delete-confirm-text"
+                        value={deleteConfirmText}
+                        onChange={(e) => setDeleteConfirmText(e.target.value)}
+                        placeholder="DELETE"
+                        autoComplete="off"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="delete-password">
+                        Current password (recommended)
+                      </Label>
+                      <Input
+                        id="delete-password"
+                        type="password"
+                        value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                        placeholder="Enter your current password"
+                        autoComplete="current-password"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="delete-reason">Reason (optional)</Label>
+                      <Input
+                        id="delete-reason"
+                        value={deleteReason}
+                        onChange={(e) => setDeleteReason(e.target.value)}
+                        placeholder="Tell us why (optional)"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
+
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                      <Button
+                        variant="destructive"
+                        disabled={!canDelete}
+                        onClick={handleDeleteAccount}
+                      >
+                        {deleteAccountMutation.isPending
+                          ? "Deleting..."
+                          : "Delete account"}
+                      </Button>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         )}

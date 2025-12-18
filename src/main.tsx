@@ -14,51 +14,79 @@ import { appStateService } from "./lib/services/appStateService";
 import { deviceService } from "./lib/services/deviceService";
 import { AppConfigService } from "./lib/api/services/appConfigService";
 
+// Native builds should NOT use the PWA service worker (it can cache stale JS between builds).
+if (Capacitor.isNativePlatform() && "serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .getRegistrations()
+    .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+    .then(() => console.log("Service workers unregistered (native build)"))
+    .catch((err) =>
+      console.warn(
+        "Failed to unregister service workers (native build):",
+        err?.message || String(err)
+      )
+    );
+}
+
 // Initialize services with error handling
 const initializeServices = async () => {
   try {
     // Initialize app configuration first
     console.log("Initializing app configuration...");
     try {
-    await AppConfigService.initialize();
-    console.log("App configuration initialized successfully");
+      await AppConfigService.initialize();
+      console.log("App configuration initialized successfully");
     } catch (error) {
-      console.warn("App configuration initialization failed, continuing:", error);
+      console.warn(
+        "App configuration initialization failed, continuing:",
+        error
+      );
     }
 
     // Initialize offline storage
     try {
-    await offlineStorageService.initialize();
+      await offlineStorageService.initialize();
     } catch (error) {
       console.warn("Offline storage initialization failed, continuing:", error);
     }
 
     // Initialize device service
     try {
-    await deviceService.initialize();
+      await deviceService.initialize();
     } catch (error) {
       console.warn("Device service initialization failed, continuing:", error);
     }
 
     // Initialize network monitoring
     try {
-    await networkService.initialize();
+      await networkService.initialize();
     } catch (error) {
       console.warn("Network service initialization failed, continuing:", error);
     }
 
     // Initialize app state management
     try {
-    await appStateService.initialize();
+      await appStateService.initialize();
     } catch (error) {
-      console.warn("App state service initialization failed, continuing:", error);
+      console.warn(
+        "App state service initialization failed, continuing:",
+        error
+      );
     }
 
-    // Initialize push notifications
-    try {
-    await pushNotificationService.initialize();
-    } catch (error) {
-      console.warn("Push notification service initialization failed, continuing:", error);
+    // Skip push notifications on Android (Firebase not configured)
+    // Push notifications require Firebase on Android which causes crashes
+    if (!Capacitor.isNativePlatform()) {
+      pushNotificationService.initialize().catch((error) => {
+        console.warn(
+          "Push notification service initialization failed, continuing:",
+          error
+        );
+      });
+    } else {
+      console.log(
+        "Push notifications disabled on native platform (Firebase not configured)"
+      );
     }
 
     console.log("Capacitor services initialization completed");

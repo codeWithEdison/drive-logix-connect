@@ -6,12 +6,6 @@ import {
 } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
 import { storage } from "./secureStorage";
-import {
-  initializeFirebase,
-  getFirebaseMessaging,
-  VAPID_KEY,
-} from "../config/firebase";
-import { getToken, onMessage } from "firebase/messaging";
 import axiosInstance from "../api/axios";
 
 export interface NotificationData {
@@ -51,6 +45,8 @@ class PushNotificationService {
       this.isInitialized = true;
     } catch (error) {
       console.error("Push notification initialization error:", error);
+      // Don't throw - allow app to continue even if push notifications fail
+      this.isInitialized = true; // Mark as initialized to prevent retry loops
     }
   }
 
@@ -58,44 +54,57 @@ class PushNotificationService {
    * Initialize native push notifications
    */
   private async initializeNative(): Promise<void> {
-    // Request permissions
-    const permStatus = await PushNotifications.requestPermissions();
-
-    if (permStatus.receive === "granted") {
-      // Register with Apple / Google to receive push via APNS/FCM
-      await PushNotifications.register();
-
-      // Listen for registration
-      PushNotifications.addListener("registration", (token: Token) => {
-        console.log("Push registration success, token: " + token.value);
-        this.fcmToken = token.value;
-        this.registerDeviceWithBackend();
-      });
-
-      // Listen for registration errors
-      PushNotifications.addListener("registrationError", (error: any) => {
-        console.error("Error on registration: " + JSON.stringify(error));
-      });
-
-      // Listen for push notifications received
-      PushNotifications.addListener(
-        "pushNotificationReceived",
-        (notification: PushNotificationSchema) => {
-          console.log("Push notification received: ", notification);
-          this.handleNotificationReceived(notification);
-        }
+    try {
+      // Skip push notifications on Android if Firebase is not configured
+      // The Capacitor PushNotifications plugin requires Firebase on Android
+      // We'll disable it to prevent crashes
+      console.log(
+        "Push notifications disabled on Android (Firebase not configured)"
       );
+      return;
 
-      // Listen for push notification actions
-      PushNotifications.addListener(
-        "pushNotificationActionPerformed",
-        (notification: ActionPerformed) => {
-          console.log("Push notification action performed", notification);
-          this.handleNotificationAction(notification);
-        }
-      );
-    } else {
-      console.log("Push notification permissions not granted");
+      // Request permissions
+      const permStatus = await PushNotifications.requestPermissions();
+
+      if (permStatus.receive === "granted") {
+        // Register with Apple / Google to receive push via APNS/FCM
+        await PushNotifications.register();
+
+        // Listen for registration
+        PushNotifications.addListener("registration", (token: Token) => {
+          console.log("Push registration success, token: " + token.value);
+          this.fcmToken = token.value;
+          this.registerDeviceWithBackend();
+        });
+
+        // Listen for registration errors
+        PushNotifications.addListener("registrationError", (error: any) => {
+          console.error("Error on registration: " + JSON.stringify(error));
+        });
+
+        // Listen for push notifications received
+        PushNotifications.addListener(
+          "pushNotificationReceived",
+          (notification: PushNotificationSchema) => {
+            console.log("Push notification received: ", notification);
+            this.handleNotificationReceived(notification);
+          }
+        );
+
+        // Listen for push notification actions
+        PushNotifications.addListener(
+          "pushNotificationActionPerformed",
+          (notification: ActionPerformed) => {
+            console.log("Push notification action performed", notification);
+            this.handleNotificationAction(notification);
+          }
+        );
+      } else {
+        console.log("Push notification permissions not granted");
+      }
+    } catch (error) {
+      console.error("Native push notification initialization error:", error);
+      // Don't throw - allow app to continue even if push notifications fail
     }
   }
 
@@ -104,14 +113,27 @@ class PushNotificationService {
    */
   private async initializeWeb(): Promise<void> {
     try {
-      const { messaging } = initializeFirebase();
-      if (!messaging) return;
+      // Dynamically import Firebase only for web platform
+      if (Capacitor.isNativePlatform()) {
+        console.warn("Web push notifications not available on native platform");
+        return;
+      }
+
+      // Dynamic import to avoid loading Firebase on native platforms
+      const firebaseModule = await import("../config/firebase");
+      const firebaseMessaging = await import("firebase/messaging");
+
+      const { messaging } = firebaseModule.initializeFirebase();
+      if (!messaging) {
+        console.warn("Firebase messaging not initialized");
+        return;
+      }
 
       // Request permission and get token
       const permission = await Notification.requestPermission();
       if (permission === "granted") {
-        const token = await getToken(messaging, {
-          vapidKey: VAPID_KEY,
+        const token = await firebaseMessaging.getToken(messaging, {
+          vapidKey: firebaseModule.VAPID_KEY,
         });
 
         if (token) {
@@ -120,13 +142,14 @@ class PushNotificationService {
         }
 
         // Listen for foreground messages
-        onMessage(messaging, (payload) => {
+        firebaseMessaging.onMessage(messaging, (payload) => {
           console.log("Message received in foreground:", payload);
           this.handleWebNotification(payload);
         });
       }
     } catch (error) {
       console.error("Web push initialization error:", error);
+      // Don't throw - allow app to continue even if push notifications fail
     }
   }
 

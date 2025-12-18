@@ -1,0 +1,50 @@
+Subject: URGENT: CORS Configuration Required for Mobile App API Access
+
+Hi Backend Team,
+
+We need to fix a CORS (Cross-Origin Resource Sharing) issue that's blocking all API requests from our mobile app.
+
+PROBLEM:
+The mobile app (Android/iOS) cannot make API requests to https://api.lovewaylogistics.com because the backend is not allowing requests from the mobile app's origin.
+
+ERROR:
+"Access to XMLHttpRequest at 'https://api.lovewaylogistics.com/v1/...' from origin 'https://localhost' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+
+REQUIRED FIX:
+Please configure the backend to allow CORS requests from these origins:
+
+MOBILE APPS (Development & Production):
+1. https://localhost (Android - works for both dev and Play Store apps)
+2. capacitor://localhost (iOS - works for both dev and App Store apps)
+
+WEB APPLICATIONS:
+3. http://localhost:5173 (Web development)
+4. https://your-production-domain.com (Production web - replace with your domain)
+
+IMPORTANT: Apps installed from App Store and Play Store use the SAME origins as development apps.
+No separate configuration needed for production mobile apps.
+
+REQUIRED HEADERS:
+The backend should respond with these headers for all API requests:
+
+IMPORTANT: `Access-Control-Allow-Origin` must be ONE value (NOT comma-separated).
+Correct behavior: echo back the request Origin if it’s in the allowlist, and return `Vary: Origin`.
+
+Access-Control-Allow-Origin: https://localhost   (example; should match incoming Origin)
+Vary: Origin
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization, Accept, Accept-Language
+Access-Control-Allow-Credentials: true
+
+IMPORTANT:
+- The backend must properly handle OPTIONS requests (preflight) for all endpoints
+- All /v1/* endpoints are affected
+- This is blocking all mobile app functionality
+
+PRIORITY: HIGH - This is blocking all API communication from mobile app
+
+I've attached a detailed technical document (BACKEND_CORS_FIX_REQUEST.md) with implementation examples for Express.js, Django, Laravel, and Nginx.
+
+Please let me know once this is implemented so we can test.
+
+Thanks!

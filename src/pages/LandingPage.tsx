@@ -2779,15 +2779,24 @@ const LandingPage: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs md:text-sm text-gray-400">
               <p>{t("landing.footer.copyright")}</p>
               <div className="flex gap-6">
-                <a href="#" className="hover:text-white transition-colors">
+                <Link
+                  to="/privacy"
+                  className="hover:text-white transition-colors"
+                >
                   {t("landing.footer.policies.privacy")}
-                </a>
-                <a href="#" className="hover:text-white transition-colors">
+                </Link>
+                <Link
+                  to="/terms"
+                  className="hover:text-white transition-colors"
+                >
                   {t("landing.footer.policies.terms")}
-                </a>
-                <a href="#" className="hover:text-white transition-colors">
+                </Link>
+                <Link
+                  to="/cookies"
+                  className="hover:text-white transition-colors"
+                >
                   {t("landing.footer.policies.cookies")}
-                </a>
+                </Link>
               </div>
             </div>
           </motion.div>

@@ -16,7 +16,8 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       mode === "development" && componentTagger(),
-      VitePWA({
+      !isNativeBuild &&
+        VitePWA({
         registerType: "autoUpdate",
         includeAssets: [
           "favicon.ico",
@@ -178,15 +179,11 @@ export default defineConfig(({ mode }) => {
     build: {
       chunkSizeWarningLimit: 1000,
       // Use Vite's default chunking strategy for both web and native builds.
-      // Custom manualChunks can sometimes introduce circular evaluation order
-      // issues in complex apps, leading to runtime errors like
-      // "Cannot access 'X' before initialization" in vendor bundles.
-      rollupOptions: isNativeBuild
-        ? {
-            external: (id) =>
-              id.startsWith("@capacitor/") && !id.includes("@capacitor/core"),
-          }
-        : {},
+      // NOTE: Do NOT mark Capacitor plugins as external here.
+      // They must be bundled so that imports like "@capacitor/preferences"
+      // are resolved at build time; otherwise the WebView will see bare
+      // module specifiers and fail with "Failed to resolve module specifier".
+      rollupOptions: {},
     },
     define: {
       // Define Capacitor environment variables

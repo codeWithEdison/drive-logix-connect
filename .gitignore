@@ -25,3 +25,18 @@ dist-ssr
 .env
 dev_doc
 
+# Secrets / credentials (must never be committed)
+**/service-account.json
+**/firebase/service-account.json
+google-services.json
+GoogleService-Info.plist
+*.keystore
+*.jks
+*.p12
+*.pem
+.env.*
+
+# Windows reserved device filenames (cannot be committed)
+nul
+NUL
+

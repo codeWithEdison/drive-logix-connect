@@ -35,6 +35,16 @@ export const useChangePassword = () => {
   });
 };
 
+export const useDeleteAccount = () => {
+  return useMutation({
+    mutationFn: (data?: {
+      currentPassword?: string;
+      reason?: string;
+      confirmation?: string;
+    }) => UserService.deleteAccount(data),
+  });
+};
+
 export const useUsers = (params?: UserSearchParams) => {
   return useQuery({
     queryKey: queryKeys.users.list(params),

@@ -7,8 +7,12 @@ type SocketEvents = {
 let socketInstance: Socket | null = null;
 let currentToken: string | null = null;
 
+// For mobile builds (native mode), default to online backend
+const isNativeBuild = import.meta.env.MODE === "native";
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:3000") as string;
+  (isNativeBuild
+    ? "https://api.lovewaylogistics.com"
+    : "http://localhost:3000")) as string;
 
 export function getSocket(token: string): Socket {
   if (socketInstance && currentToken === token) return socketInstance;

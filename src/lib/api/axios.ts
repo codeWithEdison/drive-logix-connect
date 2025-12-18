@@ -10,11 +10,53 @@ declare module "axios" {
 }
 
 // Base configuration
+// For mobile builds (native mode), default to online backend
+const isNativeBuild = import.meta.env.MODE === "native";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  // "https://loveway-logistics-backends.onrender.com";
-  "http://localhost:3000";
+  (isNativeBuild
+    ? "https://api.lovewaylogistics.com"
+    : "http://localhost:3000");
 const API_VERSION = "v1";
+
+// Avoid logging raw axios config/headers objects on mobile.
+// Capacitor/Console may try to serialize them and can hit circular refs.
+const safeStringify = (value: unknown): string => {
+  try {
+    const seen = new WeakSet<object>();
+    return JSON.stringify(
+      value,
+      (_key, val) => {
+        if (val instanceof Error) {
+          return { name: val.name, message: val.message, stack: val.stack };
+        }
+        if (typeof val === "function") return "[Function]";
+        if (typeof val === "object" && val !== null) {
+          if (seen.has(val as object)) return "[Circular]";
+          seen.add(val as object);
+        }
+        return val;
+      },
+      2
+    );
+  } catch {
+    try {
+      return String(value);
+    } catch {
+      return "[Unstringifiable]";
+    }
+  }
+};
+
+const headersToPlainObject = (headers: any): Record<string, unknown> => {
+  try {
+    if (!headers) return {};
+    if (typeof headers.toJSON === "function") return headers.toJSON();
+    return { ...(headers as any) };
+  } catch {
+    return {};
+  }
+};
 
 // Request throttling
 const requestQueue: Array<() => void> = [];
@@ -44,6 +86,9 @@ const axiosInstance: AxiosInstance = axios.create({
     "Content-Type": "application/json",
     Accept: "application/json",
   },
+  // For mobile apps, we need to handle CORS differently
+  // The backend should allow requests from mobile app origins
+  withCredentials: false,
 });
 
 // Request interceptor
@@ -62,9 +107,32 @@ axiosInstance.interceptors.request.use(
     // Add request timestamp for throttling
     config.metadata = { startTime: Date.now() };
 
+    // Log API request
+    const method = config.method?.toUpperCase() || "GET";
+    const url = config.url || "";
+    const fullUrl = `${config.baseURL}${url}`;
+    const hasAuth = !!token;
+
+    const headersPlain = headersToPlainObject(config.headers);
+    const logPayload = {
+      method,
+      url: fullUrl,
+      headers: {
+        ...headersPlain,
+        Authorization: hasAuth ? "Bearer ***" : "None",
+      },
+      hasAuth,
+      params: config.params,
+      data: config.data,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log(`[API REQUEST] ${method} ${fullUrl} ${safeStringify(logPayload)}`);
+
     return config;
   },
   (error) => {
+    console.error(`[API REQUEST ERROR] ${safeStringify(error)}`);
     return Promise.reject(error);
   }
 );
@@ -82,6 +150,24 @@ axiosInstance.interceptors.response.use(
       if (accessToken) storage.setItem("access_token", accessToken);
       if (refreshToken) storage.setItem("refresh_token", refreshToken);
     }
+
+    // Log API response
+    const method = response.config.method?.toUpperCase() || "GET";
+    const url = response.config.url || "";
+    const fullUrl = `${response.config.baseURL}${url}`;
+    const duration = response.config.metadata
+      ? Date.now() - response.config.metadata.startTime
+      : 0;
+
+    const logPayload = {
+      status: response.status,
+      statusText: response.statusText,
+      durationMs: duration,
+      timestamp: new Date().toISOString(),
+      // Keep response data, but stringify safely to avoid circulars
+      data: response.data,
+    };
+    console.log(`[API RESPONSE] ${method} ${fullUrl} ${safeStringify(logPayload)}`);
 
     return response;
   },
@@ -134,10 +220,30 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    // Log API error
+    const method = originalRequest?.method?.toUpperCase() || "GET";
+    const url = originalRequest?.url || "";
+    const fullUrl = originalRequest?.baseURL
+      ? `${originalRequest.baseURL}${url}`
+      : url;
+
+    const logPayload = {
+      status: error.response?.status || "NO_RESPONSE",
+      statusText: error.response?.statusText || error.message,
+      error: error.response?.data || error.message,
+      config: {
+        url: fullUrl,
+        method,
+        headers: headersToPlainObject(originalRequest?.headers),
+      },
+      timestamp: new Date().toISOString(),
+    };
+    console.error(`[API ERROR] ${method} ${fullUrl} ${safeStringify(logPayload)}`);
+
     // Transform error response to match our ApiError interface
     if (error.response?.data) {
       const responseData = error.response.data;
-      
+
       // Handle when error is a string (e.g., "User with this email or phone already exists")
       let errorMessage = error.message;
       if (typeof responseData.error === "string") {
@@ -147,7 +253,7 @@ axiosInstance.interceptors.response.use(
       } else if (responseData.message) {
         errorMessage = responseData.message;
       }
-      
+
       const apiError: ApiError = {
         success: false,
         error: {

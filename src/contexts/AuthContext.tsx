@@ -17,7 +17,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   register: (data: CreateUserRequest) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   getDefaultRoute: (role: UserRole) => string;
   isLoading: boolean;
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       // Call logout API if user is authenticated
       if (user) {

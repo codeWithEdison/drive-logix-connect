@@ -203,8 +203,14 @@ class AppStateService {
         console.log("Syncing offline data...");
       }
 
-      // Refresh push notification token if needed
-      await pushNotificationService.initialize();
+      // Refresh push notification token if needed (skip on native Android - Firebase not configured)
+      if (!Capacitor.isNativePlatform()) {
+        try {
+          await pushNotificationService.initialize();
+        } catch (error) {
+          console.warn("Push notification refresh failed:", error);
+        }
+      }
     } catch (error) {
       console.error("Failed to refresh app data:", error);
     }
