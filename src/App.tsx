@@ -17,6 +17,7 @@ import { ApiProvider } from "@/lib/api/ApiProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { UpdatePrompt } from "@/components/mobile/UpdatePrompt";
 import { OfflineIndicator } from "@/components/mobile/OfflineIndicator";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { Capacitor } from "@capacitor/core";
 
 // Lazy load pages for better performance
@@ -526,6 +527,7 @@ function App() {
           v7_relativeSplatPath: true,
         }}
       >
+        <ScrollToTop />
         <ApiProvider>
           <TooltipProvider>
             <AuthProvider>
