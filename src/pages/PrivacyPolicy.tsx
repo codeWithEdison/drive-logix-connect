@@ -1,5 +1,7 @@
 import React from "react";
 import { SEO } from "@/components/seo/SEO";
+import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -11,7 +13,9 @@ export default function PrivacyPolicyPage() {
         type="website"
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-10">
+      <PublicHeader />
+
+      <div className="max-w-4xl mx-auto px-4 py-10 mt-20">
         <h1 className="text-3xl font-bold text-foreground">Privacy Policy</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Effective date: {new Date().getFullYear()}-01-01
@@ -114,8 +118,10 @@ export default function PrivacyPolicyPage() {
               the app.
             </li>
             <li>
-              <strong>Deletion</strong>: to request account deletion, contact us
-              using the details below.
+              <strong>Deletion</strong>: you can delete your account directly
+              through the app settings or by visiting{" "}
+              <a href="/delete-account">/delete-account</a>. Once deleted, your
+              personal data will be permanently removed from our systems.
             </li>
           </ul>
 
@@ -137,6 +143,8 @@ export default function PrivacyPolicyPage() {
           </ul>
         </div>
       </div>
+
+      <PublicFooter />
     </div>
   );
 }

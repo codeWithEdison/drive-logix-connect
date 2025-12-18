@@ -1,5 +1,7 @@
 import React from "react";
 import { SEO } from "@/components/seo/SEO";
+import { PublicHeader } from "@/components/layout/PublicHeader";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 
 export default function TermsPage() {
   return (
@@ -11,7 +13,9 @@ export default function TermsPage() {
         type="website"
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-10">
+      <PublicHeader />
+
+      <div className="max-w-4xl mx-auto px-4 py-10 mt-20">
         <h1 className="text-3xl font-bold text-foreground">
           Terms and Conditions
         </h1>
@@ -105,6 +109,8 @@ export default function TermsPage() {
           </ul>
         </div>
       </div>
+
+      <PublicFooter />
     </div>
   );
 }
