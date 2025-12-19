@@ -46,10 +46,10 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col min-h-screen w-full bg-[#F9FAFE]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="flex flex-col min-h-screen w-full bg-[#F9FAFE]">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group" style={{ marginTop: 'calc(-1 * env(safe-area-inset-top, 0px))' }}>
-          <div className="flex h-16 items-center justify-between px-4" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <img
                 src="/lovewaylogistic.png"

@@ -364,7 +364,7 @@ export function ProfilePage() {
       await logout();
       setDeleteDialogOpen(false);
       resetDeleteDialog();
-      navigate("/");
+      navigate("/login", { replace: true });
     } catch (error: any) {
       const msg =
         error?.error?.message ||
