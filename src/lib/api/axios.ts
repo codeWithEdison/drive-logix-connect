@@ -185,7 +185,10 @@ axiosInstance.interceptors.response.use(
     }
 
     // Handle 401 errors (token expired)
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip token refresh for logout endpoint to prevent loops
+    const isLogoutRequest = originalRequest?.url?.includes("/auth/logout");
+    
+    if (error.response?.status === 401 && !originalRequest._retry && !isLogoutRequest) {
       originalRequest._retry = true;
 
       const refreshToken = await storage.getItem("refresh_token");
