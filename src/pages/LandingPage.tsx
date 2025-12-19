@@ -720,7 +720,10 @@ const LandingPage: React.FC = () => {
       </nav>
 
       {/* Modern Hero Section */}
-      <section className="pt-20 relative min-h-screen flex items-center overflow-hidden">
+      <section 
+        className="relative min-h-screen flex items-center overflow-hidden"
+        style={{ paddingTop: 'calc(5rem + env(safe-area-inset-top, 0px))' }}
+      >
         {/* Animated Background with Gradient Overlay */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
