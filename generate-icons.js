@@ -139,12 +139,88 @@ async function generateIcons() {
 
     console.log(`✓ Generated default splash screen`);
 
+    console.log("\nGenerating iOS app icon...");
+
+    // iOS app icon (1024x1024)
+    const iosAppIconPath = path.join(
+      __dirname,
+      "ios",
+      "App",
+      "App",
+      "Assets.xcassets",
+      "AppIcon.appiconset"
+    );
+
+    if (!fs.existsSync(iosAppIconPath)) {
+      fs.mkdirSync(iosAppIconPath, { recursive: true });
+    }
+
+    // Generate iOS app icon (1024x1024)
+    await sharp(logoPath)
+      .resize(1024, 1024, {
+        fit: "contain",
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
+      })
+      .png()
+      .toFile(path.join(iosAppIconPath, "AppIcon-512@2x.png"));
+
+    console.log(`✓ Generated iOS app icon`);
+
+    console.log("\nGenerating iOS splash screen images...");
+
+    // iOS splash screen sizes (2732x2732 for all scales)
+    const iosSplashPath = path.join(
+      __dirname,
+      "ios",
+      "App",
+      "App",
+      "Assets.xcassets",
+      "Splash.imageset"
+    );
+
+    if (!fs.existsSync(iosSplashPath)) {
+      fs.mkdirSync(iosSplashPath, { recursive: true });
+    }
+
+    // Generate iOS splash screens (2732x2732 for all scales)
+    // 1x, 2x, 3x all use the same size but different filenames
+    const iosSplashSize = 2732;
+
+    // Generate 1x splash
+    await sharp(logoPath)
+      .resize(iosSplashSize, iosSplashSize, {
+        fit: "contain",
+        background: { r: 249, g: 250, b: 254, alpha: 1 }, // #F9FAFE
+      })
+      .png()
+      .toFile(path.join(iosSplashPath, "splash-2732x2732-2.png"));
+
+    // Generate 2x splash
+    await sharp(logoPath)
+      .resize(iosSplashSize, iosSplashSize, {
+        fit: "contain",
+        background: { r: 249, g: 250, b: 254, alpha: 1 }, // #F9FAFE
+      })
+      .png()
+      .toFile(path.join(iosSplashPath, "splash-2732x2732-1.png"));
+
+    // Generate 3x splash
+    await sharp(logoPath)
+      .resize(iosSplashSize, iosSplashSize, {
+        fit: "contain",
+        background: { r: 249, g: 250, b: 254, alpha: 1 }, // #F9FAFE
+      })
+      .png()
+      .toFile(path.join(iosSplashPath, "splash-2732x2732.png"));
+
+    console.log(`✓ Generated iOS splash screen images`);
+
     console.log(
       "\n✅ All icons and splash screens generated successfully from lovewaylogistic.png!"
     );
     console.log("Next steps:");
-    console.log("1. Rebuild the app: npm run build && npx cap sync android");
-    console.log("2. Run in Android Studio to see your custom icons");
+    console.log("1. Rebuild the app: npm run build && npx cap sync android && npx cap sync ios");
+    console.log("2. Run in Android Studio or Xcode to see your custom icons");
   } catch (error) {
     console.error("Error generating icons:", error);
     process.exit(1);

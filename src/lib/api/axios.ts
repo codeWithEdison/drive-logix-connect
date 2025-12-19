@@ -10,13 +10,14 @@ declare module "axios" {
 }
 
 // Base configuration
-// For mobile builds (native mode), default to online backend
+// Always use deployed backend unless explicitly overridden via environment variable
 const isNativeBuild = import.meta.env.MODE === "native";
+const isDevelopment = import.meta.env.MODE === "development";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  (isNativeBuild
-    ? "https://api.lovewaylogistics.com"
-    : "http://localhost:3000");
+  (isDevelopment && !isNativeBuild
+    ? "http://localhost:3000"
+    : "https://api.lovewaylogistics.com");
 const API_VERSION = "v1";
 
 // Avoid logging raw axios config/headers objects on mobile.

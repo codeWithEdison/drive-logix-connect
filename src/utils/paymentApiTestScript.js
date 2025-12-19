@@ -1,7 +1,7 @@
 // Payment API Test Script
 // Run this in browser console to test the payment endpoints
 
-const API_BASE_URL = "http://localhost:3000/v1"; // Updated to include v1 prefix
+const API_BASE_URL = "https://api.lovewaylogistics.com/v1"; // Using deployed backend
 
 // Test data
 const testData = {

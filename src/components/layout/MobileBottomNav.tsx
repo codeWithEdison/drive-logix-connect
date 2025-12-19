@@ -121,7 +121,7 @@ export function MobileBottomNav() {
   const mobileNavigation = navigation.slice(0, 5);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-white via-white/95 to-white/90 backdrop-blur-md border-t border-gray-200/50 shadow-lg md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-white via-white/95 to-white/90 backdrop-blur-md border-t border-gray-200/50 shadow-lg md:hidden pb-safe">
       <div className="flex items-center justify-around px-1 py-1.5 sm:py-2">
         {mobileNavigation.map((item) => {
           const Icon = item.icon;

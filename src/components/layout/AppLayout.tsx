@@ -48,8 +48,8 @@ export function AppLayout({ children }: AppLayoutProps) {
     return (
       <div className="flex flex-col min-h-screen w-full bg-[#F9FAFE]">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group">
-          <div className="flex h-16 items-center justify-between px-4">
+        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group safe-area-top">
+          <div className="flex h-16 items-center justify-between px-4 pt-safe">
             <div className="flex items-center gap-3">
               <img
                 src="/lovewaylogistic.png"
