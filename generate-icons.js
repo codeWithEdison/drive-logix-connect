@@ -231,22 +231,54 @@ async function generateIcons() {
 
     // Generate iOS app icon (1024x1024) - fit without zooming, with padding
     // Use lovewaylogistic.png for app icon
-    const iosIconSize = Math.floor(1024 * 0.9);
-    const iosIconPadding = Math.floor((1024 - iosIconSize) / 2);
+    // iOS requires exactly 1024x1024 pixels
+    const targetSize = 1024;
+    const logoSize = Math.floor(targetSize * 0.9); // Logo takes 90% of space
     
-    await sharp(appIconPath)
-      .resize(iosIconSize, iosIconSize, {
+    // First, get the image metadata to calculate proper sizing
+    const metadata = await sharp(appIconPath).metadata();
+    const logoAspectRatio = metadata.width / metadata.height;
+    
+    let logoWidth, logoHeight;
+    if (logoAspectRatio > 1) {
+      // Landscape: fit width
+      logoWidth = logoSize;
+      logoHeight = Math.floor(logoSize / logoAspectRatio);
+    } else {
+      // Portrait or square: fit height
+      logoHeight = logoSize;
+      logoWidth = Math.floor(logoSize * logoAspectRatio);
+    }
+    
+    // Calculate padding to center the logo
+    const paddingTop = Math.floor((targetSize - logoHeight) / 2);
+    const paddingBottom = targetSize - logoHeight - paddingTop;
+    const paddingLeft = Math.floor((targetSize - logoWidth) / 2);
+    const paddingRight = targetSize - logoWidth - paddingLeft;
+    
+    // Create a 1024x1024 white background and composite the resized logo on top
+    const resizedLogo = await sharp(appIconPath)
+      .resize(logoWidth, logoHeight, {
         fit: "inside",
         withoutEnlargement: true,
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
       })
-      .extend({
-        top: iosIconPadding,
-        bottom: iosIconPadding,
-        left: iosIconPadding,
-        right: iosIconPadding,
+      .toBuffer();
+    
+    await sharp({
+      create: {
+        width: targetSize,
+        height: targetSize,
+        channels: 4,
         background: { r: 255, g: 255, b: 255, alpha: 1 },
-      })
+      },
+    })
+      .composite([
+        {
+          input: resizedLogo,
+          left: paddingLeft,
+          top: paddingTop,
+        },
+      ])
       .png()
       .toFile(path.join(iosAppIconPath, "AppIcon-512@2x.png"));
 
