@@ -35,14 +35,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Use the same navigation config as DynamicSidebar
 // Priority is based on order - first 4 are most important
+// For mobile, client role excludes history and liveTracking
 const getNavigationConfig = (t: (key: string) => string) => ({
   client: [
     { title: t("navigation.dashboard"), url: "/", icon: Home },
     { title: t("navigation.createCargo"), url: "/create-cargo", icon: Plus },
     { title: t("navigation.myCargos"), url: "/my-cargos", icon: Package },
-    { title: t("navigation.liveTracking"), url: "/tracking", icon: MapPin },
     { title: t("navigation.invoices"), url: "/invoices", icon: Receipt },
-    { title: t("navigation.history"), url: "/history", icon: History },
   ],
   driver: [
     { title: t("navigation.dashboard"), url: "/driver", icon: Home },
