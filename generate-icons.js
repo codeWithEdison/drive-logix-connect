@@ -133,48 +133,100 @@ async function generateIcons() {
         fs.mkdirSync(landscapePath, { recursive: true });
       }
 
-      // Portrait splash (width x height) - fit without zooming
+      // Portrait splash (width x height) - fit without zooming, preserve aspect ratio
       // Use logo-text.png for splash screens
-      const portraitLogoW = Math.floor(dimensions.w * 0.8);
-      const portraitLogoH = Math.floor(dimensions.h * 0.8);
-      const portraitPaddingW = Math.floor((dimensions.w - portraitLogoW) / 2);
-      const portraitPaddingH = Math.floor((dimensions.h - portraitLogoH) / 2);
+      // Get source image dimensions to calculate proper sizing
+      const sourceMetadata = await sharp(splashLogoPath).metadata();
+      const sourceAspectRatio = sourceMetadata.width / sourceMetadata.height;
       
-      await sharp(splashLogoPath)
-        .resize(portraitLogoW, portraitLogoH, {
+      // Calculate max dimensions that fit within 80% of screen
+      const maxLogoW = Math.floor(dimensions.w * 0.8);
+      const maxLogoH = Math.floor(dimensions.h * 0.8);
+      
+      // Calculate actual logo dimensions maintaining aspect ratio
+      let logoW, logoH;
+      if (sourceAspectRatio > (maxLogoW / maxLogoH)) {
+        // Image is wider - fit to width
+        logoW = maxLogoW;
+        logoH = Math.floor(maxLogoW / sourceAspectRatio);
+      } else {
+        // Image is taller - fit to height
+        logoH = maxLogoH;
+        logoW = Math.floor(maxLogoH * sourceAspectRatio);
+      }
+      
+      const portraitPaddingW = Math.floor((dimensions.w - logoW) / 2);
+      const portraitPaddingH = Math.floor((dimensions.h - logoH) / 2);
+      
+      // Resize logo maintaining aspect ratio, then composite onto background
+      const resizedLogo = await sharp(splashLogoPath)
+        .resize(logoW, logoH, {
           fit: "inside",
           withoutEnlargement: true,
+        })
+        .toBuffer();
+      
+      await sharp({
+        create: {
+          width: dimensions.w,
+          height: dimensions.h,
+          channels: 4,
           background: { r: 249, g: 250, b: 254, alpha: 1 }, // #F9FAFE
-        })
-        .extend({
-          top: portraitPaddingH,
-          bottom: portraitPaddingH,
-          left: portraitPaddingW,
-          right: portraitPaddingW,
-          background: { r: 249, g: 250, b: 254, alpha: 1 },
-        })
+        },
+      })
+        .composite([
+          {
+            input: resizedLogo,
+            left: portraitPaddingW,
+            top: portraitPaddingH,
+          },
+        ])
         .png()
         .toFile(path.join(portraitPath, "splash.png"));
 
-      // Landscape splash (height x width - swapped) - fit without zooming
-      const landscapeLogoW = Math.floor(dimensions.h * 0.8);
-      const landscapeLogoH = Math.floor(dimensions.w * 0.8);
+      // Landscape splash (height x width - swapped) - fit without zooming, preserve aspect ratio
+      // Calculate max dimensions that fit within 80% of screen (swapped for landscape)
+      const maxLandscapeW = Math.floor(dimensions.h * 0.8);
+      const maxLandscapeH = Math.floor(dimensions.w * 0.8);
+      
+      // Calculate actual logo dimensions maintaining aspect ratio
+      let landscapeLogoW, landscapeLogoH;
+      if (sourceAspectRatio > (maxLandscapeW / maxLandscapeH)) {
+        // Image is wider - fit to width
+        landscapeLogoW = maxLandscapeW;
+        landscapeLogoH = Math.floor(maxLandscapeW / sourceAspectRatio);
+      } else {
+        // Image is taller - fit to height
+        landscapeLogoH = maxLandscapeH;
+        landscapeLogoW = Math.floor(maxLandscapeH * sourceAspectRatio);
+      }
+      
       const landscapePaddingW = Math.floor((dimensions.h - landscapeLogoW) / 2);
       const landscapePaddingH = Math.floor((dimensions.w - landscapeLogoH) / 2);
       
-      await sharp(splashLogoPath)
+      // Resize logo maintaining aspect ratio, then composite onto background
+      const resizedLandscapeLogo = await sharp(splashLogoPath)
         .resize(landscapeLogoW, landscapeLogoH, {
           fit: "inside",
           withoutEnlargement: true,
+        })
+        .toBuffer();
+      
+      await sharp({
+        create: {
+          width: dimensions.h,
+          height: dimensions.w,
+          channels: 4,
           background: { r: 249, g: 250, b: 254, alpha: 1 }, // #F9FAFE
-        })
-        .extend({
-          top: landscapePaddingH,
-          bottom: landscapePaddingH,
-          left: landscapePaddingW,
-          right: landscapePaddingW,
-          background: { r: 249, g: 250, b: 254, alpha: 1 },
-        })
+        },
+      })
+        .composite([
+          {
+            input: resizedLandscapeLogo,
+            left: landscapePaddingW,
+            top: landscapePaddingH,
+          },
+        ])
         .png()
         .toFile(path.join(landscapePath, "splash.png"));
 
@@ -183,31 +235,60 @@ async function generateIcons() {
       );
     }
 
-    // Also update the default drawable splash - fit without zooming
+    // Also update the default drawable splash - fit without zooming, preserve aspect ratio
     // Use logo-text.png for splash screens
     const defaultSplashPath = path.join(
       androidResPath,
       "drawable",
       "splash.png"
     );
-    const defaultLogoW = Math.floor(480 * 0.8);
-    const defaultLogoH = Math.floor(320 * 0.8);
+    
+    // Get source image dimensions if not already available
+    const defaultSourceMetadata = await sharp(splashLogoPath).metadata();
+    const defaultSourceAspectRatio = defaultSourceMetadata.width / defaultSourceMetadata.height;
+    
+    // Calculate max dimensions that fit within 80% of screen
+    const defaultMaxW = Math.floor(480 * 0.8);
+    const defaultMaxH = Math.floor(320 * 0.8);
+    
+    // Calculate actual logo dimensions maintaining aspect ratio
+    let defaultLogoW, defaultLogoH;
+    if (defaultSourceAspectRatio > (defaultMaxW / defaultMaxH)) {
+      // Image is wider - fit to width
+      defaultLogoW = defaultMaxW;
+      defaultLogoH = Math.floor(defaultMaxW / defaultSourceAspectRatio);
+    } else {
+      // Image is taller - fit to height
+      defaultLogoH = defaultMaxH;
+      defaultLogoW = Math.floor(defaultMaxH * defaultSourceAspectRatio);
+    }
+    
     const defaultPaddingW = Math.floor((480 - defaultLogoW) / 2);
     const defaultPaddingH = Math.floor((320 - defaultLogoH) / 2);
     
-    await sharp(splashLogoPath)
+    // Resize logo maintaining aspect ratio, then composite onto background
+    const resizedDefaultLogo = await sharp(splashLogoPath)
       .resize(defaultLogoW, defaultLogoH, {
         fit: "inside",
         withoutEnlargement: true,
-        background: { r: 249, g: 250, b: 254, alpha: 1 },
       })
-      .extend({
-        top: defaultPaddingH,
-        bottom: defaultPaddingH,
-        left: defaultPaddingW,
-        right: defaultPaddingW,
+      .toBuffer();
+    
+    await sharp({
+      create: {
+        width: 480,
+        height: 320,
+        channels: 4,
         background: { r: 249, g: 250, b: 254, alpha: 1 },
-      })
+      },
+    })
+      .composite([
+        {
+          input: resizedDefaultLogo,
+          left: defaultPaddingW,
+          top: defaultPaddingH,
+        },
+      ])
       .png()
       .toFile(defaultSplashPath);
 
@@ -304,60 +385,64 @@ async function generateIcons() {
     // 1x, 2x, 3x all use the same size but different filenames
     const iosSplashSize = 2732;
 
-    // Generate iOS splash screens - fit without zooming, with padding
+    // Generate iOS splash screens - fit without zooming, preserve aspect ratio
     // Use logo-text.png for splash screens
-    const splashLogoSize = Math.floor(iosSplashSize * 0.7); // Use 70% of screen to ensure visibility
-    const splashPadding = Math.floor((iosSplashSize - splashLogoSize) / 2);
-
-    // Generate 1x splash
-    await sharp(splashLogoPath)
-      .resize(splashLogoSize, splashLogoSize, {
+    // Get source image dimensions to calculate proper sizing
+    const iosSourceMetadata = await sharp(splashLogoPath).metadata();
+    const iosSourceAspectRatio = iosSourceMetadata.width / iosSourceMetadata.height;
+    
+    // Calculate max dimensions that fit within 70% of screen (2732x2732 is square)
+    const maxIosLogoSize = Math.floor(iosSplashSize * 0.7);
+    
+    // Calculate actual logo dimensions maintaining aspect ratio
+    let iosLogoW, iosLogoH;
+    if (iosSourceAspectRatio > 1) {
+      // Image is wider - fit to width
+      iosLogoW = maxIosLogoSize;
+      iosLogoH = Math.floor(maxIosLogoSize / iosSourceAspectRatio);
+    } else {
+      // Image is taller or square - fit to height
+      iosLogoH = maxIosLogoSize;
+      iosLogoW = Math.floor(maxIosLogoSize * iosSourceAspectRatio);
+    }
+    
+    const iosPaddingW = Math.floor((iosSplashSize - iosLogoW) / 2);
+    const iosPaddingH = Math.floor((iosSplashSize - iosLogoH) / 2);
+    
+    // Resize logo maintaining aspect ratio, then composite onto background
+    const resizedIosLogo = await sharp(splashLogoPath)
+      .resize(iosLogoW, iosLogoH, {
         fit: "inside",
         withoutEnlargement: true,
+      })
+      .toBuffer();
+    
+    const iosSplashBackground = await sharp({
+      create: {
+        width: iosSplashSize,
+        height: iosSplashSize,
+        channels: 4,
         background: { r: 249, g: 250, b: 254, alpha: 1 }, // #F9FAFE
-      })
-      .extend({
-        top: splashPadding,
-        bottom: splashPadding,
-        left: splashPadding,
-        right: splashPadding,
-        background: { r: 249, g: 250, b: 254, alpha: 1 },
-      })
+      },
+    })
+      .composite([
+        {
+          input: resizedIosLogo,
+          left: iosPaddingW,
+          top: iosPaddingH,
+        },
+      ])
       .png()
+      .toBuffer();
+
+    // Generate all three splash files with the same image
+    await sharp(iosSplashBackground)
       .toFile(path.join(iosSplashPath, "splash-2732x2732-2.png"));
-
-    // Generate 2x splash
-    await sharp(splashLogoPath)
-      .resize(splashLogoSize, splashLogoSize, {
-        fit: "inside",
-        withoutEnlargement: true,
-        background: { r: 249, g: 250, b: 254, alpha: 1 }, // #F9FAFE
-      })
-      .extend({
-        top: splashPadding,
-        bottom: splashPadding,
-        left: splashPadding,
-        right: splashPadding,
-        background: { r: 249, g: 250, b: 254, alpha: 1 },
-      })
-      .png()
+    
+    await sharp(iosSplashBackground)
       .toFile(path.join(iosSplashPath, "splash-2732x2732-1.png"));
-
-    // Generate 3x splash
-    await sharp(splashLogoPath)
-      .resize(splashLogoSize, splashLogoSize, {
-        fit: "inside",
-        withoutEnlargement: true,
-        background: { r: 249, g: 250, b: 254, alpha: 1 }, // #F9FAFE
-      })
-      .extend({
-        top: splashPadding,
-        bottom: splashPadding,
-        left: splashPadding,
-        right: splashPadding,
-        background: { r: 249, g: 250, b: 254, alpha: 1 },
-      })
-      .png()
+    
+    await sharp(iosSplashBackground)
       .toFile(path.join(iosSplashPath, "splash-2732x2732.png"));
 
     console.log(`✓ Generated iOS splash screen images`);
