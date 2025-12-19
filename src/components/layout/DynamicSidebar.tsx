@@ -167,7 +167,8 @@ export function DynamicSidebar() {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login", { replace: true });
+    // Use hard navigation to ensure logout works
+    window.location.href = "/login";
   };
 
   return (

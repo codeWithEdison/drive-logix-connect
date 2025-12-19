@@ -364,7 +364,8 @@ export function ProfilePage() {
       await logout();
       setDeleteDialogOpen(false);
       resetDeleteDialog();
-      navigate("/login", { replace: true });
+      // Use hard navigation to ensure logout works
+      window.location.href = "/login";
     } catch (error: any) {
       const msg =
         error?.error?.message ||

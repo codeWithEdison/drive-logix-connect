@@ -47,13 +47,13 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
         title: t("auth.logoutSuccess"),
         description: t("auth.logoutSuccessMessage"),
       });
-      // Navigate to login page after logout
-      navigate("/login", { replace: true });
+      // Use hard navigation to ensure logout works
+      window.location.href = "/login";
     } catch (error) {
       // Even if API call fails, logout locally
       await logout();
-      // Navigate to login page even on error
-      navigate("/login", { replace: true });
+      // Use hard navigation to ensure logout works
+      window.location.href = "/login";
     }
   };
 
