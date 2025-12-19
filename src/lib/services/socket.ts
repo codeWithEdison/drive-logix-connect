@@ -7,13 +7,9 @@ type SocketEvents = {
 let socketInstance: Socket | null = null;
 let currentToken: string | null = null;
 
-// Always use deployed backend unless explicitly overridden via environment variable
-const isNativeBuild = import.meta.env.MODE === "native";
-const isDevelopment = import.meta.env.MODE === "development";
+// Always use deployed backend everywhere unless explicitly overridden via environment variable
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ||
-  (isDevelopment && !isNativeBuild
-    ? "http://localhost:3000"
-    : "https://api.lovewaylogistics.com")) as string;
+  "https://api.lovewaylogistics.com") as string;
 
 export function getSocket(token: string): Socket {
   if (socketInstance && currentToken === token) return socketInstance;

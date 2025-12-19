@@ -47,9 +47,17 @@ export function AppLayout({ children }: AppLayoutProps) {
   if (isMobile) {
     return (
       <div className="flex flex-col min-h-screen w-full bg-[#F9FAFE]">
-        {/* Mobile Header */}
-        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group safe-area-top">
-          <div className="flex h-16 items-center justify-between px-4 pt-safe">
+        {/* Mobile Header with safe area */}
+        <header className="sticky top-0 z-40 w-full bg-[#F9FAFE]/80 backdrop-blur-md border-b border-white/20 group">
+          {/* Safe area spacer for status bar/notch */}
+          <div 
+            style={{ 
+              height: 'env(safe-area-inset-top, 0px)', 
+              minHeight: 'env(safe-area-inset-top, 0px)'
+            }} 
+          />
+          {/* Header content */}
+          <div className="flex h-16 items-center justify-between px-4">
             <div className="flex items-center gap-3">
               <img
                 src="/lovewaylogistic.png"

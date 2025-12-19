@@ -5,14 +5,9 @@ import { ApiResponse, ApiError } from "../../types/shared";
 import { storage } from "../services/secureStorage";
 
 // Base configuration
-// Always use deployed backend unless explicitly overridden via environment variable
-const isNativeBuild = import.meta.env.MODE === "native";
-const isDevelopment = import.meta.env.MODE === "development";
+// Always use deployed backend everywhere unless explicitly overridden via environment variable
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (isDevelopment && !isNativeBuild
-    ? "http://localhost:3000"
-    : "https://api.lovewaylogistics.com");
+  import.meta.env.VITE_API_BASE_URL || "https://api.lovewaylogistics.com";
 const API_VERSION = "v1";
 const BASE_URL = `${API_BASE_URL}/${API_VERSION}`;
 
