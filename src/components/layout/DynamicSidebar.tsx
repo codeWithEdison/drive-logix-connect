@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
@@ -156,6 +156,7 @@ export function DynamicSidebar() {
   const { t } = useLanguage();
   const { state } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const collapsed = state === "collapsed";
 
   if (!user) return null;
@@ -163,6 +164,12 @@ export function DynamicSidebar() {
   const navigationConfig = getNavigationConfig(t);
   const navigation = navigationConfig[user.role] || [];
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    await logout();
+    // Use hard navigation to ensure logout works
+    window.location.href = "/login";
+  };
 
   return (
     <Sidebar
@@ -237,7 +244,7 @@ export function DynamicSidebar() {
       <SidebarFooter className="p-4 mt-auto">
         {!collapsed ? (
           <Button
-            onClick={logout}
+            onClick={handleLogout}
             variant="ghost"
             size="sm"
             className="w-full justify-start gap-3 text-gray-600 hover:text-gray-900 p-3"
@@ -247,7 +254,7 @@ export function DynamicSidebar() {
           </Button>
         ) : (
           <Button
-            onClick={logout}
+            onClick={handleLogout}
             variant="ghost"
             size="sm"
             className="w-full p-2 hover:text-gray-900"

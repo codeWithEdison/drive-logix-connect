@@ -10,13 +10,9 @@ declare module "axios" {
 }
 
 // Base configuration
-// For mobile builds (native mode), default to online backend
-const isNativeBuild = import.meta.env.MODE === "native";
+// Always use deployed backend everywhere unless explicitly overridden via environment variable
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (isNativeBuild
-    ? "https://api.lovewaylogistics.com"
-    : "http://localhost:3000");
+  import.meta.env.VITE_API_BASE_URL || "https://api.lovewaylogistics.com";
 const API_VERSION = "v1";
 
 // Avoid logging raw axios config/headers objects on mobile.
@@ -189,7 +185,10 @@ axiosInstance.interceptors.response.use(
     }
 
     // Handle 401 errors (token expired)
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip token refresh for logout endpoint to prevent loops
+    const isLogoutRequest = originalRequest?.url?.includes("/auth/logout");
+    
+    if (error.response?.status === 401 && !originalRequest._retry && !isLogoutRequest) {
       originalRequest._retry = true;
 
       const refreshToken = await storage.getItem("refresh_token");

@@ -130,21 +130,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async (): Promise<void> => {
+    // Clear tokens FIRST to prevent axios interceptor from trying to refresh
+    setUser(null);
+    await storage.removeItem("logistics_user");
+    await storage.removeItem("access_token");
+    await storage.removeItem("refresh_token");
+    
     try {
-      // Call logout API if user is authenticated
+      // Try to call logout API, but don't wait for it or retry if it fails
+      // The tokens are already cleared, so this is just a best-effort cleanup
       if (user) {
-        await AuthService.logout();
+        // Use a timeout to prevent hanging
+        await Promise.race([
+          AuthService.logout(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Logout timeout")), 2000)
+          )
+        ]).catch(() => {
+          // Ignore errors - tokens are already cleared
+        });
       }
     } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      // Clear secure storage and state regardless of API call result
-      setUser(null);
-      await storage.removeItem("logistics_user");
-      await storage.removeItem("access_token");
-      await storage.removeItem("refresh_token");
-      customToast.auth.logoutSuccess();
+      // Ignore errors - tokens are already cleared
+      console.error("Logout API error (ignored):", error);
     }
+    
+    customToast.auth.logoutSuccess();
   };
 
   const getDefaultRoute = (role: UserRole): string => {

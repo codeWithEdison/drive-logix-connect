@@ -42,14 +42,18 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
-      logout();
+      await logout();
       toast({
         title: t("auth.logoutSuccess"),
         description: t("auth.logoutSuccessMessage"),
       });
+      // Use hard navigation to ensure logout works
+      window.location.href = "/login";
     } catch (error) {
       // Even if API call fails, logout locally
-      logout();
+      await logout();
+      // Use hard navigation to ensure logout works
+      window.location.href = "/login";
     }
   };
 
