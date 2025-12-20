@@ -70,3 +70,6 @@ Each API call will show:
 - Filter by specific endpoint: `adb -s emulator-5554 logcat | grep "app-config"`
 
 
+
+
+

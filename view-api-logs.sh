@@ -16,3 +16,6 @@ adb -s emulator-5554 logcat -c
 adb -s emulator-5554 logcat | grep --line-buffered -i "API REQUEST\|API RESPONSE\|API ERROR\|Capacitor/Console.*API"
 
 
+
+
+

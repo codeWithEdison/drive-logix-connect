@@ -153,14 +153,16 @@ class HttpService {
             response = await Http.put(httpConfig);
             break;
           case "DELETE":
-            response = await Http.delete(httpConfig);
+            response = await Http.del(httpConfig);
             break;
           case "PATCH":
             response = await Http.patch(httpConfig);
             break;
         }
       } catch (httpError: any) {
-        console.error(`[HTTP SERVICE] Capacitor HTTP error: ${safeStringify(httpError)}`);
+        console.error(
+          `[HTTP SERVICE] Capacitor HTTP error: ${safeStringify(httpError)}`
+        );
         throw httpError;
       }
 
@@ -319,5 +321,3 @@ class HttpService {
 }
 
 export const httpService = new HttpService();
-
-

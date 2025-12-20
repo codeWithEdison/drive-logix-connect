@@ -200,3 +200,73 @@ export const useVerifyFlutterwavePayment = () => {
     },
   });
 };
+
+// Paypack-specific payment hooks for mobile money integration
+export interface InitializePaypackPaymentRequest {
+  invoice_id: string;
+  amount: number;
+  customer_phone: string; // Required! Format: +250XXXXXXXXX
+}
+
+interface InitializePaypackPaymentResponse {
+  success: boolean;
+  message: string;
+  data: {
+    transaction_reference: string;
+    status: "pending" | "completed" | "failed";
+    amount: number;
+    phone: string;
+  };
+}
+
+export interface PaypackPaymentStatusResponse {
+  success: boolean;
+  message: string;
+  data: {
+    transaction_reference: string;
+    status: "pending" | "completed" | "failed";
+    amount: number;
+    phone: string;
+    invoice_update?: {
+      invoice_number: string;
+      status: string;
+      is_fully_paid: boolean;
+      total_paid: number;
+      remaining_amount: number;
+    };
+    failure_reason?: string;
+  };
+}
+
+/**
+ * Hook to initialize Paypack mobile money payment
+ * Sends payment request to customer's phone via USSD/push notification
+ */
+export const useInitializePaypackPayment = () => {
+  return useMutation({
+    mutationFn: async (
+      data: InitializePaypackPaymentRequest
+    ): Promise<InitializePaypackPaymentResponse> => {
+      const response = await axiosInstance.post(
+        "/payments/paypack/initialize",
+        data
+      );
+      return response.data;
+    },
+  });
+};
+
+/**
+ * Hook to check Paypack payment status
+ * Used for polling payment status until completion or failure
+ */
+export const usePaypackPaymentStatus = () => {
+  return useMutation({
+    mutationFn: async (ref: string): Promise<PaypackPaymentStatusResponse> => {
+      const response = await axiosInstance.get(
+        `/payments/paypack/status?ref=${ref}`
+      );
+      return response.data;
+    },
+  });
+};
