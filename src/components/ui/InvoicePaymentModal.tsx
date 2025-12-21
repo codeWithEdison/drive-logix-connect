@@ -73,37 +73,76 @@ export function InvoicePaymentModal({
       <div className="space-y-6">
         {paymentCompleted ? (
           /* Payment Success State */
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-6">
             <div className="flex justify-center">
-              <CheckCircle className="h-16 w-16 text-green-500" />
+              <div className="rounded-full bg-green-100 p-4">
+                <CheckCircle className="h-20 w-20 text-green-600" />
+              </div>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-green-800 mb-2">
+              <h3 className="text-2xl font-bold text-green-800 mb-3">
                 {t("invoices.paymentSuccessTitle")}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-600 text-base">
                 {t("invoices.paymentSuccessMessage")}
               </p>
             </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="text-sm text-green-800">
-                <p className="font-semibold">
-                  {t("invoices.invoiceNumber")}: {invoice.invoice_number}
-                </p>
-                <p className="font-semibold">
-                  {t("invoices.amountPaid")}: RWF{" "}
-                  {invoice.total_amount.toLocaleString()}
-                </p>
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 shadow-sm">
+              <div className="space-y-3 text-left">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-green-700">
+                    {t("invoices.invoiceNumber")}:
+                  </span>
+                  <span className="font-bold text-green-900 font-mono">
+                    {invoice.invoice_number}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-green-200">
+                  <span className="text-sm font-medium text-green-700">
+                    {t("invoices.amountPaid")}:
+                  </span>
+                  <span className="text-xl font-bold text-green-900">
+                    RWF {invoice.total_amount.toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
+            <p className="text-sm text-gray-500">
+              {t("invoices.paymentSuccessMessage")}
+            </p>
           </div>
         ) : (
           /* Payment Flow */
-          <PaymentFlow
-            invoice={invoice}
-            onSuccess={handlePaymentSuccess}
-            onCancel={handlePaymentCancel}
-          />
+          <div>
+            {/* Progress Indicator */}
+            <div className="mb-6">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+                    1
+                  </div>
+                  <span className="ml-2 text-sm font-medium text-gray-700">
+                    {t("invoices.selectPaymentMethod")}
+                  </span>
+                </div>
+                <div className="w-12 h-0.5 bg-gray-300"></div>
+                <div className="flex items-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center text-sm font-semibold">
+                    2
+                  </div>
+                  <span className="ml-2 text-sm font-medium text-gray-500">
+                    {t("invoices.processingPayment")}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <PaymentFlow
+              invoice={invoice}
+              onSuccess={handlePaymentSuccess}
+              onCancel={handlePaymentCancel}
+            />
+          </div>
         )}
       </div>
     </ModernModel>

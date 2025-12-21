@@ -97,41 +97,44 @@ export function InvoiceDetailModal({
   if (!invoice) return null;
 
   const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
+    const statusLower = status.toLowerCase();
+    const statusText = t(`invoices.status.${statusLower}`, status);
+
+    switch (statusLower) {
       case "paid":
         return (
           <Badge className="bg-green-100 text-green-800 border-green-200">
-            Paid
+            {statusText}
           </Badge>
         );
       case "sent":
         return (
           <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-            Sent
+            {statusText}
           </Badge>
         );
       case "overdue":
         return (
           <Badge className="bg-red-100 text-red-800 border-red-200">
-            Overdue
+            {statusText}
           </Badge>
         );
       case "draft":
         return (
           <Badge className="bg-gray-100 text-gray-800 border-gray-200">
-            Draft
+            {statusText}
           </Badge>
         );
       case "cancelled":
         return (
           <Badge className="bg-gray-100 text-gray-800 border-gray-200">
-            Cancelled
+            {statusText}
           </Badge>
         );
       default:
         return (
           <Badge className="bg-gray-100 text-gray-800 border-gray-200">
-            {status}
+            {statusText}
           </Badge>
         );
     }
@@ -201,49 +204,57 @@ export function InvoiceDetailModal({
     <ModernModel
       isOpen={isOpen}
       onClose={onClose}
-      title={`Invoice ${invoice.invoice_number} - ${
-        invoice.cargo?.cargo_number || invoice.cargo_id || "N/A"
+      title={`${t("invoices.invoiceLabel")} ${invoice.invoice_number} - ${
+        invoice.cargo?.cargo_number || invoice.cargo_id || t("invoices.naLabel")
       }`}
     >
       <div className="space-y-6">
         {/* Company Header */}
         <div className="text-center border-b pb-6">
           <div className="flex items-center justify-center gap-4 mb-4">
-            <img src="/logo.png" alt="Loveway Logo" className="h-12 w-auto" />
+            <img
+              src="/logo.png"
+              alt="Loveway Logo"
+              className="h-14 w-auto object-contain"
+            />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Loveway Rwanda Co. Ltd
+                {t("invoices.companyName")}
               </h1>
               <p className="text-sm text-gray-600">
-                Logistics & Transportation Services
+                {t("invoices.companyTagline")}
               </p>
             </div>
           </div>
           <div className="text-sm text-gray-600">
-            <p>Kigali, Rwanda</p>
-            <p>Phone: +250 788 123 456 | Email: info@loveway.rw</p>
+            <p>{t("invoices.companyLocation")}</p>
+            <p>{t("invoices.companyContact")}</p>
           </div>
         </div>
 
         {/* Invoice Header */}
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">INVOICE</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {t("invoices.invoiceLabel")}
+            </h2>
             <p className="text-sm text-gray-600">
-              Invoice #: {invoice.invoice_number}
+              {t("invoices.invoiceNumberLabel")}: {invoice.invoice_number}
             </p>
             <p className="text-sm text-gray-600">
-              Cargo #:{" "}
-              {invoice.cargo?.cargo_number || invoice.cargo_id || "N/A"}
+              {t("invoices.cargoNumberLabel")}:{" "}
+              {invoice.cargo?.cargo_number ||
+                invoice.cargo_id ||
+                t("invoices.naLabel")}
             </p>
             <p className="text-sm text-gray-600">
-              Date: {formatDate(invoice.created_at)}
+              {t("invoices.dateLabel")}: {formatDate(invoice.created_at)}
             </p>
           </div>
           <div className="text-right">
             {getStatusBadge(invoice.status)}
             <p className="text-sm text-gray-600 mt-2">
-              Due Date: {formatDate(invoice.due_date)}
+              {t("invoices.dueDateLabel")}: {formatDate(invoice.due_date)}
             </p>
           </div>
         </div>
@@ -253,19 +264,27 @@ export function InvoiceDetailModal({
           <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-4">
               <Package className="h-5 w-5 text-orange-600" />
-              <h3 className="font-semibold text-gray-900">Cargo Information</h3>
+              <h3 className="font-semibold text-gray-900">
+                {t("invoices.cargoInformation")}
+              </h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-600">Cargo Number</p>
+                <p className="text-sm text-gray-600">
+                  {t("invoices.cargoNumberField")}
+                </p>
                 <p className="font-semibold font-mono">
-                  {invoice.cargo?.cargo_number || invoice.cargo_id || "N/A"}
+                  {invoice.cargo?.cargo_number ||
+                    invoice.cargo_id ||
+                    t("invoices.naLabel")}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Type</p>
+                <p className="text-sm text-gray-600">
+                  {t("invoices.typeField")}
+                </p>
                 <p className="font-semibold capitalize">
-                  {invoice.cargo?.type || "N/A"}
+                  {invoice.cargo?.type || t("invoices.naLabel")}
                 </p>
               </div>
             </div>
@@ -274,10 +293,10 @@ export function InvoiceDetailModal({
                 <MapPin className="h-4 w-4 text-green-600 mt-1" />
                 <div>
                   <p className="text-xs text-gray-500 font-medium">
-                    PICKUP LOCATION
+                    {t("invoices.pickupLocation")}
                   </p>
                   <p className="text-sm font-semibold">
-                    {invoice.cargo?.pickup_address || "N/A"}
+                    {invoice.cargo?.pickup_address || t("invoices.naLabel")}
                   </p>
                 </div>
               </div>
@@ -285,10 +304,11 @@ export function InvoiceDetailModal({
                 <MapPin className="h-4 w-4 text-red-600 mt-1" />
                 <div>
                   <p className="text-xs text-gray-500 font-medium">
-                    DELIVERY LOCATION
+                    {t("invoices.deliveryLocation")}
                   </p>
                   <p className="text-sm font-semibold">
-                    {invoice.cargo?.destination_address || "N/A"}
+                    {invoice.cargo?.destination_address ||
+                      t("invoices.naLabel")}
                   </p>
                 </div>
               </div>
@@ -301,31 +321,37 @@ export function InvoiceDetailModal({
           <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-4">
               <Receipt className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-gray-900">Invoice Details</h3>
+              <h3 className="font-semibold text-gray-900">
+                {t("invoices.invoiceDetails")}
+              </h3>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal:</span>
+                <span className="text-gray-600">
+                  {t("invoices.subtotalLabel")}:
+                </span>
                 <span className="font-semibold">
                   {formatCurrency(invoice.subtotal, invoice.currency)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Tax ({invoice.currency}):</span>
+                <span className="text-gray-600">
+                  {t("invoices.taxLabel")} ({invoice.currency}):
+                </span>
                 <span className="font-semibold">
                   {formatCurrency(invoice.tax_amount, invoice.currency)}
                 </span>
               </div>
               {parseFloat(invoice.discount_amount) > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Discount:</span>
+                  <span>{t("invoices.discountLabel")}:</span>
                   <span className="font-semibold">
                     -{formatCurrency(invoice.discount_amount, invoice.currency)}
                   </span>
                 </div>
               )}
               <div className="border-t pt-3 flex justify-between text-lg font-bold">
-                <span>Total Amount:</span>
+                <span>{t("invoices.totalAmountLabel")}:</span>
                 <span className="text-primary">
                   {formatCurrency(invoice.total_amount, invoice.currency)}
                 </span>
@@ -341,27 +367,34 @@ export function InvoiceDetailModal({
               <div className="flex items-center gap-3 mb-4">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <h3 className="font-semibold text-gray-900">
-                  Payment Information
+                  {t("invoices.paymentInformation")}
                 </h3>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Payment Date:</span>
+                  <span className="text-gray-600">
+                    {t("invoices.paymentDate")}:
+                  </span>
                   <span className="font-semibold">
                     {formatDate(invoice.paid_at)}
                   </span>
                 </div>
                 {invoice.payment_method && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Method:</span>
+                    <span className="text-gray-600">
+                      {t("invoices.paymentMethodLabel")}:
+                    </span>
                     <span className="font-semibold capitalize">
-                      {invoice.payment_method?.replace("_", " ") || "Unknown"}
+                      {invoice.payment_method?.replace("_", " ") ||
+                        t("invoices.unknownLabel")}
                     </span>
                   </div>
                 )}
                 {invoice.payment_reference && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Reference:</span>
+                    <span className="text-gray-600">
+                      {t("invoices.referenceLabel")}:
+                    </span>
                     <span className="font-semibold">
                       {invoice.payment_reference}
                     </span>
@@ -379,7 +412,7 @@ export function InvoiceDetailModal({
               <div className="flex items-center gap-3 mb-4">
                 <DollarSign className="h-5 w-5 text-blue-600" />
                 <h3 className="font-semibold text-gray-900">
-                  {t("invoices.paymentOptions", "Payment Options")}
+                  {t("invoices.paymentOptions")}
                 </h3>
               </div>
 
@@ -390,30 +423,38 @@ export function InvoiceDetailModal({
                     {/* Transfer Option */}
                     <Button
                       variant="outline"
-                      className="h-20 flex flex-col items-center justify-center gap-2 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-900"
+                      className="h-24 flex flex-col items-center justify-center gap-2 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-900"
                       onClick={() => handleTransferOption("bank")}
                     >
-                      <Building2 className="h-6 w-6 text-blue-600 hover:text-blue-700" />
+                      <img
+                        src="/image/bank.png"
+                        alt="Bank of Kigali"
+                        className="h-10 w-auto object-contain"
+                      />
                       <span className="font-semibold text-gray-900 hover:text-blue-900">
-                        Bank Transfer
+                        {t("invoices.bankTransfer")}
                       </span>
                       <span className="text-xs text-gray-600 hover:text-blue-700">
-                        Manual verification
+                        {t("invoices.manualVerification")}
                       </span>
                     </Button>
 
                     {/* Mobile Money Option */}
                     <Button
                       variant="outline"
-                      className="h-20 flex flex-col items-center justify-center gap-2 border-2 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50 hover:text-yellow-900"
+                      className="h-24 flex flex-col items-center justify-center gap-2 border-2 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50 hover:text-yellow-900"
                       onClick={() => handleTransferOption("momo")}
                     >
-                      <Smartphone className="h-6 w-6 text-yellow-600 hover:text-yellow-700" />
+                      <img
+                        src="/image/momo.png"
+                        alt="MTN Mobile Money"
+                        className="h-10 w-auto object-contain"
+                      />
                       <span className="font-semibold text-gray-900 hover:text-yellow-900">
-                        Mobile Money
+                        {t("invoices.mobileMoney")}
                       </span>
                       <span className="text-xs text-gray-600 hover:text-yellow-700">
-                        MoMo transfer
+                        {t("invoices.momoTransfer")}
                       </span>
                     </Button>
                   </div>
@@ -425,7 +466,7 @@ export function InvoiceDetailModal({
                       onClick={handlePayOnline}
                     >
                       <Send className="h-5 w-5 mr-2" />
-                      Pay Online (Instant)
+                      {t("invoices.payOnlineInstant")}
                     </Button>
                   </div>
                 </div>
@@ -441,7 +482,7 @@ export function InvoiceDetailModal({
                       className="text-gray-600 hover:text-gray-800"
                     >
                       <X className="h-4 w-4 mr-1" />
-                      Back to Options
+                      {t("invoices.backToOptions")}
                     </Button>
                   </div>
 
@@ -451,29 +492,29 @@ export function InvoiceDetailModal({
                       <div className="flex items-center gap-3 mb-3">
                         <Building2 className="h-5 w-5 text-blue-600" />
                         <h4 className="font-semibold text-gray-900">
-                          {t("invoices.bankTransfer", "Bank Transfer")}
+                          {t("invoices.bankTransfer")}
                         </h4>
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <img
-                            src="/logo.png"
+                            src="/image/bank.png"
                             alt="Bank of Kigali"
-                            className="h-6 w-auto"
+                            className="h-8 w-auto object-contain"
                           />
                           <span className="font-medium text-gray-700">
-                            Bank of Kigali
+                            {t("invoices.bankOfKigali")}
                           </span>
                         </div>
                         <div className="bg-white p-3 rounded border">
                           <p className="text-sm text-gray-600">
-                            {t("invoices.accountName", "Account Name")}:
+                            {t("invoices.accountName")}:
                           </p>
                           <p className="font-mono font-semibold text-gray-900">
                             LOVEWAY RWANDA CO LTD
                           </p>
                           <p className="text-sm text-gray-600 mt-1">
-                            {t("invoices.accountNumber", "Account Number")}:
+                            {t("invoices.accountNumber")}:
                           </p>
                           <p className="font-mono font-semibold text-gray-900">
                             00289-06965230-80
@@ -485,7 +526,7 @@ export function InvoiceDetailModal({
                           variant="default"
                           onClick={() => setIsOfflineVerificationOpen(true)}
                         >
-                          Submit Bank Transfer Verification
+                          {t("invoices.submitBankTransferVerification")}
                         </Button>
                       </div>
                     </div>
@@ -497,29 +538,29 @@ export function InvoiceDetailModal({
                       <div className="flex items-center gap-3 mb-3">
                         <Smartphone className="h-5 w-5 text-yellow-600" />
                         <h4 className="font-semibold text-gray-900">
-                          {t("invoices.mobileMoney", "Mobile Money")}
+                          {t("invoices.mobileMoney")}
                         </h4>
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-yellow-500 rounded flex items-center justify-center">
-                            <span className="text-white font-bold text-xs">
-                              MTN
-                            </span>
-                          </div>
+                          <img
+                            src="/image/momo.png"
+                            alt="MTN Mobile Money"
+                            className="h-8 w-auto object-contain"
+                          />
                           <span className="font-medium text-gray-700">
-                            MTN Mobile Money
+                            {t("invoices.mtnMobileMoney")}
                           </span>
                         </div>
                         <div className="bg-white p-3 rounded border">
                           <p className="text-sm text-gray-600">
-                            {t("invoices.momoCode", "MoMo Code")}:
+                            {t("invoices.momoCode")}:
                           </p>
                           <p className="font-mono font-semibold text-gray-900">
                             *182*6*1*{invoice.invoice_number}#
                           </p>
                           <p className="text-sm text-gray-600 mt-1">
-                            {t("invoices.momoNumber", "MoMo Number")}:
+                            {t("invoices.momoNumber")}:
                           </p>
                           <p className="font-mono font-semibold text-gray-900">
                             +250 788 123 456
@@ -531,7 +572,7 @@ export function InvoiceDetailModal({
                           variant="default"
                           onClick={() => setIsOfflineVerificationOpen(true)}
                         >
-                          Submit MoMo Transfer Verification
+                          {t("invoices.submitMomoVerification")}
                         </Button>
                       </div>
                     </div>
@@ -543,16 +584,10 @@ export function InvoiceDetailModal({
                       <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
                       <div>
                         <h4 className="font-semibold text-amber-800 mb-2">
-                          {t(
-                            "invoices.paymentInstructions",
-                            "Payment Instructions"
-                          )}
+                          {t("invoices.paymentInstructionsTitle")}
                         </h4>
                         <p className="text-sm text-amber-700">
-                          {t(
-                            "invoices.paymentInstructionsText",
-                            "If you pay directly, you must send a screenshot or receipt that clearly shows the amount and transaction ID. Our team will review it."
-                          )}
+                          {t("invoices.paymentInstructionsText")}
                         </p>
                       </div>
                     </div>
@@ -569,7 +604,9 @@ export function InvoiceDetailModal({
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-2">
                 <FileText className="h-5 w-5 text-gray-600" />
-                <h3 className="font-semibold text-gray-900">Notes</h3>
+                <h3 className="font-semibold text-gray-900">
+                  {t("invoices.notesLabel")}
+                </h3>
               </div>
               <p className="text-sm text-gray-700">{invoice.notes}</p>
             </CardContent>
@@ -585,7 +622,7 @@ export function InvoiceDetailModal({
               onClick={() => setIsPaymentConfirmationModalOpen(true)}
             >
               <X className="h-4 w-4 mr-2" />
-              Cancel Invoice
+              {t("invoices.cancelInvoice")}
             </Button>
           </div>
         )}
@@ -617,7 +654,7 @@ export function InvoiceDetailModal({
       <ModernModel
         isOpen={isPaymentConfirmationModalOpen}
         onClose={() => setIsPaymentConfirmationModalOpen(false)}
-        title="Payment Confirmation"
+        title={t("invoices.paymentConfirmation")}
       >
         <PaymentConfirmationModal
           isOpen={isPaymentConfirmationModalOpen}

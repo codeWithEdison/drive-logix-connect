@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Loader2,
   Smartphone,
+  X,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -150,48 +151,50 @@ export function PaymentFlow({
   return (
     <div className="space-y-6">
       {/* Payment Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-primary" />
+      <Card className="border-2 border-primary/20 shadow-md">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+          <CardTitle className="flex items-center gap-2 text-primary">
+            <Receipt className="h-5 w-5" />
             {t("invoices.paymentSummary")}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground mb-1">
                 {t("invoices.invoiceNumber")}
               </p>
-              <p className="font-semibold">
+              <p className="font-bold text-gray-900 font-mono">
                 {getInvoiceNumber(invoice.invoice_number)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground mb-1">
                 {t("invoices.cargoNumber")}
               </p>
-              <p className="font-semibold font-mono">
+              <p className="font-bold text-gray-900 font-mono">
                 {getCargoNumber(invoice.cargo_id, invoice.cargo?.cargo_number)}
               </p>
             </div>
           </div>
 
           {invoice.cargo && (
-            <div>
-              <p className="text-sm text-muted-foreground">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground mb-1">
                 {t("invoices.cargoType")}
               </p>
-              <p className="font-semibold">{invoice.cargo.type}</p>
+              <p className="font-bold text-gray-900 capitalize">
+                {invoice.cargo.type}
+              </p>
             </div>
           )}
 
-          <div className="border-t pt-4">
+          <div className="border-t-2 border-dashed pt-4 bg-gradient-to-r from-primary/5 to-transparent rounded-lg p-4 -mx-2">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold">
+              <span className="text-base font-semibold text-gray-700">
                 {t("invoices.totalAmount")}
               </span>
-              <span className="text-2xl font-bold text-primary">
+              <span className="text-3xl font-bold text-primary">
                 {formatCurrency(invoice.total_amount, invoice.currency)}
               </span>
             </div>
@@ -200,29 +203,40 @@ export function PaymentFlow({
       </Card>
 
       {/* Payment Method Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Select Payment Method</CardTitle>
+      <Card className="shadow-md">
+        <CardHeader className="border-b bg-gray-50">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-primary" />
+            {t("invoices.selectPaymentMethod")}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            {t("invoices.paymentInstructions")}
+          </p>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 pt-6">
           {/* Flutterwave Option */}
           <button
             onClick={() => handlePaymentMethodSelect("flutterwave")}
             disabled={isInitializing}
-            className="w-full p-4 border-2 rounded-lg hover:border-primary hover:bg-primary/5 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-5 border-2 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group hover:shadow-md"
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <CreditCard className="h-6 w-6 text-blue-600" />
+              <div className="p-4 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors">
+                <CreditCard className="h-7 w-7 text-blue-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-base">Card Payment</h3>
-                <p className="text-sm text-muted-foreground">
-                  Pay with Visa, Mastercard, or other cards
+                <h3 className="font-bold text-lg text-gray-900 mb-1">
+                  {t("invoices.cardPayment")}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {t("invoices.cardPaymentDescription")}
                 </p>
+                <span className="inline-block mt-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                  Instant Payment
+                </span>
               </div>
               {isInitializing && selectedMethod === "flutterwave" && (
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
               )}
             </div>
           </button>
@@ -231,17 +245,22 @@ export function PaymentFlow({
           <button
             onClick={() => handlePaymentMethodSelect("paypack")}
             disabled={isInitializing}
-            className="w-full p-4 border-2 rounded-lg hover:border-primary hover:bg-primary/5 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-5 border-2 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group hover:shadow-md"
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Smartphone className="h-6 w-6 text-green-600" />
+              <div className="p-4 bg-green-100 rounded-xl group-hover:bg-green-200 transition-colors">
+                <Smartphone className="h-7 w-7 text-green-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-base">Mobile Money</h3>
-                <p className="text-sm text-muted-foreground">
-                  Pay with MTN Mobile Money or Airtel Money
+                <h3 className="font-bold text-lg text-gray-900 mb-1">
+                  {t("invoices.mobileMoneyPayment")}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {t("invoices.mobileMoneyDescription")}
                 </p>
+                <span className="inline-block mt-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                  Recommended for Rwanda
+                </span>
               </div>
             </div>
           </button>
@@ -249,50 +268,63 @@ export function PaymentFlow({
       </Card>
 
       {/* Payment Methods Info */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <AlertCircle className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold">Payment Information</h3>
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <AlertCircle className="h-5 w-5 text-blue-600" />
+            </div>
+            <h3 className="font-bold text-blue-900">
+              {t("invoices.paymentInformationTitle")}
+            </h3>
           </div>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>
-              <strong>Card Payment:</strong> Supports Visa, Mastercard, and
-              other international cards. You'll be redirected to a secure
-              payment page.
-            </p>
-            <p>
-              <strong>Mobile Money:</strong> Pay directly from your MTN or
-              Airtel mobile money account. You'll receive a prompt on your phone
-              to approve the payment.
-            </p>
+          <div className="space-y-3 text-sm">
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <p className="text-gray-700">
+                <strong className="text-blue-800">
+                  {t("invoices.cardPayment")}:
+                </strong>{" "}
+                {t("invoices.cardPaymentInfo")}
+              </p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-blue-100">
+              <p className="text-gray-700">
+                <strong className="text-blue-800">
+                  {t("invoices.mobileMoneyPayment")}:
+                </strong>{" "}
+                {t("invoices.mobileMoneyInfo")}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Security Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="p-2 bg-green-100 rounded-lg">
+            <CheckCircle className="h-6 w-6 text-green-600" />
+          </div>
           <div>
-            <h4 className="font-semibold text-blue-900 mb-1">
-              {t("invoices.securePayment")}
+            <h4 className="font-bold text-green-900 mb-2 text-base">
+              {t("invoices.securePaymentTitle")}
             </h4>
-            <p className="text-sm text-blue-800">
-              {t("invoices.securePaymentDescription")}
+            <p className="text-sm text-green-800 leading-relaxed">
+              {t("invoices.securePaymentInfo")}
             </p>
           </div>
         </div>
       </div>
 
       {/* Cancel Button */}
-      <div className="flex justify-center pt-4">
+      <div className="flex justify-center pt-2">
         <Button
           variant="outline"
           onClick={onCancel}
           disabled={isInitializing}
-          className="min-w-[200px]"
+          className="min-w-[200px] hover:bg-gray-100 border-gray-300"
         >
+          <X className="h-4 w-4 mr-2" />
           {t("common.cancel")}
         </Button>
       </div>
