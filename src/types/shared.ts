@@ -467,9 +467,32 @@ export interface CreateVehicleRequest {
   fuel_type?: FuelType;
   fuel_efficiency?: number;
   type: VehicleType;
+  status?: VehicleStatus;
   insurance_expiry?: string;
   registration_expiry?: string;
-  branch_id?: UUID; // New field
+  last_maintenance_date?: string;
+  next_maintenance_date?: string;
+  total_distance_km?: number;
+  branch_id?: UUID;
+  // GPS/Device Information
+  device_imei?: string;
+  jimi_device_id?: string;
+  gps_provider?: "jimi" | "manual";
+  gps_device_status?: "online" | "offline" | "stale";
+  // JIMI Device Details
+  sim_number?: string;
+  device_model?: string;
+  device_model_alias?: string;
+  vehicle_icon?: string;
+  vin_number?: string;
+  engine_number?: string;
+  device_expiration?: string;
+  device_activation_time?: string;
+  device_remark?: string;
+  device_name?: string;
+  // Driver Information
+  driver_name?: string;
+  driver_phone?: string;
 }
 
 // ===========================================

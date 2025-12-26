@@ -444,6 +444,128 @@ export const useCreateClient = () => {
   });
 };
 
+// Superadmin management hooks
+export const useGetSuperadmins = (params?: {
+  search?: string;
+  is_active?: boolean;
+  branch_id?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  return useQuery({
+    queryKey: ["superadmins", params],
+    queryFn: async () => {
+      console.log("🔍 useGetSuperadmins - calling API with params:", params);
+      try {
+        const result = await AdminService.getSuperadmins(params);
+        console.log("🔍 useGetSuperadmins - API response:", JSON.stringify(result, null, 2));
+        return result;
+      } catch (error) {
+        console.error("🔍 useGetSuperadmins - API error:", error);
+        throw error;
+      }
+    },
+    select: (data) => {
+      console.log("🔍 useGetSuperadmins hook - raw data in select:", JSON.stringify(data, null, 2));
+      console.log("🔍 useGetSuperadmins hook - data?.data:", data?.data);
+      console.log("🔍 useGetSuperadmins hook - Array.isArray(data?.data):", Array.isArray(data?.data));
+      console.log("🔍 useGetSuperadmins hook - data?.meta:", data?.meta);
+      
+      // The API returns: { success: true, data: [...], meta: { pagination: {...} } }
+      // AdminService.getSuperadmins returns response.data which is the ApiResponse
+      // So data here is: { success: true, data: [...], meta: { pagination: {...} } }
+      if (data?.data && Array.isArray(data.data)) {
+        const result = {
+          data: data.data,
+          pagination: data.meta?.pagination || {},
+        };
+        console.log("🔍 useGetSuperadmins hook - returning:", JSON.stringify(result, null, 2));
+        console.log("🔍 useGetSuperadmins hook - result.data length:", result.data.length);
+        return result;
+      }
+      // Fallback: return empty structure
+      console.warn("🔍 useGetSuperadmins hook - returning empty (fallback) - data structure:", {
+        hasData: !!data,
+        dataType: typeof data,
+        dataKeys: data ? Object.keys(data) : [],
+        dataData: data?.data,
+        dataDataType: typeof data?.data,
+        isArray: Array.isArray(data?.data),
+      });
+      return { data: [], pagination: {} };
+    },
+  });
+};
+
+export const useGetSuperadminById = (superAdminId: string) => {
+  return useQuery({
+    queryKey: ["superadmins", "detail", superAdminId],
+    queryFn: () => AdminService.getSuperadminById(superAdminId),
+    select: (data) => data.data,
+    enabled: !!superAdminId,
+  });
+};
+
+export const useCreateSuperadmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      full_name: string;
+      email: string;
+      password: string;
+      phone?: string;
+      preferred_language?: "en" | "rw" | "fr";
+    }) => AdminService.createSuperadmin(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmins"] });
+    },
+  });
+};
+
+export const useUpdateSuperadmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      superAdminId,
+      data,
+    }: {
+      superAdminId: string;
+      data: {
+        full_name?: string;
+        email?: string;
+        phone?: string;
+        preferred_language?: "en" | "rw" | "fr";
+        avatar_url?: string;
+      };
+    }) => AdminService.updateSuperadmin(superAdminId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmins"] });
+    },
+  });
+};
+
+export const useToggleSuperadminStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      superAdminId,
+      data,
+    }: {
+      superAdminId: string;
+      data: {
+        is_active: boolean;
+        reason?: string;
+      };
+    }) => AdminService.toggleSuperadminStatus(superAdminId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmins"] });
+    },
+  });
+};
+
 export const useFinancialReports = (params?: {
   start_date?: string;
   end_date?: string;

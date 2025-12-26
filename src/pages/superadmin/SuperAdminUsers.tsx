@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CustomTabs } from "@/components/ui/CustomTabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,10 @@ import {
   useCreateDriver,
   useCreateClient,
   useUpdateClient,
+  useGetSuperadmins,
+  useCreateSuperadmin,
+  useUpdateSuperadmin,
+  useToggleSuperadminStatus,
 } from "@/lib/api/hooks/utilityHooks";
 import { useAdminClients } from "@/lib/api/hooks/clientHooks";
 import { useBranches } from "@/lib/api/hooks/branchHooks";
@@ -117,6 +121,7 @@ export default function SuperAdminUsers() {
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedAdmin, setSelectedAdmin] = useState<User | null>(null);
+  const [selectedSuperadmin, setSelectedSuperadmin] = useState<User | null>(null);
 
   // Filter states
   const [selectedBranchId, setSelectedBranchId] = useState<string>("");
@@ -144,6 +149,12 @@ export default function SuperAdminUsers() {
   // Client modal states
   const [showCreateClientModal, setShowCreateClientModal] = useState(false);
   const [editingClientUser, setEditingClientUser] = useState<any>(null);
+
+  // Superadmin modal states
+  const [showCreateSuperadminModal, setShowCreateSuperadminModal] = useState(false);
+  const [editingSuperadminUser, setEditingSuperadminUser] = useState<User | null>(null);
+  const [showSuperadminDetailModal, setShowSuperadminDetailModal] = useState(false);
+  const [currentSuperadminPage, setCurrentSuperadminPage] = useState(1);
 
   // New modern modals
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -193,6 +204,15 @@ export default function SuperAdminUsers() {
     password: "",
     preferred_language: "en" as "en" | "rw" | "fr",
     branch_id: "",
+  });
+
+  // Superadmin form state
+  const [superadminFormData, setSuperadminFormData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    password: "",
+    preferred_language: "en" as "en" | "rw" | "fr",
   });
 
   // Password visibility state
@@ -287,6 +307,23 @@ export default function SuperAdminUsers() {
     limit: 50,
   });
 
+  // Fetch superadmins
+  const {
+    data: superadminsResponse,
+    isLoading: isSuperadminsLoading,
+    error: superadminsError,
+    refetch: refetchSuperadmins,
+  } = useGetSuperadmins({
+    limit: 50,
+  });
+
+  // Debug: Log superadmin data
+  useEffect(() => {
+    console.log("🔍 SuperAdminUsers - superadminsResponse:", superadminsResponse);
+    console.log("🔍 SuperAdminUsers - isSuperadminsLoading:", isSuperadminsLoading);
+    console.log("🔍 SuperAdminUsers - superadminsError:", superadminsError);
+  }, [superadminsResponse, isSuperadminsLoading, superadminsError]);
+
   // Fetch branches for filter
   const { data: branchesData } = useBranches({ limit: 100 });
 
@@ -298,9 +335,22 @@ export default function SuperAdminUsers() {
   const createDriverMutation = useCreateDriver();
   const createClientMutation = useCreateClient();
   const updateClientMutation = useUpdateClient();
+  const createSuperadminMutation = useCreateSuperadmin();
+  const updateSuperadminMutation = useUpdateSuperadmin();
+  const toggleSuperadminStatusMutation = useToggleSuperadminStatus();
 
   // Process data from API responses
   const admins = adminsData || [];
+  // Handle paginated response structure: { data: [...], pagination: {...} }
+  // superadminsResponse is the object returned from select: { data: [...], pagination: {...} }
+  // So we access superadminsResponse?.data to get the array
+  const superadmins = (superadminsResponse?.data || []) as User[];
+  
+  // Debug: Log processed superadmins
+  useEffect(() => {
+    console.log("🔍 SuperAdminUsers - superadmins array:", superadmins);
+    console.log("🔍 SuperAdminUsers - superadmins length:", superadmins.length);
+  }, [superadmins]);
   // Transform drivers data to match Driver interface
   const drivers: Driver[] = driversData
     ? driversData.map((user: any) => ({
@@ -478,6 +528,120 @@ export default function SuperAdminUsers() {
     // Refresh client data
     window.location.reload();
     customToast.success("Client operation completed successfully");
+  };
+
+  // Superadmin handlers
+  const handleCreateSuperadmin = () => {
+    setEditingSuperadminUser(null);
+    const generatedPassword = generatePassword();
+    setSuperadminFormData({
+      full_name: "",
+      email: "",
+      phone: "",
+      password: generatedPassword,
+      preferred_language: "en",
+    });
+    setShowPassword(false);
+    setShowCreateSuperadminModal(true);
+  };
+
+  const handleEditSuperadmin = (superadmin: User) => {
+    setEditingSuperadminUser(superadmin);
+    setSuperadminFormData({
+      full_name: superadmin.full_name || "",
+      email: superadmin.email || "",
+      phone: superadmin.phone || "",
+      password: "",
+      preferred_language: superadmin.preferred_language || "en",
+    });
+    setShowPassword(false);
+    setShowCreateSuperadminModal(true);
+  };
+
+  const handleViewSuperadmin = (superadmin: User) => {
+    setSelectedSuperadmin(superadmin);
+    setShowSuperadminDetailModal(true);
+  };
+
+  const handleSuperadminFormChange = (field: string, value: any) => {
+    setSuperadminFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleCreateSuperadminUser = async () => {
+    try {
+      if (!editingSuperadminUser && superadminFormData.password.length < 8) {
+        customToast.error("Password must be at least 8 characters long");
+        return;
+      }
+
+      if (
+        editingSuperadminUser &&
+        superadminFormData.password &&
+        superadminFormData.password.length < 8
+      ) {
+        customToast.error("Password must be at least 8 characters long");
+        return;
+      }
+
+      if (editingSuperadminUser) {
+        const updateData: any = {
+          full_name: superadminFormData.full_name,
+          email: superadminFormData.email,
+          phone: superadminFormData.phone,
+          preferred_language: superadminFormData.preferred_language,
+        };
+
+        if (superadminFormData.password && superadminFormData.password.trim() !== "") {
+          updateData.password = superadminFormData.password;
+        }
+
+        await updateSuperadminMutation.mutateAsync({
+          superAdminId: editingSuperadminUser.id,
+          data: updateData,
+        });
+
+        customToast.success("Superadmin updated successfully!");
+      } else {
+        await createSuperadminMutation.mutateAsync(superadminFormData);
+        customToast.success("Superadmin created successfully!");
+      }
+
+      setShowCreateSuperadminModal(false);
+      setEditingSuperadminUser(null);
+      refetchSuperadmins();
+    } catch (error: any) {
+      console.error("Superadmin operation error:", error);
+      const errorMessage = extractErrorMessage(error);
+      customToast.error(
+        `Failed to ${editingSuperadminUser ? "update" : "create"} superadmin: ${errorMessage}`
+      );
+    }
+  };
+
+  const handleUpdateSuperadminStatus = async (superadminId: string, isActive: boolean) => {
+    try {
+      await toggleSuperadminStatusMutation.mutateAsync({
+        superAdminId: superadminId,
+        data: {
+          is_active: isActive,
+          reason: isActive
+            ? "Superadmin activated by super admin"
+            : "Superadmin deactivated by super admin",
+        },
+      });
+
+      customToast.success(
+        `Superadmin status updated to ${isActive ? "active" : "inactive"}`
+      );
+      refetchSuperadmins();
+    } catch (error: any) {
+      console.error("Error updating superadmin status:", error);
+      const errorMessage = extractErrorMessage(error);
+      customToast.error(`Failed to update superadmin status: ${errorMessage}`);
+    }
   };
 
   const handleDeleteDriver = async (driverId: string) => {
@@ -891,6 +1055,11 @@ export default function SuperAdminUsers() {
 
   const tabs = [
     {
+      value: "superadmins",
+      label: t("userManagement.superadmins"),
+      count: superadmins.length,
+    },
+    {
       value: "admins",
       label: t("userManagement.admins"),
       count: admins.length,
@@ -933,6 +1102,15 @@ export default function SuperAdminUsers() {
         client.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const filteredSuperadmins = superadmins.filter(
+    (superadmin: User) =>
+      (superadmin.full_name?.toLowerCase() || "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (superadmin.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (superadmin.phone?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+  );
+
   // Pagination logic
   const getPaginatedData = (
     data: any[],
@@ -964,11 +1142,17 @@ export default function SuperAdminUsers() {
     currentClientPage,
     itemsPerPage
   );
+  const paginatedSuperadmins = getPaginatedData(
+    filteredSuperadmins,
+    currentSuperadminPage,
+    itemsPerPage
+  );
 
   // Total pages
   const totalAdminPages = getTotalPages(filteredAdmins, itemsPerPage);
   const totalDriverPages = getTotalPages(filteredDrivers, itemsPerPage);
   const totalClientPages = getTotalPages(filteredClients, itemsPerPage);
+  const totalSuperadminPages = getTotalPages(filteredSuperadmins, itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -1016,6 +1200,12 @@ export default function SuperAdminUsers() {
             <Button onClick={handleCreateClient}>
               <Plus className="w-4 h-4 mr-2" />
               {t("addClient")}
+            </Button>
+          )}
+          {activeTab === "superadmins" && (
+            <Button onClick={handleCreateSuperadmin}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t("userManagement.addSuperadmin")}
             </Button>
           )}
         </div>
@@ -1117,6 +1307,242 @@ export default function SuperAdminUsers() {
       <CustomTabs value={activeTab} onValueChange={setActiveTab} tabs={tabs} />
 
       {/* Tab Content */}
+      {activeTab === "superadmins" && (
+        <div className="mt-6">
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                {t("userManagement.superadminUsers")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isSuperadminsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <span className="ml-2 text-muted-foreground">
+                    {t("common.loading")}...
+                  </span>
+                </div>
+              ) : superadminsError ? (
+                <div className="text-center py-8">
+                  <p className="text-red-600">
+                    {t("common.error")}:{" "}
+                    {superadminsError.message || t("common.loadError")}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          #
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.avatar")}
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.name")}
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.email")}
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.phone")}
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.verified")}
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.branch")}
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.status")}
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.lastLogin")}
+                        </TableHead>
+                        <TableHead className="text-xs font-medium text-gray-600">
+                          {t("common.actions")}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredSuperadmins.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={9}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            {t("userManagement.noSuperadminsFound")}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedSuperadmins.map((superadmin: User, index: number) => (
+                          <TableRow
+                            key={superadmin.id}
+                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => handleViewSuperadmin(superadmin)}
+                          >
+                            <TableCell className="text-xs text-gray-500">
+                              {index + 1}
+                            </TableCell>
+                            <TableCell>
+                              <div className="w-8 h-8 rounded-full overflow-hidden">
+                                {superadmin.avatar_url ? (
+                                  <img
+                                    src={superadmin.avatar_url}
+                                    alt={superadmin.full_name || "User"}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+                                    {superadmin.full_name?.charAt(0) || "?"}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-medium text-sm">
+                              {superadmin.full_name || "-"}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {superadmin.email || "-"}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {superadmin.phone || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  superadmin.is_verified
+                                    ? "bg-green-100 text-green-600"
+                                    : "bg-yellow-100 text-yellow-600"
+                                }
+                              >
+                                {superadmin.is_verified
+                                  ? t("common.verified")
+                                  : t("common.pending")}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <label
+                                className="flex items-center cursor-pointer"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="sr-only"
+                                  checked={superadmin.is_active}
+                                  onChange={() =>
+                                    handleUpdateSuperadminStatus(
+                                      superadmin.id,
+                                      !superadmin.is_active
+                                    )
+                                  }
+                                  disabled={
+                                    toggleSuperadminStatusMutation.isPending ||
+                                    superadmin.id === user?.id
+                                  }
+                                />
+                                <div
+                                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                    superadmin.is_active
+                                      ? "bg-green-500"
+                                      : "bg-gray-300"
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                      superadmin.is_active
+                                        ? "translate-x-6"
+                                        : "translate-x-1"
+                                    }`}
+                                  />
+                                </div>
+                                <span className="ml-2 text-sm text-gray-700">
+                                  {superadmin.is_active
+                                    ? t("common.active")
+                                    : t("common.inactive")}
+                                </span>
+                              </label>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {superadmin.last_login
+                                ? new Date(
+                                    superadmin.last_login
+                                  ).toLocaleDateString()
+                                : "-"}
+                            </TableCell>
+                            <TableCell>
+                              <div
+                                className="flex gap-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditSuperadmin(superadmin)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Superadmin Pagination */}
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {(currentSuperadminPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(
+                    currentSuperadminPage * itemsPerPage,
+                    filteredSuperadmins.length
+                  )}{" "}
+                  of {filteredSuperadmins.length} superadmins
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentSuperadminPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentSuperadminPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {currentSuperadminPage} of {totalSuperadminPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentSuperadminPage((prev) =>
+                        Math.min(prev + 1, totalSuperadminPages)
+                      )
+                    }
+                    disabled={currentSuperadminPage === totalSuperadminPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {activeTab === "admins" && (
         <div className="mt-6">
           <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
@@ -1539,6 +1965,170 @@ export default function SuperAdminUsers() {
         onSuccess={handleDriverSuccess}
         editingDriver={editingDriver}
       />
+
+      {/* Create/Edit Superadmin Modal */}
+      <ModernModel
+        isOpen={showCreateSuperadminModal}
+        onClose={() => {
+          setShowCreateSuperadminModal(false);
+          setEditingSuperadminUser(null);
+        }}
+        title={editingSuperadminUser ? t("userManagement.editSuperadmin") : t("userManagement.addNewSuperadmin")}
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="superadmin_full_name">Full Name *</Label>
+              <Input
+                id="superadmin_full_name"
+                value={superadminFormData.full_name}
+                onChange={(e) =>
+                  handleSuperadminFormChange("full_name", e.target.value)
+                }
+                placeholder="Enter full name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="superadmin_email">Email *</Label>
+              <Input
+                id="superadmin_email"
+                type="email"
+                value={superadminFormData.email}
+                onChange={(e) =>
+                  handleSuperadminFormChange("email", e.target.value)
+                }
+                placeholder="superadmin@lovewaylogistics.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="superadmin_phone">Phone *</Label>
+              <Input
+                id="superadmin_phone"
+                value={superadminFormData.phone}
+                onChange={(e) =>
+                  handleSuperadminFormChange("phone", e.target.value)
+                }
+                placeholder="+250 788 123 456"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="superadmin_password">
+                Password {!editingSuperadminUser ? "*" : ""}
+              </Label>
+              {!editingSuperadminUser ? (
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="superadmin_password"
+                      type={showPassword ? "text" : "password"}
+                      value={superadminFormData.password}
+                      disabled
+                      placeholder="Auto-generated password"
+                      className="pr-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newPassword = generatePassword();
+                      setSuperadminFormData((prev) => ({
+                        ...prev,
+                        password: newPassword,
+                      }));
+                      setShowPassword(true);
+                    }}
+                    className="px-3"
+                  >
+                    <RefreshCcw className="h-4 w-4 mr-1" />
+                    Regenerate
+                  </Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Input
+                    id="superadmin_password"
+                    type={showPassword ? "text" : "password"}
+                    value={superadminFormData.password}
+                    onChange={(e) =>
+                      handleSuperadminFormChange("password", e.target.value)
+                    }
+                    placeholder="Enter new password (min 8 chars)"
+                    className="pr-20"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
+              <p className="text-xs text-gray-500">
+                {!editingSuperadminUser
+                  ? "Password is auto-generated (8 characters). Click 'Regenerate' to create a new one."
+                  : "Leave empty to keep current password, or enter a new password (minimum 8 characters)."}
+              </p>
+            </div>
+          </div>
+
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={handleCreateSuperadminUser}
+              className="flex-1"
+              disabled={
+                createSuperadminMutation.isPending ||
+                updateSuperadminMutation.isPending
+              }
+            >
+              {createSuperadminMutation.isPending ||
+              updateSuperadminMutation.isPending
+                ? "Processing..."
+                : editingSuperadminUser
+                ? t("userManagement.updateSuperadmin")
+                : t("userManagement.createSuperadmin")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateSuperadminModal(false);
+                setEditingSuperadminUser(null);
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </ModernModel>
 
       {/* Create/Edit Admin Modal */}
       <ModernModel
@@ -2033,6 +2623,18 @@ export default function SuperAdminUsers() {
           isOpen={showAdminDetailModal}
           onClose={() => setShowAdminDetailModal(false)}
           user={selectedAdmin}
+        />
+      )}
+
+      {/* Superadmin Detail Modal */}
+      {selectedSuperadmin && (
+        <UserDetailModal
+          isOpen={showSuperadminDetailModal}
+          onClose={() => {
+            setShowSuperadminDetailModal(false);
+            setSelectedSuperadmin(null);
+          }}
+          user={selectedSuperadmin}
         />
       )}
 

@@ -255,4 +255,79 @@ export class AdminService {
     });
     return response.data;
   }
+
+  // ===========================================
+  // SUPERADMIN MANAGEMENT METHODS
+  // ===========================================
+
+  // Create superadmin
+  static async createSuperadmin(data: {
+    full_name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    preferred_language?: "en" | "rw" | "fr";
+  }): Promise<
+    ApiResponse<{
+      user: any;
+    }>
+  > {
+    const response = await axiosInstance.post("/admin/superadmins", data);
+    return response.data;
+  }
+
+  // Get all superadmins
+  static async getSuperadmins(params?: {
+    search?: string;
+    is_active?: boolean;
+    branch_id?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<PaginationResponse<any>>> {
+    const response = await axiosInstance.get("/admin/superadmins", { params });
+    return response.data;
+  }
+
+  // Get superadmin by ID
+  static async getSuperadminById(
+    superAdminId: string
+  ): Promise<ApiResponse<{ user: any }>> {
+    const response = await axiosInstance.get(
+      `/admin/superadmins/${superAdminId}`
+    );
+    return response.data;
+  }
+
+  // Update superadmin
+  static async updateSuperadmin(
+    superAdminId: string,
+    data: {
+      full_name?: string;
+      email?: string;
+      phone?: string;
+      preferred_language?: "en" | "rw" | "fr";
+      avatar_url?: string;
+    }
+  ): Promise<ApiResponse<{ user: any }>> {
+    const response = await axiosInstance.put(
+      `/admin/superadmins/${superAdminId}`,
+      data
+    );
+    return response.data;
+  }
+
+  // Enable/Disable superadmin
+  static async toggleSuperadminStatus(
+    superAdminId: string,
+    data: {
+      is_active: boolean;
+      reason?: string;
+    }
+  ): Promise<ApiResponse<{ user: any; message: string }>> {
+    const response = await axiosInstance.put(
+      `/admin/superadmins/${superAdminId}/status`,
+      data
+    );
+    return response.data;
+  }
 }

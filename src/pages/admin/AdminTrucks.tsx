@@ -40,7 +40,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
-import { CreateVehicleRequest, VehicleType, FuelType } from "@/types/shared";
+import { CreateVehicleRequest, VehicleType, FuelType, VehicleStatus } from "@/types/shared";
 import { toast } from "@/hooks/use-toast";
 import VehicleSyncModal, {
   VehicleSyncRow,
@@ -77,9 +77,29 @@ const AdminTrucks = () => {
     fuel_type: FuelType.DIESEL,
     fuel_efficiency: 0,
     type: VehicleType.TRUCK,
+    status: "active" as VehicleStatus,
     insurance_expiry: "",
     registration_expiry: "",
-    branch_id: user?.branch_id, // Always use user's branch_id as default
+    last_maintenance_date: "",
+    next_maintenance_date: "",
+    total_distance_km: 0,
+    branch_id: user?.branch_id,
+    device_imei: "",
+    jimi_device_id: "",
+    gps_provider: "manual",
+    gps_device_status: "offline",
+    sim_number: "",
+    device_model: "",
+    device_model_alias: "",
+    vehicle_icon: "",
+    vin_number: "",
+    engine_number: "",
+    device_expiration: "",
+    device_activation_time: "",
+    device_remark: "",
+    device_name: "",
+    driver_name: "",
+    driver_phone: "",
   });
   const [isCreatingVehicle, setIsCreatingVehicle] = useState(false);
   const [isUpdatingVehicle, setIsUpdatingVehicle] = useState(false);
@@ -96,9 +116,29 @@ const AdminTrucks = () => {
     fuel_type: FuelType.DIESEL,
     fuel_efficiency: 0,
     type: VehicleType.TRUCK,
+    status: "active" as VehicleStatus,
     insurance_expiry: "",
     registration_expiry: "",
+    last_maintenance_date: "",
+    next_maintenance_date: "",
+    total_distance_km: 0,
     branch_id: user?.branch_id,
+    device_imei: "",
+    jimi_device_id: "",
+    gps_provider: "manual",
+    gps_device_status: "offline",
+    sim_number: "",
+    device_model: "",
+    device_model_alias: "",
+    vehicle_icon: "",
+    vin_number: "",
+    engine_number: "",
+    device_expiration: "",
+    device_activation_time: "",
+    device_remark: "",
+    device_name: "",
+    driver_name: "",
+    driver_phone: "",
   });
 
   // API hooks
@@ -235,6 +275,8 @@ const AdminTrucks = () => {
     });
 
     // Populate edit form with truck data
+    // Get full vehicle data from API if available
+    const vehicleData = vehiclesData.find((v: any) => v.id === truck.id);
     setEditFormData({
       plate_number: truck.licensePlate || "",
       make: truck.manufacturer || "",
@@ -246,9 +288,37 @@ const AdminTrucks = () => {
       fuel_type: (truck.engineType as FuelType) || FuelType.DIESEL,
       fuel_efficiency: parseFloat(truck.fuelEfficiency?.toString() || "0") || 0,
       type: (truck.vehicleType as VehicleType) || VehicleType.TRUCK,
+      status: (vehicleData?.status || truck.status || "active") as VehicleStatus,
       insurance_expiry: truck.insuranceExpiryISO || "",
       registration_expiry: truck.registrationExpiryISO || "",
+      last_maintenance_date: vehicleData?.last_maintenance_date
+        ? new Date(vehicleData.last_maintenance_date).toISOString().split("T")[0]
+        : "",
+      next_maintenance_date: vehicleData?.next_maintenance_date
+        ? new Date(vehicleData.next_maintenance_date).toISOString().split("T")[0]
+        : "",
+      total_distance_km: vehicleData?.total_distance_km || 0,
       branch_id: truck.branchId || user?.branch_id,
+      device_imei: vehicleData?.device_imei || "",
+      jimi_device_id: vehicleData?.jimi_device_id || "",
+      gps_provider: (vehicleData?.gps_provider || "manual") as "jimi" | "manual",
+      gps_device_status: (vehicleData?.gps_device_status || "offline") as "online" | "offline" | "stale",
+      sim_number: vehicleData?.sim_number || "",
+      device_model: vehicleData?.device_model || "",
+      device_model_alias: vehicleData?.device_model_alias || "",
+      vehicle_icon: vehicleData?.vehicle_icon || "",
+      vin_number: vehicleData?.vin_number || "",
+      engine_number: vehicleData?.engine_number || "",
+      device_expiration: vehicleData?.device_expiration
+        ? new Date(vehicleData.device_expiration).toISOString().slice(0, 16)
+        : "",
+      device_activation_time: vehicleData?.device_activation_time
+        ? new Date(vehicleData.device_activation_time).toISOString().slice(0, 16)
+        : "",
+      device_remark: vehicleData?.device_remark || "",
+      device_name: vehicleData?.device_name || "",
+      driver_name: vehicleData?.driver_name || "",
+      driver_phone: vehicleData?.driver_phone || "",
     });
 
     setIsEditModalOpen(true);
@@ -292,9 +362,29 @@ const AdminTrucks = () => {
       fuel_type: FuelType.DIESEL,
       fuel_efficiency: 0,
       type: VehicleType.TRUCK,
+      status: "active" as VehicleStatus,
       insurance_expiry: "",
       registration_expiry: "",
-      branch_id: user?.branch_id, // Always use user's branch_id as default
+      last_maintenance_date: "",
+      next_maintenance_date: "",
+      total_distance_km: 0,
+      branch_id: user?.branch_id,
+      device_imei: "",
+      jimi_device_id: "",
+      gps_provider: "manual",
+      gps_device_status: "offline",
+      sim_number: "",
+      device_model: "",
+      device_model_alias: "",
+      vehicle_icon: "",
+      vin_number: "",
+      engine_number: "",
+      device_expiration: "",
+      device_activation_time: "",
+      device_remark: "",
+      device_name: "",
+      driver_name: "",
+      driver_phone: "",
     });
     setIsCreateModalOpen(true);
   };
@@ -1242,6 +1332,382 @@ const AdminTrucks = () => {
             </CardContent>
           </Card>
 
+          {/* Status and Maintenance */}
+          <Card>
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-gray-900 mb-4">
+                Status & Maintenance
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={createFormData.status || "active"}
+                    onValueChange={(value: VehicleStatus) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        status: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                      <SelectItem value="retired">Retired</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="totalDistance">Total Distance (km)</Label>
+                  <Input
+                    id="totalDistance"
+                    type="number"
+                    step="0.1"
+                    value={createFormData.total_distance_km || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        total_distance_km: parseFloat(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="0"
+                    min="0"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastMaintenance">Last Maintenance Date</Label>
+                  <Input
+                    id="lastMaintenance"
+                    type="date"
+                    value={createFormData.last_maintenance_date || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        last_maintenance_date: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nextMaintenance">Next Maintenance Date</Label>
+                  <Input
+                    id="nextMaintenance"
+                    type="date"
+                    value={createFormData.next_maintenance_date || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        next_maintenance_date: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* GPS/Device Information */}
+          <Card>
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-gray-900 mb-4">
+                GPS/Device Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="deviceImei">Device IMEI</Label>
+                  <Input
+                    id="deviceImei"
+                    value={createFormData.device_imei || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        device_imei: e.target.value,
+                      }))
+                    }
+                    placeholder="123456789012345"
+                    maxLength={50}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="jimiDeviceId">JIMI Device ID</Label>
+                  <Input
+                    id="jimiDeviceId"
+                    value={createFormData.jimi_device_id || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        jimi_device_id: e.target.value,
+                      }))
+                    }
+                    placeholder="JIMI123456"
+                    maxLength={100}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gpsProvider">GPS Provider</Label>
+                  <Select
+                    value={createFormData.gps_provider || "manual"}
+                    onValueChange={(value: "jimi" | "manual") =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        gps_provider: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="jimi">JIMI</SelectItem>
+                      <SelectItem value="manual">Manual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="gpsDeviceStatus">GPS Device Status</Label>
+                  <Select
+                    value={createFormData.gps_device_status || "offline"}
+                    onValueChange={(value: "online" | "offline" | "stale") =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        gps_device_status: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="online">Online</SelectItem>
+                      <SelectItem value="offline">Offline</SelectItem>
+                      <SelectItem value="stale">Stale</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* JIMI Device Details */}
+          <Card>
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-gray-900 mb-4">
+                JIMI Device Details
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="simNumber">SIM Number</Label>
+                  <Input
+                    id="simNumber"
+                    value={createFormData.sim_number || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        sim_number: e.target.value,
+                      }))
+                    }
+                    placeholder="+250788123456"
+                    maxLength={50}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="deviceModel">Device Model</Label>
+                  <Input
+                    id="deviceModel"
+                    value={createFormData.device_model || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        device_model: e.target.value,
+                      }))
+                    }
+                    placeholder="GT06N"
+                    maxLength={100}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="deviceModelAlias">Device Model Alias</Label>
+                  <Input
+                    id="deviceModelAlias"
+                    value={createFormData.device_model_alias || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        device_model_alias: e.target.value,
+                      }))
+                    }
+                    placeholder="GT06N-Alias"
+                    maxLength={100}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vehicleIcon">Vehicle Icon</Label>
+                  <Input
+                    id="vehicleIcon"
+                    value={createFormData.vehicle_icon || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        vehicle_icon: e.target.value,
+                      }))
+                    }
+                    placeholder="truck-icon"
+                    maxLength={50}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vinNumber">VIN Number</Label>
+                  <Input
+                    id="vinNumber"
+                    value={createFormData.vin_number || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        vin_number: e.target.value,
+                      }))
+                    }
+                    placeholder="1HGBH41JXMN109186"
+                    maxLength={50}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="engineNumber">Engine Number</Label>
+                  <Input
+                    id="engineNumber"
+                    value={createFormData.engine_number || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        engine_number: e.target.value,
+                      }))
+                    }
+                    placeholder="ENG123456"
+                    maxLength={50}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="deviceExpiration">Device Expiration</Label>
+                  <Input
+                    id="deviceExpiration"
+                    type="datetime-local"
+                    value={createFormData.device_expiration || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        device_expiration: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="deviceActivationTime">Device Activation Time</Label>
+                  <Input
+                    id="deviceActivationTime"
+                    type="datetime-local"
+                    value={createFormData.device_activation_time || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        device_activation_time: e.target.value,
+                      }))
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="deviceName">Device Name</Label>
+                  <Input
+                    id="deviceName"
+                    value={createFormData.device_name || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        device_name: e.target.value,
+                      }))
+                    }
+                    placeholder="TRK001-GPS"
+                    maxLength={100}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="deviceRemark">Device Remark</Label>
+                  <Input
+                    id="deviceRemark"
+                    value={createFormData.device_remark || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        device_remark: e.target.value,
+                      }))
+                    }
+                    placeholder="Additional notes about the GPS device"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Driver Information */}
+          <Card>
+            <CardContent className="p-4">
+              <h4 className="font-semibold text-gray-900 mb-4">
+                Driver Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="driverName">Driver Name</Label>
+                  <Input
+                    id="driverName"
+                    value={createFormData.driver_name || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        driver_name: e.target.value,
+                      }))
+                    }
+                    placeholder="John Doe"
+                    maxLength={100}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="driverPhone">Driver Phone</Label>
+                  <Input
+                    id="driverPhone"
+                    value={createFormData.driver_phone || ""}
+                    onChange={(e) =>
+                      setCreateFormData((prev) => ({
+                        ...prev,
+                        driver_phone: e.target.value,
+                      }))
+                    }
+                    placeholder="+250788123456"
+                    maxLength={20}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Action Buttons */}
           <div className="flex gap-3">
             <Button
@@ -1558,6 +2024,382 @@ const AdminTrucks = () => {
                           registration_expiry: e.target.value,
                         }))
                       }
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Status and Maintenance */}
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  Status & Maintenance
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="editStatus">Status</Label>
+                    <Select
+                      value={editFormData.status || editingTruck.status}
+                      onValueChange={(value: VehicleStatus) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          status: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                        <SelectItem value="retired">Retired</SelectItem>
+                        <SelectItem value="suspended">Suspended</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="editTotalDistance">Total Distance (km)</Label>
+                    <Input
+                      id="editTotalDistance"
+                      type="number"
+                      step="0.1"
+                      value={editFormData.total_distance_km || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          total_distance_km: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                      placeholder="0"
+                      min="0"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editLastMaintenance">Last Maintenance Date</Label>
+                    <Input
+                      id="editLastMaintenance"
+                      type="date"
+                      value={editFormData.last_maintenance_date || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          last_maintenance_date: e.target.value,
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editNextMaintenance">Next Maintenance Date</Label>
+                    <Input
+                      id="editNextMaintenance"
+                      type="date"
+                      value={editFormData.next_maintenance_date || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          next_maintenance_date: e.target.value,
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* GPS/Device Information */}
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  GPS/Device Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="editDeviceImei">Device IMEI</Label>
+                    <Input
+                      id="editDeviceImei"
+                      value={editFormData.device_imei || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          device_imei: e.target.value,
+                        }))
+                      }
+                      placeholder="123456789012345"
+                      maxLength={50}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editJimiDeviceId">JIMI Device ID</Label>
+                    <Input
+                      id="editJimiDeviceId"
+                      value={editFormData.jimi_device_id || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          jimi_device_id: e.target.value,
+                        }))
+                      }
+                      placeholder="JIMI123456"
+                      maxLength={100}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editGpsProvider">GPS Provider</Label>
+                    <Select
+                      value={editFormData.gps_provider || "manual"}
+                      onValueChange={(value: "jimi" | "manual") =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          gps_provider: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="jimi">JIMI</SelectItem>
+                        <SelectItem value="manual">Manual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="editGpsDeviceStatus">GPS Device Status</Label>
+                    <Select
+                      value={editFormData.gps_device_status || "offline"}
+                      onValueChange={(value: "online" | "offline" | "stale") =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          gps_device_status: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">Online</SelectItem>
+                        <SelectItem value="offline">Offline</SelectItem>
+                        <SelectItem value="stale">Stale</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* JIMI Device Details */}
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  JIMI Device Details
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="editSimNumber">SIM Number</Label>
+                    <Input
+                      id="editSimNumber"
+                      value={editFormData.sim_number || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          sim_number: e.target.value,
+                        }))
+                      }
+                      placeholder="+250788123456"
+                      maxLength={50}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editDeviceModel">Device Model</Label>
+                    <Input
+                      id="editDeviceModel"
+                      value={editFormData.device_model || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          device_model: e.target.value,
+                        }))
+                      }
+                      placeholder="GT06N"
+                      maxLength={100}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editDeviceModelAlias">Device Model Alias</Label>
+                    <Input
+                      id="editDeviceModelAlias"
+                      value={editFormData.device_model_alias || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          device_model_alias: e.target.value,
+                        }))
+                      }
+                      placeholder="GT06N-Alias"
+                      maxLength={100}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editVehicleIcon">Vehicle Icon</Label>
+                    <Input
+                      id="editVehicleIcon"
+                      value={editFormData.vehicle_icon || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          vehicle_icon: e.target.value,
+                        }))
+                      }
+                      placeholder="truck-icon"
+                      maxLength={50}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editVinNumber">VIN Number</Label>
+                    <Input
+                      id="editVinNumber"
+                      value={editFormData.vin_number || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          vin_number: e.target.value,
+                        }))
+                      }
+                      placeholder="1HGBH41JXMN109186"
+                      maxLength={50}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editEngineNumber">Engine Number</Label>
+                    <Input
+                      id="editEngineNumber"
+                      value={editFormData.engine_number || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          engine_number: e.target.value,
+                        }))
+                      }
+                      placeholder="ENG123456"
+                      maxLength={50}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editDeviceExpiration">Device Expiration</Label>
+                    <Input
+                      id="editDeviceExpiration"
+                      type="datetime-local"
+                      value={editFormData.device_expiration || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          device_expiration: e.target.value,
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editDeviceActivationTime">Device Activation Time</Label>
+                    <Input
+                      id="editDeviceActivationTime"
+                      type="datetime-local"
+                      value={editFormData.device_activation_time || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          device_activation_time: e.target.value,
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editDeviceName">Device Name</Label>
+                    <Input
+                      id="editDeviceName"
+                      value={editFormData.device_name || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          device_name: e.target.value,
+                        }))
+                      }
+                      placeholder="TRK001-GPS"
+                      maxLength={100}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="editDeviceRemark">Device Remark</Label>
+                    <Input
+                      id="editDeviceRemark"
+                      value={editFormData.device_remark || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          device_remark: e.target.value,
+                        }))
+                      }
+                      placeholder="Additional notes about the GPS device"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Driver Information */}
+            <Card>
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  Driver Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="editDriverName">Driver Name</Label>
+                    <Input
+                      id="editDriverName"
+                      value={editFormData.driver_name || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          driver_name: e.target.value,
+                        }))
+                      }
+                      placeholder="John Doe"
+                      maxLength={100}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editDriverPhone">Driver Phone</Label>
+                    <Input
+                      id="editDriverPhone"
+                      value={editFormData.driver_phone || ""}
+                      onChange={(e) =>
+                        setEditFormData((prev) => ({
+                          ...prev,
+                          driver_phone: e.target.value,
+                        }))
+                      }
+                      placeholder="+250788123456"
+                      maxLength={20}
                       className="mt-1"
                     />
                   </div>
