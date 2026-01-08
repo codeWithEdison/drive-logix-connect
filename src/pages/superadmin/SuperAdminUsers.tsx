@@ -48,6 +48,7 @@ import { useToast } from "@/hooks/use-toast";
 import { customToast } from "@/lib/utils/toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { User, Client, UserRole } from "@/types/shared";
+import { getErrorMessage } from "@/lib/utils/frontend";
 
 interface FormData {
   full_name: string;
@@ -231,33 +232,20 @@ export default function SuperAdminUsers() {
 
   // Helper function to extract error messages from API response
   const extractErrorMessage = (error: any) => {
+    // Handle validation errors with details
     if (
-      error?.response?.data?.error?.details &&
-      Array.isArray(error.response.data.error.details)
+      (error?.response?.data?.error?.details || error?.error?.details) &&
+      Array.isArray(error?.response?.data?.error?.details || error?.error?.details)
     ) {
-      // Handle validation errors with details
-      const details = error.response.data.error.details;
+      const details = error?.response?.data?.error?.details || error?.error?.details;
       const fieldErrors = details
         .map((detail: any) => `${detail.field}: ${detail.message}`)
         .join(", ");
-      return (
-        fieldErrors || error.response.data.error.message || "Validation failed"
-      );
+      return fieldErrors || "Validation failed";
     }
 
-    if (error?.response?.data?.error?.message) {
-      return error.response.data.error.message;
-    }
-
-    if (error?.response?.data?.message) {
-      return error.response.data.message;
-    }
-
-    if (error?.message) {
-      return error.message;
-    }
-
-    return "An unexpected error occurred";
+    // Use improved getErrorMessage utility for standard error extraction
+    return getErrorMessage(error, "An unexpected error occurred");
   };
 
   // Client form state
@@ -851,12 +839,7 @@ export default function SuperAdminUsers() {
       // Show error toast
       toast({
         title: t("userManagement.createUserError"),
-        description:
-          error?.response?.data?.error?.message ||
-          error?.response?.data?.error?.message ||
-          error?.response?.data?.error ||
-          error?.response?.data?.message ||
-          t("userManagement.createUserErrorDesc"),
+        description: extractErrorMessage(error) || t("userManagement.createUserErrorDesc"),
         variant: "destructive",
       });
     }

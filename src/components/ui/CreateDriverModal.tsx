@@ -373,12 +373,18 @@ export function CreateDriverModal({
       // Move to step 2 for document upload
       setCurrentStep(2);
     } catch (error: any) {
+      // Extract error message from transformed error structure (axios interceptor)
+      // Priority: error.error.message (transformed) > error.message > response.data.message > response.data.error.message
       const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.error ||
-        error?.response?.data?.message ||
-        error?.message ||
-        (editingDriver ? "Failed to update driver" : "Failed to create driver");
+        error?.error?.message || // Transformed error from axios interceptor
+        error?.message || // Direct error message
+        error?.response?.data?.message || // Original response message
+        error?.response?.data?.error?.message || // Original response error message
+        (typeof error?.response?.data?.error === "string"
+          ? error.response.data.error
+          : null) || // Error as string
+        (editingDriver ? "Failed to update driver" : "Failed to create driver"); // Fallback
+
       setError(errorMessage);
       toast({
         title: "Error",
@@ -457,10 +463,17 @@ export function CreateDriverModal({
       onSuccess?.();
       handleClose();
     } catch (error: any) {
+      // Extract error message from transformed error structure (axios interceptor)
       const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to upload documents";
+        error?.error?.message || // Transformed error from axios interceptor
+        error?.message || // Direct error message
+        error?.response?.data?.message || // Original response message
+        error?.response?.data?.error?.message || // Original response error message
+        (typeof error?.response?.data?.error === "string"
+          ? error.response.data.error
+          : null) || // Error as string
+        "Failed to upload documents"; // Fallback
+
       setError(errorMessage);
       toast({
         title: "Error",

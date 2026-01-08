@@ -45,6 +45,7 @@ import { toast } from "@/hooks/use-toast";
 import VehicleSyncModal, {
   VehicleSyncRow,
 } from "@/components/vehicles/VehicleSyncModal";
+import { getErrorMessage } from "@/lib/utils/frontend";
 
 const AdminTrucks = () => {
   const { t } = useLanguage();
@@ -548,51 +549,24 @@ const AdminTrucks = () => {
       refetch();
     } catch (error: any) {
       console.error("Update vehicle error:", error);
-      console.error("Error response:", error?.response);
-      console.error("Error response data:", error?.response?.data);
 
-      let errorMessage = "Failed to update vehicle";
       let errorTitle = "Error";
+      let errorMessage = "Failed to update vehicle";
 
-      if (error?.response?.data) {
-        const errorData = error.response.data;
-        console.error("Error data structure:", errorData);
-
-        // Handle validation errors
-        if (
-          errorData.error?.code === "VALIDATION_ERROR" &&
-          errorData.error?.details
-        ) {
-          errorTitle = "Validation Error";
-          const validationErrors = errorData.error.details
-            .map((detail: any) => `${detail.field}: ${detail.message}`)
-            .join(", ");
-          errorMessage = validationErrors;
-          console.error("Validation errors:", validationErrors);
-        }
-        // Handle other API errors
-        else if (errorData.message) {
-          errorMessage = errorData.message;
-          console.error("API error message:", errorData.message);
-        }
-        // Handle error object with message
-        else if (errorData.error?.message) {
-          errorMessage = errorData.error.message;
-          console.error("Error object message:", errorData.error.message);
-        }
-        // Fallback: show the entire error data
-        else {
-          errorMessage = JSON.stringify(errorData, null, 2);
-          console.error("Fallback error message:", errorMessage);
-        }
+      // Handle validation errors with details
+      if (
+        error?.response?.data?.error?.code === "VALIDATION_ERROR" &&
+        error?.response?.data?.error?.details
+      ) {
+        errorTitle = "Validation Error";
+        const validationErrors = error.response.data.error.details
+          .map((detail: any) => `${detail.field}: ${detail.message}`)
+          .join(", ");
+        errorMessage = validationErrors;
+      } else {
+        // Use utility function for standard error extraction
+        errorMessage = getErrorMessage(error, "Failed to update vehicle");
       }
-      // Handle network or other errors
-      else if (error?.message) {
-        errorMessage = error.message;
-        console.error("Network error message:", error.message);
-      }
-
-      console.error("Final error message:", errorMessage);
 
       toast({
         title: errorTitle,

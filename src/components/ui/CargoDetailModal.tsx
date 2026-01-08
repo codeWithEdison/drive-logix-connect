@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/api/queryClient";
 import { useNavigate } from "react-router-dom";
+import { getErrorMessage } from "@/lib/utils/frontend";
 import {
   MapPin,
   Phone,
@@ -481,10 +482,7 @@ export function CargoDetailModal({
       console.error("Failed to reject assignment:", error);
       toast({
         title: t("assignment.failedToReject"),
-        description:
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to reject assignment. Please try again.",
+        description: getErrorMessage(error, "Failed to reject assignment. Please try again."),
         variant: "destructive",
       });
     } finally {
@@ -543,12 +541,10 @@ export function CargoDetailModal({
       console.error("Failed to upload pickup images or update status:", error);
 
       // Show user-friendly error message
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        t("errors.uploadFailed") ||
-        "Failed to upload images or update cargo status";
+      const errorMessage = getErrorMessage(
+        error,
+        t("errors.uploadFailed") || "Failed to upload images or update cargo status"
+      );
 
       // Show user-friendly error message using toast
       toast({
@@ -620,12 +616,10 @@ export function CargoDetailModal({
     } catch (error: any) {
       console.error("Failed to submit rating:", error);
 
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        t("delivery.ratingFailed") ||
-        "Failed to submit rating";
+      const errorMessage = getErrorMessage(
+        error,
+        t("delivery.ratingFailed") || "Failed to submit rating"
+      );
 
       toast({
         title: t("delivery.ratingFailed"),
@@ -690,12 +684,10 @@ export function CargoDetailModal({
       );
 
       // Show user-friendly error message
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        t("errors.uploadFailed") ||
-        "Failed to upload images or update cargo status";
+      const errorMessage = getErrorMessage(
+        error,
+        t("errors.uploadFailed") || "Failed to upload images or update cargo status"
+      );
 
       // Show user-friendly error message using toast
       toast({
@@ -735,11 +727,10 @@ export function CargoDetailModal({
     } catch (error: any) {
       toast({
         title: t("invoice.generationFailed") || "Failed to Generate Invoice",
-        description:
-          error?.response?.data?.message ||
-          error?.message ||
-          t("invoice.generationFailedDescription") ||
-          "Failed to generate invoice. Please try again.",
+        description: getErrorMessage(
+          error,
+          t("invoice.generationFailedDescription") || "Failed to generate invoice. Please try again."
+        ),
         variant: "destructive",
       });
     }
@@ -776,11 +767,10 @@ export function CargoDetailModal({
       console.error(`Failed to change status to ${newStatus}:`, error);
       toast({
         title: t("cargo.statusUpdateFailed") || "Status Update Failed",
-        description:
-          error?.response?.data?.message ||
-          error?.message ||
-          t("cargo.statusUpdateFailedDescription") ||
-          "Failed to update status. Please try again.",
+        description: getErrorMessage(
+          error,
+          t("cargo.statusUpdateFailedDescription") || "Failed to update status. Please try again."
+        ),
         variant: "destructive",
       });
     }
@@ -2081,11 +2071,10 @@ export function CargoDetailModal({
                       } catch (error: any) {
                         toast({
                           title: t("assignment.failedToAccept"),
-                          description:
-                            error?.response?.data?.message ||
-                            error?.message ||
-                            t("assignment.failedToAcceptDescription") ||
-                            "Failed to accept assignment. Please try again.",
+                          description: getErrorMessage(
+                            error,
+                            t("assignment.failedToAcceptDescription") || "Failed to accept assignment. Please try again."
+                          ),
                           variant: "destructive",
                         });
                       }
@@ -2167,10 +2156,10 @@ export function CargoDetailModal({
                             t("assignment.vehicleChangeFailed") ||
                             "Failed to Change Vehicle",
                           description:
-                            error?.response?.data?.message ||
-                            error?.message ||
-                            t("assignment.vehicleChangeFailedDescription") ||
-                            "Failed to change vehicle. Please try again.",
+                          getErrorMessage(
+                            error,
+                            t("assignment.vehicleChangeFailedDescription") || "Failed to change vehicle. Please try again."
+                          ),
                           variant: "destructive",
                         });
                       }
@@ -2211,10 +2200,10 @@ export function CargoDetailModal({
                           t("assignment.cancelFailed") ||
                           "Failed to Cancel Assignment",
                         description:
-                          error?.response?.data?.message ||
-                          error?.message ||
-                          t("assignment.cancelFailedDescription") ||
-                          "Failed to cancel assignment. Please try again.",
+                          getErrorMessage(
+                            error,
+                            t("assignment.cancelFailedDescription") || "Failed to cancel assignment. Please try again."
+                          ),
                         variant: "destructive",
                       });
                     }
@@ -2295,9 +2284,7 @@ export function CargoDetailModal({
                         toast({
                           title: "Failed to Accept Cargo",
                           description:
-                            error?.response?.data?.message ||
-                            error?.message ||
-                            "Failed to accept cargo. Please try again.",
+                            getErrorMessage(error, "Failed to accept cargo. Please try again."),
                           variant: "destructive",
                         });
                       }
@@ -2346,10 +2333,10 @@ export function CargoDetailModal({
                           t("delivery.transitFailed") ||
                           "Failed to Start Transit",
                         description:
-                          error?.response?.data?.message ||
-                          error?.message ||
-                          t("delivery.transitFailedDescription") ||
-                          "Failed to start transit. Please try again.",
+                          getErrorMessage(
+                            error,
+                            t("delivery.transitFailedDescription") || "Failed to start transit. Please try again."
+                          ),
                         variant: "destructive",
                       });
                     }
@@ -2461,9 +2448,7 @@ export function CargoDetailModal({
                       toast({
                         title: "Failed to Cancel Cargo",
                         description:
-                          error?.response?.data?.message ||
-                          error?.message ||
-                          "Failed to cancel cargo. Please try again.",
+                          getErrorMessage(error, "Failed to cancel cargo. Please try again."),
                         variant: "destructive",
                       });
                     }

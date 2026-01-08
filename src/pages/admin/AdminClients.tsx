@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
 import Modal, { ModalSize } from "@/components/modal/Modal";
 import { Label } from "@/components/ui/label";
+import { getErrorMessage } from "@/lib/utils/frontend";
 
 export default function AdminClients() {
   const { t } = useLanguage();
@@ -298,50 +299,10 @@ export default function AdminClients() {
       setEditingClient(null);
       refetch();
     } catch (error: any) {
-      // Extract error message directly from backend response
-      // The axios interceptor transforms errors, so check the transformed structure first
-      let errorMessage = "An unexpected error occurred";
-
-      // Priority 1: Check error.error.message (transformed by axios interceptor)
-      // The interceptor now properly extracts string errors: { error: { message: "..." } }
-      if (
-        error?.error?.message &&
-        !error.error.message.includes("status code")
-      ) {
-        errorMessage = error.error.message;
-      }
-      // Priority 2: Check error.response.data (original Axios HTTP error structure)
-      // This might still be available even after transformation
-      else if (error?.response?.data) {
-        const responseData = error.response.data;
-        // Backend returns error as string: { error: "User with this email..." }
-        if (typeof responseData.error === "string") {
-          errorMessage = responseData.error;
-        }
-        // Or as object: { error: { message: "..." } }
-        else if (responseData.error?.message) {
-          errorMessage = responseData.error.message;
-        }
-        // Or direct message field
-        else if (responseData.message) {
-          errorMessage = responseData.message;
-        }
-      }
-      // Priority 3: Check error.data (in case it's wrapped differently)
-      else if (error?.data) {
-        const errorData = error.data;
-        if (typeof errorData.error === "string") {
-          errorMessage = errorData.error;
-        } else if (errorData.error?.message) {
-          errorMessage = errorData.error.message;
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        }
-      }
-      // Priority 4: Fallback to error.message (but skip axios status messages)
-      else if (error?.message && !error.message.includes("status code")) {
-        errorMessage = error.message;
-      }
+      const errorMessage = getErrorMessage(
+        error,
+        editingClient ? "Failed to update client" : "Failed to create client"
+      );
 
       const errorTitle = editingClient
         ? "Failed to Update Client"

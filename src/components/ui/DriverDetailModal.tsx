@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ModernModel from "@/components/modal/ModernModel";
+import { getErrorMessage } from "@/lib/utils/frontend";
 import {
   Truck,
   Phone,
@@ -260,10 +261,7 @@ export function DriverDetailModal({
       refetch();
       onDocumentUploaded?.();
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to upload document";
+      const errorMessage = getErrorMessage(error, "Failed to upload document");
       toast({
         title: "Error",
         description: errorMessage,

@@ -423,14 +423,96 @@ export const storage = {
 // ERROR HANDLING UTILITIES
 // ===========================================
 
-export const getErrorMessage = (error: any): string => {
+/**
+ * Extracts error message from API error responses.
+ * Handles the standardized backend error format:
+ * {
+ *   success: false,
+ *   message: string,
+ *   error: {
+ *     code: string,
+ *     message: string,
+ *     details?: any
+ *   }
+ * }
+ *
+ * Also handles errors transformed by axios interceptor.
+ */
+export const getErrorMessage = (
+  error: any,
+  fallback: string = "An unexpected error occurred"
+): string => {
+  // Handle string errors directly
   if (typeof error === "string") return error;
+
+  // Priority 1: Check transformed error structure from axios interceptor
+  // After axios interceptor: { error: { code, message, details }, timestamp }
+  if (error?.error?.message) {
+    // Handle validation errors with details array
+    if (
+      error.error.code === "VALIDATION_ERROR" &&
+      error.error.details &&
+      Array.isArray(error.error.details)
+    ) {
+      const fieldErrors = error.error.details
+        .map((detail: any) => {
+          if (typeof detail === "string") return detail;
+          if (detail?.field && detail?.message) {
+            return `${detail.field}: ${detail.message}`;
+          }
+          return detail?.message || String(detail);
+        })
+        .filter(Boolean)
+        .join(", ");
+      return fieldErrors || error.error.message;
+    }
+    return error.error.message;
+  }
+
+  // Priority 2: Check direct error message
   if (error?.message) return error.message;
-  if (error?.error?.message) return error.error.message;
-  if (error?.response?.data?.message) return error.response.data.message;
-  if (error?.response?.data?.error?.message)
-    return error.response.data.error.message;
-  return "An unexpected error occurred";
+
+  // Priority 3: Check original response data (standard backend format)
+  if (error?.response?.data) {
+    const responseData = error.response.data;
+
+    // Handle validation errors with details array
+    if (
+      responseData.error?.code === "VALIDATION_ERROR" &&
+      responseData.error?.details &&
+      Array.isArray(responseData.error.details)
+    ) {
+      const fieldErrors = responseData.error.details
+        .map((detail: any) => {
+          if (typeof detail === "string") return detail;
+          if (detail?.field && detail?.message) {
+            return `${detail.field}: ${detail.message}`;
+          }
+          return detail?.message || String(detail);
+        })
+        .filter(Boolean)
+        .join(", ");
+      return fieldErrors || responseData.error.message || responseData.message;
+    }
+
+    // Check top-level message (standard format)
+    if (responseData.message) return responseData.message;
+
+    // Check error.message (standard format)
+    if (responseData.error?.message) return responseData.error.message;
+
+    // Check if error is a string
+    if (typeof responseData.error === "string") return responseData.error;
+  }
+
+  // Priority 4: Check error.data (alternative structure)
+  if (error?.data) {
+    if (error.data.error?.message) return error.data.error.message;
+    if (error.data.message) return error.data.message;
+    if (typeof error.data.error === "string") return error.data.error;
+  }
+
+  return fallback;
 };
 
 export const isNetworkError = (error: any): boolean => {

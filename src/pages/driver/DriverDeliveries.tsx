@@ -27,6 +27,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { customToast } from "@/lib/utils/toast";
 import { UserRole } from "@/types/shared";
+import { getErrorMessage } from "@/lib/utils/frontend";
 import {
   mapCargosToCargoDetails,
   mapCargoToCargoDetail,
@@ -286,11 +287,7 @@ export default function DriverDeliveries() {
       console.error("Failed to update delivery status:", error);
 
       // Show user-friendly error message
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to update delivery status";
+      const errorMessage = getErrorMessage(error, "Failed to update delivery status");
 
       customToast.error(errorMessage);
     }
@@ -466,11 +463,7 @@ export default function DriverDeliveries() {
     } catch (error: any) {
       console.error("Delivery image upload failed:", error);
 
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to confirm delivery";
+      const errorMessage = getErrorMessage(error, "Failed to confirm delivery");
 
       customToast.error(errorMessage);
     }

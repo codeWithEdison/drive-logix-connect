@@ -185,11 +185,7 @@ export function PhotoUploadModal({
       console.error("Upload failed:", error);
 
       // Show detailed error message
-      const errorMessage =
-        error?.response?.data?.error?.message ||
-        error?.response?.data?.message ||
-        error?.message ||
-        "Upload failed. Please try again.";
+      const errorMessage = getErrorMessage(error, "Upload failed. Please try again.");
 
       toast({
         title: "Upload Error",
