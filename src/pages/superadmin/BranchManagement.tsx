@@ -378,7 +378,10 @@ export default function BranchManagementPage() {
                           </span>
                         </label>
                       </TableCell>
-                      <TableCell>
+                      <TableCell
+                        onClick={(e) => e.stopPropagation()}
+                        className="relative z-10"
+                      >
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -388,15 +391,19 @@ export default function BranchManagementPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem
-                              onClick={() =>
-                                navigate(`/superadmin/branches/${branch.id}`)
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/superadmin/branches/${branch.id}`);
+                              }}
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => openEditDialog(branch)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditDialog(branch);
+                              }}
                             >
                               <Edit className="mr-2 h-4 w-4" />
                               Edit

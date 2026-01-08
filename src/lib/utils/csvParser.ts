@@ -189,6 +189,86 @@ function cleanDriverData(data: Record<string, string>): Record<string, string> {
 }
 
 /**
+ * Map CSV column names to vehicle field names
+ */
+export function mapCSVToVehicleFields(
+  csvRow: Record<string, string>
+): Record<string, string> {
+  const fieldMap: Record<string, string> = {
+    // Device fields
+    device_imei: "device_imei",
+    imei: "device_imei",
+    gps_imei: "device_imei",
+    
+    plate_number: "plate_number",
+    plate: "plate_number",
+    license_plate: "plate_number",
+    registration_number: "plate_number",
+    
+    vehicle_type: "vehicle_type",
+    type: "vehicle_type",
+    vehicle_category: "vehicle_type",
+    
+    make: "make",
+    manufacturer: "make",
+    brand: "make",
+    
+    model: "model",
+    
+    year: "year",
+    manufacture_year: "year",
+    
+    color: "color",
+    
+    driver_name: "driver_name",
+    driver: "driver_name",
+    assigned_driver: "driver_name",
+    
+    driver_phone: "driver_phone",
+    driver_phone_number: "driver_phone",
+    
+    sim_number: "sim_number",
+    sim: "sim_number",
+    sim_card: "sim_number",
+    
+    device_model: "device_model",
+    gps_device_model: "device_model",
+    
+    device_name: "device_name",
+    device_alias: "device_name",
+    gps_device_name: "device_name",
+    
+    capacity_kg: "capacity_kg",
+    capacity: "capacity_kg",
+    weight_capacity: "capacity_kg",
+    max_weight: "capacity_kg",
+    
+    capacity_volume: "capacity_volume",
+    volume_capacity: "capacity_volume",
+    max_volume: "capacity_volume",
+    
+    fuel_type: "fuel_type",
+    fuel: "fuel_type",
+    
+    branch_id: "branch_id",
+    branch: "branch_id",
+    
+    status: "status",
+    vehicle_status: "status",
+  };
+
+  const mapped: Record<string, string> = {};
+
+  Object.entries(csvRow).forEach(([key, value]) => {
+    const normalizedKey = key.toLowerCase().trim();
+    const mappedKey = fieldMap[normalizedKey] || normalizedKey;
+    mapped[mappedKey] = value;
+  });
+
+  return mapped;
+}
+
+/**
  * Map CSV column names to driver field names
  */
 export function mapCSVToDriverFields(

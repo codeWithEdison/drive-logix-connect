@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { CustomTabs } from "@/components/ui/CustomTabs";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,8 @@ import VehicleSyncModal, {
   VehicleSyncRow,
 } from "@/components/vehicles/VehicleSyncModal";
 import { getErrorMessage } from "@/lib/utils/frontend";
+import { parseCSV, mapCSVToVehicleFields } from "@/lib/utils/csvParser";
+import { Download, Upload } from "lucide-react";
 
 const AdminTrucks = () => {
   const { t } = useLanguage();
@@ -59,6 +61,7 @@ const AdminTrucks = () => {
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [syncRows, setSyncRows] = useState<VehicleSyncRow[]>([]);
   const [isPushing, setIsPushing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingTruck, setEditingTruck] = useState<Truck | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -682,7 +685,191 @@ const AdminTrucks = () => {
       );
     }
     await refetch();
-    if (errors === 0) setIsSyncModalOpen(false);
+    if (errors === 0) {
+      setIsSyncModalOpen(false);
+      setSyncRows([]);
+    }
+  };
+
+  // File upload handler
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = [
+      "text/csv",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/plain",
+    ];
+    const allowedExtensions = [".csv", ".xlsx", ".xls"];
+
+    const fileExtension = file.name
+      .toLowerCase()
+      .substring(file.name.lastIndexOf("."));
+    const isValidType =
+      allowedTypes.includes(file.type) ||
+      allowedExtensions.includes(fileExtension);
+
+    if (!isValidType) {
+      customToast.error("Invalid file type. Please upload CSV or Excel files.");
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      customToast.error("File size must be less than 10MB");
+      return;
+    }
+
+    try {
+      // Read file content
+      const fileContent = await readFileContent(file);
+
+      // Parse CSV
+      const csvRows = parseCSV(fileContent);
+
+      if (csvRows.length === 0) {
+        customToast.error("No data found in file");
+        return;
+      }
+
+      // Map CSV rows to vehicle sync rows
+      const rows: VehicleSyncRow[] = csvRows.map((csvRow) => {
+        const mapped = mapCSVToVehicleFields(csvRow);
+        const toCell = (v: any) => ({ value: v ?? "", error: null });
+
+        return {
+          device_imei: toCell(mapped.device_imei),
+          plate_number: toCell(mapped.plate_number),
+          vehicle_type: toCell(mapped.vehicle_type),
+          make: toCell(mapped.make),
+          model: toCell(mapped.model),
+          year: toCell(mapped.year),
+          color: toCell(mapped.color),
+          driver_name: toCell(mapped.driver_name),
+          driver_phone: toCell(mapped.driver_phone),
+          sim_number: toCell(mapped.sim_number),
+          device_model: toCell(mapped.device_model),
+          device_name: toCell(mapped.device_name),
+          capacity_kg: toCell(mapped.capacity_kg),
+          capacity_volume: toCell(mapped.capacity_volume),
+          fuel_type: toCell(mapped.fuel_type),
+          branch_id: toCell(mapped.branch_id || user?.branch_id || ""),
+          status: toCell(mapped.status || "active"),
+          gps_provider: toCell(mapped.device_imei ? "jimi" : ""),
+        };
+      });
+
+      setSyncRows(rows);
+      setIsSyncModalOpen(true);
+      customToast.success(`Loaded ${rows.length} vehicles from file`);
+    } catch (error: any) {
+      customToast.error(getErrorMessage(error, "Failed to parse file"));
+    } finally {
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // Read file content helper
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        resolve(content);
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
+  // Download CSV template
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "device_imei",
+      "plate_number",
+      "vehicle_type",
+      "make",
+      "model",
+      "year",
+      "color",
+      "driver_name",
+      "driver_phone",
+      "sim_number",
+      "device_model",
+      "device_name",
+      "capacity_kg",
+      "capacity_volume",
+      "fuel_type",
+      "branch_id",
+    ];
+
+    // Example rows with sample data
+    const exampleRows = [
+      [
+        "123456789012345",
+        "RAA123A",
+        "truck",
+        "Toyota",
+        "Hiace",
+        "2020",
+        "White",
+        "John Doe",
+        "+250788123456",
+        "250788123456",
+        "JIMI-GPS-001",
+        "Vehicle-001",
+        "3000",
+        "15",
+        "diesel",
+        "",
+      ],
+      [
+        "123456789012346",
+        "RAA124A",
+        "van",
+        "Nissan",
+        "NV200",
+        "2021",
+        "Blue",
+        "Jane Smith",
+        "+250788123457",
+        "250788123457",
+        "JIMI-GPS-002",
+        "Vehicle-002",
+        "2000",
+        "10",
+        "petrol",
+        "",
+      ],
+    ];
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(","),
+      ...exampleRows.map((row) => row.join(",")),
+    ].join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "vehicle_bulk_upload_template.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    customToast.success("Template downloaded successfully");
   };
 
   // Loading state
@@ -788,6 +975,27 @@ const AdminTrucks = () => {
               className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
             />
             {t("common.refresh")}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleDownloadTemplate}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Template
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload CSV/Excel
           </Button>
           {user?.role === "super_admin" && (
             <Button
