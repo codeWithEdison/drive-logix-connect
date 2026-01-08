@@ -942,7 +942,7 @@ export function CreateCargoForm() {
                       placeholder={t(
                         "createCargo.steps.cargoDetails.selectCargoCategory"
                       )}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                       {cargoCategorySearch && (
@@ -1077,7 +1077,7 @@ export function CreateCargoForm() {
                     onChange={(e) =>
                       setFormData({ ...formData, weight: e.target.value })
                     }
-                    className="rounded-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                    className="rounded-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                   />
                 </div>
               </div>
@@ -1095,7 +1095,7 @@ export function CreateCargoForm() {
                       onChange={(e) =>
                         setFormData({ ...formData, length: e.target.value })
                       }
-                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                     />
                   </div>
                   <div>
@@ -1106,7 +1106,7 @@ export function CreateCargoForm() {
                       onChange={(e) =>
                         setFormData({ ...formData, width: e.target.value })
                       }
-                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                     />
                   </div>
                   <div>
@@ -1117,7 +1117,7 @@ export function CreateCargoForm() {
                       onChange={(e) =>
                         setFormData({ ...formData, height: e.target.value })
                       }
-                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                      className="rounded-full px-2 sm:px-3 md:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                     />
                   </div>
                 </div>
@@ -1147,7 +1147,7 @@ export function CreateCargoForm() {
                     }}
                     onFocus={() => setShowUrgencyDropdown(true)}
                     placeholder={t("createCargo.steps.cargoDetails.urgency")}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     {urgencySearch && (
@@ -1244,7 +1244,7 @@ export function CreateCargoForm() {
                   }
                   rows={3}
                   maxLength={1000}
-                  className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm"
+                  className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                 />
                 <p className="text-[10px] sm:text-xs text-gray-500 font-medium">
                   {formData.description.length}/1000 characters
@@ -1341,7 +1341,11 @@ export function CreateCargoForm() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={pickupLocationOpen}
-                          className="w-full justify-between"
+                          className={`w-full justify-between ${
+                            formData.selectedPickupLocationId
+                              ? "text-gray-900"
+                              : "text-gray-400 text-sm font-normal"
+                          }`}
                         >
                           {formData.selectedPickupLocationId
                             ? myLocations?.find(
@@ -1364,7 +1368,7 @@ export function CreateCargoForm() {
                             placeholder={t(
                               "createCargo.steps.pickupDelivery.searchLocation"
                             )}
-                            className="border-b border-gray-200"
+                            className="border-b border-gray-200 placeholder:text-gray-400 placeholder:text-sm placeholder:opacity-75"
                           />
                           <CommandList className="max-h-[300px] bg-white p-2">
                             <CommandEmpty className="py-6 text-center text-gray-500 bg-white">
@@ -1523,6 +1527,7 @@ export function CreateCargoForm() {
                             newPickupLocationName: e.target.value,
                           })
                         }
+                        className="placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                       />
                     </div>
 
@@ -1552,7 +1557,7 @@ export function CreateCargoForm() {
                           placeholder={t(
                             "createCargo.steps.pickupDelivery.selectPickupDistrict"
                           )}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                           {pickupDistrictSearch && (
@@ -1692,7 +1697,7 @@ export function CreateCargoForm() {
                                   setPickupSearchResults([]);
                                 }
                               }}
-                              className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                              className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                             />
                             {isSearchingPickup && (
                               <div className="absolute right-2.5 sm:right-3 md:right-4 top-1/2 transform -translate-y-1/2">
@@ -1777,7 +1782,7 @@ export function CreateCargoForm() {
                           }
                         }}
                         rows={2}
-                        className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm"
+                        className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                       />
                     </div>
 
@@ -1804,7 +1809,7 @@ export function CreateCargoForm() {
                                 pickupContactName: e.target.value,
                               })
                             }
-                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                           />
                         </div>
                       </div>
@@ -1830,7 +1835,7 @@ export function CreateCargoForm() {
                                 pickupContactPhone: e.target.value,
                               })
                             }
-                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                           />
                         </div>
                       </div>
@@ -1857,7 +1862,7 @@ export function CreateCargoForm() {
                               pickupOpeningHours: e.target.value,
                             })
                           }
-                          className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                          className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                         />
                       </div>
                     </div>
@@ -1937,7 +1942,11 @@ export function CreateCargoForm() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={destinationLocationOpen}
-                          className="w-full justify-between"
+                          className={`w-full justify-between ${
+                            formData.selectedDestinationLocationId
+                              ? "text-gray-900"
+                              : "text-gray-400 text-sm font-normal"
+                          }`}
                         >
                           {formData.selectedDestinationLocationId
                             ? myLocations?.find(
@@ -1960,7 +1969,7 @@ export function CreateCargoForm() {
                             placeholder={t(
                               "createCargo.steps.pickupDelivery.searchLocation"
                             )}
-                            className="border-b border-gray-200"
+                            className="border-b border-gray-200 placeholder:text-gray-400 placeholder:text-sm placeholder:opacity-75"
                           />
                           <CommandList className="max-h-[300px] bg-white p-2">
                             <CommandEmpty className="py-6 text-center text-gray-500 bg-white">
@@ -2119,6 +2128,7 @@ export function CreateCargoForm() {
                             newDestinationLocationName: e.target.value,
                           })
                         }
+                        className="placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                       />
                     </div>
 
@@ -2148,7 +2158,7 @@ export function CreateCargoForm() {
                           placeholder={t(
                             "createCargo.steps.pickupDelivery.selectDeliveryDistrict"
                           )}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                           {destinationDistrictSearch && (
@@ -2289,7 +2299,7 @@ export function CreateCargoForm() {
                                   setDestinationSearchResults([]);
                                 }
                               }}
-                              className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                              className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                             />
                             {isSearchingDestination && (
                               <div className="absolute right-2.5 sm:right-3 md:right-4 top-1/2 transform -translate-y-1/2">
@@ -2375,7 +2385,7 @@ export function CreateCargoForm() {
                           }
                         }}
                         rows={2}
-                        className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm"
+                        className="rounded-2xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                       />
                     </div>
 
@@ -2402,7 +2412,7 @@ export function CreateCargoForm() {
                                 destinationContactName: e.target.value,
                               })
                             }
-                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                           />
                         </div>
                       </div>
@@ -2428,7 +2438,7 @@ export function CreateCargoForm() {
                                 destinationContactPhone: e.target.value,
                               })
                             }
-                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                            className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                           />
                         </div>
                       </div>
@@ -2455,7 +2465,7 @@ export function CreateCargoForm() {
                               destinationOpeningHours: e.target.value,
                             })
                           }
-                          className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                          className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
                         />
                       </div>
                     </div>
@@ -2576,6 +2586,7 @@ export function CreateCargoForm() {
                       })
                     }
                     rows={3}
+                    className="placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
                   />
                 </div>
               </div>
