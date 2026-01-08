@@ -212,6 +212,7 @@ export class AdminService {
     emergency_phone?: string;
     blood_type?: string;
     medical_certificate_expiry?: string;
+    branch_id?: string;
   }): Promise<
     ApiResponse<{
       user: any;
@@ -220,6 +221,46 @@ export class AdminService {
     }>
   > {
     const response = await axiosInstance.post("/admin/drivers", data);
+    return response.data;
+  }
+
+  // Bulk create drivers (Admin)
+  static async bulkCreateDrivers(data: {
+    drivers: Array<{
+      full_name: string;
+      email: string;
+      phone?: string;
+      password: string;
+      preferred_language?: "en" | "rw" | "fr";
+      license_number: string;
+      license_expiry?: string;
+      license_type: "A" | "B" | "C" | "D" | "E";
+      code_number?: string;
+      date_of_birth?: string;
+      emergency_contact?: string;
+      emergency_phone?: string;
+      blood_type?: string;
+      medical_certificate_expiry?: string;
+      branch_id?: string;
+    }>;
+  }): Promise<
+    ApiResponse<{
+      success: number;
+      failed: number;
+      total: number;
+      results: Array<{
+        success: boolean;
+        driver?: {
+          id: string;
+          full_name: string;
+          email: string;
+        };
+        email: string;
+        error?: string;
+      }>;
+    }>
+  > {
+    const response = await axiosInstance.post("/admin/drivers/bulk", data);
     return response.data;
   }
 

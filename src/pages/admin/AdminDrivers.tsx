@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, AlertCircle } from "lucide-react";
+import { Plus, RefreshCw, AlertCircle, Upload, Download } from "lucide-react";
 import { DriverTable, Driver } from "@/components/ui/DriverTable";
 import { DriverDetailModal } from "@/components/ui/DriverDetailModal";
 import { CreateDriverModal } from "@/components/ui/CreateDriverModal";
 import { DocumentPreviewModal } from "@/components/ui/DocumentPreviewModal";
+import DriverSyncModal, {
+  DriverSyncRow,
+} from "@/components/drivers/DriverSyncModal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,10 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUserManagement, useUpdateUserStatus } from "@/lib/api/hooks";
+import { useAdminDrivers } from "@/lib/api/hooks/adminHooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
+import { AdminService } from "@/lib/api/services/adminService";
+import { parseCSV, mapCSVToDriverFields } from "@/lib/utils/csvParser";
+import { getErrorMessage } from "@/lib/utils/frontend";
 
 const AdminDrivers = () => {
   const { t } = useLanguage();
@@ -33,6 +40,9 @@ const AdminDrivers = () => {
     url: string;
     name: string;
   } | null>(null);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [syncRows, setSyncRows] = useState<DriverSyncRow[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // API hooks
   const {
@@ -48,6 +58,31 @@ const AdminDrivers = () => {
   });
 
   const updateUserStatusMutation = useUpdateUserStatus();
+
+  // Fetch all drivers for validation
+  const { data: allDriversData } = useAdminDrivers({ limit: 1000 });
+
+  // Extract existing driver data for validation
+  const existingDriversForValidation = React.useMemo(() => {
+    if (!allDriversData || !Array.isArray(allDriversData)) return [];
+    return allDriversData
+      .map((driver: any) => {
+        // Handle different data structures
+        const user = driver.user || driver;
+        const driverData = driver.driver || driver;
+
+        return {
+          email: user.email || driver.email || "",
+          phone: user.phone || driver.phone || "",
+          license_number:
+            driverData.license_number || driver.license_number || "",
+          code_number: driverData.code_number || driver.code_number || "",
+        };
+      })
+      .filter(
+        (d: any) => d.email || d.phone || d.license_number || d.code_number
+      );
+  }, [allDriversData]);
 
   // Transform API data
   // console.log("🔍 AdminDrivers Debug - driversData:", driversData);
@@ -167,6 +202,248 @@ const AdminDrivers = () => {
     refetch();
   };
 
+  // File upload handler
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = [
+      "text/csv",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/plain",
+    ];
+    const allowedExtensions = [".csv", ".xlsx", ".xls"];
+
+    const fileExtension = file.name
+      .toLowerCase()
+      .substring(file.name.lastIndexOf("."));
+    const isValidType =
+      allowedTypes.includes(file.type) ||
+      allowedExtensions.includes(fileExtension);
+
+    if (!isValidType) {
+      customToast.error("Invalid file type. Please upload CSV or Excel files.");
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      customToast.error("File size must be less than 10MB");
+      return;
+    }
+
+    try {
+      // Read file content
+      const fileContent = await readFileContent(file);
+
+      // Parse CSV
+      const csvRows = parseCSV(fileContent);
+
+      if (csvRows.length === 0) {
+        customToast.error("No data found in file");
+        return;
+      }
+
+      // Map CSV rows to driver sync rows
+      const rows: DriverSyncRow[] = csvRows.map((csvRow) => {
+        const mapped = mapCSVToDriverFields(csvRow);
+        const toCell = (v: any) => ({ value: v ?? "", error: null });
+
+        return {
+          full_name: toCell(mapped.full_name),
+          email: toCell(mapped.email),
+          phone: toCell(mapped.phone),
+          password: toCell(mapped.password),
+          preferred_language: toCell(mapped.preferred_language || "en"),
+          license_number: toCell(mapped.license_number),
+          license_type: toCell(mapped.license_type),
+          license_expiry: toCell(mapped.license_expiry),
+          code_number: toCell(mapped.code_number),
+          date_of_birth: toCell(mapped.date_of_birth),
+          emergency_contact: toCell(mapped.emergency_contact),
+          emergency_phone: toCell(mapped.emergency_phone),
+          blood_type: toCell(mapped.blood_type),
+          medical_certificate_expiry: toCell(mapped.medical_certificate_expiry),
+          branch_id: toCell(mapped.branch_id || user?.branch_id || ""),
+        };
+      });
+
+      setSyncRows(rows);
+      setIsSyncModalOpen(true);
+      customToast.success(`Loaded ${rows.length} drivers from file`);
+    } catch (error: any) {
+      customToast.error(getErrorMessage(error, "Failed to parse file"));
+    } finally {
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // Read file content helper
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        resolve(content);
+      };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
+  // Download CSV template
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "full_name",
+      "email",
+      "phone",
+      "password",
+      "preferred_language",
+      "license_number",
+      "license_type",
+      "code_number",
+      "license_expiry",
+      "date_of_birth",
+      "emergency_contact",
+      "emergency_phone",
+      "blood_type",
+      "medical_certificate_expiry",
+      "branch_id",
+    ];
+
+    // Example rows with sample data
+    const exampleRows = [
+      [
+        "John Doe",
+        "john.doe@example.com",
+        "+250788123456",
+        "SecurePass123",
+        "en",
+        "DL001234",
+        "B",
+        "DRV001",
+        "2028-12-31",
+        "1990-01-15",
+        "Jane Doe",
+        "+250788123457",
+        "O+",
+        "2025-12-31",
+        "",
+      ],
+      [
+        "Jane Smith",
+        "jane.smith@example.com",
+        "+250788123458",
+        "SecurePass456",
+        "rw",
+        "DL001235",
+        "C",
+        "DRV002",
+        "2029-06-30",
+        "1992-05-20",
+        "John Smith",
+        "+250788123459",
+        "A+",
+        "2026-06-30",
+        "",
+      ],
+    ];
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(","),
+      ...exampleRows.map((row) =>
+        row
+          .map((cell) => {
+            // Escape commas and quotes in cells
+            if (
+              cell.includes(",") ||
+              cell.includes('"') ||
+              cell.includes("\n")
+            ) {
+              return `"${cell.replace(/"/g, '""')}"`;
+            }
+            return cell;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "driver_bulk_upload_template.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    customToast.success("Template downloaded successfully");
+  };
+
+  // Handle bulk save
+  const handleSyncSave = async (drivers: any[]) => {
+    try {
+      const response = await AdminService.bulkCreateDrivers({ drivers });
+      const successCount = response.data?.success ?? 0;
+      const failedCount = response.data?.failed ?? 0;
+      const results = response.data?.results || [];
+
+      if (successCount > 0) {
+        customToast.success(`Successfully created ${successCount} driver(s)`);
+      }
+
+      if (failedCount > 0) {
+        // Map errors back to rows
+        const errorMap = new Map<string, string>();
+        results.forEach((result: any) => {
+          if (!result.success && result.error) {
+            errorMap.set(result.email, result.error);
+          }
+        });
+
+        // Update rows with server errors
+        setSyncRows((prev) =>
+          prev.map((row) => {
+            const email = row.email?.value?.toLowerCase();
+            if (email && errorMap.has(email)) {
+              return {
+                ...row,
+                email: {
+                  value: row.email?.value,
+                  error: errorMap.get(email) as string,
+                },
+                hasErrors: true,
+              };
+            }
+            return row;
+          })
+        );
+
+        customToast.error(
+          `${failedCount} driver(s) failed. Check error messages in the table and retry.`
+        );
+      }
+
+      await refetch();
+      if (failedCount === 0) {
+        setIsSyncModalOpen(false);
+        setSyncRows([]);
+      }
+    } catch (error: any) {
+      customToast.error(getErrorMessage(error, "Failed to create drivers"));
+    }
+  };
+
   const handlePreviewDocument = (documentUrl: string, documentName: string) => {
     setPreviewDocument({ url: documentUrl, name: documentName });
     setIsDocumentPreviewOpen(true);
@@ -278,6 +555,34 @@ const AdminDrivers = () => {
             />
             {isLoading || isFetching ? "Refreshing..." : "Refresh"}
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            onChange={handleFileUpload}
+            className="hidden"
+            id="driver-file-upload"
+          />
+          <Button
+            variant="outline"
+            onClick={handleDownloadTemplate}
+            type="button"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Template
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (fileInputRef.current) {
+                fileInputRef.current.click();
+              }
+            }}
+            type="button"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload CSV/Excel
+          </Button>
           <Button onClick={handleCreateNew}>
             <Plus className="h-4 w-4 mr-2" />
             Add New Driver
@@ -384,6 +689,18 @@ const AdminDrivers = () => {
         isOpen={isCreateDriverModalOpen}
         onClose={() => setIsCreateDriverModalOpen(false)}
         onSuccess={handleCreateDriverSuccess}
+      />
+
+      {/* Driver Sync Modal */}
+      <DriverSyncModal
+        isOpen={isSyncModalOpen}
+        onClose={() => {
+          setIsSyncModalOpen(false);
+          setSyncRows([]);
+        }}
+        rows={syncRows}
+        onSave={handleSyncSave}
+        existingDrivers={existingDriversForValidation}
       />
     </div>
   );
