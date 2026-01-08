@@ -63,6 +63,132 @@ function parseCSVLine(line: string): string[] {
 }
 
 /**
+ * Clean and normalize email address
+ * Handles cases like "joDSADhn.doe@example.com07882346484" -> "john.doe@example.com"
+ */
+function cleanEmail(email: string): string {
+  if (!email) return email;
+  
+  // Extract email before any trailing numbers/phone numbers
+  // Pattern: email@domain.com followed by numbers
+  const emailMatch = email.match(/^([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+  if (emailMatch) {
+    return emailMatch[1].toLowerCase();
+  }
+  
+  // If no match, try to find email pattern anywhere in the string
+  const emailPattern = /([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i;
+  const found = email.match(emailPattern);
+  if (found) {
+    return found[1].toLowerCase();
+  }
+  
+  return email.toLowerCase();
+}
+
+/**
+ * Clean and normalize phone number
+ * Handles scientific notation like "2.50788E+11" -> "250788000000"
+ */
+function cleanPhone(phone: string): string {
+  if (!phone) return phone;
+  
+  // Handle scientific notation (e.g., "2.50788E+11")
+  if (/[eE][+-]?\d+/.test(phone)) {
+    const num = parseFloat(phone);
+    if (!isNaN(num)) {
+      // Convert to integer string, removing decimal points
+      return Math.round(num).toString();
+    }
+  }
+  
+  // Remove common phone formatting characters but keep + for international
+  let cleaned = phone.replace(/[\s\-\(\)\.]/g, '');
+  
+  // If it starts with +, keep it, otherwise ensure it's numeric
+  if (cleaned.startsWith('+')) {
+    return cleaned;
+  }
+  
+  // Remove any non-numeric characters except +
+  return cleaned.replace(/[^\d+]/g, '');
+}
+
+/**
+ * Convert date from DD/MM/YYYY or DD-MM-YYYY to YYYY-MM-DD format
+ * Also handles other common formats
+ */
+function cleanDate(dateStr: string): string {
+  if (!dateStr || dateStr.trim() === '') return '';
+  
+  const trimmed = dateStr.trim();
+  
+  // Already in YYYY-MM-DD format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+  
+  // Try to parse DD/MM/YYYY or DD-MM-YYYY format
+  const dateMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dateMatch) {
+    const [, part1, part2, year] = dateMatch;
+    const num1 = parseInt(part1);
+    const num2 = parseInt(part2);
+    
+    // If first part > 12, it must be DD/MM/YYYY format
+    if (num1 > 12) {
+      return `${year}-${part2.padStart(2, '0')}-${part1.padStart(2, '0')}`;
+    }
+    // If second part > 12, it must be MM/DD/YYYY format (US)
+    if (num2 > 12) {
+      return `${year}-${part1.padStart(2, '0')}-${part2.padStart(2, '0')}`;
+    }
+    // Ambiguous case: both <= 12, assume DD/MM/YYYY (more common in international formats)
+    return `${year}-${part2.padStart(2, '0')}-${part1.padStart(2, '0')}`;
+  }
+  
+  // Return as-is if we can't parse it (validation will catch it)
+  return trimmed;
+}
+
+/**
+ * Clean and normalize driver data fields
+ */
+function cleanDriverData(data: Record<string, string>): Record<string, string> {
+  const cleaned: Record<string, string> = { ...data };
+  
+  // Clean email
+  if (cleaned.email) {
+    cleaned.email = cleanEmail(cleaned.email);
+  }
+  
+  // Clean phone
+  if (cleaned.phone) {
+    cleaned.phone = cleanPhone(cleaned.phone);
+  }
+  
+  // Clean emergency phone
+  if (cleaned.emergency_phone) {
+    cleaned.emergency_phone = cleanPhone(cleaned.emergency_phone);
+  }
+  
+  // Clean date fields
+  if (cleaned.license_expiry) {
+    cleaned.license_expiry = cleanDate(cleaned.license_expiry);
+  }
+  
+  if (cleaned.date_of_birth) {
+    cleaned.date_of_birth = cleanDate(cleaned.date_of_birth);
+  }
+  
+  if (cleaned.medical_certificate_expiry) {
+    cleaned.medical_certificate_expiry = cleanDate(cleaned.medical_certificate_expiry);
+  }
+  
+  return cleaned;
+}
+
+/**
  * Map CSV column names to driver field names
  */
 export function mapCSVToDriverFields(
@@ -135,5 +261,6 @@ export function mapCSVToDriverFields(
     mapped[mappedKey] = value;
   });
 
-  return mapped;
+  // Clean and normalize the data
+  return cleanDriverData(mapped);
 }

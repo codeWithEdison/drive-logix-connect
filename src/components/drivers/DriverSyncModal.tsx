@@ -120,12 +120,37 @@ export function DriverSyncModal({
     const str = String(v).trim();
     if (!str || str === "") return null;
     
-    // Try to parse various date formats
-    const date = new Date(str);
-    if (isNaN(date.getTime())) return null;
+    // Already in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return str;
+    }
     
-    // Return in YYYY-MM-DD format
-    return date.toISOString().split("T")[0];
+    // Try DD/MM/YYYY or DD-MM-YYYY format
+    const dateMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dateMatch) {
+      const [, part1, part2, year] = dateMatch;
+      const num1 = parseInt(part1);
+      const num2 = parseInt(part2);
+      
+      // If first part > 12, it must be DD/MM/YYYY format
+      if (num1 > 12) {
+        return `${year}-${part2.padStart(2, '0')}-${part1.padStart(2, '0')}`;
+      }
+      // If second part > 12, it must be MM/DD/YYYY format (US)
+      if (num2 > 12) {
+        return `${year}-${part1.padStart(2, '0')}-${part2.padStart(2, '0')}`;
+      }
+      // Ambiguous case: both <= 12, assume DD/MM/YYYY (more common in international formats)
+      return `${year}-${part2.padStart(2, '0')}-${part1.padStart(2, '0')}`;
+    }
+    
+    // Try to parse with Date constructor as fallback
+    const date = new Date(str);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split("T")[0];
+    }
+    
+    return null;
   }
 
   function validateEmail(email: string): boolean {
@@ -287,14 +312,15 @@ export function DriverSyncModal({
       }
 
       // Optional: license_expiry (date)
-      if (nr.license_expiry?.value) {
-        const expiryDate = parseDate(nr.license_expiry.value);
+      const licenseExpiryValue = (nr.license_expiry?.value || "").toString().trim();
+      if (licenseExpiryValue) {
+        const expiryDate = parseDate(licenseExpiryValue);
         if (expiryDate) {
           nr.license_expiry = { value: expiryDate, error: null };
         } else {
           nr.license_expiry = {
-            value: nr.license_expiry.value,
-            error: "Invalid date format (use YYYY-MM-DD)",
+            value: licenseExpiryValue,
+            error: "Invalid date format (use YYYY-MM-DD or DD/MM/YYYY)",
           };
         }
       } else {
@@ -302,14 +328,15 @@ export function DriverSyncModal({
       }
 
       // Optional: date_of_birth (date)
-      if (nr.date_of_birth?.value) {
-        const dob = parseDate(nr.date_of_birth.value);
+      const dobValue = (nr.date_of_birth?.value || "").toString().trim();
+      if (dobValue) {
+        const dob = parseDate(dobValue);
         if (dob) {
           nr.date_of_birth = { value: dob, error: null };
         } else {
           nr.date_of_birth = {
-            value: nr.date_of_birth.value,
-            error: "Invalid date format (use YYYY-MM-DD)",
+            value: dobValue,
+            error: "Invalid date format (use YYYY-MM-DD or DD/MM/YYYY)",
           };
         }
       } else {
@@ -350,14 +377,15 @@ export function DriverSyncModal({
       }
 
       // Optional: medical_certificate_expiry (date)
-      if (nr.medical_certificate_expiry?.value) {
-        const medExpiry = parseDate(nr.medical_certificate_expiry.value);
+      const medExpiryValue = (nr.medical_certificate_expiry?.value || "").toString().trim();
+      if (medExpiryValue) {
+        const medExpiry = parseDate(medExpiryValue);
         if (medExpiry) {
           nr.medical_certificate_expiry = { value: medExpiry, error: null };
         } else {
           nr.medical_certificate_expiry = {
-            value: nr.medical_certificate_expiry.value,
-            error: "Invalid date format (use YYYY-MM-DD)",
+            value: medExpiryValue,
+            error: "Invalid date format (use YYYY-MM-DD or DD/MM/YYYY)",
           };
         }
       } else {
@@ -443,7 +471,23 @@ export function DriverSyncModal({
       value: "",
       error: null,
     };
-    (next[idx] as any)[key] = { ...cell, value };
+    
+    // Auto-convert dates from DD/MM/YYYY to YYYY-MM-DD format
+    let processedValue = value;
+    if (
+      (key === "license_expiry" || 
+       key === "date_of_birth" || 
+       key === "medical_certificate_expiry") &&
+      value &&
+      typeof value === "string"
+    ) {
+      const converted = parseDate(value);
+      if (converted) {
+        processedValue = converted;
+      }
+    }
+    
+    (next[idx] as any)[key] = { ...cell, value: processedValue };
     setData(validate(next));
   }
 
