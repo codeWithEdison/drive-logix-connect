@@ -403,34 +403,92 @@ const AdminDrivers = () => {
       }
 
       if (failedCount > 0) {
-        // Map errors back to rows
-        const errorMap = new Map<string, string>();
-        results.forEach((result: any) => {
-          if (!result.success && result.error) {
-            errorMap.set(result.email, result.error);
-          }
-        });
+        // Create error mapping - match errors to rows by email (handling malformed emails)
+        const errorResults = results.filter((r: any) => !r.success && r.error);
+        
+        // Helper function to extract clean email from potentially malformed string
+        const extractEmail = (emailStr: string): string => {
+          if (!emailStr) return '';
+          // Try to extract email before numbers (e.g., "jodsadhn.doe@example.com07882346484" -> "jodsadhn.doe@example.com")
+          const emailMatch = emailStr.match(/^([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+          return emailMatch ? emailMatch[1].toLowerCase() : emailStr.toLowerCase();
+        };
 
         // Update rows with server errors
         setSyncRows((prev) =>
           prev.map((row) => {
-            const email = row.email?.value?.toLowerCase();
-            if (email && errorMap.has(email)) {
-              return {
-                ...row,
-                email: {
+            const rowEmail = row.email?.value?.toString().toLowerCase().trim();
+            const rowLicense = row.license_number?.value?.toString().trim();
+            
+            // Find matching error by email (exact or partial match for malformed emails)
+            const matchingError = errorResults.find((result: any) => {
+              if (!result.email) return false;
+              
+              const resultEmail = extractEmail(result.email);
+              
+              // Exact match
+              if (rowEmail === resultEmail) return true;
+              
+              // Partial match (handles malformed emails like "email@domain.com123456")
+              if (rowEmail && resultEmail.includes(rowEmail)) return true;
+              if (rowEmail && result.email.toLowerCase().includes(rowEmail)) return true;
+              
+              // Match by license number if error is about license
+              if (rowLicense && result.error?.toLowerCase().includes('license') &&
+                  result.email && result.email.includes(rowLicense)) return true;
+              
+              return false;
+            });
+
+            if (matchingError) {
+              const errorMsg = matchingError.error;
+              const updatedRow: any = { ...row, hasErrors: true };
+              
+              // Determine which field the error is about and set error on that field
+              const errorLower = errorMsg.toLowerCase();
+              if (errorLower.includes('email') || errorLower.includes('user with this email')) {
+                updatedRow.email = {
                   value: row.email?.value,
-                  error: errorMap.get(email) as string,
-                },
-                hasErrors: true,
-              };
+                  error: errorMsg,
+                };
+              } else if (errorLower.includes('license')) {
+                updatedRow.license_number = {
+                  value: row.license_number?.value,
+                  error: errorMsg,
+                };
+              } else if (errorLower.includes('phone')) {
+                updatedRow.phone = {
+                  value: row.phone?.value,
+                  error: errorMsg,
+                };
+              } else if (errorLower.includes('code number') || errorLower.includes('code_number')) {
+                updatedRow.code_number = {
+                  value: row.code_number?.value,
+                  error: errorMsg,
+                };
+              } else {
+                // Default to email field if we can't determine
+                updatedRow.email = {
+                  value: row.email?.value,
+                  error: errorMsg,
+                };
+              }
+              
+              return updatedRow;
             }
             return row;
           })
         );
 
+        // Build detailed error message for toast
+        const errorMessages = errorResults.map((r: any) => r.error).filter(Boolean);
+        const errorSummary = errorMessages.length > 0 
+          ? errorMessages.map((msg: string, idx: number) => `${idx + 1}. ${msg}`).join('\n')
+          : `${failedCount} driver(s) failed to create`;
+        
         customToast.error(
-          `${failedCount} driver(s) failed. Check error messages in the table and retry.`
+          `${failedCount} driver(s) failed to create`,
+          errorSummary
         );
       }
 
