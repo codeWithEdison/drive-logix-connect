@@ -26,6 +26,7 @@ interface PaypackPaymentProps {
   invoiceNumber: string;
   cargoNumber: string;
   customerPhone?: string; // Optional pre-filled phone
+  hideSummary?: boolean; // Hide payment summary section
   onSuccess: (paymentData: any) => void;
   onCancel: () => void;
 }
@@ -36,6 +37,7 @@ export const PaypackPayment: React.FC<PaypackPaymentProps> = ({
   invoiceNumber,
   cargoNumber,
   customerPhone = "",
+  hideSummary = false,
   onSuccess,
   onCancel,
 }) => {
@@ -140,38 +142,42 @@ export const PaypackPayment: React.FC<PaypackPaymentProps> = ({
 
   return (
     <Card className="w-full mx-auto border-2 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 border-b-2">
-        <CardTitle className="flex items-center gap-3 text-lg">
-          {getStatusIcon()}
-          {t("invoices.mobileMoneyPaymentTitle")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-5 pt-6">
-        {/* Payment Summary - Compact */}
-        <div className="bg-gradient-to-r from-primary/5 to-transparent rounded-xl p-4 border-l-4 border-primary">
-          <div className="flex justify-between items-baseline">
-            <span className="text-sm text-muted-foreground">
-              {t("invoices.totalAmount")}:
-            </span>
-            <span className="text-2xl font-bold text-primary">
-              RWF {amount.toLocaleString()}
-            </span>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <span className="text-muted-foreground">
-                {t("invoices.cargoNumber")}:
+      {!hideSummary && (
+        <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 border-b-2">
+          <CardTitle className="flex items-center gap-3 text-lg">
+            {getStatusIcon()}
+            {t("invoices.mobileMoneyPaymentTitle")}
+          </CardTitle>
+        </CardHeader>
+      )}
+      <CardContent className={`space-y-5 ${hideSummary ? "pt-6" : "pt-6"}`}>
+        {/* Payment Summary - Compact (hidden if hideSummary is true) */}
+        {!hideSummary && (
+          <div className="bg-gradient-to-r from-primary/5 to-transparent rounded-xl p-4 border-l-4 border-primary">
+            <div className="flex justify-between items-baseline">
+              <span className="text-sm text-muted-foreground">
+                {t("invoices.totalAmount")}:
               </span>
-              <span className="font-mono ml-1">{cargoNumber}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">
-                {t("invoices.invoiceNumber")}:
+              <span className="text-2xl font-bold text-primary">
+                RWF {amount.toLocaleString()}
               </span>
-              <span className="font-mono ml-1">{invoiceNumber}</span>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-muted-foreground">
+                  {t("invoices.cargoNumber")}:
+                </span>
+                <span className="font-mono ml-1">{cargoNumber}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">
+                  {t("invoices.invoiceNumber")}:
+                </span>
+                <span className="font-mono ml-1">{invoiceNumber}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Phone Number Input */}
         {status === "idle" && (
@@ -262,16 +268,127 @@ export const PaypackPayment: React.FC<PaypackPaymentProps> = ({
 
             {/* Polling Progress Indicator */}
             {isPolling && (
-              <div className="bg-blue-50 rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-center gap-2 text-sm text-blue-800">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="font-medium">
-                    {t("invoices.checkingPaymentStatus")}
-                  </span>
+              <div className="space-y-3">
+                <div className="bg-blue-50 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-sm text-blue-800">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="font-medium">
+                      {t("invoices.checkingPaymentStatus")}
+                    </span>
+                  </div>
+                  <p className="text-xs text-center text-blue-700">
+                    {t("invoices.dontCloseWindow")}
+                  </p>
                 </div>
-                <p className="text-xs text-center text-blue-700">
-                  {t("invoices.dontCloseWindow")}
-                </p>
+
+                {/* USSD Instructions based on operator */}
+                {phone && isValidRwandanPhone(formatRwandanPhone(phone)) && (
+                  <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-4 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-amber-900 mb-2">
+                          {t("invoices.noPromptInstructions")}
+                        </h4>
+                        <div className="space-y-2">
+                          {getRwandanOperator(formatRwandanPhone(phone)) === "MTN" && (
+                            <div className="bg-white rounded-lg p-3 border border-amber-200">
+                              <div className="flex items-center gap-2 mb-1">
+                                <img
+                                  src="/image/momo.png"
+                                  alt="MTN Mobile Money"
+                                  className="h-5 w-auto object-contain"
+                                />
+                                <span className="text-xs font-medium text-gray-700">
+                                  MTN Mobile Money
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-800 mb-2">
+                                {t("invoices.mtnUssdCode")}
+                              </p>
+                              <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                                <code className="text-sm font-mono font-bold text-gray-900">
+                                  *182*7*1#
+                                </code>
+                              </div>
+                            </div>
+                          )}
+                          {getRwandanOperator(formatRwandanPhone(phone)) === "Airtel" && (
+                            <div className="bg-white rounded-lg p-3 border border-amber-200">
+                              <div className="flex items-center gap-2 mb-1">
+                                <img
+                                  src="/image/aiter_mtn_momo.png"
+                                  alt="Airtel Money"
+                                  className="h-5 w-auto object-contain opacity-90"
+                                />
+                                <span className="text-xs font-medium text-gray-700">
+                                  Airtel Money
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-800 mb-2">
+                                {t("invoices.airtelUssdCode")}
+                              </p>
+                              <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                                <code className="text-sm font-mono font-bold text-gray-900">
+                                  *185*1#
+                                </code>
+                              </div>
+                            </div>
+                          )}
+                          {/* Fallback for unknown operator - show both options */}
+                          {getRwandanOperator(formatRwandanPhone(phone)) !== "MTN" && 
+                           getRwandanOperator(formatRwandanPhone(phone)) !== "Airtel" && (
+                            <div className="space-y-2">
+                              <div className="bg-white rounded-lg p-3 border border-amber-200">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <img
+                                    src="/image/momo.png"
+                                    alt="MTN Mobile Money"
+                                    className="h-5 w-auto object-contain"
+                                  />
+                                  <span className="text-xs font-medium text-gray-700">
+                                    MTN Mobile Money
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-800 mb-2">
+                                  {t("invoices.mtnUssdCode")}
+                                </p>
+                                <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                                  <code className="text-sm font-mono font-bold text-gray-900">
+                                    *182*7*1#
+                                  </code>
+                                </div>
+                              </div>
+                              <div className="bg-white rounded-lg p-3 border border-amber-200">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <img
+                                    src="/image/aiter_mtn_momo.png"
+                                    alt="Airtel Money"
+                                    className="h-5 w-auto object-contain opacity-90"
+                                  />
+                                  <span className="text-xs font-medium text-gray-700">
+                                    Airtel Money
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-800 mb-2">
+                                  {t("invoices.airtelUssdCode")}
+                                </p>
+                                <div className="bg-gray-50 p-2 rounded border border-gray-200">
+                                  <code className="text-sm font-mono font-bold text-gray-900">
+                                    *185*1#
+                                  </code>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-xs text-amber-800 mt-2">
+                          {t("invoices.followInstructions")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -7,6 +7,7 @@ import {
   InvoicePaymentModal,
   InvoicePaymentData,
 } from "@/components/ui/InvoicePaymentModal";
+import { PaypackPayment } from "@/components/payments/PaypackPayment";
 import {
   Download,
   Eye,
@@ -85,6 +86,7 @@ export function InvoiceDetailModal({
   const { t } = useLanguage();
   const { user } = useAuth();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isMobileMoneyPaymentOpen, setIsMobileMoneyPaymentOpen] = useState(false);
   const [isPaymentConfirmationModalOpen, setIsPaymentConfirmationModalOpen] =
     useState(false);
   const [isOfflineVerificationOpen, setIsOfflineVerificationOpen] =
@@ -168,11 +170,34 @@ export function InvoiceDetailModal({
 
   const handlePaymentSuccess = (paymentData: any) => {
     setIsPaymentModalOpen(false);
+    setIsMobileMoneyPaymentOpen(false);
     setIsPaymentConfirmationModalOpen(false);
     if (onPaymentSuccess) {
       onPaymentSuccess(paymentData);
     }
     toast.success(t("invoices.paymentProcessedSuccessfully"));
+  };
+
+  const handleMobileMoneyPaymentSuccess = (paymentData: any) => {
+    handlePaymentSuccess(paymentData);
+  };
+
+  const handleMobileMoneyPaymentCancel = () => {
+    setIsMobileMoneyPaymentOpen(false);
+  };
+
+  // Helper functions for PaypackPayment
+  const getCargoNumber = (cargoId: string, cargoNumber?: string) => {
+    if (cargoNumber) {
+      return cargoNumber;
+    }
+    return cargoId.startsWith("#") ? cargoId : `#${cargoId}`;
+  };
+
+  const getInvoiceNumber = (invoiceNumber: string) => {
+    return invoiceNumber.startsWith("LI")
+      ? invoiceNumber
+      : `LI${invoiceNumber}`;
   };
 
   const canPay = () => {
@@ -192,7 +217,8 @@ export function InvoiceDetailModal({
   };
 
   const handlePayOnline = () => {
-    setIsPaymentModalOpen(true);
+    // Open mobile money payment modal directly (phone input only)
+    setIsMobileMoneyPaymentOpen(true);
   };
 
   const handleBackToOptions = () => {
@@ -420,7 +446,7 @@ export function InvoiceDetailModal({
                 /* Initial Payment Options */
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Transfer Option */}
+                    {/* Bank Transfer Option */}
                     <Button
                       variant="outline"
                       className="h-24 flex flex-col items-center justify-center gap-2 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-900"
@@ -439,8 +465,23 @@ export function InvoiceDetailModal({
                       </span>
                     </Button>
 
-                    {/* Mobile Money Option */}
+                    {/* Mobile Money / Airtel Money Option */}
                     <Button
+                      className="h-24 flex flex-col items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white border-2 border-green-500"
+                      onClick={handlePayOnline}
+                    >
+                      <img
+                        src="/image/aiter_mtn_momo.png"
+                        alt="Mobile Money / Airtel Money"
+                        className="h-10 w-auto object-contain"
+                      />
+                      <span className="font-semibold">
+                        Mobile Money / Airtel Money
+                      </span>
+                    </Button>
+
+                    {/* Mobile Money Option - Commented Out */}
+                    {/* <Button
                       variant="outline"
                       className="h-24 flex flex-col items-center justify-center gap-2 border-2 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-50 hover:text-yellow-900"
                       onClick={() => handleTransferOption("momo")}
@@ -456,18 +497,7 @@ export function InvoiceDetailModal({
                       <span className="text-xs text-gray-600 hover:text-yellow-700">
                         {t("invoices.momoTransfer")}
                       </span>
-                    </Button>
-                  </div>
-
-                  {/* Pay Online Option */}
-                  <div className="pt-4 border-t">
-                    <Button
-                      className="w-full bg-green-600 hover:bg-green-700 text-white h-12"
-                      onClick={handlePayOnline}
-                    >
-                      <Send className="h-5 w-5 mr-2" />
-                      {t("invoices.payOnlineInstant")}
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               ) : (
@@ -532,8 +562,8 @@ export function InvoiceDetailModal({
                     </div>
                   )}
 
-                  {/* Mobile Money Details */}
-                  {selectedTransferType === "momo" && (
+                  {/* Mobile Money Details - Commented Out */}
+                  {/* {selectedTransferType === "momo" && (
                     <div className="border rounded-lg p-4 bg-yellow-50">
                       <div className="flex items-center gap-3 mb-3">
                         <Smartphone className="h-5 w-5 text-yellow-600" />
@@ -576,7 +606,7 @@ export function InvoiceDetailModal({
                         </Button>
                       </div>
                     </div>
-                  )}
+                  )} */}
 
                   {/* Payment Instructions */}
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
@@ -640,6 +670,26 @@ export function InvoiceDetailModal({
         }
         onPaymentSuccess={handlePaymentSuccess}
       />
+
+      {/* Mobile Money Payment Modal - Direct phone input (no payment summary) */}
+      {isMobileMoneyPaymentOpen && (
+        <ModernModel
+          isOpen={isMobileMoneyPaymentOpen}
+          onClose={handleMobileMoneyPaymentCancel}
+          title="Mobile Money / Airtel Money Payment"
+        >
+          <PaypackPayment
+            amount={parseFloat(invoice.total_amount)}
+            invoiceId={invoice.id}
+            invoiceNumber={getInvoiceNumber(invoice.invoice_number)}
+            cargoNumber={getCargoNumber(invoice.cargo_id, invoice.cargo?.cargo_number)}
+            customerPhone={user?.phone || ""}
+            hideSummary={true}
+            onSuccess={handleMobileMoneyPaymentSuccess}
+            onCancel={handleMobileMoneyPaymentCancel}
+          />
+        </ModernModel>
+      )}
 
       {/* Offline Payment Verification Modal (Client) */}
       <OfflinePaymentVerificationModal

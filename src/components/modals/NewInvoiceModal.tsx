@@ -19,10 +19,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calculator, DollarSign, Package, FileText } from "lucide-react";
+import { Calculator, DollarSign, Package, FileText, AlertCircle } from "lucide-react";
 import { useGenerateInvoice } from "@/lib/api/hooks/invoiceHooks";
 import { useAllCargos, useEstimateCargoCost } from "@/lib/api/hooks/cargoHooks";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils/frontend";
 
 interface NewInvoiceModalProps {
   isOpen: boolean;
@@ -58,6 +59,9 @@ export default function NewInvoiceModal({
   const [lastEstimationParams, setLastEstimationParams] = useState<string>("");
   const estimationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isEstimatingRef = useRef(false);
+
+  // Validation errors state
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Extract data with stable reference
   const cargos = useMemo(() => {
@@ -224,17 +228,42 @@ export default function NewInvoiceModal({
       ...prev,
       [field]: value,
     }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async () => {
-    // Validation
+    // Reset errors
+    setErrors({});
+
+    // Frontend validation
+    const validationErrors: Record<string, string> = {};
+
     if (!formData.cargoId) {
-      toast.error("Please select a cargo");
-      return;
+      validationErrors.cargoId = "Please select a cargo";
     }
 
     if (formData.subtotal <= 0) {
-      toast.error("Please enter a valid subtotal amount");
+      validationErrors.subtotal = "Please enter a valid subtotal amount";
+    }
+
+    // Validate notes - required and cannot be empty or whitespace only
+    if (!formData.notes || !formData.notes.trim()) {
+      validationErrors.notes = "Notes are required and cannot be empty";
+    }
+
+    // Show validation errors
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      // Show toast for first error
+      const firstError = Object.values(validationErrors)[0];
+      toast.error(firstError);
       return;
     }
 
@@ -246,7 +275,7 @@ export default function NewInvoiceModal({
         discount_amount: formData.discountAmount,
         currency: formData.currency,
         due_date: formData.dueDate,
-        notes: formData.notes,
+        notes: formData.notes.trim(), // Trim whitespace before sending
       };
 
       await generateInvoiceMutation.mutateAsync(invoiceData);
@@ -254,7 +283,16 @@ export default function NewInvoiceModal({
       onSuccess?.(invoiceData);
       handleClose();
     } catch (error: any) {
-      toast.error(error.message || "Failed to create invoice");
+      // Extract and show clear error message from backend
+      const errorMessage = getErrorMessage(error, "Failed to create invoice");
+      
+      // Check if error is specifically about notes field
+      if (errorMessage.toLowerCase().includes("notes")) {
+        setErrors({ notes: errorMessage });
+        toast.error(errorMessage);
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -269,6 +307,7 @@ export default function NewInvoiceModal({
       dueDate: "",
       notes: "",
     });
+    setErrors({});
     setHasEstimatedCost(false);
     setLastEstimationParams("");
     isEstimatingRef.current = false;
@@ -693,7 +732,7 @@ export default function NewInvoiceModal({
                 Additional Notes
               </h3>
               <p className="text-gray-600 text-sm font-normal">
-                Optional invoice details
+                Required invoice details
               </p>
             </div>
           </CardTitle>
@@ -704,16 +743,24 @@ export default function NewInvoiceModal({
               htmlFor="notes"
               className="text-sm font-medium text-gray-700"
             >
-              Notes (Optional)
+              Notes <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="notes"
-              placeholder="Additional notes for the invoice..."
+              placeholder="Enter additional notes for the invoice..."
               value={formData.notes}
               onChange={(e) => handleInputChange("notes", e.target.value)}
               rows={3}
-              className="border-gray-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
+              className={`border-gray-200 focus:border-blue-500 focus:ring-blue-500 resize-none placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal ${
+                errors.notes ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
+              }`}
             />
+            {errors.notes && (
+              <p className="text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {errors.notes}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

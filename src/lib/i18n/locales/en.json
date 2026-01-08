@@ -2114,7 +2114,11 @@
     "tryAgain": "Try Again",
     "done": "Done",
     "poweredByPaypack": "Powered by Paypack",
-    "secureMobilePayment": "Secure Mobile Money Payment"
+    "secureMobilePayment": "Secure Mobile Money Payment",
+    "noPromptInstructions": "If you don't see a payment prompt on your phone:",
+    "mtnUssdCode": "For MTN Mobile Money, dial *182*7*1# and follow the instructions",
+    "airtelUssdCode": "For Airtel Money, dial *185*1# and follow the instructions",
+    "followInstructions": "Follow the instructions on your phone to complete the payment"
   },
   "actions": {
     "title": "Actions",

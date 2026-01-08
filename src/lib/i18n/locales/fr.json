@@ -1310,7 +1310,11 @@
     "tryAgain": "Réessayer",
     "done": "Terminé",
     "poweredByPaypack": "Propulsé par Paypack",
-    "secureMobilePayment": "Paiement Mobile Money sécurisé"
+    "secureMobilePayment": "Paiement Mobile Money sécurisé",
+    "noPromptInstructions": "Si vous ne voyez pas d'invite de paiement sur votre téléphone:",
+    "mtnUssdCode": "Pour MTN Mobile Money, composez *182*7*1# et suivez les instructions",
+    "airtelUssdCode": "Pour Airtel Money, composez *185*1# et suivez les instructions",
+    "followInstructions": "Suivez les instructions sur votre téléphone pour compléter le paiement"
   },
   "adminDashboard": {
     "title": "Tableau de bord administrateur",
