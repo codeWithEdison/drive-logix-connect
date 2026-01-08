@@ -97,8 +97,23 @@ export function DriverSyncModal({
     const total = data.length;
     const errors = data.filter((r) => r.hasErrors).length;
     const valid = total - errors;
-    return { total, valid, errors };
-  }, [data]);
+    
+    // Count errors in SELECTED rows only
+    const selectedRows = Array.from(selected.values())
+      .map((i) => data[i])
+      .filter(Boolean);
+    const selectedErrors = selectedRows.filter((r) => r.hasErrors).length;
+    const selectedValid = selectedRows.length - selectedErrors;
+    
+    return { 
+      total, 
+      valid, 
+      errors,
+      selectedTotal: selectedRows.length,
+      selectedValid,
+      selectedErrors,
+    };
+  }, [data, selected]);
 
   function parseDate(v: any): string | null {
     if (!v) return null;
@@ -437,10 +452,49 @@ export function DriverSyncModal({
     const selectedRows = Array.from(selected.values())
       .map((i) => data[i])
       .filter(Boolean);
-    if (selectedRows.some((r) => r.hasErrors)) {
-      setSaveError("Fix errors in selected rows before saving");
+    
+    // Validate: Check if any selected row has errors
+    const rowsWithErrors = selectedRows.filter((r) => r.hasErrors);
+    if (rowsWithErrors.length > 0) {
+      setSaveError(
+        `Cannot save: ${rowsWithErrors.length} selected row(s) have validation errors. Please fix errors before saving.`
+      );
       return;
     }
+    
+    // Validate: Check if any selected row has cell-level errors
+    const rowsWithCellErrors = selectedRows.filter((row) => {
+      return HEADERS.some((header) => {
+        const cell = (row as any)[header] as RowCell | undefined;
+        return cell?.error !== null && cell?.error !== undefined;
+      });
+    });
+    
+    if (rowsWithCellErrors.length > 0) {
+      setSaveError(
+        `Cannot save: ${rowsWithCellErrors.length} selected row(s) have field errors. Please fix all errors before saving.`
+      );
+      return;
+    }
+    
+    // Additional validation: Ensure all required fields are present
+    const invalidRows = selectedRows.filter((row) => {
+      const hasRequiredFields = 
+        row.full_name?.value &&
+        row.email?.value &&
+        row.password?.value &&
+        row.license_number?.value &&
+        row.license_type?.value;
+      return !hasRequiredFields;
+    });
+    
+    if (invalidRows.length > 0) {
+      setSaveError(
+        `Cannot save: ${invalidRows.length} selected row(s) are missing required fields. Please fill in all required fields.`
+      );
+      return;
+    }
+    
     setIsSaving(true);
     try {
       // Map to API payload format
@@ -492,6 +546,17 @@ export function DriverSyncModal({
           <div>Total: {counts.total}</div>
           <div className="text-green-600">Valid: {counts.valid}</div>
           <div className="text-red-600">Errors: {counts.errors}</div>
+          {selected.size > 0 && (
+            <>
+              <div className="text-blue-600">Selected: {counts.selectedTotal}</div>
+              <div className="text-green-600">Selected Valid: {counts.selectedValid}</div>
+              {counts.selectedErrors > 0 && (
+                <div className="text-red-600 font-semibold">
+                  Selected Errors: {counts.selectedErrors}
+                </div>
+              )}
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={toggleAll} disabled={!data.length}>
@@ -506,7 +571,12 @@ export function DriverSyncModal({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isSaving || !selected.size || counts.errors > 0}
+            disabled={
+              isSaving || 
+              !selected.size || 
+              counts.selectedErrors > 0 ||
+              counts.selectedValid === 0
+            }
           >
             {isSaving ? "Saving..." : "Save Selected"}
           </Button>
@@ -709,16 +779,17 @@ export function DriverSyncModal({
                     );
                   }
                   
-                  // Password field
+                  // Password field (visible in validation table)
                   if (key === "password") {
                     return (
                       <td key={key as string} className={baseCls}>
                         <Input
-                          type="password"
+                          type="text"
                           value={val}
                           onChange={(e) =>
                             handleCellChange(i, key, e.target.value)
                           }
+                          placeholder="Enter password (min 8 chars)"
                         />
                         {err && (
                           <div className="flex items-center gap-1 text-red-600 text-xs mt-1">
