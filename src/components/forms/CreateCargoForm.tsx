@@ -340,7 +340,6 @@ export function CreateCargoForm() {
       case 1: // Cargo Details
         return !!(
           (
-            formData.cargoType &&
             formData.cargoCategoryId &&
             formData.weight &&
             parseFloat(formData.weight) > 0 &&
@@ -635,12 +634,15 @@ export function CreateCargoForm() {
         }
       }
 
+      // Get cargo category name
+      const selectedCategory = cargoCategories?.find(
+        (c) => c.id === formData.cargoCategoryId
+      );
+      const categoryName = selectedCategory?.name || "";
+
       const cargoRequest: CreateCargoRequest & { distance_km?: number } = {
         category_id: formData.cargoCategoryId || undefined,
-        type:
-          formData.cargoType === "other"
-            ? formData.otherCargoType
-            : formData.cargoType,
+        type: categoryName, // Send category name instead of cargo type
         weight_kg: parseFloat(formData.weight),
         volume:
           (parseFloat(formData.length || "0") *
@@ -915,114 +917,6 @@ export function CreateCargoForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label
-                    htmlFor="cargoType"
-                    className="text-xs sm:text-sm font-semibold text-gray-700"
-                  >
-                    {t("createCargo.steps.cargoDetails.cargoType")}{" "}
-                    <span className="text-red-500">*</span>
-                  </Label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={
-                        cargoTypeSearch ||
-                        (formData.cargoType
-                          ? t(
-                              `createCargo.steps.cargoDetails.types.${formData.cargoType}`
-                            )
-                          : "")
-                      }
-                      onChange={(e) => {
-                        setCargoTypeSearch(e.target.value);
-                        setShowCargoTypeDropdown(true);
-                      }}
-                      onFocus={() => setShowCargoTypeDropdown(true)}
-                      placeholder={t(
-                        "createCargo.steps.cargoDetails.selectCargoType"
-                      )}
-                      className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                      {cargoTypeSearch && (
-                        <button
-                          onClick={() => {
-                            setCargoTypeSearch("");
-                            setShowCargoTypeDropdown(true);
-                          }}
-                          className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                        >
-                          <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
-                        </button>
-                      )}
-                      <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                    </div>
-
-                    {/* Dropdown */}
-                    {showCargoTypeDropdown && (
-                      <motion.div
-                        className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                      >
-                        {[
-                          "electronics",
-                          "furniture",
-                          "documents",
-                          "food",
-                          "clothing",
-                          "other",
-                        ]
-                          .filter(
-                            (type) =>
-                              !cargoTypeSearch ||
-                              t(`createCargo.steps.cargoDetails.types.${type}`)
-                                .toLowerCase()
-                                .includes(cargoTypeSearch.toLowerCase())
-                          )
-                          .map((type) => (
-                            <button
-                              key={type}
-                              onClick={() => {
-                                setFormData({ ...formData, cargoType: type });
-                                setCargoTypeSearch("");
-                                setShowCargoTypeDropdown(false);
-                              }}
-                              className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                                formData.cargoType === type ? "bg-blue-50" : ""
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Check
-                                  className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                                    formData.cargoType === type
-                                      ? "opacity-100 text-blue-600"
-                                      : "opacity-0"
-                                  }`}
-                                />
-                                <span className="text-xs sm:text-sm font-medium text-gray-900">
-                                  {t(
-                                    `createCargo.steps.cargoDetails.types.${type}`
-                                  )}
-                                </span>
-                              </div>
-                            </button>
-                          ))}
-                      </motion.div>
-                    )}
-
-                    {/* Click outside to close */}
-                    {showCargoTypeDropdown && (
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowCargoTypeDropdown(false)}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label
                     htmlFor="cargoCategoryId"
                     className="text-xs sm:text-sm font-semibold text-gray-700"
                   >
@@ -1165,31 +1059,7 @@ export function CreateCargoForm() {
                   </div>
                 </div>
 
-                {formData.cargoType === "other" && (
-                  <div className="space-y-1.5 sm:space-y-2 md:col-span-2">
-                    <Label
-                      htmlFor="otherCargoType"
-                      className="text-xs sm:text-sm font-semibold text-gray-700"
-                    >
-                      {t("createCargo.steps.cargoDetails.specifyType")}{" "}
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="otherCargoType"
-                      placeholder={t(
-                        "createCargo.steps.cargoDetails.enterCargoType"
-                      )}
-                      value={formData.otherCargoType}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          otherCargoType: e.target.value,
-                        })
-                      }
-                      className="rounded-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
-                    />
-                  </div>
-                )}
+                {/* Cargo type "other" field removed - using category name instead */}
 
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label
@@ -1485,25 +1355,29 @@ export function CreateCargoForm() {
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <Command>
+                      <PopoverContent
+                        className="w-full p-0 bg-white border-2 border-gray-200 shadow-xl"
+                        align="start"
+                      >
+                        <Command className="bg-white">
                           <CommandInput
                             placeholder={t(
                               "createCargo.steps.pickupDelivery.searchLocation"
                             )}
+                            className="border-b border-gray-200"
                           />
-                          <CommandList>
-                            <CommandEmpty>
+                          <CommandList className="max-h-[300px] bg-white p-2">
+                            <CommandEmpty className="py-6 text-center text-gray-500 bg-white">
                               {t(
                                 "createCargo.steps.pickupDelivery.noLocationsFound"
                               )}
                             </CommandEmpty>
-                            <CommandGroup>
+                            <CommandGroup className="bg-white p-2">
                               {filterLocations(
                                 myLocations || [],
                                 "",
                                 LocationType.PICKUP_POINT
-                              ).map((location) => (
+                              ).map((location, index) => (
                                 <CommandItem
                                   key={location.id}
                                   value={location.name}
@@ -1514,24 +1388,51 @@ export function CreateCargoForm() {
                                     );
                                     setPickupLocationOpen(false);
                                   }}
+                                  className={`!bg-white px-4 py-4 cursor-pointer transition-all duration-200 rounded-lg mb-2 border data-[selected='true']:!bg-white data-[selected=true]:!bg-white ${
+                                    formData.selectedPickupLocationId ===
+                                    location.id
+                                      ? "!bg-white border-blue-400 border-l-4 border-l-blue-600 shadow-md"
+                                      : "!bg-white border-gray-200 hover:!bg-blue-50 hover:border-blue-300 hover:shadow-sm border-l-4 border-l-transparent data-[selected='true']:!bg-blue-50"
+                                  }`}
                                 >
                                   <Check
-                                    className={`mr-2 h-4 w-4 ${
+                                    className={`mr-3 h-5 w-5 flex-shrink-0 ${
                                       formData.selectedPickupLocationId ===
                                       location.id
-                                        ? "opacity-100"
+                                        ? "opacity-100 text-blue-600"
                                         : "opacity-0"
                                     }`}
                                   />
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
+                                  <div className="flex flex-col flex-1 min-w-0">
+                                    <span
+                                      className={`font-semibold text-base ${
+                                        formData.selectedPickupLocationId ===
+                                        location.id
+                                          ? "text-blue-900"
+                                          : "text-gray-900"
+                                      }`}
+                                    >
                                       {location.name}
                                     </span>
-                                    <span className="text-sm text-muted-foreground">
+                                    <span
+                                      className={`text-sm mt-1.5 ${
+                                        formData.selectedPickupLocationId ===
+                                        location.id
+                                          ? "text-blue-700"
+                                          : "text-gray-600"
+                                      }`}
+                                    >
                                       {location.address}
                                     </span>
                                     {location.contact_person && (
-                                      <span className="text-xs text-muted-foreground">
+                                      <span
+                                        className={`text-xs mt-1 ${
+                                          formData.selectedPickupLocationId ===
+                                          location.id
+                                            ? "text-blue-600 font-medium"
+                                            : "text-gray-500"
+                                        }`}
+                                      >
                                         Contact: {location.contact_person}
                                       </span>
                                     )}
@@ -2050,25 +1951,29 @@ export function CreateCargoForm() {
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-full p-0" align="start">
-                        <Command>
+                      <PopoverContent
+                        className="w-full p-0 bg-white border-2 border-gray-200 shadow-xl"
+                        align="start"
+                      >
+                        <Command className="bg-white">
                           <CommandInput
                             placeholder={t(
                               "createCargo.steps.pickupDelivery.searchLocation"
                             )}
+                            className="border-b border-gray-200"
                           />
-                          <CommandList>
-                            <CommandEmpty>
+                          <CommandList className="max-h-[300px] bg-white p-2">
+                            <CommandEmpty className="py-6 text-center text-gray-500 bg-white">
                               {t(
                                 "createCargo.steps.pickupDelivery.noLocationsFound"
                               )}
                             </CommandEmpty>
-                            <CommandGroup>
+                            <CommandGroup className="bg-white p-2">
                               {filterLocations(
                                 myLocations || [],
                                 "",
                                 LocationType.DELIVERY_POINT
-                              ).map((location) => (
+                              ).map((location, index) => (
                                 <CommandItem
                                   key={location.id}
                                   value={location.name}
@@ -2079,24 +1984,51 @@ export function CreateCargoForm() {
                                     );
                                     setDestinationLocationOpen(false);
                                   }}
+                                  className={`!bg-white px-4 py-4 cursor-pointer transition-all duration-200 rounded-lg mb-2 border data-[selected='true']:!bg-white data-[selected=true]:!bg-white ${
+                                    formData.selectedDestinationLocationId ===
+                                    location.id
+                                      ? "!bg-white border-green-400 border-l-4 border-l-green-600 shadow-md"
+                                      : "!bg-white border-gray-200 hover:!bg-green-50 hover:border-green-300 hover:shadow-sm border-l-4 border-l-transparent data-[selected='true']:!bg-green-50"
+                                  }`}
                                 >
                                   <Check
-                                    className={`mr-2 h-4 w-4 ${
+                                    className={`mr-3 h-5 w-5 flex-shrink-0 ${
                                       formData.selectedDestinationLocationId ===
                                       location.id
-                                        ? "opacity-100"
+                                        ? "opacity-100 text-green-600"
                                         : "opacity-0"
                                     }`}
                                   />
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
+                                  <div className="flex flex-col flex-1 min-w-0">
+                                    <span
+                                      className={`font-semibold text-base ${
+                                        formData.selectedDestinationLocationId ===
+                                        location.id
+                                          ? "text-green-900"
+                                          : "text-gray-900"
+                                      }`}
+                                    >
                                       {location.name}
                                     </span>
-                                    <span className="text-sm text-muted-foreground">
+                                    <span
+                                      className={`text-sm mt-1.5 ${
+                                        formData.selectedDestinationLocationId ===
+                                        location.id
+                                          ? "text-green-700"
+                                          : "text-gray-600"
+                                      }`}
+                                    >
                                       {location.address}
                                     </span>
                                     {location.contact_person && (
-                                      <span className="text-xs text-muted-foreground">
+                                      <span
+                                        className={`text-xs mt-1 ${
+                                          formData.selectedDestinationLocationId ===
+                                          location.id
+                                            ? "text-green-600 font-medium"
+                                            : "text-gray-500"
+                                        }`}
+                                      >
                                         Contact: {location.contact_person}
                                       </span>
                                     )}
@@ -2833,9 +2765,9 @@ export function CreateCargoForm() {
                       {t("createCargo.steps.confirmation.cargoType")}
                     </p>
                     <p className="font-medium capitalize">
-                      {formData.cargoType === "other"
-                        ? formData.otherCargoType
-                        : formData.cargoType}
+                      {cargoCategories?.find(
+                        (c) => c.id === formData.cargoCategoryId
+                      )?.name || "-"}
                     </p>
                   </div>
                   <div>
