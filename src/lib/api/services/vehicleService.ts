@@ -73,8 +73,8 @@ export class VehicleService {
 
     if (filters.date) params.append("date", filters.date);
     if (filters.type) params.append("type", filters.type);
-    if (filters.capacity_min)
-      params.append("capacity_min", filters.capacity_min.toString());
+    if (filters.capacity_min != null)
+      params.append("capacity_min", Math.round(filters.capacity_min).toString());
     if (filters.page) params.append("page", filters.page.toString());
     if (filters.limit) params.append("limit", filters.limit.toString());
 

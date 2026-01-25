@@ -288,7 +288,7 @@ export default function AssignmentModal({
   const { data: vehiclesData, isLoading: vehiclesLoading } =
     useAvailableVehiclesWithoutAssignments({
       date: pickupDate,
-      capacity_min: currentCargo?.weight_kg || 0,
+      capacity_min: Math.round(currentCargo?.weight_kg ?? 0),
       limit: 100,
     });
 
