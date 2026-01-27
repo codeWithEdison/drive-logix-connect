@@ -4,6 +4,7 @@ import {
   NotificationService,
   AdminService,
   FileService,
+  UserService,
 } from "../services";
 import { queryKeys } from "../queryClient";
 import {
@@ -314,6 +315,23 @@ export const useUpdateUserStatus = () => {
   });
 };
 
+/**
+ * Resend verification email for a user (admin / super_admin only).
+ * POST /v1/users/:userId/resend-verification
+ */
+export const useResendUserVerification = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => UserService.resendVerification(userId),
+    onSuccess: (_, userId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.detail(userId) });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.users() });
+    },
+  });
+};
+
 // Create user hooks
 export const useCreateAdmin = () => {
   const queryClient = useQueryClient();
@@ -615,12 +633,14 @@ export const useTransportationReports = (params?: {
     queryKey: queryKeys.admin.transportationReports(params),
     queryFn: () => AdminService.getTransportationReports(params),
     select: (data) => {
-      // The API returns data nested in meta.language.report
-      if (data?.meta?.language?.report) {
+      // API may return data nested in meta.language (language is object here, not string)
+      const metaLanguage = (data as { meta?: { language?: { report?: unknown[]; filters?: Record<string, unknown> } } })
+        ?.meta?.language;
+      if (metaLanguage?.report) {
         return {
-          report: data.meta.language.report,
-          total_records: data.meta.language.report.length,
-          filters: data.meta.language.filters || {},
+          report: metaLanguage.report,
+          total_records: metaLanguage.report.length,
+          filters: metaLanguage.filters || {},
         };
       }
       // Fallback to standard structure if available

@@ -91,4 +91,15 @@ export class UserService {
     const response = await axiosInstance.get("/users/statistics");
     return response.data;
   }
+
+  /**
+   * Resend verification email (admin / super_admin only).
+   * POST /users/:userId/resend-verification
+   */
+  static async resendVerification(userId: string): Promise<ApiResponse<null>> {
+    const response = await axiosInstance.post(
+      `/users/${userId}/resend-verification`
+    );
+    return response.data;
+  }
 }

@@ -34,6 +34,7 @@ import ModernModel from "@/components/modal/ModernModel";
 import {
   useUserManagement,
   useUpdateUserStatus,
+  useResendUserVerification,
   useCreateAdmin,
   useUpdateAdmin,
   useCreateDriver,
@@ -366,6 +367,7 @@ export default function SuperAdminUsers() {
   const { data: branchesData } = useBranches({ limit: 100 });
 
   const updateUserStatusMutation = useUpdateUserStatus();
+  const resendVerificationMutation = useResendUserVerification();
 
   // Create user mutations
   const createAdminMutation = useCreateAdmin();
@@ -1395,6 +1397,19 @@ export default function SuperAdminUsers() {
     }
   };
 
+  const handleResendVerification = async (userId: string) => {
+    try {
+      await resendVerificationMutation.mutateAsync(userId);
+      customToast.success(t("userManagement.resendVerificationSuccess"));
+    } catch (error: any) {
+      console.error("Error resending verification email:", error);
+      const errorMessage = extractErrorMessage(error);
+      customToast.error(
+        t("userManagement.resendVerificationFailed") || `Failed to resend verification: ${errorMessage}`
+      );
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -1875,6 +1890,26 @@ export default function SuperAdminUsers() {
                                   className="flex gap-2"
                                   onClick={(e) => e.stopPropagation()}
                                 >
+                                  {!superadmin.is_verified && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        handleResendVerification(superadmin.id)
+                                      }
+                                      disabled={
+                                        resendVerificationMutation.isPending
+                                      }
+                                      title={t(
+                                        "userManagement.resendVerification"
+                                      )}
+                                    >
+                                      <Mail className="h-4 w-4 mr-1" />
+                                      {t(
+                                        "userManagement.resendVerification"
+                                      )}
+                                    </Button>
+                                  )}
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -2114,6 +2149,26 @@ export default function SuperAdminUsers() {
                                 className="flex gap-2"
                                 onClick={(e) => e.stopPropagation()}
                               >
+                                {!admin.is_verified && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleResendVerification(admin.id)
+                                    }
+                                    disabled={
+                                      resendVerificationMutation.isPending
+                                    }
+                                    title={t(
+                                      "userManagement.resendVerification"
+                                    )}
+                                  >
+                                    <Mail className="h-4 w-4 mr-1" />
+                                    {t(
+                                      "userManagement.resendVerification"
+                                    )}
+                                  </Button>
+                                )}
                                 <Button
                                   variant="outline"
                                   size="sm"

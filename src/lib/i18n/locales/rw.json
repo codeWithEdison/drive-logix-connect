@@ -1220,7 +1220,8 @@
       "cancelCargo": "Hagarika Imizigo",
       "trackCargo": "Kurikirana Imizigo",
       "call": "Hamagara",
-      "details": "Ibisobanuro"
+      "details": "Ibisobanuro",
+      "downloadExcel": "Kuramo Excel"
     },
     "mobile": {
       "generalCargo": "Imizigo Bisanzwe",
@@ -1673,7 +1674,10 @@
     "updateUserError": "Ikosa mu guhindura umukoresha",
     "updateUserErrorDesc": "Ikosa muguhindura imiterere y'umukoresha. Nyamuneka gerageza nanone.",
     "editUser": "Guhindura Umukoresha",
-    "updateUser": "Kuvugurura Umukoresha"
+    "updateUser": "Kuvugurura Umukoresha",
+    "resendVerification": "Ohereza nanone uburenganzira",
+    "resendVerificationSuccess": "Imeyili yemeza yoherejwe neza.",
+    "resendVerificationFailed": "Kwohereza imeyili yemeza byanze. Nyamuneka gerageza nanone."
   },
   "landing": {
     "hero": {
