@@ -2295,7 +2295,9 @@ export function CargoDetailModal({
                   </Button>
                 )}
 
-              {cargo.status === "assigned" && (
+              {["assigned", "fully_assigned", "partially_assigned"].includes(
+                cargo.status
+              ) && (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   onClick={handleMarkPickedUp}
