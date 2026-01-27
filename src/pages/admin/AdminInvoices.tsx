@@ -46,6 +46,11 @@ import {
   useAllInvoices,
   useUpdateInvoiceStatus,
 } from "@/lib/api/hooks/invoiceHooks";
+import { InvoiceService } from "@/lib/api/services";
+import {
+  generateInvoicePdfBlob,
+  type InvoicePdfLabels,
+} from "@/lib/pdf/invoicePdf";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import ModernModel from "@/components/modal/ModernModel";
@@ -199,9 +204,66 @@ export default function AdminInvoices() {
     setCurrentPage(1);
   };
 
-  const handleDownloadInvoice = (invoiceId: string) => {
-    console.log(`Downloading invoice ${invoiceId}`);
-    toast.info("Downloading invoice PDF...");
+  const handleDownloadInvoice = async (
+    invoiceId: string,
+    invoiceFromView?: any
+  ) => {
+    const triggerDownload = (blob: Blob, filename: string) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    const labels: InvoicePdfLabels = {
+      companyName: t("invoices.companyName"),
+      companyTagline: t("invoices.companyTagline"),
+      companyLocation: t("invoices.companyLocation"),
+      companyContact: t("invoices.companyContact"),
+      invoiceLabel: t("invoices.invoiceLabel"),
+      invoiceNumberLabel: t("invoices.invoiceNumberLabel"),
+      cargoNumberLabel: t("invoices.cargoNumberLabel"),
+      dateLabel: t("invoices.dateLabel"),
+      dueDateLabel: t("invoices.dueDateLabel"),
+      cargoInformation: t("invoices.cargoInformation"),
+      cargoNumberField: t("invoices.cargoNumberField"),
+      typeField: t("invoices.typeField"),
+      pickupLocation: t("invoices.pickupLocation"),
+      deliveryLocation: t("invoices.deliveryLocation"),
+      invoiceDetails: t("invoices.invoiceDetails"),
+      subtotalLabel: t("invoices.subtotalLabel"),
+      taxLabel: t("invoices.taxLabel"),
+      discountLabel: t("invoices.discountLabel"),
+      totalAmountLabel: t("invoices.totalAmountLabel"),
+      paymentInformation: t("invoices.paymentInformation"),
+      paymentDate: t("invoices.paymentDate"),
+      paymentMethodLabel: t("invoices.paymentMethodLabel"),
+      referenceLabel: t("invoices.referenceLabel"),
+      naLabel: t("invoices.naLabel"),
+    };
+
+    try {
+      toast.info("Downloading invoice PDF...");
+      const invoice =
+        invoiceFromView?.id === invoiceId
+          ? invoiceFromView
+          : ((await InvoiceService.getInvoiceById(invoiceId)) as any)?.data ??
+            null;
+      if (!invoice?.id) {
+        toast.error("Failed to download PDF");
+        return;
+      }
+      const pdfBlob = generateInvoicePdfBlob(invoice, { labels });
+      triggerDownload(pdfBlob, `invoice-${invoiceId}.pdf`);
+      toast.success("PDF downloaded");
+    } catch (err: any) {
+      console.error("Invoice PDF download failed:", err);
+      toast.error("Failed to download PDF");
+    }
   };
 
   const handleViewInvoice = (invoice: any) => {
@@ -564,6 +626,7 @@ export default function AdminInvoices() {
                     <TableRow
                       key={invoice.id}
                       className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleViewInvoice(invoice)}
                     >
                       <TableCell className="text-sm text-gray-500">
                         {(currentPage - 1) * pageSize + index + 1}
@@ -631,7 +694,7 @@ export default function AdminInvoices() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -777,10 +840,9 @@ export default function AdminInvoices() {
         }}
         invoice={selectedInvoice}
         showAdminActions={true}
-        onDownload={(invoiceId) => {
-          console.log("Downloading invoice:", invoiceId);
-          toast.info("Downloading invoice PDF...");
-        }}
+        onDownload={(id) =>
+          handleDownloadInvoice(id, selectedInvoice)
+        }
         onPaymentSuccess={(paymentData) => {
           toast.success("Invoice status updated successfully!");
           refetch();

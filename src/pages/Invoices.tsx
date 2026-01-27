@@ -41,6 +41,11 @@ import {
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClientInvoices } from "@/lib/api/hooks";
+import { InvoiceService } from "@/lib/api/services";
+import {
+  generateInvoicePdfBlob,
+  type InvoicePdfLabels,
+} from "@/lib/pdf/invoicePdf";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
@@ -280,11 +285,66 @@ export default function Invoices() {
     setCurrentPage(1);
   };
 
-  const handleDownloadInvoice = (invoiceId: string) => {
-    // Mock download functionality
-    console.log(`Downloading invoice ${invoiceId}`);
-    toast.info(t("invoices.downloadInfo"));
-    // In real app, this would trigger a PDF download
+  const handleDownloadInvoice = async (
+    invoiceId: string,
+    invoiceFromView?: any
+  ) => {
+    const triggerDownload = (blob: Blob, filename: string) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    const labels: InvoicePdfLabels = {
+      companyName: t("invoices.companyName"),
+      companyTagline: t("invoices.companyTagline"),
+      companyLocation: t("invoices.companyLocation"),
+      companyContact: t("invoices.companyContact"),
+      invoiceLabel: t("invoices.invoiceLabel"),
+      invoiceNumberLabel: t("invoices.invoiceNumberLabel"),
+      cargoNumberLabel: t("invoices.cargoNumberLabel"),
+      dateLabel: t("invoices.dateLabel"),
+      dueDateLabel: t("invoices.dueDateLabel"),
+      cargoInformation: t("invoices.cargoInformation"),
+      cargoNumberField: t("invoices.cargoNumberField"),
+      typeField: t("invoices.typeField"),
+      pickupLocation: t("invoices.pickupLocation"),
+      deliveryLocation: t("invoices.deliveryLocation"),
+      invoiceDetails: t("invoices.invoiceDetails"),
+      subtotalLabel: t("invoices.subtotalLabel"),
+      taxLabel: t("invoices.taxLabel"),
+      discountLabel: t("invoices.discountLabel"),
+      totalAmountLabel: t("invoices.totalAmountLabel"),
+      paymentInformation: t("invoices.paymentInformation"),
+      paymentDate: t("invoices.paymentDate"),
+      paymentMethodLabel: t("invoices.paymentMethodLabel"),
+      referenceLabel: t("invoices.referenceLabel"),
+      naLabel: t("invoices.naLabel"),
+    };
+
+    try {
+      toast.info(t("invoices.downloadInfo"));
+      const invoice =
+        invoiceFromView?.id === invoiceId
+          ? invoiceFromView
+          : ((await InvoiceService.getInvoiceById(invoiceId)) as any)?.data ??
+            null;
+      if (!invoice?.id) {
+        toast.error(t("invoices.downloadError") ?? "Failed to download PDF");
+        return;
+      }
+      const pdfBlob = generateInvoicePdfBlob(invoice, { labels });
+      triggerDownload(pdfBlob, `invoice-${invoiceId}.pdf`);
+      toast.success(t("invoices.downloadSuccess") ?? "PDF downloaded");
+    } catch (err: any) {
+      console.error("Invoice PDF download failed:", err);
+      toast.error(t("invoices.downloadError") ?? "Failed to download PDF");
+    }
   };
 
   const handleViewInvoice = (invoice: any) => {
@@ -1461,10 +1521,7 @@ export default function Invoices() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         invoice={selectedInvoice}
-        onDownload={(invoiceId) => {
-          console.log("Downloading invoice:", invoiceId);
-          toast.info(t("invoices.downloadInfo"));
-        }}
+        onDownload={(id) => handleDownloadInvoice(id, selectedInvoice)}
         onPay={(invoiceId) => {
           console.log("Paying invoice:", invoiceId);
           toast.info(t("invoices.payInfo"));
