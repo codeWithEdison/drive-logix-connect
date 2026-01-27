@@ -50,10 +50,24 @@ export const mapDeliveryAssignmentToCargoDetail = (
   const client = cargo.client || {};
   const user = client.user || {};
   const vehicle = assignment.vehicle || {};
+  const driver = assignment.driver || {};
 
-  // Map assignment status to cargo status for proper UI display
-  let status = "assigned" as any; // Default fallback
-  if (assignment.assignment_status) {
+  // Prefer actual cargo status so driver sees the right next action (pickup / transit / deliver)
+  // Only fall back to assignment_status when cargo.status is missing or assignment is pending
+  const validCargoStatuses = [
+    "pending",
+    "assigned",
+    "fully_assigned",
+    "partially_assigned",
+    "picked_up",
+    "in_transit",
+    "delivered",
+    "cancelled",
+  ];
+  let status: string;
+  if (cargo.status && validCargoStatuses.includes(cargo.status)) {
+    status = cargo.status;
+  } else if (assignment.assignment_status) {
     switch (assignment.assignment_status) {
       case "pending":
         status = "pending";
@@ -70,6 +84,8 @@ export const mapDeliveryAssignmentToCargoDetail = (
       default:
         status = "assigned";
     }
+  } else {
+    status = "assigned";
   }
 
   return {
@@ -78,8 +94,8 @@ export const mapDeliveryAssignmentToCargoDetail = (
     status: status,
     from: cargo.pickup_address || "Pickup Location",
     to: cargo.destination_address || "Delivery Location",
-    clientCompany: user.full_name || "Client Name",
-    phone: client.phone || "",
+    clientCompany: user.full_name || client.company_name || "Client Name",
+    phone: user.phone || client.phone || "",
     weight: `${cargo.weight_kg || 0} kg`, // Updated to use weight_kg
     type: cargo.type || "General",
     pickupTime: cargo.pickup_time || "TBD",
@@ -96,8 +112,8 @@ export const mapDeliveryAssignmentToCargoDetail = (
     pickupContactPhone: cargo.pickup_phone || "",
     deliveryContact: cargo.delivery_contact || "",
     deliveryContactPhone: cargo.delivery_phone || "",
-    driver: assignment.driver_name,
-    driverPhone: assignment.driver_phone,
+    driver: driver.full_name || assignment.driver_name,
+    driverPhone: driver.phone || assignment.driver_phone,
     cost: cargo.cost,
     estimatedTime: cargo.estimated_time,
     // Vehicle information from assignment

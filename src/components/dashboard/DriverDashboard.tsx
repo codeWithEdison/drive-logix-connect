@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -123,6 +123,17 @@ export function DriverDashboard() {
   const dashboard = dashboardData?.data as any;
 
   const updateStatusMutation = useUpdateDriverStatus();
+
+  // Sync driverStatus from API when dashboard loads (fixes revert on refresh)
+  useEffect(() => {
+    const apiStatus = dashboard?.driver_info?.status;
+    if (
+      apiStatus &&
+      ["available", "on_duty", "unavailable"].includes(apiStatus)
+    ) {
+      setDriverStatus(apiStatus as "available" | "on_duty" | "unavailable");
+    }
+  }, [dashboard?.driver_info?.status]);
 
   // Assignment system hooks
   const acceptAssignmentMutation = useAcceptAssignment();
@@ -500,7 +511,15 @@ export function DriverDashboard() {
                     <User className="w-6 h-6 sm:w-8 sm:h-8 text-white/80" />
                   )}
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                <div
+                  className={`absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-white flex items-center justify-center ${
+                    driverStatus === "available"
+                      ? "bg-green-500"
+                      : driverStatus === "on_duty"
+                        ? "bg-blue-500"
+                        : "bg-gray-500"
+                  }`}
+                >
                   <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                 </div>
               </div>
@@ -538,11 +557,7 @@ export function DriverDashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge className="bg-green-500/20 text-green-200 border-green-400/30 text-xs">
-                      {statusConfig[
-                        dashboard?.driver_info?.status || driverStatus
-                      ]?.label ||
-                        dashboard?.driver_info?.status ||
-                        driverStatus}
+                      {statusConfig[driverStatus]?.label ?? driverStatus}
                     </Badge>
                   </div>
                 </div>
@@ -571,7 +586,7 @@ export function DriverDashboard() {
                 </span>
                 <Select
                   onValueChange={handleStatusChange}
-                  defaultValue={driverStatus}
+                  value={driverStatus}
                 >
                   <SelectTrigger className="w-full sm:w-[160px] lg:w-[180px] bg-white/10 border-white/30 text-white">
                     <SelectValue placeholder={t("common.select")} />
@@ -828,6 +843,16 @@ export function DriverDashboard() {
                                 {t("delivery.markDelivered") ||
                                   "Mark Delivered"}
                               </Button>
+                            );
+                          }
+                          if (status === "delivered") {
+                            return (
+                              <div className="flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                                <span className="font-semibold text-green-800">
+                                  {t("status.delivered") || "Delivered"}
+                                </span>
+                              </div>
                             );
                           }
                           return (

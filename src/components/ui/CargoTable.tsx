@@ -205,11 +205,28 @@ export function CargoTable({
   const endIndex = startIndex + itemsPerPage;
   const currentCargos = filteredCargos.slice(startIndex, endIndex);
 
+  const getAssignmentStatusBadge = (assignmentStatus: string) => {
+    const config: { [key: string]: { className: string } } = {
+      pending: { className: "bg-yellow-100 text-yellow-600" },
+      accepted: { className: "bg-indigo-100 text-indigo-600" },
+      rejected: { className: "bg-red-100 text-red-600" },
+      cancelled: { className: "bg-red-100 text-red-600" },
+    };
+    const label =
+      t(`cargoTable.assignmentStatus.${assignmentStatus}`) || assignmentStatus;
+    return (
+      <Badge className={config[assignmentStatus]?.className || "bg-gray-100 text-gray-600"}>
+        {label}
+      </Badge>
+    );
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig: { [key: string]: { className: string } } = {
       pending: { className: "bg-yellow-100 text-yellow-600" },
       quoted: { className: "bg-blue-100 text-blue-600" },
       accepted: { className: "bg-indigo-100 text-indigo-600" },
+      rejected: { className: "bg-red-100 text-red-600" },
       partially_assigned: { className: "bg-orange-100 text-orange-600" },
       fully_assigned: { className: "bg-purple-100 text-purple-600" },
       picked_up: { className: "bg-orange-100 text-orange-600" },
@@ -858,7 +875,17 @@ export function CargoTable({
                       >
                         {cargo.type || t("cargoTable.table.general")}
                       </Badge>
-                      {getStatusBadge(data.status)}
+                      {(cargo as any).assignmentStatus != null
+                        ? getAssignmentStatusBadge((cargo as any).assignmentStatus)
+                        : getStatusBadge(data.status)}
+                      {(cargo as any).assignmentStatus != null && (
+                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs">
+                          <span className="text-gray-500 font-medium">
+                            {t("cargoTable.table.cargoStatus") || "Cargo"}:
+                          </span>
+                          {getStatusBadge(cargo.status)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1318,6 +1345,14 @@ export function CargoTable({
                                 {cargo.description}
                               </p>
                             )}
+                            {(cargo as any).assignmentStatus != null && (
+                              <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs text-gray-500 font-medium">
+                                  {t("cargoTable.table.cargoStatus") || "Cargo"}:
+                                </span>
+                                {getStatusBadge(cargo.status)}
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -1400,7 +1435,11 @@ export function CargoTable({
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell>{getStatusBadge(data.status)}</TableCell>
+                        <TableCell>
+                          {(cargo as any).assignmentStatus != null
+                            ? getAssignmentStatusBadge((cargo as any).assignmentStatus)
+                            : getStatusBadge(data.status)}
+                        </TableCell>
                         <TableCell>{renderActions(cargo)}</TableCell>
                       </TableRow>
                     );

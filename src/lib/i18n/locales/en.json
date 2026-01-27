@@ -1809,6 +1809,7 @@
     },
     "table": {
       "cargoInfo": "Cargo Info",
+      "cargoStatus": "Cargo",
       "client": "Client",
       "route": "Route",
       "driver": "Driver",
@@ -1820,10 +1821,17 @@
       "general": "General",
       "notAvailable": "N/A"
     },
+    "assignmentStatus": {
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
     "status": {
       "pending": "Pending",
       "quoted": "Invoice Sent",
       "accepted": "Invoice Paid",
+      "rejected": "Rejected",
       "assigned": "Assigned",
       "partiallyAssigned": "Partially Assigned",
       "fullyAssigned": "Fully Assigned",

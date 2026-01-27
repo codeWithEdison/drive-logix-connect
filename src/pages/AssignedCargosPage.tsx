@@ -21,10 +21,6 @@ import {
   RefreshCw,
   AlertCircle,
   Package,
-  Truck,
-  Clock,
-  CheckCircle,
-  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,7 +68,7 @@ export function AssignedCargosPage() {
         data: { notes },
       });
       customToast.success("Assignment accepted successfully");
-      refetch(); // Refresh the assignments list
+      await refreshModalCargo(assignmentId);
     } catch (error: any) {
       customToast.error(error.message || "Failed to accept assignment");
     }
@@ -89,7 +85,7 @@ export function AssignedCargosPage() {
         data: { reason, notes },
       });
       customToast.success("Assignment rejected");
-      refetch(); // Refresh the assignments list
+      await refreshModalCargo(assignmentId);
     } catch (error: any) {
       customToast.error(error.message || "Failed to reject assignment");
     }
@@ -99,7 +95,7 @@ export function AssignedCargosPage() {
     try {
       await cancelAssignmentMutation.mutateAsync(assignmentId);
       customToast.success("Assignment cancelled");
-      refetch(); // Refresh the assignments list
+      await refreshModalCargo(assignmentId);
     } catch (error: any) {
       customToast.error(error.message || "Failed to cancel assignment");
     }
@@ -115,6 +111,7 @@ export function AssignedCargosPage() {
         data: { vehicle_id: vehicleId },
       });
       customToast.success("Vehicle changed successfully");
+      await refreshModalCargo(assignmentId);
     } catch (error: any) {
       customToast.error(error.message || "Failed to change vehicle");
     }
@@ -127,6 +124,7 @@ export function AssignedCargosPage() {
         data: { driver_id: driverId },
       });
       customToast.success("Driver changed successfully");
+      await refreshModalCargo(assignmentId);
     } catch (error: any) {
       customToast.error(error.message || "Failed to change driver");
     }
@@ -146,6 +144,7 @@ export function AssignedCargosPage() {
         notes,
       });
       customToast.success("Assignment created successfully");
+      await refreshModalCargo();
     } catch (error: any) {
       customToast.error(error.message || "Failed to create assignment");
     }
@@ -228,13 +227,42 @@ export function AssignedCargosPage() {
       ? mapDeliveryAssignmentsToCargoDetails(assignments)
       : [];
 
-  // Calculate stats
+  // Refresh modal cargo after any activity (refetch and update selectedCargo)
+  const refreshModalCargo = async (assignmentId?: string, cargoId?: string) => {
+    const result = await refetch();
+    const raw = result.data;
+    const nextAssignments = Array.isArray(raw)
+      ? raw
+      : Array.isArray((raw as any)?.data?.assignments)
+        ? (raw as any).data.assignments
+        : Array.isArray((raw as any)?.data)
+          ? (raw as any).data
+          : [];
+    const nextCargos = mapDeliveryAssignmentsToCargoDetails(nextAssignments);
+    if (!isModalOpen || !selectedCargo) return;
+    const updated =
+      assignmentId != null
+        ? nextCargos.find((c) => (c as any).assignmentId === assignmentId)
+        : cargoId != null
+          ? nextCargos.find((c) => c.id === cargoId)
+          : nextCargos.find((c) => c.id === selectedCargo.id);
+    if (updated) setSelectedCargo(updated);
+  };
+
+  // Stats by assignment status
   const stats = {
-    total: transformedCargos.length,
-    pending: transformedCargos.filter((c) => c.status === "pending").length,
-    inTransit: transformedCargos.filter((c) => c.status === "in_transit")
-      .length,
-    completed: transformedCargos.filter((c) => c.status === "delivered").length,
+    pending: transformedCargos.filter(
+      (c) => (c as any).assignmentStatus === "pending"
+    ).length,
+    accepted: transformedCargos.filter(
+      (c) => (c as any).assignmentStatus === "accepted"
+    ).length,
+    rejected: transformedCargos.filter(
+      (c) => (c as any).assignmentStatus === "rejected"
+    ).length,
+    cancelled: transformedCargos.filter(
+      (c) => (c as any).assignmentStatus === "cancelled"
+    ).length,
   };
 
   // Loading state
@@ -403,89 +431,46 @@ export function AssignedCargosPage() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards – by assignment status, title + number only */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
-          <CardContent className="p-3 sm:p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  {t("dashboard.totalAssigned")}
-                </p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                  {stats.total}
-                </p>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  {t("dashboard.allCargos")}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
-                <Package className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600" />
-              </div>
-            </div>
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+              {t("cargoTable.assignmentStatus.pending")}
+            </p>
+            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mt-0.5">
+              {stats.pending}
+            </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
-          <CardContent className="p-3 sm:p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  {t("dashboard.pendingAssignments")}
-                </p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                  {stats.pending}
-                </p>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  {t("dashboard.awaitingPickup")}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600" />
-              </div>
-            </div>
+        <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+              {t("cargoTable.assignmentStatus.accepted")}
+            </p>
+            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mt-0.5">
+              {stats.accepted}
+            </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
-          <CardContent className="p-3 sm:p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  {t("status.inTransit")}
-                </p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                  {stats.inTransit}
-                </p>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  {t("dashboard.currentlyMoving")}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
-                <Truck className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
-              </div>
-            </div>
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+              {t("cargoTable.assignmentStatus.rejected")}
+            </p>
+            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mt-0.5">
+              {stats.rejected}
+            </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden group">
-          <CardContent className="p-3 sm:p-4 lg:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
-              <div className="space-y-1 sm:space-y-2">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
-                  {t("status.completed")}
-                </p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                  {stats.completed}
-                </p>
-                <p className="text-xs text-gray-500 hidden sm:block">
-                  {t("dashboard.successfullyDelivered")}
-                </p>
-              </div>
-              <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/50 group-hover:scale-110 transition-transform duration-300 self-start sm:self-auto">
-                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
-              </div>
-            </div>
+        <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 border-2 hover:shadow-lg transition-all duration-300 rounded-xl sm:rounded-2xl overflow-hidden">
+          <CardContent className="px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">
+              {t("cargoTable.assignmentStatus.cancelled")}
+            </p>
+            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mt-0.5">
+              {stats.cancelled}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -537,6 +522,7 @@ export function AssignedCargosPage() {
         onUploadPhoto={handleUploadPhoto}
         onReportIssue={handleReportIssue}
         onCallContact={handleCallContact}
+        onCargoUpdated={(cargoId) => refreshModalCargo(undefined, cargoId)}
         onAccept={(cargoId) => {
           // Find the assignment for this cargo and accept it
           const cargo = transformedCargos.find((c) => c.id === cargoId);
