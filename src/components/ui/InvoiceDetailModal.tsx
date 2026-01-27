@@ -85,6 +85,7 @@ export function InvoiceDetailModal({
 }: InvoiceDetailModalProps) {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const updateInvoiceStatusMutation = useUpdateInvoiceStatus();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isMobileMoneyPaymentOpen, setIsMobileMoneyPaymentOpen] = useState(false);
   const [isPaymentConfirmationModalOpen, setIsPaymentConfirmationModalOpen] =
@@ -224,6 +225,25 @@ export function InvoiceDetailModal({
   const handleBackToOptions = () => {
     setShowTransferOptions(false);
     setSelectedTransferType(null);
+  };
+
+  const handleMarkAsPaid = async () => {
+    try {
+      await updateInvoiceStatusMutation.mutateAsync({
+        id: invoice.id,
+        data: { status: "paid" },
+      });
+      toast.success(t("invoices.markAsPaidSuccess") ?? "Invoice marked as paid");
+      onPaymentSuccess?.({ invoiceId: invoice.id, status: "paid" });
+      onClose?.();
+    } catch (err: any) {
+      console.error("Mark as paid failed:", err);
+      toast.error(
+        err?.response?.data?.message ??
+          t("invoices.markAsPaidError") ??
+          "Failed to mark invoice as paid"
+      );
+    }
   };
 
   return (
@@ -643,17 +663,32 @@ export function InvoiceDetailModal({
           </Card>
         )}
 
-        {/* Admin Action Buttons */}
-        {canAdminAction() && (
-          <div className="flex gap-3 pt-4 border-t">
-            <Button
-              variant="outline"
-              className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-              onClick={() => setIsPaymentConfirmationModalOpen(true)}
-            >
-              <X className="h-4 w-4 mr-2" />
-              {t("invoices.cancelInvoice")}
-            </Button>
+        {/* Admin / Super Admin Action Buttons */}
+        {showAdminActions && (!invoice.paid || canAdminAction()) && (
+          <div className="flex flex-wrap gap-3 pt-4 border-t">
+            {!invoice.paid && (
+              <Button
+                variant="default"
+                className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleMarkAsPaid}
+                disabled={updateInvoiceStatusMutation.isPending}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {updateInvoiceStatusMutation.isPending
+                  ? t("common.loading") ?? "Loading..."
+                  : t("invoices.markAsPaid") ?? "Mark as Paid"}
+              </Button>
+            )}
+            {canAdminAction() && (
+              <Button
+                variant="outline"
+                className="flex-1 min-w-[140px] text-red-600 border-red-200 hover:bg-red-50"
+                onClick={() => setIsPaymentConfirmationModalOpen(true)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                {t("invoices.cancelInvoice")}
+              </Button>
+            )}
           </div>
         )}
       </div>
