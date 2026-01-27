@@ -530,16 +530,31 @@ const AdminTrucks = () => {
     setIsUpdatingVehicle(true);
 
     try {
-      console.log("🚛 Updating vehicle with data:", {
-        id: editingTruck.id,
-        data: editFormData,
-        insurance_expiry: editFormData.insurance_expiry,
-        registration_expiry: editFormData.registration_expiry,
-      });
+      // Build payload: omit empty date strings so API gets valid ISO 8601 or no key
+      const dateFields = [
+        "insurance_expiry",
+        "registration_expiry",
+        "last_maintenance_date",
+        "next_maintenance_date",
+        "device_expiration",
+        "device_activation_time",
+      ] as const;
+      const payload = { ...editFormData } as any;
+      for (const key of dateFields) {
+        const val = payload[key];
+        if (val === "" || val == null) {
+          delete payload[key];
+        } else if (typeof val === "string" && val.trim()) {
+          // Ensure ISO 8601: "YYYY-MM-DD" is valid; optional time part if API requires
+          payload[key] = val.trim();
+        }
+      }
+      // API does not allow total_distance_km in update body (read-only / server-managed)
+      delete payload.total_distance_km;
 
       await updateVehicleMutation.mutateAsync({
         id: editingTruck.id,
-        data: editFormData,
+        data: payload,
       });
 
       toast({

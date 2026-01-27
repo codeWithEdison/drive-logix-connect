@@ -90,3 +90,26 @@ export const useCreateAdminDriver = () => {
     },
   });
 };
+
+/**
+ * Update driver availability status (Admin / Super Admin).
+ * PUT /admin/drivers/:driverId/status
+ * Body: { status: "available" | "on_duty" | "unavailable" | "suspended" }
+ */
+export const useUpdateAdminDriverStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      driverId,
+      status,
+    }: {
+      driverId: string;
+      status: "available" | "on_duty" | "unavailable" | "suspended";
+    }) => AdminService.updateDriverStatus(driverId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.drivers() });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+};

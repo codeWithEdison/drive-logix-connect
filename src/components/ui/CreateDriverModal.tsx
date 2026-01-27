@@ -22,13 +22,17 @@ import {
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
-import { useCreateAdminDriver } from "@/lib/api/hooks/adminHooks";
+import {
+  useCreateAdminDriver,
+  useUpdateAdminDriverStatus,
+} from "@/lib/api/hooks/adminHooks";
 import { useUploadDriverDocument } from "@/lib/api/hooks/driverHooks";
 import { useBranches } from "@/lib/api/hooks/branchHooks";
 import { FileService } from "@/lib/api/services/utilityService";
 import axiosInstance from "@/lib/api/axios";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Driver } from "./DriverTable";
 
 interface CreateDriverModalProps {
@@ -37,6 +41,8 @@ interface CreateDriverModalProps {
   onSuccess?: () => void;
   editingDriver?: Driver | null;
 }
+
+type DriverStatus = "available" | "on_duty" | "unavailable" | "suspended";
 
 interface DriverFormData {
   full_name: string;
@@ -54,6 +60,7 @@ interface DriverFormData {
   blood_type: string;
   medical_certificate_expiry: string;
   branch_id: string;
+  status: DriverStatus;
 }
 
 interface DocumentFile {
@@ -86,7 +93,9 @@ export function CreateDriverModal({
   const [error, setError] = useState<string | null>(null);
 
   const { user } = useAuth();
+  const { t } = useLanguage();
   const createDriverMutation = useCreateAdminDriver();
+  const updateDriverStatusMutation = useUpdateAdminDriverStatus();
   const uploadDocumentMutation = useUploadDriverDocument();
   const { data: branchesData } = useBranches({ limit: 100 });
 
@@ -106,6 +115,7 @@ export function CreateDriverModal({
     blood_type: "",
     medical_certificate_expiry: "",
     branch_id: user?.branch_id || "",
+    status: "available",
   });
 
   const [documents, setDocuments] = useState<DocumentFile[]>([]);
@@ -145,6 +155,13 @@ export function CreateDriverModal({
           editingDriver.medical_certificate_expiry
         ),
         branch_id: user?.branch_id || "",
+        status:
+          (editingDriver as Driver).status &&
+          ["available", "on_duty", "unavailable", "suspended"].includes(
+            (editingDriver as Driver).status
+          )
+            ? ((editingDriver as Driver).status as DriverStatus)
+            : "available",
       });
       setCreatedDriverId(editingDriver.id);
     } else {
@@ -165,6 +182,7 @@ export function CreateDriverModal({
         blood_type: "",
         medical_certificate_expiry: "",
         branch_id: user?.branch_id || "",
+        status: "available",
       });
       setCreatedDriverId(null);
     }
@@ -321,8 +339,8 @@ export function CreateDriverModal({
     setError(null);
 
     try {
-      // If editing, update driver via PUT (exclude password), then proceed to documents
-      if (editingDriver) {
+      // If editing, update driver profile via PUT (no status), then availability via PUT /admin/drivers/:id/status
+        if (editingDriver) {
         const updatePayload: any = {
           full_name: formData.full_name,
           email: formData.email,
@@ -345,6 +363,12 @@ export function CreateDriverModal({
           `/admin/drivers/${editingDriver.id}`,
           updatePayload
         );
+
+        // Update availability status via dedicated API: PUT /admin/drivers/:driverId/status
+        await updateDriverStatusMutation.mutateAsync({
+          driverId: editingDriver.id,
+          status: formData.status,
+        });
 
         setCreatedDriverId(editingDriver.id);
         toast({
@@ -807,6 +831,35 @@ export function CreateDriverModal({
                       </SelectContent>
                     </Select>
                   </div>
+                  {editingDriver && (user?.role === "admin" || user?.role === "super_admin") && (
+                    <div>
+                      <Label htmlFor="driver_status">Status</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value: DriverStatus) =>
+                          handleInputChange("status", value)
+                        }
+                      >
+                        <SelectTrigger id="driver_status">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="available">
+                            {t("status.available")}
+                          </SelectItem>
+                          <SelectItem value="on_duty">
+                            {t("status.onDuty")}
+                          </SelectItem>
+                          <SelectItem value="unavailable">
+                            {t("status.unavailable")}
+                          </SelectItem>
+                          <SelectItem value="suspended">
+                            {t("status.suspended")}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   {user?.role === "super_admin" && (
                     <div>
                       <Label htmlFor="branch_id">Branch *</Label>

@@ -224,6 +224,22 @@ export class AdminService {
     return response.data;
   }
 
+  /**
+   * Update driver availability status (Admin / Super Admin).
+   * PUT /admin/drivers/:driverId/status
+   * Body: { status: "available" | "on_duty" | "unavailable" | "suspended" }
+   */
+  static async updateDriverStatus(
+    driverId: string,
+    status: "available" | "on_duty" | "unavailable" | "suspended"
+  ): Promise<ApiResponse<any>> {
+    const response = await axiosInstance.put(
+      `/admin/drivers/${driverId}/status`,
+      { status }
+    );
+    return response.data;
+  }
+
   // Bulk create drivers (Admin)
   static async bulkCreateDrivers(data: {
     drivers: Array<{
