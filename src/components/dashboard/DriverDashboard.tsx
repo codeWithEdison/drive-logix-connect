@@ -802,9 +802,22 @@ export function DriverDashboard() {
 
                       {/* Action Buttons */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Status-based primary action */}
+                        {/* Status-based primary action: normalize status (API may return snake_case or camelCase) */}
                         {(() => {
-                          const status = activeDelivery?.status;
+                          const rawStatus =
+                            activeDelivery?.status ??
+                            (activeDelivery as any)?.cargo_status ??
+                            (activeDelivery as any)?.delivery_status;
+                          const status = rawStatus
+                            ? String(rawStatus)
+                                .trim()
+                                .toLowerCase()
+                                .replace(/\s+/g, "_")
+                                .replace("intransit", "in_transit")
+                                .replace("pickedup", "picked_up")
+                                .replace("fullyassigned", "fully_assigned")
+                                .replace("partiallyassigned", "partially_assigned")
+                            : "";
                           if (
                             [
                               "assigned",
@@ -874,17 +887,6 @@ export function DriverDashboard() {
                           <Phone className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                           {t("common.call")} {t("common.client")}
                         </Button>
-
-                        {activeDelivery?.status === "in_transit" && (
-                          <Button
-                            variant="outline"
-                            className="border-gray-300 hover:bg-gray-50 py-3 rounded-xl font-semibold"
-                            onClick={() => setIsDeliveryImageModalOpen(true)}
-                          >
-                            <Camera className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                            {t("common.upload")} {t("delivery.uploadProof")}
-                          </Button>
-                        )}
 
                         <Button
                           variant="outline"
