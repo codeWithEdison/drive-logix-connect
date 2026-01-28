@@ -46,6 +46,7 @@ import {
   Building2,
   Map,
 } from "lucide-react";
+import { formatCompactRevenue } from "@/lib/utils/frontend";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,11 +123,9 @@ export function SuperAdminDashboard() {
     },
     {
       title: "Total Revenue",
-      value: dashboardData?.data?.stats?.total_revenue
-        ? `RWF ${(dashboardData.data.stats.total_revenue / 1000000).toFixed(
-            1
-          )}M`
-        : "RWF 0M",
+      value: dashboardData?.data?.stats?.total_revenue != null
+        ? `RWF ${formatCompactRevenue(dashboardData.data.stats.total_revenue)}`
+        : "RWF 0",
       description: "All branches",
       icon: DollarSign,
       iconColor: "text-green-600",

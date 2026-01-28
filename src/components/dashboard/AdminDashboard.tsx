@@ -43,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { formatCompactRevenue } from "@/lib/utils/frontend";
 
 export function AdminDashboard() {
   // English-only: lightweight label formatter for legacy keys
@@ -90,11 +91,9 @@ export function AdminDashboard() {
   const adminStats = [
     {
       title: "Total Revenue",
-      value: dashboardData?.data?.stats?.monthly_revenue
-        ? `RWF ${(dashboardData.data.stats.monthly_revenue / 1000000).toFixed(
-            1
-          )}M`
-        : "RWF 0M",
+      value: dashboardData?.data?.stats?.monthly_revenue != null
+        ? `RWF ${formatCompactRevenue(dashboardData.data.stats.monthly_revenue)}`
+        : "RWF 0",
       description: "Total",
       icon: DollarSign,
       iconColor: "text-green-600",

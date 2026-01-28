@@ -125,6 +125,22 @@ export const formatNumber = (
   }
 };
 
+/**
+ * Format revenue in compact form: thousands (K) or millions (M) as appropriate.
+ * e.g. 500 → "500", 1_500 → "1.5K", 1_500_000 → "1.5M"
+ */
+export const formatCompactRevenue = (value: number): string => {
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000;
+    return m >= 10 ? `${Math.round(m)}M` : `${m.toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    const k = value / 1_000;
+    return k >= 10 ? `${Math.round(k)}K` : `${k.toFixed(1)}K`;
+  }
+  return Math.round(value).toString();
+};
+
 // ===========================================
 // STRING UTILITIES
 // ===========================================

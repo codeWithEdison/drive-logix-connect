@@ -14,6 +14,7 @@ import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { useRevenueChart } from "@/lib/api/hooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatCompactRevenue } from "@/lib/utils/frontend";
 
 interface RevenueTrendsData {
   daily_revenue: Array<{
@@ -73,23 +74,12 @@ export function RevenueChart({
     }
   };
 
-  const getYAxisFormatter = (value: number) => {
-    switch (selectedPeriod) {
-      case "month":
-        return `${(value / 1000000).toFixed(0)}M`;
-      default:
-        return `${(value / 1000000).toFixed(1)}M`;
-    }
-  };
+  const getYAxisFormatter = (value: number) => formatCompactRevenue(value);
 
-  const getTooltipFormatter = (value: number) => {
-    switch (selectedPeriod) {
-      case "month":
-        return [`RWF ${(value / 1000000).toFixed(0)}M`, t("common.revenue")];
-      default:
-        return [`RWF ${(value / 1000).toFixed(0)}K`, t("common.revenue")];
-    }
-  };
+  const getTooltipFormatter = (value: number) => [
+    `RWF ${formatCompactRevenue(value)}`,
+    t("common.revenue"),
+  ];
 
   const currentData = getData();
   const currentRevenue = currentData[currentData.length - 1]?.revenue || 0;
