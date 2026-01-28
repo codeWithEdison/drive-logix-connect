@@ -57,6 +57,7 @@ import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { customToast } from "@/lib/utils/toast";
+import { formatDateTime } from "@/lib/utils/frontend";
 import { DriverStatus } from "@/types/shared";
 import { mapDashboardCargosToCargoDetails } from "@/lib/utils/cargoMapper";
 import {
@@ -84,7 +85,7 @@ import { useUpdateCargoStatus } from "@/lib/api/hooks/cargoHooks";
 import { CargoImageType, CargoStatus } from "@/types/shared";
 
 export function DriverDashboard() {
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -755,7 +756,12 @@ export function DriverDashboard() {
                               {activeDelivery?.pickup_address}
                             </p>
                             <p className="text-xs text-green-600 font-medium mt-1">
-                              {activeDelivery?.pickup_time}
+                              {activeDelivery?.pickup_time
+                                ? formatDateTime(
+                                    activeDelivery.pickup_time,
+                                    currentLanguage
+                                  )
+                                : "-"}
                             </p>
                           </div>
                         </div>
@@ -774,7 +780,12 @@ export function DriverDashboard() {
                               {activeDelivery?.delivery_address}
                             </p>
                             <p className="text-xs text-red-600 font-medium mt-1">
-                              {activeDelivery?.estimated_delivery_time}
+                              {activeDelivery?.estimated_delivery_time
+                                ? formatDateTime(
+                                    activeDelivery.estimated_delivery_time,
+                                    currentLanguage
+                                  )
+                                : "-"}
                             </p>
                           </div>
                         </div>
