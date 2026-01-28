@@ -637,6 +637,7 @@ export interface Invoice {
   id: UUID;
   invoice_number: string;
   cargo_id: UUID;
+  pricing_policy_id?: string | null; // NEW: Policy ID (null if created with manual subtotal)
   subtotal: number;
   tax_amount: number;
   discount_amount: number;
@@ -670,15 +671,41 @@ export interface Invoice {
       phone: string;
     };
   };
+  // NEW: Pricing policy object (only in detail response)
+  pricing_policy?: {
+    id: string;
+    name: string;
+    rate_per_kg: number;
+    minimum_fare?: number | null;
+  };
 }
 
 export interface CreateInvoiceRequest {
   cargo_id: UUID;
-  subtotal: number;
+  pricing_policy_id?: string; // NEW: Recommended - use policy for pricing
+  subtotal?: number; // Required if pricing_policy_id not provided (legacy)
   tax_amount?: number;
   discount_amount?: number;
   currency?: string;
   due_date?: string;
+  notes?: string;
+}
+
+// Pricing Policy interface (base_rate_per_km and minimum_fare removed from API)
+export interface PricingPolicy {
+  id: UUID;
+  name: string;
+  rate_per_kg: number;
+  base_rate_per_km?: number; // Deprecated – no longer sent/used
+  minimum_fare?: number | null; // Deprecated – no longer sent/used
+  surcharge_type?: string | null;
+  surcharge_amount?: number | null;
+  surcharge_description?: string | null;
+  discount_percent?: number | null;
+  is_active: boolean;
+  valid_from?: string | null; // Legacy (not used for selection)
+  valid_until?: string | null; // Legacy (not used for selection)
+  created_at: string;
 }
 
 // ===========================================

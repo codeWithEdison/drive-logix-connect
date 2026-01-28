@@ -208,8 +208,10 @@ export const useEstimateCargoCost = () => {
   return useMutation({
     mutationFn: (data: {
       weight_kg: number;
-      distance_km: number;
-      category_id: string;
+      distance_km?: number; // Optional (not used in calculation)
+      category_id?: string;
+      type?: string;
+      volume?: number;
     }) => CargoService.estimateCost(data),
   });
 };

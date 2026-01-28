@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calculator, DollarSign, Package, FileText, AlertCircle } from "lucide-react";
 import { useGenerateInvoice } from "@/lib/api/hooks/invoiceHooks";
-import { useAllCargos, useEstimateCargoCost } from "@/lib/api/hooks/cargoHooks";
+import { useAllCargos } from "@/lib/api/hooks/cargoHooks";
+import { usePricingPolicies } from "@/lib/api/hooks/utilityHooks";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils/frontend";
 
@@ -41,6 +36,7 @@ export default function NewInvoiceModal({
   // Form state - simplified to only essential fields
   const [formData, setFormData] = useState({
     cargoId: "",
+    pricingPolicyId: "", // Selected policy; price calculated from policy × weight
     subtotal: 0,
     taxAmount: 0,
     discountAmount: 0,
@@ -52,13 +48,10 @@ export default function NewInvoiceModal({
   // API hooks
   const generateInvoiceMutation = useGenerateInvoice();
   const { data: cargosData } = useAllCargos({ limit: 100 });
-  const estimateCostMutation = useEstimateCargoCost();
-
-  // Request throttling and state tracking
-  const [hasEstimatedCost, setHasEstimatedCost] = useState(false);
-  const [lastEstimationParams, setLastEstimationParams] = useState<string>("");
-  const estimationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isEstimatingRef = useRef(false);
+  const {
+    data: pricingPolicies = [],
+    isLoading: isLoadingPolicies,
+  } = usePricingPolicies({ is_active: true });
 
   // Validation errors state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -70,128 +63,23 @@ export default function NewInvoiceModal({
     return data;
   }, [cargosData]);
 
+  const selectedCargo = cargos.find(
+    (cargo: any) => cargo.id === formData.cargoId
+  );
+
   // Calculate total amount - this is now computed directly in the render
   const totalAmount =
     formData.subtotal + formData.taxAmount - formData.discountAmount;
 
-  // Throttled estimation function to prevent infinite requests
-  const throttledEstimateCost = useCallback(
-    (cargo: any, forceRecalculate = false) => {
-      const params = `${cargo.weight_kg}-${cargo.distance_km}-${cargo.category_id}`;
-
-      // Skip if already estimated with same parameters (unless forced)
-      if (
-        !forceRecalculate &&
-        hasEstimatedCost &&
-        lastEstimationParams === params
-      ) {
-        console.log(
-          "💰 Skipping estimation - already estimated with same parameters"
-        );
-        return;
-      }
-
-      // Skip if already estimating
-      if (isEstimatingRef.current) {
-        console.log("💰 Skipping estimation - already in progress");
-        return;
-      }
-
-      // Clear any existing timeout
-      if (estimationTimeoutRef.current) {
-        clearTimeout(estimationTimeoutRef.current);
-      }
-
-      // Set timeout to prevent rapid successive calls
-      estimationTimeoutRef.current = setTimeout(() => {
-        if (isEstimatingRef.current) {
-          console.log("💰 Skipping estimation - timeout but still estimating");
-          return;
-        }
-
-        isEstimatingRef.current = true;
-        setLastEstimationParams(params);
-
-        console.log("💰 Estimating cost for cargo:", {
-          weight_kg: cargo.weight_kg,
-          distance_km: cargo.distance_km,
-          category_id: cargo.category_id,
-        });
-
-        estimateCostMutation.mutate(
-          {
-            weight_kg: cargo.weight_kg,
-            distance_km: cargo.distance_km,
-            category_id: cargo.category_id,
-          },
-          {
-            onSuccess: (response) => {
-              const estimatedCost = response.data?.estimated_cost || 0;
-              console.log("💰 Cost estimated:", estimatedCost);
-              setFormData((prev) => ({
-                ...prev,
-                subtotal: estimatedCost,
-              }));
-              setHasEstimatedCost(true);
-              isEstimatingRef.current = false;
-            },
-            onError: (error) => {
-              console.error("💰 Cost estimation failed:", error);
-              // Fallback to existing estimated_cost if available
-              if (cargo.estimated_cost) {
-                setFormData((prev) => ({
-                  ...prev,
-                  subtotal: Number(cargo.estimated_cost) || 0,
-                }));
-              }
-              setHasEstimatedCost(true);
-              isEstimatingRef.current = false;
-            },
-          }
-        );
-      }, 500); // 500ms debounce
-    },
-    [hasEstimatedCost, lastEstimationParams, estimateCostMutation]
-  );
-
-  // Auto-populate cargo data when preselectedCargoId is provided
+  // Auto-populate cargo and due date when preselectedCargoId is provided (price comes from policy)
   useEffect(() => {
     if (isOpen && preselectedCargoId && cargos.length > 0) {
       const cargo = cargos.find((c: any) => c.id === preselectedCargoId);
       if (cargo) {
-        console.log("📦 Auto-populating cargo data:", {
-          cargoId: preselectedCargoId,
-          estimated_cost: cargo.estimated_cost,
-          weight_kg: cargo.weight_kg,
-          distance_km: cargo.distance_km,
-          category_id: cargo.category_id,
-        });
-
-        // Set cargo ID
         setFormData((prev) => ({
           ...prev,
           cargoId: preselectedCargoId,
         }));
-
-        // Prioritize existing estimated_cost over recalculation
-        if (cargo.estimated_cost && cargo.estimated_cost > 0) {
-          console.log(
-            "💰 Using existing estimated cost:",
-            cargo.estimated_cost
-          );
-          setFormData((prev) => ({
-            ...prev,
-            subtotal: Number(cargo.estimated_cost) || 0,
-          }));
-          setHasEstimatedCost(true);
-        } else if (cargo.weight_kg && cargo.distance_km && cargo.category_id) {
-          console.log("💰 No existing cost, estimating new cost...");
-          throttledEstimateCost(cargo);
-        } else {
-          console.log("⚠️ Insufficient data for cost estimation");
-        }
-
-        // Set due date to one day before pickup date
         if (cargo.pickup_date) {
           const pickupDate = new Date(cargo.pickup_date);
           const dueDate = new Date(pickupDate);
@@ -201,7 +89,6 @@ export default function NewInvoiceModal({
             dueDate: dueDate.toISOString().split("T")[0],
           }));
         } else {
-          // Fallback: 30 days from now if no pickup date
           const futureDate = new Date();
           futureDate.setDate(futureDate.getDate() + 30);
           setFormData((prev) => ({
@@ -211,16 +98,24 @@ export default function NewInvoiceModal({
         }
       }
     }
-  }, [isOpen, preselectedCargoId, cargos, throttledEstimateCost]);
+  }, [isOpen, preselectedCargoId, cargos]);
 
-  // Cleanup effect to clear timeouts
+  // Calculate subtotal when policy + weight changes
   useEffect(() => {
-    return () => {
-      if (estimationTimeoutRef.current) {
-        clearTimeout(estimationTimeoutRef.current);
+    if (formData.pricingPolicyId && selectedCargo?.weight_kg) {
+      const policy = pricingPolicies.find((p: any) => p.id === formData.pricingPolicyId);
+      if (policy) {
+        const calculatedSubtotal = (policy.rate_per_kg || 0) * (selectedCargo.weight_kg || 0);
+        const finalSubtotal = policy.minimum_fare && calculatedSubtotal < policy.minimum_fare
+          ? policy.minimum_fare
+          : calculatedSubtotal;
+        setFormData((prev) => ({
+          ...prev,
+          subtotal: finalSubtotal,
+        }));
       }
-    };
-  }, []);
+    }
+  }, [formData.pricingPolicyId, selectedCargo?.weight_kg, pricingPolicies]);
 
   // Handlers
   const handleInputChange = (field: string, value: any) => {
@@ -249,8 +144,11 @@ export default function NewInvoiceModal({
       validationErrors.cargoId = "Please select a cargo";
     }
 
+    if (!formData.pricingPolicyId) {
+      validationErrors.pricingPolicyId = "Please select a pricing policy";
+    }
     if (formData.subtotal <= 0) {
-      validationErrors.subtotal = "Please enter a valid subtotal amount";
+      validationErrors.subtotal = "Subtotal is calculated after you select a pricing policy";
     }
 
     // Validate notes - required and cannot be empty or whitespace only
@@ -268,15 +166,16 @@ export default function NewInvoiceModal({
     }
 
     try {
-      const invoiceData = {
+      const invoiceData: any = {
         cargo_id: formData.cargoId,
-        subtotal: formData.subtotal,
         tax_amount: formData.taxAmount,
         discount_amount: formData.discountAmount,
         currency: formData.currency,
         due_date: formData.dueDate,
         notes: formData.notes.trim(), // Trim whitespace before sending
       };
+
+      invoiceData.pricing_policy_id = formData.pricingPolicyId;
 
       await generateInvoiceMutation.mutateAsync(invoiceData);
       toast.success("Invoice created successfully!");
@@ -300,6 +199,7 @@ export default function NewInvoiceModal({
     // Reset form and estimation state
     setFormData({
       cargoId: "",
+      pricingPolicyId: "",
       subtotal: 0,
       taxAmount: 0,
       discountAmount: 0,
@@ -308,9 +208,6 @@ export default function NewInvoiceModal({
       notes: "",
     });
     setErrors({});
-    setHasEstimatedCost(false);
-    setLastEstimationParams("");
-    isEstimatingRef.current = false;
     onClose();
   };
 
@@ -332,145 +229,80 @@ export default function NewInvoiceModal({
     formattedTotal: formatCurrency(totalAmount),
   });
 
-  const selectedCargo = cargos.find(
-    (cargo: any) => cargo.id === formData.cargoId
-  );
-
   return (
     <div className="space-y-8">
-      {/* Enhanced Header Info */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <DollarSign className="h-6 w-6 text-blue-600" />
-          </div>
+      {/* Header – clear section */}
+      <section
+        className="rounded-xl border border-gray-200 bg-white p-6"
+        aria-labelledby="new-invoice-heading"
+      >
+        <div className="flex items-center gap-2 mb-5 pb-4 border-b border-gray-100">
+          <DollarSign className="h-5 w-5 text-blue-600" />
           <div>
-            <h3 className="text-xl font-bold text-blue-900">
+            <h2 id="new-invoice-heading" className="text-lg font-semibold text-gray-800">
               Create New Invoice
-            </h3>
-            <p className="text-sm text-blue-700 font-medium">
+            </h2>
+            <p className="text-sm text-gray-500 font-normal mt-0.5">
               Step 2: Generate billing document
             </p>
           </div>
         </div>
-        <p className="text-blue-600">
+        <p className="text-sm text-gray-600">
           Create a professional invoice for the selected cargo delivery with
           automatic cost calculation.
         </p>
-      </div>
+      </section>
 
-      {/* Enhanced Cargo Information Display */}
+      {/* Cargo Information – single section, clear data */}
       {selectedCargo && (
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-          <CardHeader className="bg-gray-50 border-b border-gray-200">
-            <CardTitle className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Package className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">
-                  Cargo Information
-                </h3>
-                <p className="text-gray-600 text-sm font-normal">
-                  Shipment details for invoice
-                </p>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <p className="text-sm font-medium text-gray-600">Cargo ID</p>
-                </div>
-                <p className="text-xl font-bold text-gray-900 font-mono">
-                  {selectedCargo.cargo_number || selectedCargo.id}
-                </p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <p className="text-sm font-medium text-gray-600">Status</p>
-                </div>
-                <Badge
-                  variant="outline"
-                  className="text-sm px-3 py-1 font-medium"
-                >
+        <section
+          className="rounded-xl border border-gray-200 bg-white p-6"
+          aria-labelledby="cargo-info-heading"
+        >
+          <div className="flex items-center gap-2 mb-5 pb-4 border-b border-gray-100">
+            <Package className="h-5 w-5 text-blue-600" />
+            <h3 id="cargo-info-heading" className="text-lg font-semibold text-gray-800">
+              Cargo Information
+            </h3>
+          </div>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+            <div>
+              <dt className="text-gray-500 font-medium mb-0.5">Cargo number</dt>
+              <dd className="text-gray-900 font-mono font-semibold">
+                {selectedCargo.cargo_number || selectedCargo.id}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-500 font-medium mb-0.5">Status</dt>
+              <dd>
+                <Badge variant="outline" className="text-xs font-medium">
                   {selectedCargo.status}
                 </Badge>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm md:col-span-2 lg:col-span-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <p className="text-sm font-medium text-gray-600">Route</p>
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-gray-900 truncate">
-                    📍 {selectedCargo.pickup_address}
-                  </p>
-                  <div className="flex items-center justify-center my-1">
-                    <div className="w-full h-px bg-gray-300"></div>
-                    <span className="px-2 text-gray-400">→</span>
-                    <div className="w-full h-px bg-gray-300"></div>
-                  </div>
-                  <p className="font-medium text-gray-900 truncate">
-                    🎯 {selectedCargo.destination_address}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <p className="text-sm font-medium text-gray-600">
-                    Weight & Type
-                  </p>
-                </div>
-                <p className="text-sm font-medium text-gray-900">
-                  {selectedCargo.weight_kg}kg •{" "}
-                  {selectedCargo.type || "General"}
-                </p>
-              </div>
-
-              {selectedCargo.estimated_cost && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <p className="text-sm font-medium text-green-700">
-                      Estimated Cost
-                    </p>
-                  </div>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(selectedCargo.estimated_cost)}
-                  </p>
-                  {estimateCostMutation.isPending && (
-                    <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
-                      <div className="animate-spin rounded-full h-3 w-3 border-b border-green-600"></div>
-                      Recalculating cost...
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedCargo.pickup_date && (
-                <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <p className="text-sm font-medium text-gray-600">
-                      Pickup Date
-                    </p>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {new Date(selectedCargo.pickup_date).toLocaleDateString()}
-                  </p>
-                </div>
-              )}
+              </dd>
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <dt className="text-gray-500 font-medium mb-0.5">Weight & type</dt>
+              <dd className="text-gray-900 font-medium">
+                {selectedCargo.weight_kg} kg • {selectedCargo.type || "General"}
+              </dd>
+            </div>
+            {selectedCargo.pickup_date ? (
+              <div>
+                <dt className="text-gray-500 font-medium mb-0.5">Pickup date</dt>
+                <dd className="text-gray-900 font-medium">
+                  {new Date(selectedCargo.pickup_date).toLocaleDateString()}
+                </dd>
+              </div>
+            ) : null}
+            <div className="sm:col-span-2 lg:col-span-3">
+              <dt className="text-gray-500 font-medium mb-0.5">Route</dt>
+              <dd className="text-gray-900 mt-1 space-y-1">
+                <p className="font-medium">Pickup: {selectedCargo.pickup_address || "—"}</p>
+                <p className="font-medium">Delivery: {selectedCargo.destination_address || "—"}</p>
+              </dd>
+            </div>
+          </dl>
+        </section>
       )}
 
       {/* Enhanced Invoice Details */}
@@ -491,6 +323,86 @@ export default function NewInvoiceModal({
           </CardTitle>
         </CardHeader>
         <CardContent className="p-8 space-y-8">
+          {/* Pricing Policy – select policy, price shown below */}
+          <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 bg-blue-500 rounded-full" />
+              <h4 className="font-semibold text-gray-800 text-lg">
+                Pricing Policy
+              </h4>
+            </div>
+            <div className="space-y-3">
+              <Label
+                htmlFor="pricingPolicyId"
+                className="text-sm font-medium text-gray-700"
+              >
+                Select Pricing Policy *
+              </Label>
+              <Select
+                value={formData.pricingPolicyId}
+                onValueChange={(value) => {
+                  handleInputChange("pricingPolicyId", value);
+                  if (selectedCargo?.weight_kg && value) {
+                    const policy = pricingPolicies.find((p: any) => p.id === value);
+                    if (policy) {
+                      const calculatedSubtotal = (policy.rate_per_kg || 0) * (selectedCargo.weight_kg || 0);
+                      const finalSubtotal = policy.minimum_fare && calculatedSubtotal < policy.minimum_fare
+                        ? policy.minimum_fare
+                        : calculatedSubtotal;
+                      setFormData((prev) => ({
+                        ...prev,
+                        subtotal: finalSubtotal,
+                      }));
+                    }
+                  }
+                }}
+                disabled={isLoadingPolicies}
+              >
+                <SelectTrigger id="pricingPolicyId" className="h-11">
+                  <SelectValue placeholder={isLoadingPolicies ? "Loading policies..." : "Select a pricing policy"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {pricingPolicies.length === 0 ? (
+                    <SelectItem value="none" disabled>
+                      {isLoadingPolicies ? "Loading..." : "No active policies available"}
+                    </SelectItem>
+                  ) : (
+                    pricingPolicies.map((policy: any) => (
+                      <SelectItem key={policy.id} value={policy.id}>
+                        {policy.name} - {formatCurrency(policy.rate_per_kg || 0)}/kg
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {errors.pricingPolicyId && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.pricingPolicyId}
+                </p>
+              )}
+              {formData.pricingPolicyId && selectedCargo?.weight_kg && (
+                <div className="bg-white p-4 rounded-lg border border-blue-200">
+                  <p className="text-sm font-medium text-gray-800">
+                    Subtotal: {formatCurrency(formData.subtotal)}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {selectedCargo.weight_kg} kg × {formatCurrency(
+                      pricingPolicies.find((p: any) => p.id === formData.pricingPolicyId)?.rate_per_kg || 0
+                    )}/kg
+                    {(() => {
+                      const policy = pricingPolicies.find((p: any) => p.id === formData.pricingPolicyId);
+                      if (policy?.minimum_fare && formData.subtotal === policy.minimum_fare) {
+                        return " (minimum fare applied)";
+                      }
+                      return "";
+                    })()}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Subtotal Section */}
           <div className="bg-emerald-50 rounded-xl p-6 border border-emerald-100">
             <div className="flex items-center gap-2 mb-4">
@@ -502,68 +414,29 @@ export default function NewInvoiceModal({
 
             <div className="space-y-4">
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Label
-                    htmlFor="subtotal"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Subtotal (RWF) *
-                  </Label>
-                  {estimateCostMutation.isPending && (
-                    <div className="flex items-center gap-1 text-emerald-600">
-                      <div className="animate-spin rounded-full h-3 w-3 border-b border-emerald-600"></div>
-                      <span className="text-xs">Auto-calculating...</span>
-                    </div>
-                  )}
-                </div>
-                <div className="relative">
-                  <Input
-                    id="subtotal"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={formData.subtotal}
-                    onChange={(e) =>
-                      handleInputChange("subtotal", Number(e.target.value) || 0)
-                    }
-                    placeholder="Enter subtotal amount"
-                    disabled={estimateCostMutation.isPending}
-                    className={`h-12 text-lg font-semibold border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 ${
-                      estimateCostMutation.isPending ? "bg-emerald-50" : ""
-                    }`}
-                  />
-                  {estimateCostMutation.isPending && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
-                    </div>
-                  )}
-                </div>
-                {estimateCostMutation.isPending && (
-                  <p className="text-xs text-emerald-600">
-                    💰 Calculating cost based on cargo details...
+                <Label
+                  htmlFor="subtotal"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Calculated Subtotal (RWF)
+                </Label>
+                <Input
+                  id="subtotal"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.subtotal}
+                  readOnly
+                  placeholder="Select a pricing policy above"
+                  disabled
+                  className="h-12 text-lg font-semibold border-gray-200 bg-emerald-50"
+                />
+                {errors.subtotal && (
+                  <p className="text-sm text-red-600 flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {errors.subtotal}
                   </p>
                 )}
-                {selectedCargo &&
-                  selectedCargo.weight_kg &&
-                  selectedCargo.distance_km &&
-                  selectedCargo.category_id && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Force recalculation by resetting estimation state
-                        setHasEstimatedCost(false);
-                        setLastEstimationParams("");
-                        throttledEstimateCost(selectedCargo, true);
-                      }}
-                      disabled={estimateCostMutation.isPending}
-                      className="h-9 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-400"
-                    >
-                      <Calculator className="h-3 w-3 mr-1" />
-                      Recalculate Cost
-                    </Button>
-                  )}
               </div>
             </div>
           </div>

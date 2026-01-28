@@ -5,6 +5,7 @@ import {
   AdminService,
   FileService,
   UserService,
+  OperationalService,
 } from "../services";
 import { queryKeys } from "../queryClient";
 import {
@@ -686,5 +687,21 @@ export const useApproveEntity = () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.drivers.all() });
       }
     },
+  });
+};
+
+/**
+ * Get pricing policies (for invoice creation)
+ * GET /operational/pricing-policies?is_active=true
+ */
+export const usePricingPolicies = (params?: {
+  is_active?: boolean;
+  vehicle_type?: string;
+}) => {
+  return useQuery({
+    queryKey: queryKeys.operational.pricingPolicies(params),
+    queryFn: () => OperationalService.getPricingPolicies(params),
+    select: (data) => data.data || [],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 };

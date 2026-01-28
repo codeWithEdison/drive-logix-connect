@@ -1,5 +1,5 @@
 import axiosInstance from "../axios";
-import { ApiResponse } from "../../../types/shared";
+import { ApiResponse, PricingPolicy } from "../../../types/shared";
 
 export class LocalizationService {
   // Get translations
@@ -135,7 +135,7 @@ export class OperationalService {
   static async getPricingPolicies(params?: {
     is_active?: boolean;
     vehicle_type?: string;
-  }): Promise<ApiResponse<any[]>> {
+  }): Promise<ApiResponse<PricingPolicy[]>> {
     const response = await axiosInstance.get("/operational/pricing-policies", {
       params,
     });

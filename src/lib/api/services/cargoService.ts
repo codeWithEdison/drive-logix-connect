@@ -158,26 +158,28 @@ export class CargoService {
     return response.data;
   }
 
-  // Estimate cargo cost
+  // Estimate cargo cost (weight-only pricing, distance optional)
   static async estimateCost(data: {
     weight_kg: number;
-    distance_km: number;
-    category_id: string;
+    distance_km?: number; // Optional (not used in calculation)
+    category_id?: string;
+    type?: string;
+    volume?: number;
   }): Promise<
     ApiResponse<{
       estimated_cost: number;
       breakdown: {
-        base_cost: number;
-        weight_cost: number;
-        distance_cost: number;
+        weight_cost: number; // rate_per_kg × weight_kg
+        distance_cost: number; // Always 0 (distance not used)
         category_multiplier: number;
-        total_distance_km: number;
+        total_distance_km?: number | null; // Same as input (reference only)
         currency: string;
       };
       pricing_policy: {
-        base_rate_per_km: number;
+        id: string;
+        name: string;
         rate_per_kg: number;
-        minimum_fare: number;
+        minimum_fare?: number | null;
       };
     }>
   > {

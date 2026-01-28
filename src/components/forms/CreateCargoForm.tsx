@@ -109,11 +109,10 @@ export function CreateCargoForm() {
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [pickupBranchId, setPickupBranchId] = useState<string | null>(null);
   const [costBreakdown, setCostBreakdown] = useState<{
-    base_cost: number;
     weight_cost: number;
     distance_cost: number;
     category_multiplier: number;
-    total_distance_km: number;
+    total_distance_km?: number;
     currency: string;
   } | null>(null);
   const [cargoData, setCargoData] = useState<{
@@ -2687,82 +2686,15 @@ export function CreateCargoForm() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4 sm:space-y-6">
-              {/* Cost Breakdown */}
-              <div className="bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 backdrop-blur-sm rounded-2xl p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3 border border-blue-100/50">
-                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900">
+              {/* Pricing info note (no live estimate on create) */}
+              <div className="bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-purple-50/80 backdrop-blur-sm rounded-2xl p-3 sm:p-4 md:p-6 border border-blue-100/50">
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-2">
                   {t("createCargo.steps.confirmation.costBreakdown")}
                 </h3>
-                {estimateCostMutation.isPending ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ) : estimateCostMutation.error ? (
-                  <div className="text-center py-4">
-                    <AlertCircle className="h-8 w-8 mx-auto text-red-500 mb-2" />
-                    <p className="text-red-600 text-sm">
-                      {t("createCargo.steps.confirmation.costError")}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-                    {costBreakdown ? (
-                      <>
-                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
-                          <span className="text-gray-700 font-medium">
-                            Base Cost
-                          </span>
-                          <span className="font-bold text-gray-900">
-                            RWF {costBreakdown.base_cost.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
-                          <span className="text-gray-700 font-medium">
-                            Weight Cost ({formData.weight}kg)
-                          </span>
-                          <span className="font-bold text-gray-900">
-                            RWF {costBreakdown.weight_cost.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
-                          <span className="text-gray-700 font-medium">
-                            Distance Cost ({costBreakdown.total_distance_km}km)
-                          </span>
-                          <span className="font-bold text-gray-900">
-                            RWF {costBreakdown.distance_cost.toLocaleString()}
-                          </span>
-                        </div>
-                        {costBreakdown.category_multiplier > 1 && (
-                          <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
-                            <span className="text-gray-700 font-medium">
-                              Category Multiplier (
-                              {costBreakdown.category_multiplier}x)
-                            </span>
-                            <span className="font-bold text-green-600">
-                              Applied
-                            </span>
-                          </div>
-                        )}
-                        <div className="border-t-2 border-blue-200 pt-3 sm:pt-4 flex justify-between items-center bg-gradient-to-r from-blue-100/80 to-indigo-100/80 rounded-xl p-3 sm:p-4">
-                          <span className="text-sm sm:text-base md:text-lg font-bold text-gray-900">
-                            {t("createCargo.steps.confirmation.totalCost")}
-                          </span>
-                          <span className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                            RWF {estimatedCost.toLocaleString()}
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-4 sm:py-6">
-                        <p className="text-xs sm:text-sm text-gray-600">
-                          Cost breakdown will be calculated after location
-                          selection
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <p className="text-xs sm:text-sm text-gray-700">
+                  Price will be available after our team reviews your cargo details
+                  and generates an invoice.
+                </p>
               </div>
 
               {/* Summary */}
@@ -2918,14 +2850,6 @@ export function CreateCargoForm() {
                     </span>
                     <span className="text-xs sm:text-sm md:text-base font-bold text-gray-900">
                       {cargoData?.cargo_number || "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">
-                    <span className="text-xs sm:text-sm text-gray-700 font-medium">
-                      {t("createCargo.steps.success.totalAmount")}
-                    </span>
-                    <span className="text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                      RWF {estimatedCost.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-2 sm:p-3 bg-white/60 rounded-xl">

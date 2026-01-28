@@ -33,6 +33,7 @@ import {
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUpdateInvoiceStatus } from "@/lib/api/hooks/invoiceHooks";
+import { InvoiceStatus } from "@/types/shared";
 import { toast } from "sonner";
 import PaymentConfirmationModal from "@/components/modals/PaymentConfirmationModal";
 import OfflinePaymentVerificationModal from "@/components/modals/OfflinePaymentVerificationModal";
@@ -41,6 +42,7 @@ export interface InvoiceDetail {
   id: string;
   invoice_number: string;
   cargo_id: string;
+  pricing_policy_id?: string | null; // NEW: Policy ID
   subtotal: string;
   tax_amount: string;
   discount_amount: string;
@@ -61,6 +63,13 @@ export interface InvoiceDetail {
     type: string;
     pickup_address: string;
     destination_address: string;
+  };
+  // NEW: Pricing policy object (from API detail response)
+  pricing_policy?: {
+    id: string;
+    name: string;
+    rate_per_kg: number;
+    minimum_fare?: number | null;
   };
 }
 
@@ -143,8 +152,8 @@ export function InvoiceDetailModal({
     }
   };
 
-  const formatCurrency = (amount: string, currency: string) => {
-    const numAmount = parseFloat(amount);
+  const formatCurrency = (amount: string | number, currency: string) => {
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
     return new Intl.NumberFormat("rw-RW", {
       style: "currency",
       currency: currency,
@@ -231,7 +240,7 @@ export function InvoiceDetailModal({
     try {
       await updateInvoiceStatusMutation.mutateAsync({
         id: invoice.id,
-        data: { status: "paid" },
+        data: { status: InvoiceStatus.PAID },
       });
       toast.success(t("invoices.markAsPaidSuccess") ?? "Invoice marked as paid");
       onPaymentSuccess?.({ invoiceId: invoice.id, status: "paid" });
@@ -372,6 +381,28 @@ export function InvoiceDetailModal({
               </h3>
             </div>
             <div className="space-y-3">
+              {/* Pricing Policy Section */}
+              {invoice.pricing_policy && (
+                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Receipt className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-semibold text-blue-900">
+                      {t("invoices.pricingPolicyUsed") || "Pricing Policy Used"}
+                    </span>
+                  </div>
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium">{invoice.pricing_policy.name}</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      {t("invoices.ratePerKg") || "Rate"}: {formatCurrency(invoice.pricing_policy.rate_per_kg, invoice.currency)}/kg
+                      {invoice.pricing_policy.minimum_fare && (
+                        <span className="ml-2">
+                          • {t("invoices.minimumFare") || "Min"}: {formatCurrency(invoice.pricing_policy.minimum_fare, invoice.currency)}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">
                   {t("invoices.subtotalLabel")}:

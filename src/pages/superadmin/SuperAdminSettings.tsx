@@ -22,6 +22,7 @@ import {
   useUpdateServiceArea,
   useToggleServiceArea,
 } from "@/lib/api/hooks";
+import { OperationalService } from "@/lib/api/services";
 import type {
   CreateServiceAreaRequest,
   UpdateServiceAreaRequest,
@@ -35,16 +36,9 @@ export default function SuperAdminSettings() {
   // Pricing policies state and CRUD
   interface CreatePricingPolicyRequest {
     name: string;
-    base_rate_per_km: number;
     rate_per_kg: number;
-    minimum_fare?: number | null;
-    surcharge_type?: "fixed" | "percent" | null;
-    surcharge_amount?: number | null;
-    surcharge_description?: string | null;
     discount_percent?: number | null;
     is_active?: boolean;
-    valid_from?: string | Date | null;
-    valid_until?: string | Date | null;
   }
 
   type UpdatePricingPolicyRequest = Partial<CreatePricingPolicyRequest>;
@@ -56,16 +50,9 @@ export default function SuperAdminSettings() {
   const [isSavingPolicy, setIsSavingPolicy] = useState(false);
   const [policyForm, setPolicyForm] = useState<CreatePricingPolicyRequest>({
     name: "",
-    base_rate_per_km: 0,
     rate_per_kg: 0,
-    minimum_fare: 0,
-    surcharge_type: "fixed",
-    surcharge_amount: 0,
-    surcharge_description: "",
     discount_percent: 0,
     is_active: true,
-    valid_from: null,
-    valid_until: null,
   });
 
   const validatePricingPolicy = (data: CreatePricingPolicyRequest) => {
@@ -78,16 +65,6 @@ export default function SuperAdminSettings() {
       errors.push("Name must be at most 100 characters.");
     }
 
-    if (data.base_rate_per_km === null || data.base_rate_per_km === undefined) {
-      errors.push("Base rate per km is required.");
-    } else if (
-      typeof data.base_rate_per_km !== "number" ||
-      isNaN(data.base_rate_per_km) ||
-      data.base_rate_per_km <= 0
-    ) {
-      errors.push("Base rate per km must be a positive number.");
-    }
-
     if (data.rate_per_kg === null || data.rate_per_kg === undefined) {
       errors.push("Rate per kg is required.");
     } else if (
@@ -96,41 +73,6 @@ export default function SuperAdminSettings() {
       data.rate_per_kg < 0
     ) {
       errors.push("Rate per kg must be a number greater than or equal to 0.");
-    }
-
-    if (data.minimum_fare !== null && data.minimum_fare !== undefined) {
-      if (
-        typeof data.minimum_fare !== "number" ||
-        isNaN(data.minimum_fare) ||
-        data.minimum_fare < 0
-      ) {
-        errors.push(
-          "Minimum fare must be a number greater than or equal to 0."
-        );
-      }
-    }
-
-    if (
-      data.surcharge_type &&
-      !["fixed", "percent"].includes(data.surcharge_type)
-    ) {
-      errors.push("Surcharge type must be either 'fixed' or 'percent'.");
-    }
-
-    if (data.surcharge_amount !== null && data.surcharge_amount !== undefined) {
-      if (
-        typeof data.surcharge_amount !== "number" ||
-        isNaN(data.surcharge_amount) ||
-        data.surcharge_amount < 0
-      ) {
-        errors.push(
-          "Surcharge amount must be a number greater than or equal to 0."
-        );
-      }
-    }
-
-    if (data.surcharge_description && data.surcharge_description.length > 255) {
-      errors.push("Surcharge description must be at most 255 characters.");
     }
 
     if (data.discount_percent !== null && data.discount_percent !== undefined) {
@@ -145,35 +87,16 @@ export default function SuperAdminSettings() {
       }
     }
 
-    if (data.valid_from) {
-      const d = new Date(data.valid_from);
-      if (isNaN(d.getTime())) {
-        errors.push("Valid from must be a valid date.");
-      }
-    }
-
-    if (data.valid_until) {
-      const d = new Date(data.valid_until);
-      if (isNaN(d.getTime())) {
-        errors.push("Valid until must be a valid date.");
-      }
-    }
-
     return errors;
   };
 
   const fetchPricingPolicies = async () => {
     try {
       setIsLoadingPolicies(true);
-      const res = await axiosInstance.get("/operational/pricing-policies");
-      const payload = res?.data;
-      const items = Array.isArray(payload)
-        ? payload
-        : Array.isArray(payload?.data)
-        ? payload.data
-        : Array.isArray(payload?.data?.data)
-        ? payload.data.data
-        : [];
+      // Use standardized endpoint: GET /operational/pricing-policies
+      // Returns ApiResponse<PricingPolicy[]>
+      const res = await OperationalService.getPricingPolicies();
+      const items = Array.isArray(res?.data) ? res.data : [];
       setPricingPolicies(items);
     } catch (e) {
       console.error("Failed to load pricing policies", e);
@@ -186,16 +109,9 @@ export default function SuperAdminSettings() {
     setEditingPolicy(null);
     setPolicyForm({
       name: "",
-      base_rate_per_km: 0,
       rate_per_kg: 0,
-      minimum_fare: 0,
-      surcharge_type: "fixed",
-      surcharge_amount: 0,
-      surcharge_description: "",
       discount_percent: 0,
       is_active: true,
-      valid_from: null,
-      valid_until: null,
     });
     setShowPricingModal(true);
   };
@@ -204,16 +120,9 @@ export default function SuperAdminSettings() {
     setEditingPolicy(policy);
     setPolicyForm({
       name: policy.name || "",
-      base_rate_per_km: Number(policy.base_rate_per_km) || 0,
       rate_per_kg: Number(policy.rate_per_kg) || 0,
-      minimum_fare: policy.minimum_fare ?? null,
-      surcharge_type: policy.surcharge_type ?? null,
-      surcharge_amount: policy.surcharge_amount ?? null,
-      surcharge_description: policy.surcharge_description ?? "",
       discount_percent: policy.discount_percent ?? null,
       is_active: !!policy.is_active,
-      valid_from: policy.valid_from || null,
-      valid_until: policy.valid_until || null,
     });
     setShowPricingModal(true);
   };
@@ -232,16 +141,8 @@ export default function SuperAdminSettings() {
     try {
       setIsSavingPolicy(true);
       const payload: any = { ...policyForm } as CreatePricingPolicyRequest;
-      if (!payload.minimum_fare && payload.minimum_fare !== 0)
-        payload.minimum_fare = null;
-      if (!payload.surcharge_description) payload.surcharge_description = null;
-      if (!payload.surcharge_type) payload.surcharge_type = null;
-      if (!payload.surcharge_amount && payload.surcharge_amount !== 0)
-        payload.surcharge_amount = null;
       if (!payload.discount_percent && payload.discount_percent !== 0)
         payload.discount_percent = null;
-      if (!payload.valid_from) payload.valid_from = null;
-      if (!payload.valid_until) payload.valid_until = null;
 
       if (editingPolicy) {
         await axiosInstance.put(
@@ -424,12 +325,8 @@ export default function SuperAdminSettings() {
                     <TableRow>
                       <TableHead>#</TableHead>
                       <TableHead>Name</TableHead>
-                      <TableHead>Base/km</TableHead>
                       <TableHead>Rate/kg</TableHead>
-                      <TableHead>Min Fare</TableHead>
-                      <TableHead>Surcharge</TableHead>
                       <TableHead>Discount %</TableHead>
-                      <TableHead>Valid</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -437,11 +334,11 @@ export default function SuperAdminSettings() {
                   <TableBody>
                     {isLoadingPolicies ? (
                       <TableRow>
-                        <TableCell colSpan={11}>Loading...</TableCell>
+                        <TableCell colSpan={7}>Loading...</TableCell>
                       </TableRow>
                     ) : pricingPolicies.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={11}>No policies found</TableCell>
+                        <TableCell colSpan={7}>No policies found</TableCell>
                       </TableRow>
                     ) : (
                       pricingPolicies.map((p, idx) => (
@@ -450,20 +347,8 @@ export default function SuperAdminSettings() {
                           <TableCell className="font-medium">
                             {p.name}
                           </TableCell>
-                          <TableCell>{p.base_rate_per_km}</TableCell>
                           <TableCell>{p.rate_per_kg}</TableCell>
-                          <TableCell>{p.minimum_fare ?? "-"}</TableCell>
-                          <TableCell>
-                            {p.surcharge_type
-                              ? `${p.surcharge_type} ${p.surcharge_amount}`
-                              : "-"}
-                          </TableCell>
                           <TableCell>{p.discount_percent ?? 0}</TableCell>
-                          <TableCell>
-                            {(p.valid_from || "").toString().slice(0, 10)}
-                            {p.valid_until &&
-                              ` → ${p.valid_until.toString().slice(0, 10)}`}
-                          </TableCell>
                           <TableCell>
                             <Badge
                               variant={p.is_active ? "default" : "secondary"}
@@ -514,20 +399,6 @@ export default function SuperAdminSettings() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Label>Base Rate per km</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={policyForm.base_rate_per_km}
-                    onChange={(e) =>
-                      setPolicyForm({
-                        ...policyForm,
-                        base_rate_per_km: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
                   <Label>Rate per kg</Label>
                   <Input
                     type="number"
@@ -539,75 +410,6 @@ export default function SuperAdminSettings() {
                         rate_per_kg: parseFloat(e.target.value) || 0,
                       })
                     }
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Minimum Fare</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={policyForm.minimum_fare ?? 0}
-                    onChange={(e) =>
-                      setPolicyForm({
-                        ...policyForm,
-                        minimum_fare:
-                          e.target.value === ""
-                            ? null
-                            : parseFloat(e.target.value),
-                      })
-                    }
-                    placeholder="Optional"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Surcharge Type</Label>
-                  <select
-                    className="border rounded h-10 px-3"
-                    value={policyForm.surcharge_type ?? "fixed"}
-                    onChange={(e) =>
-                      setPolicyForm({
-                        ...policyForm,
-                        surcharge_type:
-                          (e.target.value as any) === "none"
-                            ? null
-                            : (e.target.value as any),
-                      })
-                    }
-                  >
-                    <option value="none">None</option>
-                    <option value="fixed">Fixed</option>
-                    <option value="percent">Percent</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Surcharge Amount</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={policyForm.surcharge_amount ?? 0}
-                    onChange={(e) =>
-                      setPolicyForm({
-                        ...policyForm,
-                        surcharge_amount:
-                          e.target.value === ""
-                            ? null
-                            : parseFloat(e.target.value),
-                      })
-                    }
-                    placeholder="Optional"
-                  />
-                </div>
-                <div className="flex flex-col gap-2 md:col-span-2">
-                  <Label>Surcharge Description</Label>
-                  <Input
-                    value={policyForm.surcharge_description || ""}
-                    onChange={(e) =>
-                      setPolicyForm({
-                        ...policyForm,
-                        surcharge_description: e.target.value,
-                      })
-                    }
-                    placeholder="Optional description"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -626,40 +428,6 @@ export default function SuperAdminSettings() {
                       })
                     }
                     placeholder="Optional"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Valid From</Label>
-                  <Input
-                    type="date"
-                    value={
-                      policyForm.valid_from
-                        ? String(policyForm.valid_from).slice(0, 10)
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setPolicyForm({
-                        ...policyForm,
-                        valid_from: e.target.value || null,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>Valid Until</Label>
-                  <Input
-                    type="date"
-                    value={
-                      policyForm.valid_until
-                        ? String(policyForm.valid_until).slice(0, 10)
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setPolicyForm({
-                        ...policyForm,
-                        valid_until: e.target.value || null,
-                      })
-                    }
                   />
                 </div>
                 <div className="flex flex-col gap-2">

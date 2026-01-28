@@ -52,6 +52,8 @@ import {
 } from "lucide-react";
 import { LiveTrackingMap } from "@/components/dashboard/LiveTrackingMap";
 import { StatsCard } from "@/components/ui/StatsCard";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/api/queryClient";
 import { useDriverDashboard, useUpdateDriverStatus } from "@/lib/api/hooks";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -108,6 +110,8 @@ export function DriverDashboard() {
   const [rejectionReason, setRejectionReason] = useState<string>("");
   const [rejectionNotes, setRejectionNotes] = useState<string>("");
 
+  const queryClient = useQueryClient();
+
   // API hooks - Using only DashboardService.getDriverDashboard() for all data
   const {
     data: dashboardData,
@@ -115,6 +119,12 @@ export function DriverDashboard() {
     error: dashboardError,
     refetch: refetchDashboard,
   } = useDriverDashboard();
+
+  // Refresh dashboard data after any action (accept, reject, status change, etc.)
+  const refreshDashboardData = async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.driver() });
+    await refetchDashboard();
+  };
 
   // Added hooks for image uploads and status updates
   const bulkUploadImages = useBulkUploadImages();
@@ -165,7 +175,7 @@ export function DriverDashboard() {
         notes: "Cargo picked up successfully",
       });
       customToast.success(t("status.picked_up") || "Picked Up");
-      refetchDashboard();
+      await refreshDashboardData();
       setIsPickupImageModalOpen(false);
     } catch (error: any) {
       customToast.error(error?.message || t("errors.uploadFailed"));
@@ -195,7 +205,7 @@ export function DriverDashboard() {
         notes: "Cargo delivered successfully",
       });
       customToast.success(t("status.delivered") || "Delivered");
-      refetchDashboard();
+      await refreshDashboardData();
       setIsDeliveryImageModalOpen(false);
     } catch (error: any) {
       customToast.error(error?.message || t("errors.uploadFailed"));
@@ -296,7 +306,7 @@ export function DriverDashboard() {
         customToast.success(
           t("delivery.deliveryStarted") || "Delivery started successfully"
         );
-        refetchDashboard();
+        await refreshDashboardData();
       }
     } catch (error: any) {
       customToast.error(error?.message || t("errors.updateFailed"));
@@ -312,14 +322,14 @@ export function DriverDashboard() {
       await updateStatusMutation.mutateAsync(newStatus as DriverStatus);
       setDriverStatus(newStatus);
       customToast.success(t("driver.statusUpdated"));
-      refetchDashboard();
+      await refreshDashboardData();
     } catch (error) {
       customToast.error(t("errors.serverError"));
     }
   };
 
-  const handleRefresh = () => {
-    refetchDashboard();
+  const handleRefresh = async () => {
+    await refreshDashboardData();
   };
 
   // Assignment handling functions
@@ -330,7 +340,7 @@ export function DriverDashboard() {
         data: { notes: t("assignment.acceptedFromDashboard") },
       });
       customToast.success(t("assignment.acceptedSuccessfully"));
-      refetchDashboard();
+      await refreshDashboardData();
     } catch (error: any) {
       customToast.error(error.message || t("assignment.failedToAccept"));
     }
@@ -346,7 +356,7 @@ export function DriverDashboard() {
         data: { reason, notes: t("assignment.rejectedFromDashboard") },
       });
       customToast.success(t("assignment.rejectedSuccessfully"));
-      refetchDashboard();
+      await refreshDashboardData();
     } catch (error: any) {
       customToast.error(error.message || t("assignment.failedToReject"));
     }
@@ -377,7 +387,7 @@ export function DriverDashboard() {
       });
       customToast.success(t("assignment.assignmentRejected"));
       setShowRejectModal(false);
-      refetchDashboard();
+      await refreshDashboardData();
     } catch (error: any) {
       customToast.error(error.message || t("assignment.failedToReject"));
     }

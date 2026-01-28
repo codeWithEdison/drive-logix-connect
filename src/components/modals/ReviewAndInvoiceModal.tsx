@@ -748,94 +748,38 @@ export default function ReviewAndInvoiceModal({
 
         {currentStep === 1 ? (
           <div className="space-y-8">
-            {/* Enhanced Cargo Overview */}
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-              <CardHeader className="bg-gray-50 border-b border-gray-200">
-                <CardTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Package className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">
-                      Cargo Overview
-                    </h3>
-                    <p className="text-gray-600 text-sm font-normal">
-                      Review shipment details
-                    </p>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <p className="text-sm font-medium text-gray-600">
-                        Cargo ID
-                      </p>
-                    </div>
-                    <p className="text-xl font-bold text-gray-900 font-mono">
-                      {cargo.cargo_number}
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <p className="text-sm font-medium text-gray-600">
-                        Client
-                      </p>
-                    </div>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {(cargo as any)?.client?.user?.full_name ||
-                        "Unknown Client"}
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <p className="text-sm font-medium text-gray-600">
-                        Status
-                      </p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className="text-sm px-3 py-1 font-medium"
-                    >
+            {/* Cargo Overview – single section, clear data */}
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <div className="flex items-center gap-2 mb-5 pb-4 border-b border-gray-100">
+                <Package className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Cargo Overview
+                </h3>
+              </div>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+                <div>
+                  <dt className="text-gray-500 font-medium mb-0.5">Cargo number</dt>
+                  <dd className="text-gray-900 font-mono font-semibold">{cargo.cargo_number}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 font-medium mb-0.5">Client</dt>
+                  <dd className="text-gray-900 font-medium">
+                    {(cargo as any)?.client?.user?.full_name || "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 font-medium mb-0.5">Status</dt>
+                  <dd>
+                    <Badge variant="outline" className="text-xs font-medium">
                       {cargo.status}
                     </Badge>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm md:col-span-2 lg:col-span-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                      <p className="text-sm font-medium text-gray-600">Route</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="font-medium text-gray-900 truncate">
-                        📍 {cargo.pickup_address}
-                      </p>
-                      <div className="flex items-center justify-center my-1">
-                        <div className="w-full h-px bg-gray-300"></div>
-                        <span className="px-2 text-gray-400">→</span>
-                        <div className="w-full h-px bg-gray-300"></div>
-                      </div>
-                      <p className="font-medium text-gray-900 truncate">
-                        🎯 {cargo.destination_address}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <p className="text-sm font-medium text-gray-600">
-                        Priority
-                      </p>
-                    </div>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500 font-medium mb-0.5">Priority</dt>
+                  <dd>
                     <Badge
-                      className={`text-sm px-3 py-1 font-medium ${
+                      className={`text-xs font-medium ${
                         cargo.priority === "urgent"
                           ? "bg-red-100 text-red-700 border-red-200"
                           : cargo.priority === "high"
@@ -847,27 +791,17 @@ export default function ReviewAndInvoiceModal({
                     >
                       {cargo.priority?.toUpperCase()}
                     </Badge>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <p className="text-sm font-medium text-green-700">
-                        Current Cost
-                      </p>
-                    </div>
-                    <p className="text-2xl font-bold text-green-600">
-                      {new Intl.NumberFormat("rw-RW", {
-                        style: "currency",
-                        currency: "RWF",
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      }).format(cargo.estimated_cost || 0)}
-                    </p>
-                  </div>
+                  </dd>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <dt className="text-gray-500 font-medium mb-0.5">Route</dt>
+                  <dd className="text-gray-900 mt-1 space-y-1">
+                    <p className="font-medium">Pickup: {cargo.pickup_address || "—"}</p>
+                    <p className="font-medium">Delivery: {cargo.destination_address || "—"}</p>
+                  </dd>
+                </div>
+              </dl>
+            </div>
 
             {/* Enhanced Editable Cargo Details */}
             <Card className="border-0 shadow-lg">
@@ -1544,187 +1478,6 @@ export default function ReviewAndInvoiceModal({
                   </div>
                 </div>
 
-                {/* Cost Estimation */}
-                <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-100">
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                    <h4 className="font-semibold text-gray-800 text-lg">
-                      Cost Estimation
-                    </h4>
-                  </div>
-
-                  {/* Current Distance Display */}
-                  {formData.distance_km > 0 && (
-                    <div className="bg-white p-4 rounded-lg border border-emerald-200 mb-6">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-emerald-700">
-                          Current Distance:
-                        </span>
-                        <span className="text-xl font-bold text-emerald-600">
-                          📏 {formData.distance_km.toFixed(2)} km
-                        </span>
-                      </div>
-                      {calculatedDistance &&
-                        calculatedDistance !== formData.distance_km && (
-                          <div className="mt-2 text-xs text-emerald-600 bg-emerald-50 p-2 rounded">
-                            ⚠️ Distance updated from{" "}
-                            {formData.distance_km.toFixed(2)} km to{" "}
-                            {calculatedDistance.toFixed(2)} km
-                          </div>
-                        )}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Label
-                          htmlFor="estimated_cost"
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Estimated Cost (RWF) *
-                        </Label>
-                        {estimateCostMutation.isPending && (
-                          <div className="flex items-center gap-1 text-emerald-600">
-                            <div className="animate-spin rounded-full h-3 w-3 border-b border-emerald-600"></div>
-                            <span className="text-xs">Auto-calculating...</span>
-                          </div>
-                        )}
-                      </div>
-                      <Input
-                        id="estimated_cost"
-                        type="number"
-                        min="0"
-                        step="100"
-                        value={formData.estimated_cost}
-                        onChange={(e) =>
-                          handleInputChange(
-                            "estimated_cost",
-                            parseFloat(e.target.value) || 0
-                          )
-                        }
-                        className={`h-12 text-lg font-semibold border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 ${
-                          estimateCostMutation.isPending ? "bg-emerald-50" : ""
-                        }`}
-                        placeholder="0"
-                      />
-                    </div>
-
-                    {formData.weight_kg &&
-                      formData.distance_km &&
-                      formData.category_id && (
-                        <div className="flex items-end">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              estimateCostMutation.mutate(
-                                {
-                                  weight_kg: formData.weight_kg,
-                                  distance_km: Math.max(
-                                    calculatedDistance ||
-                                      formData.distance_km ||
-                                      1,
-                                    1
-                                  ),
-                                  category_id: formData.category_id,
-                                },
-                                {
-                                  onSuccess: (response) => {
-                                    const estimatedCost =
-                                      response.data?.estimated_cost || 0;
-                                    handleInputChange(
-                                      "estimated_cost",
-                                      estimatedCost
-                                    );
-                                    toast.success(
-                                      `Cost updated: ${new Intl.NumberFormat(
-                                        "rw-RW",
-                                        {
-                                          style: "currency",
-                                          currency: "RWF",
-                                          minimumFractionDigits: 0,
-                                          maximumFractionDigits: 0,
-                                        }
-                                      ).format(estimatedCost)}`
-                                    );
-                                  },
-                                  onError: (error) => {
-                                    toast.error("Failed to recalculate cost");
-                                  },
-                                }
-                              );
-                            }}
-                            disabled={estimateCostMutation.isPending}
-                            className="w-full h-12 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-400"
-                          >
-                            {estimateCostMutation.isPending
-                              ? "Calculating..."
-                              : "Refresh Cost"}
-                          </Button>
-                        </div>
-                      )}
-                  </div>
-
-                  {/* Cost Breakdown Display */}
-                  {estimateCostMutation.data?.data?.breakdown && (
-                    <div className="bg-white p-6 rounded-lg border border-emerald-200 mt-6">
-                      <h5 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                        Cost Breakdown
-                      </h5>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <div className="text-gray-600">Base Cost</div>
-                          <div className="font-semibold text-gray-900">
-                            {new Intl.NumberFormat("rw-RW", {
-                              style: "currency",
-                              currency: "RWF",
-                            }).format(
-                              estimateCostMutation.data.data.breakdown.base_cost
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <div className="text-gray-600">Weight Cost</div>
-                          <div className="font-semibold text-gray-900">
-                            {new Intl.NumberFormat("rw-RW", {
-                              style: "currency",
-                              currency: "RWF",
-                            }).format(
-                              estimateCostMutation.data.data.breakdown
-                                .weight_cost
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <div className="text-gray-600">Distance Cost</div>
-                          <div className="font-semibold text-gray-900">
-                            {new Intl.NumberFormat("rw-RW", {
-                              style: "currency",
-                              currency: "RWF",
-                            }).format(
-                              estimateCostMutation.data.data.breakdown
-                                .distance_cost
-                            )}
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <div className="text-gray-600">
-                            Category Multiplier
-                          </div>
-                          <div className="font-semibold text-gray-900">
-                            {
-                              estimateCostMutation.data.data.breakdown
-                                .category_multiplier
-                            }
-                            x
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </CardContent>
             </Card>
 
