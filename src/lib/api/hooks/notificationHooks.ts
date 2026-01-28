@@ -45,15 +45,66 @@ export function useMarkNotificationAsRead() {
   return useMutation({
     mutationFn: (notificationId: string) =>
       NotificationService.markAsRead(notificationId),
+    onMutate: async (notificationId: string) => {
+      // Optimistically update notification in all cached lists
+      await queryClient.cancelQueries({ queryKey: queryKeys.notifications.all });
+
+      const previous = queryClient.getQueriesData({
+        queryKey: queryKeys.notifications.list(),
+      });
+
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.notifications.list(), exact: false },
+        (old: NotificationListResponse | undefined) => {
+          if (!old?.data?.notifications) return old;
+          const nowIso = new Date().toISOString();
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              notifications: old.data.notifications.map((n) =>
+                n.id === notificationId
+                  ? { ...n, is_read: true, read_at: n.read_at || nowIso }
+                  : n
+              ),
+            },
+          };
+        }
+      );
+
+      // Optimistically decrement unread count if we have stats cached
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.notifications.stats(), exact: false },
+        (old: NotificationStatsResponse | undefined) => {
+          if (!old?.data) return old;
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              unread: Math.max(0, (old.data.unread || 0) - 1),
+            },
+          };
+        }
+      );
+
+      return { previous };
+    },
     onSuccess: (data: MarkReadResponse) => {
       // Invalidate and refetch notifications
       queryClient.invalidateQueries({
         queryKey: queryKeys.notifications.all,
       });
 
-      customToast.success("Notification marked as read");
+      customToast.success(data?.message || "Notification marked as read");
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _id, context: any) => {
+      // Roll back optimistic updates if needed
+      const previous: Array<[unknown, unknown]> | undefined = context?.previous;
+      if (previous?.length) {
+        for (const [key, value] of previous) {
+          queryClient.setQueryData(key as any, value);
+        }
+      }
       customToast.error(
         `Failed to mark notification as read: ${error.message}`
       );

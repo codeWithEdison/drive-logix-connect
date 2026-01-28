@@ -150,7 +150,16 @@ export function NotificationCenter({
 
     // Handle navigation based on notification metadata
     if (notification.metadata?.cargo_number) {
-      // Navigate to cargo details
+      // Role-based navigation for cargo notifications
+      if (user?.role === "driver") {
+        window.location.href = "/driver/cargos";
+        return;
+      }
+      if (user?.role === "client") {
+        window.location.href = "/my-cargos";
+        return;
+      }
+      // Default: keep tracking deep-link for admins/others
       window.location.href = `/tracking/${notification.metadata.cargo_number}`;
     } else if (notification.assignment_id) {
       // Navigate to assignment details
@@ -302,7 +311,7 @@ export function NotificationCenter({
                               {formatTimeAgo(notification.sent_at)}
                             </span>
 
-                            {!notification.is_read && (
+                            {!notification.is_read ? (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -316,6 +325,11 @@ export function NotificationCenter({
                                 <CheckCircle className="h-3 w-3 mr-1" />
                                 {t("notifications.markRead")}
                               </Button>
+                            ) : (
+                              <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3" />
+                                {t("common.read") || "Read"}
+                              </span>
                             )}
                           </div>
                         </div>
