@@ -34,7 +34,7 @@ const TrackingPage = () => {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col h-full min-h-[calc(100vh-8rem)] sm:min-h-[calc(100vh-10rem)]">
       <SEO
         title={PAGE_SEO.tracking.title}
         description={PAGE_SEO.tracking.description}
@@ -42,26 +42,29 @@ const TrackingPage = () => {
         url={PAGE_SEO.tracking.path}
         structuredData={[webPageSchema, trackingServiceSchema]}
       />
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* Compact header - responsive text sizing */}
+      <div className="flex-shrink-0 space-y-3 sm:space-y-4 pb-4 sm:pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground font-heading">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground font-heading tracking-tight">
             {t("tracking.title")}
           </h1>
-          <p className="text-muted-foreground">{t("tracking.subtitle")}</p>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 sm:mt-1">
+            {t("tracking.subtitle")}
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 lg:w-80">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <div className="flex gap-2 sm:gap-3">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <Input
-              placeholder="Enter cargo ID or cargo number (e.g., LC20250913001)"
-              className="pl-10"
+              placeholder={t("tracking.enterCargoIdPlaceholder")}
+              className="pl-9 sm:pl-10 h-9 sm:h-10 text-sm"
               value={searchId}
               onChange={(e) => setSearchId(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
           <Button
-            className="bg-gradient-primary hover:bg-primary-hover"
+            className="bg-gradient-primary hover:bg-primary-hover h-9 sm:h-10 px-4 sm:px-6 text-sm font-medium flex-shrink-0"
             onClick={handleSearch}
           >
             {t("tracking.track")}
@@ -69,8 +72,8 @@ const TrackingPage = () => {
         </div>
       </div>
 
-      {/* Live Tracking Map Component */}
-      <div className="h-[calc(100vh-200px)]">
+      {/* Live Tracking Map - takes remaining space */}
+      <div className="flex-1 min-h-0">
         <LiveTrackingMap />
       </div>
     </div>

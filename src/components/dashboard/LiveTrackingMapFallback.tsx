@@ -185,10 +185,10 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   onRetry,
 }) => {
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
       <div
         className={cn(
-          "w-2 h-2 rounded-full",
+          "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0",
           isConnected
             ? "bg-green-500"
             : isConnecting
@@ -196,10 +196,9 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
             : "bg-red-500"
         )}
       />
-
       <span
         className={cn(
-          "font-medium",
+          "font-medium truncate",
           isConnected
             ? "text-green-700"
             : isConnecting
@@ -209,23 +208,21 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
       >
         {isConnected ? "Live" : isConnecting ? "Connecting..." : "Offline"}
       </span>
-
       {lastUpdate && (
-        <span className="text-gray-500">
-          • Updated {new Date(lastUpdate).toLocaleTimeString()}
+        <span className="text-muted-foreground hidden sm:inline text-xs">
+          • {new Date(lastUpdate).toLocaleTimeString()}
         </span>
       )}
-
       {!isConnected && onRetry && (
         <Button
           variant="ghost"
           size="sm"
           onClick={onRetry}
           disabled={isConnecting}
-          className="ml-2 h-6 px-2"
+          className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex-shrink-0"
         >
           <RefreshCw
-            className={cn("h-3 w-3", isConnecting && "animate-spin")}
+            className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5", isConnecting && "animate-spin")}
           />
         </Button>
       )}

@@ -35,7 +35,6 @@ import {
   Package,
   Calculator,
   ArrowRight,
-  Clock,
   CheckCircle,
   Search,
   User,
@@ -79,20 +78,17 @@ export function CreateCargoForm() {
     pickupAddress: "",
     pickupContactName: "",
     pickupContactPhone: "",
-    pickupOpeningHours: "",
     pickupLat: "",
     pickupLng: "",
     pickupDistrictId: "", // Add district selection
     destinationAddress: "",
     destinationContactName: "",
     destinationContactPhone: "",
-    destinationOpeningHours: "",
     destinationLat: "",
     destinationLng: "",
     destinationDistrictId: "", // Add district selection
     pickupDate: "",
     specialInstructions: "",
-    urgency: "standard",
     distance: 0,
     savePickupData: false,
     saveDestinationData: false,
@@ -101,9 +97,6 @@ export function CreateCargoForm() {
     useExistingDestinationLocation: false,
     selectedPickupLocationId: "",
     selectedDestinationLocationId: "",
-    // New location creation data
-    newPickupLocationName: "",
-    newDestinationLocationName: "",
   });
 
   const [estimatedCost, setEstimatedCost] = useState(0);
@@ -150,9 +143,7 @@ export function CreateCargoForm() {
 
   // Search states for comboboxes
   const [cargoTypeSearch, setCargoTypeSearch] = useState("");
-  const [urgencySearch, setUrgencySearch] = useState("");
   const [showCargoTypeDropdown, setShowCargoTypeDropdown] = useState(false);
-  const [showUrgencyDropdown, setShowUrgencyDropdown] = useState(false);
 
   // Performance optimization refs and state
   const searchCache = useRef<Map<string, GooglePlace[]>>(new Map());
@@ -472,7 +463,6 @@ export function CreateCargoForm() {
             pickupLat: location.latitude?.toString() || "",
             pickupLng: location.longitude?.toString() || "",
             pickupDistrictId: location.district_id || "",
-            newPickupLocationName: location.name,
           }
         : {
             selectedDestinationLocationId: locationId,
@@ -482,7 +472,6 @@ export function CreateCargoForm() {
             destinationLat: location.latitude?.toString() || "",
             destinationLng: location.longitude?.toString() || "",
             destinationDistrictId: location.district_id || "",
-            newDestinationLocationName: location.name,
           }),
     };
 
@@ -504,9 +493,6 @@ export function CreateCargoForm() {
     isPickup: boolean
   ): Promise<string | null> => {
     try {
-      const locationName = isPickup
-        ? formData.newPickupLocationName
-        : formData.newDestinationLocationName;
       const address = isPickup
         ? formData.pickupAddress
         : formData.destinationAddress;
@@ -539,7 +525,7 @@ export function CreateCargoForm() {
       }
 
       const locationData = {
-        name: locationName || `${isPickup ? "Pickup" : "Delivery"} Location`, // Default name if not provided
+        name: address,
         type: isPickup
           ? LocationType.PICKUP_POINT
           : LocationType.DELIVERY_POINT,
@@ -596,13 +582,11 @@ export function CreateCargoForm() {
         console.error("Error estimating cost:", error);
         // Fallback to manual calculation
         const weightRate = 500; // RWF per kg
-        const urgencyMultiplier = formData.urgency === "urgent" ? 1.5 : 1;
         const distance = formData.distance || 25; // km
         const baseRate = 2000; // RWF per km
         const cost =
-          (baseRate * distance +
-            weightRate * parseFloat(formData.weight || "0")) *
-          urgencyMultiplier;
+          baseRate * distance +
+          weightRate * parseFloat(formData.weight || "0");
         setEstimatedCost(cost);
       }
     }
@@ -657,24 +641,19 @@ export function CreateCargoForm() {
         pickup_address: formData.pickupAddress,
         pickup_contact: formData.pickupContactName,
         pickup_phone: formData.pickupContactPhone,
-        pickup_instructions: formData.pickupOpeningHours,
+        pickup_instructions: "",
         destination_location_id: destinationLocationId || undefined,
         destination_address: formData.destinationAddress,
         destination_contact: formData.destinationContactName,
         destination_phone: formData.destinationContactPhone,
-        delivery_instructions: formData.destinationOpeningHours,
+        delivery_instructions: "",
         special_requirements: formData.specialInstructions,
         description: formData.description || undefined,
         insurance_required: false, // Default values
         insurance_amount: 0,
         fragile: false,
         temperature_controlled: false,
-        priority:
-          formData.urgency === "standard"
-            ? CargoPriority.NORMAL
-            : formData.urgency === "express"
-            ? CargoPriority.HIGH
-            : CargoPriority.URGENT,
+        priority: CargoPriority.NORMAL,
         pickup_date: formData.pickupDate,
         estimated_cost: estimatedCost,
         distance_km: formData.distance || 0, // Include calculated distance
@@ -1124,109 +1103,6 @@ export function CreateCargoForm() {
 
               <div className="space-y-1.5 sm:space-y-2">
                 <Label
-                  htmlFor="urgency"
-                  className="text-xs sm:text-sm font-semibold text-gray-700"
-                >
-                  {t("createCargo.steps.cargoDetails.urgency")}
-                </Label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={
-                      urgencySearch ||
-                      (formData.urgency
-                        ? t(
-                            `createCargo.steps.cargoDetails.urgencyOptions.${formData.urgency}`
-                          )
-                        : "")
-                    }
-                    onChange={(e) => {
-                      setUrgencySearch(e.target.value);
-                      setShowUrgencyDropdown(true);
-                    }}
-                    onFocus={() => setShowUrgencyDropdown(true)}
-                    placeholder={t("createCargo.steps.cargoDetails.urgency")}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 rounded-full text-sm sm:text-base font-semibold border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    {urgencySearch && (
-                      <button
-                        onClick={() => {
-                          setUrgencySearch("");
-                          setShowUrgencyDropdown(true);
-                        }}
-                        className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                      >
-                        <X className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
-                      </button>
-                    )}
-                    <Search className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                  </div>
-
-                  {/* Dropdown */}
-                  {showUrgencyDropdown && (
-                    <motion.div
-                      className="absolute z-50 w-full mt-1 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      {["standard", "express", "urgent"]
-                        .filter(
-                          (urgency) =>
-                            !urgencySearch ||
-                            t(
-                              `createCargo.steps.cargoDetails.urgencyOptions.${urgency}`
-                            )
-                              .toLowerCase()
-                              .includes(urgencySearch.toLowerCase())
-                        )
-                        .map((urgency) => (
-                          <button
-                            key={urgency}
-                            onClick={() => {
-                              setFormData({
-                                ...formData,
-                                urgency: urgency as any,
-                              });
-                              setUrgencySearch("");
-                              setShowUrgencyDropdown(false);
-                            }}
-                            className={`w-full text-left px-3 sm:px-4 py-2 sm:py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                              formData.urgency === urgency ? "bg-blue-50" : ""
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Check
-                                className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                                  formData.urgency === urgency
-                                    ? "opacity-100 text-blue-600"
-                                    : "opacity-0"
-                                }`}
-                              />
-                              <span className="text-xs sm:text-sm font-medium text-gray-900">
-                                {t(
-                                  `createCargo.steps.cargoDetails.urgencyOptions.${urgency}`
-                                )}
-                              </span>
-                            </div>
-                          </button>
-                        ))}
-                    </motion.div>
-                  )}
-
-                  {/* Click outside to close */}
-                  {showUrgencyDropdown && (
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowUrgencyDropdown(false)}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label
                   htmlFor="description"
                   className="text-xs sm:text-sm font-semibold text-gray-700"
                 >
@@ -1462,12 +1338,6 @@ export function CreateCargoForm() {
                         <div className="text-sm space-y-1">
                           <p>
                             <span className="font-medium">
-                              {t("common.name")}:
-                            </span>{" "}
-                            {formData.newPickupLocationName}
-                          </p>
-                          <p>
-                            <span className="font-medium">
                               {t("common.address")}:
                             </span>{" "}
                             {formData.pickupAddress}
@@ -1509,27 +1379,6 @@ export function CreateCargoForm() {
                 {/* New Location Creation */}
                 {!formData.useExistingPickupLocation && (
                   <>
-                    {/* Location Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="newPickupLocationName">
-                        {t("createCargo.steps.pickupDelivery.locationName")}
-                      </Label>
-                      <Input
-                        id="newPickupLocationName"
-                        placeholder={t(
-                          "createCargo.steps.pickupDelivery.locationNamePlaceholder"
-                        )}
-                        value={formData.newPickupLocationName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            newPickupLocationName: e.target.value,
-                          })
-                        }
-                        className="placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
-                      />
-                    </div>
-
                     {/* District Selection */}
                     <div className="space-y-2">
                       <Label htmlFor="pickupDistrictId">
@@ -1840,32 +1689,6 @@ export function CreateCargoForm() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <Label
-                        htmlFor="pickupOpeningHours"
-                        className="text-xs sm:text-sm font-semibold text-gray-700"
-                      >
-                        {t("createCargo.steps.pickupDelivery.openingHours")}
-                      </Label>
-                      <div className="relative">
-                        <Clock className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
-                        <Input
-                          id="pickupOpeningHours"
-                          placeholder={t(
-                            "createCargo.steps.pickupDelivery.openingHoursPlaceholder"
-                          )}
-                          value={formData.pickupOpeningHours}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              pickupOpeningHours: e.target.value,
-                            })
-                          }
-                          className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
-                        />
-                      </div>
-                    </div>
-
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -2063,12 +1886,6 @@ export function CreateCargoForm() {
                         <div className="text-sm space-y-1">
                           <p>
                             <span className="font-medium">
-                              {t("common.name")}:
-                            </span>{" "}
-                            {formData.newDestinationLocationName}
-                          </p>
-                          <p>
-                            <span className="font-medium">
                               {t("common.address")}:
                             </span>{" "}
                             {formData.destinationAddress}
@@ -2110,27 +1927,6 @@ export function CreateCargoForm() {
                 {/* New Location Creation */}
                 {!formData.useExistingDestinationLocation && (
                   <>
-                    {/* Location Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="newDestinationLocationName">
-                        {t("createCargo.steps.pickupDelivery.locationName")}
-                      </Label>
-                      <Input
-                        id="newDestinationLocationName"
-                        placeholder={t(
-                          "createCargo.steps.pickupDelivery.locationNamePlaceholder"
-                        )}
-                        value={formData.newDestinationLocationName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            newDestinationLocationName: e.target.value,
-                          })
-                        }
-                        className="placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-sm placeholder:font-normal"
-                      />
-                    </div>
-
                     {/* District Selection */}
                     <div className="space-y-2">
                       <Label htmlFor="destinationDistrictId">
@@ -2443,32 +2239,6 @@ export function CreateCargoForm() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5 sm:space-y-2">
-                      <Label
-                        htmlFor="destinationOpeningHours"
-                        className="text-xs sm:text-sm font-semibold text-gray-700"
-                      >
-                        {t("createCargo.steps.pickupDelivery.openingHours")}
-                      </Label>
-                      <div className="relative">
-                        <Clock className="absolute left-2.5 sm:left-3 md:left-4 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 z-10" />
-                        <Input
-                          id="destinationOpeningHours"
-                          placeholder={t(
-                            "createCargo.steps.pickupDelivery.openingHoursPlaceholder"
-                          )}
-                          value={formData.destinationOpeningHours}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              destinationOpeningHours: e.target.value,
-                            })
-                          }
-                          className="pl-8 sm:pl-10 md:pl-12 rounded-full px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm placeholder:text-gray-400 placeholder:opacity-70 placeholder:text-xs placeholder:font-normal"
-                        />
-                      </div>
-                    </div>
-
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -2734,12 +2504,6 @@ export function CreateCargoForm() {
                         ? `${formData.length} × ${formData.width} × ${formData.height} cm`
                         : t("createCargo.steps.confirmation.notSpecified")}
                     </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">
-                      {t("createCargo.steps.confirmation.urgency")}
-                    </p>
-                    <p className="font-medium capitalize">{formData.urgency}</p>
                   </div>
                 </div>
 

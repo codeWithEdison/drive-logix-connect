@@ -122,12 +122,6 @@ export const LiveTrackingMap = () => {
   const isDriver = user?.role === UserRole.DRIVER;
   const isClient = user?.role === UserRole.CLIENT;
 
-  console.log("🔍 LiveTrackingMap user info:", {
-    userRole: user?.role,
-    isDriver,
-    isClient,
-    userId: user?.id,
-  });
 
   // Fetch in-transit cargo with live updates (using role-specific endpoints)
   const {
@@ -626,34 +620,22 @@ export const LiveTrackingMap = () => {
   // Auto-select first cargo when list loads and no cargo is selected
   useEffect(() => {
     if (filteredCargoList.length > 0 && !selectedCargo && !cargoLoading) {
-      console.log("🚀 Auto-selecting first cargo:", filteredCargoList[0]);
       setSelectedCargo(filteredCargoList[0]);
     }
   }, [filteredCargoList, selectedCargo, cargoLoading]);
 
-  console.log("🔍 LiveTrackingMap cargoData:", {
-    cargoData,
-    cargoDataLength: cargoData?.length,
-    filteredCargoListLength: filteredCargoList.length,
-    isLoading: cargoLoading,
-    error: cargoError,
-    userRole: user?.role,
-    isDriver,
-    isClient,
-  });
-
   return (
     <LiveTrackingErrorBoundary>
-      <div className="h-full flex flex-col lg:flex-row gap-2 sm:gap-4 overflow-hidden">
+      <div className="h-full flex flex-col lg:flex-row gap-3 sm:gap-4 overflow-hidden">
         {/* Left Panel - Cargo List */}
         <div className="w-full lg:w-[40%] flex flex-col min-w-0 h-[40vh] lg:h-full">
-          <Card className="flex-1 flex flex-col min-h-0">
-            <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base sm:text-lg font-semibold">
+          <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm sm:text-base font-semibold truncate">
                   Tracking Cargo
                 </CardTitle>
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <ConnectionStatus
                     isConnected={isConnected}
                     isConnecting={isConnecting}
@@ -669,7 +651,7 @@ export const LiveTrackingMap = () => {
                   >
                     <RefreshCw
                       className={cn(
-                        "h-3 w-3 sm:h-4 sm:w-4",
+                        "h-3.5 w-3.5 sm:h-4 sm:w-4",
                         cargoLoading && "animate-spin"
                       )}
                     />
@@ -678,21 +660,18 @@ export const LiveTrackingMap = () => {
               </div>
 
               {/* Search Input */}
-              <div className="mt-2 sm:mt-3">
-                <div className="relative">
-                  <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search cargo..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-7 sm:pl-10 h-8 sm:h-10 text-xs sm:text-sm"
-                  />
-                </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search cargo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 sm:pl-10 h-9 sm:h-10 text-sm"
+                />
               </div>
 
-              <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:mt-2">
-                {filteredCargoList.length} of {(cargoData || []).length}{" "}
-                in-transit deliveries
+              <p className="text-xs text-muted-foreground">
+                {filteredCargoList.length} of {(cargoData || []).length} in-transit
               </p>
             </CardHeader>
 
@@ -710,31 +689,23 @@ export const LiveTrackingMap = () => {
                     isConnecting={cargoLoading}
                   />
                 ) : filteredCargoList.length === 0 ? (
-                  <div className="flex items-center justify-center p-4 sm:p-8 text-gray-500">
-                    <div className="text-center">
-                      <Package className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-4 text-gray-400" />
-                      <p className="text-sm sm:text-lg font-medium mb-1 sm:mb-2">
+                  <div className="flex items-center justify-center p-6 sm:p-8 text-center">
+                    <div>
+                      <Package className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-muted-foreground/60" />
+                      <p className="text-sm sm:text-base font-medium text-foreground mb-1">
                         {searchTerm
                           ? "No matching cargo found"
                           : "No in-transit cargo"}
                       </p>
-                      <p className="text-xs sm:text-sm">
+                      <p className="text-xs sm:text-sm text-muted-foreground max-w-[240px] mx-auto">
                         {searchTerm
                           ? "Try adjusting your search terms"
                           : "Cargo will appear here when shipments are in transit"}
                       </p>
-                      {!searchTerm && (
-                        <div className="mt-2 sm:mt-4 text-xs text-gray-400">
-                          <p>Debug info:</p>
-                          <p>User role: {user?.role}</p>
-                          <p>Total cargo: {(cargoData || []).length}</p>
-                          <p>Filtered cargo: {filteredCargoList.length}</p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-1 sm:space-y-2 p-1 sm:p-2">
+                  <div className="space-y-2 p-2 sm:p-3">
                     {filteredCargoList.map((cargo: CargoWithTracking) => (
                       <Card
                         key={cargo.id}
@@ -745,18 +716,18 @@ export const LiveTrackingMap = () => {
                         )}
                         onClick={() => handleCargoSelect(cargo)}
                       >
-                        <CardContent className="p-2 sm:p-4">
+                        <CardContent className="p-3 sm:p-4">
                           {/* Header with cargo ID and status */}
-                          <div className="flex items-center justify-between mb-2 sm:mb-3">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <Package className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
-                              <h3 className="font-bold text-xs sm:text-sm">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                              <h3 className="font-semibold text-sm truncate">
                                 #{cargo.cargo_number || cargo.id}
                               </h3>
                             </div>
                             <Badge
                               className={cn(
-                                "text-white text-xs",
+                                "text-white text-[10px] sm:text-xs px-1.5 py-0 h-4 flex-shrink-0",
                                 cargo.status === "in_transit"
                                   ? "bg-purple-600"
                                   : cargo.status === "delivered"
@@ -838,17 +809,13 @@ export const LiveTrackingMap = () => {
                           </div>
 
                           {/* Addresses */}
-                          <div className="space-y-1 sm:space-y-2 mb-2 sm:mb-3">
-                            <div className="text-xs text-gray-600">
-                              <p className="font-medium truncate">
-                                {cargo.pickup_address}
-                              </p>
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              <p className="font-medium truncate">
-                                {cargo.destination_address}
-                              </p>
-                            </div>
+                          <div className="space-y-1 mb-2">
+                            <p className="text-xs text-muted-foreground truncate">
+                              {cargo.pickup_address}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {cargo.destination_address}
+                            </p>
                           </div>
 
                           {/* Contact Information */}
@@ -886,7 +853,7 @@ export const LiveTrackingMap = () => {
                                 </span>
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium truncate">
+                                <p className="text-xs sm:text-sm font-medium truncate">
                                   {isDriver
                                     ? (cargo as any)?.client?.user?.full_name ||
                                       (cargo as CargoWithTracking).client
@@ -1082,13 +1049,12 @@ export const LiveTrackingMap = () => {
                     />
 
                     {/* Map overlay info */}
-                    <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 sm:p-3 shadow-lg z-10">
-                      <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                        <Navigation className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                        <span className="font-medium">Live Tracking</span>
+                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-md z-10">
+                      <div className="flex items-center gap-1.5 text-xs sm:text-sm">
+                        <Navigation className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
+                        <span className="font-medium">Live</span>
                         {lastUpdate && (
-                          <span className="text-xs text-gray-500 hidden sm:inline">
-                            Updated{" "}
+                          <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">
                             {formatDistanceToNow(new Date(lastUpdate), {
                               addSuffix: true,
                             })}
