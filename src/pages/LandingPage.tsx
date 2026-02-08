@@ -540,7 +540,7 @@ const LandingPage: React.FC = () => {
       {/* Modern Navigation Header */}
       <nav 
         className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 z-50 shadow-sm"
-        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)', marginTop: '8px' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">

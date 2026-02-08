@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -16,9 +16,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ApiProvider } from "@/lib/api/ApiProvider";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import { UpdatePrompt } from "@/components/mobile/UpdatePrompt";
-import { OfflineIndicator } from "@/components/mobile/OfflineIndicator";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { Capacitor } from "@capacitor/core";
+import { SplashScreen } from "@capacitor/splash-screen";
 
 // Lazy load pages for better performance
 const Login = lazy(() => import("@/pages/Login"));
@@ -104,8 +104,12 @@ const PageLoader = () => (
 function AppContent() {
   const { isAuthenticated, user, getDefaultRoute, isInitialized } = useAuth();
 
-  // Debug: Log current state (remove in production)
-  // console.log("AppContent - isAuthenticated:", isAuthenticated, "user:", user, "isInitialized:", isInitialized, "pathname:", window.location.pathname);
+  // Hide native splash screen once app content is ready to show
+  useEffect(() => {
+    if (isInitialized && Capacitor.isNativePlatform()) {
+      SplashScreen.hide().catch(() => {});
+    }
+  }, [isInitialized]);
 
   // Show loading state while auth is being initialized
   if (!isInitialized) {
@@ -140,14 +144,7 @@ function AppContent() {
         </Suspense>
 
         {/* Mobile-specific components */}
-        {Capacitor.isNativePlatform() && (
-          <>
-            <UpdatePrompt />
-            <div className="fixed top-4 right-4 z-40">
-              <OfflineIndicator />
-            </div>
-          </>
-        )}
+        {Capacitor.isNativePlatform() && <UpdatePrompt />}
       </>
     );
   }
@@ -506,14 +503,7 @@ function AppContent() {
       </AppLayout>
 
       {/* Mobile-specific components */}
-      {Capacitor.isNativePlatform() && (
-        <>
-          <UpdatePrompt />
-          <div className="fixed top-4 right-4 z-40">
-            <OfflineIndicator />
-          </div>
-        </>
-      )}
+      {Capacitor.isNativePlatform() && <UpdatePrompt />}
     </>
   );
 }

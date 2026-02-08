@@ -56,7 +56,7 @@ export default function Login() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 relative overflow-hidden flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 relative overflow-hidden flex items-center justify-center p-4 pt-8 mt-4">
       <SEO
         title={PAGE_SEO.login.title}
         description={PAGE_SEO.login.description}
@@ -93,7 +93,7 @@ export default function Login() {
       />
 
       {/* Top Navigation - Back to Home & Language Selector */}
-      <div className="absolute top-4 left-4 right-4 z-50 flex justify-between items-center">
+      <div className="absolute left-4 right-4 z-50 flex justify-between items-center" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 2rem)' }}>
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}

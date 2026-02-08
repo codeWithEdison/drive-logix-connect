@@ -34,6 +34,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check for stored user on mount
     const checkStoredUser = async () => {
+      const timeout = setTimeout(() => {
+        // Safety: prevent infinite loading if storage hangs (common on Android emulator)
+        setIsInitialized(true);
+      }, 5000);
+
       try {
         const storedUser = await storage.getItem("logistics_user");
         const storedToken = await storage.getItem("access_token");
@@ -52,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error("Error checking stored user:", error);
       } finally {
-        // Mark as initialized after checking storage
+        clearTimeout(timeout);
         setIsInitialized(true);
       }
     };

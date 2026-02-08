@@ -28,6 +28,7 @@ const config: CapacitorConfig = {
     StatusBar: {
       style: "dark",
       backgroundColor: "#F9FAFE",
+      overlaysWebView: false, // Keep status bar visible (clock, battery) - don't overlay app content
     },
   },
 };

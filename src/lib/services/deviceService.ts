@@ -137,6 +137,7 @@ class DeviceService {
     if (!Capacitor.isNativePlatform()) return;
 
     try {
+      await StatusBar.setOverlaysWebView({ overlay: false });
       await StatusBar.setStyle({ style: Style.Dark });
       await StatusBar.setBackgroundColor({ color: "#F9FAFE" });
     } catch (error) {

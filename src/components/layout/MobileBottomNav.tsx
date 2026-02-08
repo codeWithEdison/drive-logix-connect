@@ -3,25 +3,23 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import {
-  Package,
-  MapPin,
-  Plus,
-  History,
-  Truck,
-  Users,
-  Settings,
-  BarChart3,
-  Home,
-  Receipt,
-  Activity,
-  Building2,
-  Map,
-  CreditCard,
-  Navigation,
-  FileSpreadsheet,
-  MoreHorizontal,
-  X,
-} from "lucide-react";
+  HiOutlineHome,
+  HiOutlinePlusCircle,
+  HiOutlineCube,
+  HiOutlineMapPin,
+  HiOutlineDocumentText,
+  HiOutlineTruck,
+  HiOutlineClock,
+  HiOutlineUsers,
+  HiOutlineClipboardDocumentList,
+  HiOutlineCog6Tooth,
+  HiOutlineChartBarSquare,
+  HiOutlineMap,
+  HiOutlineCreditCard,
+  HiOutlineDocumentChartBar,
+  HiOutlineBuildingOffice2,
+  HiOutlineEllipsisHorizontal,
+} from "react-icons/hi2";
 import {
   Sheet,
   SheetContent,
@@ -30,7 +28,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Use the same navigation config as DynamicSidebar
@@ -38,112 +35,136 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 // For mobile, client role excludes history only
 const getNavigationConfig = (t: (key: string) => string) => ({
   client: [
-    { title: t("navigation.dashboard"), url: "/", icon: Home },
-    { title: t("navigation.createCargo"), url: "/create-cargo", icon: Plus },
-    { title: t("navigation.myCargos"), url: "/my-cargos", icon: Package },
-    { title: t("navigation.liveTracking"), url: "/tracking", icon: MapPin },
-    { title: t("navigation.invoices"), url: "/invoices", icon: Receipt },
+    { title: t("navigation.dashboard"), url: "/", icon: HiOutlineHome },
+    {
+      title: t("navigation.createCargo"),
+      url: "/create-cargo",
+      icon: HiOutlinePlusCircle,
+    },
+    { title: t("navigation.myCargos"), url: "/my-cargos", icon: HiOutlineCube },
+    {
+      title: t("navigation.liveTracking"),
+      url: "/tracking",
+      icon: HiOutlineMapPin,
+    },
+    { title: t("navigation.invoices"), url: "/invoices", icon: HiOutlineDocumentText },
   ],
   driver: [
-    { title: t("navigation.dashboard"), url: "/driver", icon: Home },
+    { title: t("navigation.dashboard"), url: "/driver", icon: HiOutlineHome },
     {
       title: t("navigation.assignedCargos"),
       url: "/driver/cargos",
-      icon: Package,
+      icon: HiOutlineCube,
     },
     {
       title: t("navigation.myDeliveries"),
       url: "/driver/deliveries",
-      icon: Truck,
+      icon: HiOutlineTruck,
     },
     {
       title: t("navigation.deliveryHistory"),
       url: "/driver/history",
-      icon: History,
+      icon: HiOutlineClock,
     },
   ],
   admin: [
-    { title: t("navigation.dashboard"), url: "/admin", icon: Home },
-    { title: t("navigation.allCargos"), url: "/admin/cargos", icon: Package },
+    { title: t("navigation.dashboard"), url: "/admin", icon: HiOutlineHome },
+    { title: t("navigation.allCargos"), url: "/admin/cargos", icon: HiOutlineCube },
     {
       title: t("navigation.assignments"),
       url: "/admin/assignments",
-      icon: Activity,
+      icon: HiOutlineClipboardDocumentList,
     },
-    { title: t("navigation.drivers"), url: "/admin/drivers", icon: Users },
-    { title: "Clients", url: "/admin/clients", icon: Users },
-    { title: t("navigation.vehicles"), url: "/admin/trucks", icon: Truck },
-    { title: "Fleet Monitor", url: "/admin/fleet-monitor", icon: Navigation },
-    { title: t("navigation.invoices"), url: "/admin/invoices", icon: Receipt },
+    { title: t("navigation.drivers"), url: "/admin/drivers", icon: HiOutlineUsers },
+    { title: "Clients", url: "/admin/clients", icon: HiOutlineUsers },
+    { title: t("navigation.vehicles"), url: "/admin/trucks", icon: HiOutlineTruck },
+    {
+      title: "Fleet Monitor",
+      url: "/admin/fleet-monitor",
+      icon: HiOutlineMap,
+    },
+    { title: t("navigation.invoices"), url: "/admin/invoices", icon: HiOutlineDocumentText },
     {
       title: "Payment Verifications",
       url: "/admin/payment-verifications",
-      icon: CreditCard,
+      icon: HiOutlineCreditCard,
     },
-    { title: t("navigation.reports"), url: "/admin/reports", icon: BarChart3 },
+    {
+      title: t("navigation.reports"),
+      url: "/admin/reports",
+      icon: HiOutlineChartBarSquare,
+    },
     {
       title: "Transportation Reports",
       url: "/admin/transportation-reports",
-      icon: FileSpreadsheet,
+      icon: HiOutlineDocumentChartBar,
     },
   ],
   super_admin: [
-    { title: t("navigation.dashboard"), url: "/super-admin", icon: Home },
+    {
+      title: t("navigation.dashboard"),
+      url: "/super-admin",
+      icon: HiOutlineHome,
+    },
     {
       title: t("navigation.allCargos"),
       url: "/super-admin/cargos",
-      icon: Package,
+      icon: HiOutlineCube,
     },
     {
       title: t("navigation.assignments"),
       url: "/super-admin/assignments",
-      icon: Activity,
+      icon: HiOutlineClipboardDocumentList,
     },
     {
       title: t("navigation.vehicles"),
       url: "/super-admin/trucks",
-      icon: Truck,
+      icon: HiOutlineTruck,
     },
-    { title: "Fleet Monitor", url: "/admin/fleet-monitor", icon: Navigation },
+    {
+      title: "Fleet Monitor",
+      url: "/admin/fleet-monitor",
+      icon: HiOutlineMap,
+    },
     {
       title: t("navigation.userManagement"),
       url: "/super-admin/users",
-      icon: Users,
+      icon: HiOutlineUsers,
     },
     {
       title: "Branchs",
       url: "/superadmin/branches",
-      icon: Building2,
+      icon: HiOutlineBuildingOffice2,
     },
     {
       title: "Districts",
       url: "/superadmin/districts",
-      icon: Map,
+      icon: HiOutlineMap,
     },
     {
       title: "Cargo Categories",
       url: "/superadmin/cargo-categories",
-      icon: Package,
+      icon: HiOutlineCube,
     },
     {
       title: t("navigation.invoices"),
       url: "/super-admin/invoices",
-      icon: Receipt,
+      icon: HiOutlineDocumentText,
     },
     {
       title: "Payment Verifications",
       url: "/admin/payment-verifications",
-      icon: CreditCard,
+      icon: HiOutlineCreditCard,
     },
     {
       title: t("navigation.systemSettings"),
       url: "/super-admin/settings",
-      icon: Settings,
+      icon: HiOutlineCog6Tooth,
     },
     {
       title: "Transportation Reports",
       url: "/super-admin/transportation-reports",
-      icon: FileSpreadsheet,
+      icon: HiOutlineDocumentChartBar,
     },
   ],
 });
@@ -161,9 +182,14 @@ export function MobileBottomNav() {
   const allNavigation = navigationConfig[user.role] || [];
   const isActive = (path: string) => location.pathname === path;
 
-  // First 4 items are primary (most important), rest go in "More" menu
-  const primaryItems = allNavigation.slice(0, 4);
-  const moreItems = allNavigation.slice(4);
+  // Show all items if 5 or fewer; otherwise show first 4 + "More" for the rest
+  const maxVisible = 5;
+  const primaryItems =
+    allNavigation.length <= maxVisible
+      ? allNavigation
+      : allNavigation.slice(0, 4);
+  const moreItems =
+    allNavigation.length <= maxVisible ? [] : allNavigation.slice(4);
 
   const handleMoreItemClick = (url: string) => {
     navigate(url);
@@ -219,7 +245,7 @@ export function MobileBottomNav() {
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  <MoreHorizontal
+                  <HiOutlineEllipsisHorizontal
                     className={`h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-300 ${
                       isMoreOpen ? "text-blue-600 scale-110" : "text-gray-500"
                     }`}

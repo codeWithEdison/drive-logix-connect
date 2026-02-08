@@ -272,11 +272,12 @@
     background: rgba(59, 130, 246, 0.55);
   }
 
-/* iOS Safe Area Support - Use built-in safe area, no extra margins */
+/* iOS Safe Area Support - Extra padding/margin for status bar clearance */
 @supports (padding: max(0px)) {
   body {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    margin-top: 8px;
   }
 }
 

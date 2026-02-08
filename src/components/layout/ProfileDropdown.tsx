@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   User,
@@ -87,6 +87,15 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
     }
   };
 
+  const getInitials = (name: string) => {
+    if (!name || !name.trim()) return "?";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -117,55 +126,59 @@ export function ProfileDropdown({ className }: ProfileDropdownProps) {
 
   if (!user) return null;
 
+  const avatarUrl = userProfile?.avatar_url || user.avatar_url;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex items-center gap-3 pl-3 border-l border-gray-200 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors">
-          <Avatar className="h-8 w-8">
-            {userProfile?.avatar_url ? (
-              <img
-                src={userProfile.avatar_url}
-                alt="Profile"
-                className="h-8 w-8 rounded-full object-cover"
+        <button
+          type="button"
+          className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-gray-200 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 min-w-0"
+          aria-label={t("profile.profileAndSettings")}
+        >
+          <Avatar className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 ring-2 ring-white shadow-sm">
+            {avatarUrl ? (
+              <AvatarImage
+                src={avatarUrl}
+                alt={user.full_name}
+                className="object-cover"
               />
-            ) : (
-              <AvatarFallback
-                style={{ backgroundColor: getRoleColor(user.role) }}
-                className="text-white font-bold"
-              >
-                {user.full_name.charAt(0)}
-              </AvatarFallback>
-            )}
+            ) : null}
+            <AvatarFallback
+              style={{ backgroundColor: getRoleColor(user.role) }}
+              className="text-white font-bold text-sm sm:text-base"
+            >
+              {getInitials(user.full_name)}
+            </AvatarFallback>
           </Avatar>
-          <div className="hidden xl:block">
-            <p className="text-sm font-medium text-gray-900">
+          <div className="hidden xl:block text-left min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
               {user.full_name}
             </p>
             <p className="text-xs text-gray-500 capitalize">
               {user.role?.replace("_", " ") || "Unknown"}
             </p>
           </div>
-        </div>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         {/* User Info Header */}
         <div className="p-4">
           <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
-              {userProfile?.avatar_url ? (
-                <img
-                  src={userProfile.avatar_url}
-                  alt="Profile"
-                  className="h-12 w-12 rounded-full object-cover"
+            <Avatar className="h-14 w-14 shrink-0 ring-2 ring-gray-100">
+              {avatarUrl ? (
+                <AvatarImage
+                  src={avatarUrl}
+                  alt={user.full_name}
+                  className="object-cover"
                 />
-              ) : (
-                <AvatarFallback
-                  style={{ backgroundColor: getRoleColor(user.role) }}
-                  className="text-white font-bold text-lg"
-                >
-                  {user.full_name.charAt(0)}
-                </AvatarFallback>
-              )}
+              ) : null}
+              <AvatarFallback
+                style={{ backgroundColor: getRoleColor(user.role) }}
+                className="text-white font-bold text-xl"
+              >
+                {getInitials(user.full_name)}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900">{user.full_name}</h3>
