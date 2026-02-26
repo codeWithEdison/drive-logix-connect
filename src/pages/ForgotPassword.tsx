@@ -18,7 +18,7 @@ import {
   ArrowRight,
   KeyRound,
   Shield,
-  Sparkles,
+  Zap,
 } from "lucide-react";
 import { customToast } from "@/lib/utils/toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
@@ -436,7 +436,7 @@ export default function ForgotPassword() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-blue-300" />
+                  <Zap className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">{t("auth.quickRecovery")}</h3>

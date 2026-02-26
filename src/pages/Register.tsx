@@ -30,7 +30,7 @@ import {
   ArrowLeft,
   ArrowRight,
   UserPlus,
-  Sparkles,
+  MapPin,
   Truck,
   Shield,
 } from "lucide-react";
@@ -449,7 +449,7 @@ export default function Register() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-blue-300" />
+                  <MapPin className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">

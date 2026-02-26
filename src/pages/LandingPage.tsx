@@ -60,7 +60,7 @@ import {
   Plus,
   Minus,
   ArrowRight,
-  Sparkles,
+  Rocket,
   Send,
   ArrowUp,
   User,
@@ -2343,7 +2343,7 @@ const LandingPage: React.FC = () => {
               className="inline-flex items-center gap-2 bg-white/10 text-white px-4 py-2 rounded-full mb-6 md:mb-8 font-semibold text-xs md:text-sm border border-white/20"
               whileHover={{ scale: 1.05 }}
             >
-              <Sparkles className="w-3 h-3 md:w-4 md:h-4" />
+              <Rocket className="w-3 h-3 md:w-4 md:h-4" />
               {t("landing.getStarted.badge")}
             </motion.div>
 

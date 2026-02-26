@@ -19,7 +19,7 @@ import {
   ArrowRight,
   Shield,
   KeyRound,
-  Sparkles,
+
 } from "lucide-react";
 import { customToast } from "@/lib/utils/toast";
 import { useLanguage } from "@/lib/i18n/LanguageContext";

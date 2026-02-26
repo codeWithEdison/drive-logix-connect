@@ -18,7 +18,7 @@ import {
   Truck,
   LogIn,
   ArrowRight,
-  Sparkles,
+  MapPin,
   Home,
   ArrowLeft,
 } from "lucide-react";
@@ -193,7 +193,7 @@ export default function Login() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-blue-300" />
+                  <MapPin className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">{t("auth.realTimeTracking")}</h3>
@@ -251,7 +251,7 @@ export default function Login() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
                   >
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
                       <LogIn className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -355,7 +355,7 @@ export default function Login() {
                         <Separator className="w-full" />
                       </div>
                       <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white px-2 text-gray-500 font-medium">
+                        <span className="bg-card px-2 text-gray-500 font-medium">
                           {t("auth.orContinueWith")}
                         </span>
                       </div>
