@@ -72,7 +72,7 @@ export default function Login() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 relative overflow-hidden flex items-center justify-center p-4 pt-8 mt-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 relative overflow-hidden flex items-center justify-center p-4 pt-8">
       <SEO
         title={PAGE_SEO.login.title}
         description={PAGE_SEO.login.description}
@@ -251,7 +251,7 @@ export default function Login() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
                   >
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 aspect-square shrink-0 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
                       <LogIn className="w-6 h-6 text-white" />
                     </div>
                     <div>
