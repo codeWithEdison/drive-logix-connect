@@ -61,6 +61,7 @@ import {
   Sparkles,
   Send,
   ArrowUp,
+  User,
 } from "lucide-react";
 
 const LandingPage: React.FC = () => {
@@ -471,24 +472,18 @@ const LandingPage: React.FC = () => {
       role: t("landing.testimonials.sarah.role"),
       content: t("landing.testimonials.sarah.content"),
       rating: 5,
-      avatar:
-        "https://lh3.googleusercontent.com/a/ACg8ocKUYbuOxTvG1g0oKt1KnzS-cgBl6t-lmb74LYeMtDwt2BiJXV1g=s96-c",
     },
     {
       name: t("landing.testimonials.michael.name"),
       role: t("landing.testimonials.michael.role"),
       content: t("landing.testimonials.michael.content"),
       rating: 5,
-      avatar:
-        "https://lh3.googleusercontent.com/a/ACg8ocKUYbuOxTvG1g0oKt1KnzS-cgBl6t-lmb74LYeMtDwt2BiJXV1g=s96-c",
     },
     {
       name: t("landing.testimonials.emily.name"),
       role: t("landing.testimonials.emily.role"),
       content: t("landing.testimonials.emily.content"),
       rating: 5,
-      avatar:
-        "https://lh3.googleusercontent.com/a/ACg8ocKUYbuOxTvG1g0oKt1KnzS-cgBl6t-lmb74LYeMtDwt2BiJXV1g=s96-c",
     },
   ];
 
@@ -1742,13 +1737,13 @@ const LandingPage: React.FC = () => {
 
                   {/* Author Info */}
                   <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                    <motion.img
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-full ring-2 ring-purple-100 object-cover"
-                      whileHover={{ scale: 1.1 }}
+                    <motion.div
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center text-purple-600 ring-2 ring-purple-50"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
                       transition={{ duration: 0.3 }}
-                    />
+                    >
+                      <User className="w-5 h-5 md:w-6 md:h-6" />
+                    </motion.div>
                     <div>
                       <h4 className="text-sm md:text-base font-bold text-gray-900">
                         {testimonial.name}
