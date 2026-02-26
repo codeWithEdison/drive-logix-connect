@@ -7,8 +7,10 @@ import { usePWAInstall } from "@/hooks/usePWAInstall";
 import {
   CargoCategoryService,
   WebsiteStatisticsService,
+  CargoService,
 } from "@/lib/api/services/cargoService";
-import { CargoCategory } from "@/types/shared";
+import { OperationalService } from "@/lib/api/services/localizationService";
+import { CargoCategory, PricingPolicy } from "@/types/shared";
 import { SEO } from "@/components/seo/SEO";
 import {
   PAGE_SEO,
@@ -73,11 +75,15 @@ const LandingPage: React.FC = () => {
   const [currentAppImageIndex, setCurrentAppImageIndex] = useState(0);
   const [cargoCategories, setCargoCategories] = useState<CargoCategory[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [pricingPolicies, setPricingPolicies] = useState<PricingPolicy[]>([]);
+  const [loadingPolicies, setLoadingPolicies] = useState(true);
   const [calculatorInputs, setCalculatorInputs] = useState({
-    distance: "",
     weight: "",
-    category: "standard",
+    category: "",
+    pricing_policy: "",
   });
+  const [policySearch, setPolicySearch] = useState("");
+  const [showPolicyDropdown, setShowPolicyDropdown] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [statistics, setStatistics] = useState({
@@ -104,42 +110,16 @@ const LandingPage: React.FC = () => {
   };
 
   // Price Calculator Functions
+  // Price Calculator Logic - Now calculated on frontend
   const calculatePrice = () => {
-    const { distance, weight, category } = calculatorInputs;
-
-    // Convert string inputs to numbers, default to 0 if empty
-    const distanceNum = parseFloat(distance) || 0;
-    const weightNum = parseFloat(weight) || 0;
-
-    // If both inputs are empty, return 0
-    if (distanceNum === 0 && weightNum === 0) {
-      return 0;
-    }
-
-    // Base rates
-    const ratePerKm = 500;
-    const ratePerKg = 250;
-
-    // Category multipliers
-    const categoryMultipliers = {
-      standard: 1.0,
-      fragile: 1.5,
-      electronics: 1.3,
-      documents: 0.8,
-      furniture: 1.2,
-      food: 1.1,
-    };
-
-    // Calculate base price
-    let totalPrice = distanceNum * ratePerKm + weightNum * ratePerKg;
-
-    // Apply category multiplier
-    const multiplier =
-      categoryMultipliers[category as keyof typeof categoryMultipliers] || 1.0;
-    totalPrice *= multiplier;
-
-    return Math.max(totalPrice, 2000); // Minimum price of RWF 2,000
+    const weight = parseFloat(calculatorInputs.weight) || 0;
+    const rate = selectedPolicy?.rate_per_kg || 0;
+    const multiplier = selectedCategory?.base_rate_multiplier || 1;
+    
+    return weight * rate * multiplier;
   };
+
+  const isCalculating = false; // Instant calculation on frontend
 
   const handleCalculatorInputChange = (field: string, value: any) => {
     setCalculatorInputs((prev) => ({
@@ -150,11 +130,12 @@ const LandingPage: React.FC = () => {
 
   const resetCalculator = () => {
     setCalculatorInputs({
-      distance: "",
       weight: "",
-      category: "standard",
+      category: "",
+      pricing_policy: pricingPolicies[0]?.id || "",
     });
     setCategorySearch("");
+    setPolicySearch("");
   };
 
   // Format large counts: use K+ only when >= 1000, else show raw with +
@@ -172,9 +153,17 @@ const LandingPage: React.FC = () => {
     category.name.toLowerCase().includes(categorySearch.toLowerCase())
   );
 
-  // Get selected category details
+  // Filter policies based on search
+  const filteredPolicies = pricingPolicies.filter((policy) =>
+    policy.name.toLowerCase().includes(policySearch.toLowerCase())
+  );
+
+  // Get selected items details
   const selectedCategory = cargoCategories.find(
     (cat) => cat.id === calculatorInputs.category
+  );
+  const selectedPolicy = pricingPolicies.find(
+    (pol) => pol.id === calculatorInputs.pricing_policy
   );
 
   // Handle category selection
@@ -182,6 +171,13 @@ const LandingPage: React.FC = () => {
     handleCalculatorInputChange("category", categoryId);
     setCategorySearch(categoryName);
     setShowCategoryDropdown(false);
+  };
+
+  // Handle policy selection
+  const handlePolicySelect = (policyId: string, policyName: string) => {
+    handleCalculatorInputChange("pricing_policy", policyId);
+    setPolicySearch(policyName);
+    setShowPolicyDropdown(false);
   };
 
   const vehicles = [
@@ -303,6 +299,34 @@ const LandingPage: React.FC = () => {
     };
 
     fetchCategories();
+  }, []);
+
+  // Fetch pricing policies from backend
+  useEffect(() => {
+    const fetchPricingPolicies = async () => {
+      try {
+        setLoadingPolicies(true);
+        const response = await OperationalService.getPricingPolicies({
+          is_active: true,
+        });
+        if (response.success && response.data) {
+          setPricingPolicies(response.data);
+          // Set first policy as default
+          if (response.data.length > 0) {
+            setCalculatorInputs((prev) => ({
+              ...prev,
+              pricing_policy: response.data![0].id,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching pricing policies:", error);
+      } finally {
+        setLoadingPolicies(false);
+      }
+    };
+
+    fetchPricingPolicies();
   }, []);
 
   // Toggle back-to-top visibility on scroll
@@ -534,8 +558,7 @@ const LandingPage: React.FC = () => {
       />
       {/* Modern Navigation Header */}
       <nav 
-        className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 z-50 shadow-sm"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)', marginTop: '8px' }}
+        className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-100 z-50 shadow-sm"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
@@ -595,9 +618,9 @@ const LandingPage: React.FC = () => {
                 <LanguageSwitcher variant="ghost" size="sm" showLabel={true} />
                 <Link
                   to="/login"
-                  className="group flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 hover:-translate-y-0.5"
+                  className="group flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-full hover:bg-blue-700 transition-all duration-300 text-sm font-semibold shadow-lg shadow-blue-600/20 hover:-translate-y-0.5"
                 >
-                  <LogIn className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <LogIn className="w-4 h-4" />
                   {t("navigation.login")}
                 </Link>
               </div>
@@ -608,7 +631,7 @@ const LandingPage: React.FC = () => {
               <LanguageSwitcher variant="ghost" size="sm" showLabel={true} />
               <Link
                 to="/login"
-                className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 text-xs font-semibold shadow-lg shadow-blue-600/30"
+                className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition-all duration-300 text-xs font-semibold shadow-md"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 {t("navigation.login")}
@@ -727,10 +750,7 @@ const LandingPage: React.FC = () => {
               "url('/image/red-truck-road-with-blurred-background_470606-193.jpg')",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 via-blue-800/80 to-gray-900/90"></div>
-          {/* Animated Shapes */}
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
+          <div className="absolute inset-0 bg-blue-900/70"></div>
         </div>
 
         {/* Content */}
@@ -749,7 +769,7 @@ const LandingPage: React.FC = () => {
               {/* Main Heading */}
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
                 {t("landing.hero.title")}{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                <span className="text-blue-400">
                   {t("landing.hero.titleHighlight")}
                 </span>
               </h1>
@@ -763,33 +783,26 @@ const LandingPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
                   to="/login"
-                  className="group relative bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-full text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 text-center shadow-2xl shadow-blue-600/50 hover:shadow-blue-600/70 hover:scale-105"
+                  className="group relative bg-blue-600 text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-blue-700 transition-all duration-300 text-center shadow-lg"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
                     <Truck className="w-5 h-5" />
                     {t("landing.hero.ctaPrimary")}
                   </span>
                 </Link>
-                <button
-                  id="download"
-                  onClick={handleInstallClick}
-                  className="group border-2 border-white/50 text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-white hover:text-blue-900 transition-all duration-300 text-center backdrop-blur-sm hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-transparent"
-                  disabled={isInstalled}
-                  title={
-                    isInstalled
-                      ? "App is already installed"
-                      : isInstallable
-                      ? "Click to install the app"
-                      : "Click for installation instructions"
-                  }
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.lovelycargo.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group border-2 border-white/50 text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-white hover:text-blue-900 transition-all duration-300 text-center backdrop-blur-sm hover:scale-105"
                 >
                   <span className="flex items-center justify-center gap-2">
-                    <Smartphone className="w-5 h-5" />
-                    {isInstalled
-                      ? t("landing.downloadApp.installed") || "App Installed"
-                      : t("landing.downloadApp.downloadButton")}
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                      <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5ZM14.4,12.71L17.14,14.29L4.84,22.39C4.94,22.46 5.06,22.5 5.18,22.5C5.36,22.5 5.53,22.41 5.64,22.25L14.4,12.71ZM14.4,11.29L5.64,1.75C5.53,1.59 5.36,1.5 5.18,1.5C5.06,1.5 4.94,1.54 4.84,1.61L17.14,9.71L14.4,11.29ZM18.53,10.51L15.39,12L18.53,13.49C19.16,13.79 19.84,13.56 20.14,12.93C20.25,12.65 20.25,12.35 20.14,12.07C19.84,11.44 19.16,11.21 18.53,10.51Z" />
+                    </svg>
+                    {t("landing.downloadApp.downloadButton")}
                   </span>
-                </button>
+                </a>
               </div>
 
               {/* Stats */}
@@ -831,8 +844,7 @@ const LandingPage: React.FC = () => {
               className="relative flex justify-center lg:justify-end mt-8 lg:mt-0"
             >
               <div className="relative max-w-xs md:max-w-sm w-full px-4 md:px-0">
-                {/* Subtle Glow Effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-2xl opacity-50 animate-pulse"></div>
+
 
                 {/* Simple Elegant Container */}
                 <div className="relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl">
@@ -900,33 +912,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Why Choose Us Section - Animated Design */}
-      <section className="py-16 md:py-28 bg-gradient-to-br from-slate-50 via-blue-50/40 to-slate-50 relative overflow-hidden">
-        {/* Animated Background */}
-        <motion.div
-          className="absolute top-0 right-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-0 left-0 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
+      <section className="py-16 md:py-28 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
           <motion.div
@@ -937,7 +923,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-blue-100"
               whileHover={{ scale: 1.05 }}
             >
               <Star className="w-3 h-3 md:w-4 md:h-4" />
@@ -979,15 +965,13 @@ const LandingPage: React.FC = () => {
                   scale: 1.02,
                   transition: { duration: 0.3 },
                 }}
-                className="group relative bg-white/80 backdrop-blur-sm rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-200/50 shadow-lg hover:shadow-2xl transition-shadow duration-300"
+                className="group relative bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 <div className="relative z-10 text-center">
                   {/* Animated Icon */}
                   <motion.div
-                    className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 text-white shadow-lg shadow-blue-500/40"
+                    className="w-14 h-14 md:w-16 md:h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 text-white shadow-md"
                     whileHover={{ rotate: [0, -10, 10, -10, 0], scale: 1.1 }}
                     transition={{ duration: 0.5 }}
                   >
@@ -1020,33 +1004,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* How It Works Section - Animated Timeline */}
-      <section className="py-16 md:py-28 bg-gradient-to-br from-indigo-950 via-blue-950 to-slate-950 relative overflow-hidden">
-        {/* Animated Orbs */}
-        <motion.div
-          className="absolute top-10 left-10 w-56 h-56 md:w-72 md:h-72 bg-blue-500/20 rounded-full blur-3xl"
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-10 right-10 w-72 h-72 md:w-96 md:h-96 bg-purple-500/20 rounded-full blur-3xl"
-          animate={{
-            x: [0, -30, 0],
-            y: [0, -50, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
+      <section className="py-16 md:py-28 bg-slate-900 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
           <motion.div
@@ -1057,7 +1015,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.7 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-white/20"
+              className="inline-flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-slate-700"
               whileHover={{ scale: 1.05 }}
             >
               <Clock className="w-3 h-3 md:w-4 md:h-4" />
@@ -1066,7 +1024,7 @@ const LandingPage: React.FC = () => {
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
               {t("landing.howItWorks.title")}
             </h2>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-300 max-w-2xl mx-auto">
               {t("landing.howItWorks.subtitleShort")}
             </p>
           </motion.div>
@@ -1075,7 +1033,7 @@ const LandingPage: React.FC = () => {
           <div className="relative">
             {/* Connection Line - Desktop */}
             <motion.div
-              className="hidden md:block absolute top-16 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 mx-auto"
+              className="hidden md:block absolute top-16 left-0 right-0 h-1 bg-slate-800 mx-auto"
               style={{ width: "calc(100% - 200px)", left: "100px" }}
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
@@ -1118,7 +1076,7 @@ const LandingPage: React.FC = () => {
                   >
                     {/* Animated Number Badge */}
                     <motion.div
-                      className="relative z-10 w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 text-xl md:text-2xl font-bold shadow-2xl"
+                      className="relative z-10 w-14 h-14 md:w-16 md:h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6 text-xl md:text-2xl font-bold shadow-xl"
                       whileHover={{
                         scale: 1.15,
                         rotate: 360,
@@ -1158,7 +1116,7 @@ const LandingPage: React.FC = () => {
       {/* Services Section - Animated Cards */}
       <section
         id="services"
-        className="py-16 md:py-28 bg-gradient-to-b from-white via-slate-50/50 to-white relative overflow-hidden"
+        className="py-16 md:py-28 bg-white relative overflow-hidden"
       >
         {/* Animated Dots Pattern */}
         <motion.div
@@ -1188,7 +1146,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-blue-100"
               whileHover={{ scale: 1.05 }}
             >
               <Package className="w-3 h-3 md:w-4 md:h-4" />
@@ -1235,7 +1193,7 @@ const LandingPage: React.FC = () => {
                 <div className="relative z-10">
                   {/* Animated Icon */}
                   <motion.div
-                    className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mb-4 md:mb-6 text-blue-600 group-hover:shadow-xl transition-shadow duration-300"
+                    className="w-12 h-12 md:w-14 md:h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 md:mb-6 text-blue-600 group-hover:bg-blue-100 transition-colors duration-300"
                     whileHover={{
                       rotate: [0, -10, 10, -10, 0],
                       scale: 1.1,
@@ -1269,8 +1227,7 @@ const LandingPage: React.FC = () => {
                   </motion.div>
                 </div>
 
-                {/* Corner Accent */}
-                <div className="absolute top-0 right-0 w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full transition-colors duration-300"></div>
+
               </motion.div>
             ))}
           </motion.div>
@@ -1278,33 +1235,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Payment Options Section - Animated */}
-      <section className="py-16 md:py-28 bg-gradient-to-br from-emerald-50/50 via-white to-blue-50/50 relative overflow-hidden">
-        {/* Animated Decorative Elements */}
-        <motion.div
-          className="absolute top-10 right-10 w-48 h-48 md:w-64 md:h-64 bg-green-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            x: [0, 30, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-10 left-10 w-64 h-64 md:w-80 md:h-80 bg-blue-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1.3, 1, 1.3],
-            x: [0, -30, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
+      <section className="py-16 md:py-28 bg-slate-50 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
           <motion.div
@@ -1315,7 +1246,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-100 via-emerald-100 to-blue-100 text-green-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-blue-100"
               whileHover={{ scale: 1.05 }}
             >
               <CreditCard className="w-3 h-3 md:w-4 md:h-4" />
@@ -1357,10 +1288,9 @@ const LandingPage: React.FC = () => {
                   scale: 1.05,
                   transition: { duration: 0.3 },
                 }}
-                className="group relative bg-white/90 backdrop-blur-sm rounded-2xl md:rounded-3xl p-6 md:p-8 border-2 border-gray-100 hover:border-green-200 shadow-lg hover:shadow-2xl transition-all duration-300"
+                className="group relative bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-gray-100 hover:border-blue-200 shadow-md hover:shadow-xl transition-all duration-300"
               >
-                {/* Animated Gradient Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-blue-50/10 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 <div className="relative z-10 text-center">
                   {/* Payment Logo Image */}
@@ -1452,21 +1382,8 @@ const LandingPage: React.FC = () => {
       {/* Vehicle Fleet Section - Animated Slider */}
       <section
         id="vehicles"
-        className="py-16 md:py-28 bg-gradient-to-br from-slate-50 via-gray-50 to-slate-50 relative overflow-hidden"
+        className="py-16 md:py-28 bg-white relative overflow-hidden"
       >
-        {/* Animated Background */}
-        <motion.div
-          className="absolute top-0 left-0 w-64 h-64 md:w-96 md:h-96 bg-blue-500/5 rounded-full blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
@@ -1478,7 +1395,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-blue-100"
               whileHover={{ scale: 1.05 }}
             >
               <Truck className="w-3 h-3 md:w-4 md:h-4" />
@@ -1501,7 +1418,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.7 }}
           >
             {/* Main Slide Container */}
-            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl shadow-2xl bg-gradient-to-br from-gray-900 to-slate-900">
+            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl shadow-xl bg-slate-900">
               <div
                 className="flex transition-transform duration-700 ease-out"
                 style={{
@@ -1516,7 +1433,7 @@ const LandingPage: React.FC = () => {
                         className="absolute inset-0 bg-cover bg-center transition-all duration-700"
                         style={{ backgroundImage: `url('${vehicle.image}')` }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30"></div>
+                        <div className="absolute inset-0 bg-slate-900/60"></div>
                       </div>
 
                       {/* Content Overlay */}
@@ -1540,7 +1457,7 @@ const LandingPage: React.FC = () => {
 
                             {/* Capacity Badge */}
                             <motion.div
-                              className="inline-block bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6"
+                              className="inline-block bg-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6"
                               initial={{ opacity: 0, scale: 0.8 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ duration: 0.6, delay: 0.4 }}
@@ -1621,33 +1538,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Testimonials Section - Animated */}
-      <section className="py-16 md:py-28 bg-gradient-to-b from-white via-purple-50/30 to-white relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <motion.div
-          className="absolute top-10 right-10 w-64 h-64 md:w-96 md:h-96 bg-purple-400/5 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 50, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-10 left-10 w-64 h-64 md:w-80 md:h-80 bg-blue-400/5 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            x: [0, -30, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
+      <section className="py-16 md:py-28 bg-slate-50 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
           <motion.div
@@ -1658,7 +1549,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 via-pink-100 to-blue-100 text-purple-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-blue-100"
               whileHover={{ scale: 1.05 }}
             >
               <Heart className="w-3 h-3 md:w-4 md:h-4" />
@@ -1704,7 +1595,7 @@ const LandingPage: React.FC = () => {
               >
                 {/* Quote Icon */}
                 <motion.div
-                  className="absolute -top-3 -left-3 w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white shadow-lg"
+                  className="absolute -top-3 -left-3 w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-md"
                   whileHover={{ rotate: 180, scale: 1.1 }}
                   transition={{ duration: 0.5 }}
                 >
@@ -1712,7 +1603,7 @@ const LandingPage: React.FC = () => {
                 </motion.div>
 
                 {/* Gradient Background on Hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-pink-50/50 to-blue-50/50 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-blue-50/10 rounded-2xl md:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                 <div className="relative z-10">
                   {/* Rating Stars */}
@@ -1738,7 +1629,7 @@ const LandingPage: React.FC = () => {
                   {/* Author Info */}
                   <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
                     <motion.div
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center text-purple-600 ring-2 ring-purple-50"
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 ring-2 ring-blue-50"
                       whileHover={{ scale: 1.1, rotate: 5 }}
                       transition={{ duration: 0.3 }}
                     >
@@ -1802,33 +1693,8 @@ const LandingPage: React.FC = () => {
       {/* Pricing Section - Animated */}
       <section
         id="pricing"
-        className="py-16 md:py-28 bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 relative overflow-hidden"
+        className="py-16 md:py-28 bg-white relative overflow-hidden"
       >
-        {/* Animated Background */}
-        <motion.div
-          className="absolute top-0 left-0 w-64 h-64 md:w-96 md:h-96 bg-blue-400/10 rounded-full blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 50, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-0 right-0 w-80 h-80 md:w-96 md:h-96 bg-purple-400/10 rounded-full blur-3xl"
-          animate={{
-            x: [0, -50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
@@ -1840,11 +1706,11 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-blue-100"
               whileHover={{ scale: 1.05 }}
             >
               <DollarSign className="w-3 h-3 md:w-4 md:h-4" />
-              Transparent Pricing
+              {t("landing.pricingSection.badge")}
             </motion.div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 md:mb-4">
               {t("landing.pricingSection.title")}
@@ -1865,7 +1731,7 @@ const LandingPage: React.FC = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="flex items-center gap-3 mb-6 flex-shrink-0">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-md">
                   <Package className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
                 <h3 className="text-lg md:text-2xl font-bold text-gray-900">
@@ -1940,7 +1806,7 @@ const LandingPage: React.FC = () => {
                           hidden: { opacity: 0, x: -20 },
                           show: { opacity: 1, x: 0 },
                         }}
-                        className="flex justify-between items-center p-3 md:p-4 bg-gradient-to-r from-gray-50 to-blue-50/50 rounded-xl hover:shadow-md transition-shadow duration-200"
+                        className="flex justify-between items-center p-3 md:p-4 bg-slate-50 border border-gray-100 rounded-xl hover:shadow-md transition-shadow duration-200"
                         whileHover={{ scale: 1.02 }}
                       >
                         <div>
@@ -1973,7 +1839,7 @@ const LandingPage: React.FC = () => {
 
             {/* Interactive Price Calculator - Animated */}
             <motion.div
-              className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white shadow-2xl"
+              className="bg-blue-600 rounded-2xl md:rounded-3xl p-6 md:p-8 text-white shadow-xl"
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -2002,28 +1868,6 @@ const LandingPage: React.FC = () => {
                 initial="hidden"
                 animate="show"
               >
-                {/* Distance Input */}
-                <motion.div
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <label className="block text-xs md:text-sm font-medium mb-2">
-                    {t("landing.pricingSection.calculator.distance")}
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={calculatorInputs.distance}
-                    onChange={(e) =>
-                      handleCalculatorInputChange("distance", e.target.value)
-                    }
-                    className="w-full px-4 md:px-5 py-2 md:py-3 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm md:text-base"
-                    placeholder="Enter distance"
-                  />
-                </motion.div>
-
                 {/* Weight Input */}
                 <motion.div
                   variants={{
@@ -2042,7 +1886,9 @@ const LandingPage: React.FC = () => {
                       handleCalculatorInputChange("weight", e.target.value)
                     }
                     className="w-full px-4 md:px-5 py-2 md:py-3 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm md:text-base"
-                    placeholder="Enter weight"
+                    placeholder={t(
+                      "landing.pricingSection.calculator.weightPlaceholder"
+                    )}
                   />
                 </motion.div>
 
@@ -2158,6 +2004,105 @@ const LandingPage: React.FC = () => {
                   )}
                 </motion.div>
 
+                {/* Pricing Policy Selection - Searchable Combobox */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    show: { opacity: 1, y: 0 },
+                  }}
+                  className="relative"
+                >
+                  <label className="block text-xs md:text-sm font-medium mb-2">
+                    {t("landing.pricingSection.calculator.pricingPolicy")}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={policySearch || selectedPolicy?.name || ""}
+                      onChange={(e) => {
+                        setPolicySearch(e.target.value);
+                        setShowPolicyDropdown(true);
+                      }}
+                      onFocus={() => setShowPolicyDropdown(true)}
+                      placeholder={t(
+                        "landing.pricingSection.calculator.pricingPolicyPlaceholder"
+                      )}
+                      className="w-full px-4 md:px-5 py-2 md:py-3 pr-10 rounded-full text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm md:text-base"
+                      disabled={loadingPolicies}
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      {policySearch && (
+                        <button
+                          onClick={() => {
+                            setPolicySearch("");
+                            setShowPolicyDropdown(true);
+                          }}
+                          className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                        >
+                          <CloseIcon className="w-3 h-3 md:w-4 md:h-4 text-gray-500" />
+                        </button>
+                      )}
+                      <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+                    </div>
+
+                    {/* Dropdown */}
+                    {showPolicyDropdown && (
+                      <motion.div
+                        className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 max-h-60 overflow-y-auto custom-scrollbar"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                      >
+                        {loadingPolicies ? (
+                          <div className="p-4 text-center text-gray-500 text-sm">
+                            {t(
+                              "landing.pricingSection.calculator.loadingPolicies"
+                            )}
+                          </div>
+                        ) : filteredPolicies.length > 0 ? (
+                          filteredPolicies.map((policy) => (
+                            <button
+                              key={policy.id}
+                              onClick={() =>
+                                handlePolicySelect(policy.id, policy.name)
+                              }
+                              className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                                calculatorInputs.pricing_policy === policy.id
+                                  ? "bg-blue-50"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <div className="text-sm md:text-base font-medium text-gray-900">
+                                    {policy.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Rate: RWF {policy.rate_per_kg}/kg
+                                  </div>
+                                </div>
+                                <ChevronDownIcon className="w-4 h-4 text-blue-600 -rotate-90" />
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="p-4 text-center text-gray-500 text-sm">
+                            No policies matching "{policySearch}"
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Click outside to close */}
+                  {showPolicyDropdown && (
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowPolicyDropdown(false)}
+                    />
+                  )}
+                </motion.div>
+
                 {/* Price Display */}
                 <motion.div
                   className="bg-white/20 backdrop-blur-sm rounded-xl p-4 md:p-6 text-center border border-white/20"
@@ -2178,7 +2123,11 @@ const LandingPage: React.FC = () => {
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.3 }}
                   >
-                    RWF {calculatePrice().toLocaleString()}
+                    {isCalculating ? (
+                      <span className="animate-pulse opacity-50">...</span>
+                    ) : (
+                      `RWF ${calculatePrice().toLocaleString()}`
+                    )}
                   </motion.div>
                 </motion.div>
 
@@ -2217,33 +2166,9 @@ const LandingPage: React.FC = () => {
       {/* FAQ Section - Animated */}
       <section
         id="faq"
-        className="py-16 md:py-28 bg-gradient-to-br from-white via-indigo-50/30 to-white relative overflow-hidden"
+        className="py-16 md:py-28 bg-slate-50 relative overflow-hidden"
       >
-        {/* Animated Background */}
-        <motion.div
-          className="absolute top-10 left-10 w-64 h-64 md:w-96 md:h-96 bg-indigo-400/5 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            x: [0, 30, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-10 right-10 w-80 h-80 md:w-96 md:h-96 bg-purple-400/5 rounded-full blur-3xl"
-          animate={{
-            scale: [1.3, 1, 1.3],
-            x: [0, -40, 0],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
@@ -2255,7 +2180,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100 text-indigo-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm"
+              className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full mb-4 md:mb-6 font-semibold text-xs md:text-sm border border-blue-100"
               whileHover={{ scale: 1.05 }}
             >
               <HelpCircle className="w-3 h-3 md:w-4 md:h-4" />
@@ -2302,7 +2227,7 @@ const LandingPage: React.FC = () => {
                   {/* Question Button */}
                   <motion.button
                     onClick={() => toggleFaq(index)}
-                    className="w-full px-4 md:px-6 py-4 md:py-5 text-left flex justify-between items-center gap-4 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-300"
+                    className="w-full px-4 md:px-6 py-4 md:py-5 text-left flex justify-between items-center gap-4 hover:bg-slate-50 transition-all duration-300"
                     whileTap={{ scale: 0.99 }}
                   >
                     <div className="flex items-start gap-3 flex-1">
@@ -2310,8 +2235,8 @@ const LandingPage: React.FC = () => {
                       <motion.div
                         className={`flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
                           openFaq === index
-                            ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
-                            : "bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600"
+                            ? "bg-blue-600 text-white"
+                            : "bg-blue-50 text-blue-600"
                         }`}
                         animate={{
                           rotate: openFaq === index ? 180 : 0,
@@ -2379,57 +2304,31 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.8 }}
           >
-            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-2xl md:rounded-3xl p-6 md:p-8 border border-indigo-100">
-              <HelpCircle className="w-10 h-10 md:w-12 md:h-12 text-indigo-600 mx-auto mb-4" />
+            <div className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-blue-100 shadow-sm">
+              <HelpCircle className="w-10 h-10 md:w-12 md:h-12 text-blue-600 mx-auto mb-4" />
               <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 md:mb-3">
                 {t("landing.faq.helpCta.title")}
               </h3>
               <p className="text-sm md:text-base text-gray-600 mb-4 md:mb-6">
                 {t("landing.faq.helpCta.description")}
               </p>
-              <Link to="/contact">
+              <a href="#contact">
                 <motion.button
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-semibold text-sm md:text-base hover:shadow-xl transition-all duration-300"
+                  className="bg-blue-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-semibold text-sm md:text-base shadow-lg hover:bg-blue-700 transition-all duration-300"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   {t("landing.faq.helpCta.button")}
                 </motion.button>
-              </Link>
+              </a>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* Ready to Get Started CTA Section - Animated */}
-      <section className="py-16 md:py-28 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <motion.div
-          className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            x: [0, -50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{
-            duration: 18,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
+      <section className="py-16 md:py-28 bg-blue-600 relative overflow-hidden">
+
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
@@ -2441,7 +2340,7 @@ const LandingPage: React.FC = () => {
           >
             {/* Badge */}
             <motion.div
-              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full mb-6 md:mb-8 font-semibold text-xs md:text-sm border border-white/30"
+              className="inline-flex items-center gap-2 bg-white/10 text-white px-4 py-2 rounded-full mb-6 md:mb-8 font-semibold text-xs md:text-sm border border-white/20"
               whileHover={{ scale: 1.05 }}
             >
               <Sparkles className="w-3 h-3 md:w-4 md:h-4" />
@@ -2512,25 +2411,17 @@ const LandingPage: React.FC = () => {
                   show: { opacity: 1, y: 0 },
                 }}
               >
-                <motion.button
-                  onClick={handleInstallClick}
-                  className="bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white px-6 md:px-10 py-3 md:py-4 rounded-full font-bold text-sm md:text-base hover:bg-white/20 transition-all duration-300 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                  whileHover={isInstalled ? {} : { scale: 1.05, y: -2 }}
-                  whileTap={isInstalled ? {} : { scale: 0.95 }}
-                  disabled={isInstalled}
-                  title={
-                    isInstalled
-                      ? "App is already installed"
-                      : isInstallable
-                      ? "Click to install the app"
-                      : "Click for installation instructions"
-                  }
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.lovelycargo.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white px-6 md:px-10 py-3 md:py-4 rounded-full font-bold text-sm md:text-base hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
                 >
-                  <Smartphone className="w-4 h-4 md:w-5 md:h-5" />
-                  {isInstalled
-                    ? t("landing.downloadApp.installed") || "App Installed"
-                    : t("landing.getStarted.downloadApp")}
-                </motion.button>
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 md:w-5 md:h-5">
+                    <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5ZM14.4,12.71L17.14,14.29L4.84,22.39C4.94,22.46 5.06,22.5 5.18,22.5C5.36,22.5 5.53,22.41 5.64,22.25L14.4,12.71ZM14.4,11.29L5.64,1.75C5.53,1.59 5.36,1.5 5.18,1.5C5.06,1.5 4.94,1.54 4.84,1.61L17.14,9.71L14.4,11.29ZM18.53,10.51L15.39,12L18.53,13.49C19.16,13.79 19.84,13.56 20.14,12.93C20.25,12.65 20.25,12.35 20.14,12.07C19.84,11.44 19.16,11.21 18.53,10.51Z" />
+                  </svg>
+                  {t("landing.getStarted.downloadApp")}
+                </a>
               </motion.div>
             </motion.div>
 
@@ -2576,12 +2467,8 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer - Modern Animated */}
-      <footer className="bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 text-white py-12 md:py-16 relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl"></div>
-        </div>
+      <footer className="bg-slate-900 text-white py-12 md:py-16 relative overflow-hidden">
+
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Main Footer Content */}
@@ -2723,6 +2610,7 @@ const LandingPage: React.FC = () => {
 
             {/* Contact Info */}
             <motion.div
+              id="contact"
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 show: { opacity: 1, y: 0 },

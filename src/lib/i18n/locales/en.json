@@ -2048,7 +2048,7 @@
     "companyName": "Loveway Rwanda Co. Ltd",
     "companyTagline": "Logistics & Transportation Services",
     "companyLocation": "Kigali, Rwanda",
-    "companyContact": "Phone: +250 788 123 456 | Email: info@lovewaylogistics.com",
+    "companyContact": "Phone: 0794581924, 0786238927, 0789013134 | Email: info@lovewaylogistics.com",
     "invoiceLabel": "INVOICE",
     "invoiceNumberLabel": "Invoice #",
     "cargoNumberLabel": "Cargo #",
@@ -2416,6 +2416,7 @@
     "pricingSection": {
       "title": "Transparent Pricing",
       "subtitle": "Clear, upfront pricing with no hidden fees.",
+      "badge": "Transparent Pricing",
       "standardRates": "Standard Rates",
       "getQuote": "Get Instant Quote",
       "getQuoteDescription": "Enter your shipment details to get an accurate price estimate.",
@@ -2424,9 +2425,14 @@
       "priceCalculator": "Price Calculator",
       "calculator": {
         "distance": "Distance (km)",
+        "distancePlaceholder": "Enter distance",
         "weight": "Weight (kg)",
+        "weightPlaceholder": "Enter weight",
         "category": "Item Category",
         "categoryPlaceholder": "Search or select category...",
+        "pricingPolicy": "Pricing Policy",
+        "pricingPolicyPlaceholder": "Select pricing policy...",
+        "loadingPolicies": "Loading policies...",
         "loadingCategories": "Loading categories...",
         "noCategories": "No categories found",
         "estimatedPrice": "Estimated Price",
@@ -2474,8 +2480,8 @@
       "email": "Email",
       "address": "Address",
       "phoneNumbers": {
-        "primary": "+250 788 123 456",
-        "secondary": "+250 789 123 456"
+        "primary": "0794581924, 0786238927, 0789013134",
+        "secondary": "0786238927"
       },
       "emails": {
         "info": "info@lovewaylogistics.com",

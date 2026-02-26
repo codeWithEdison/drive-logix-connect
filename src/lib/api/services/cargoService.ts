@@ -158,11 +158,11 @@ export class CargoService {
     return response.data;
   }
 
-  // Estimate cargo cost (weight-only pricing, distance optional)
+  // Estimate cargo cost (weight-only pricing)
   static async estimateCost(data: {
     weight_kg: number;
-    distance_km?: number; // Optional (not used in calculation)
     category_id?: string;
+    pricing_policy_id?: string; // NEW: Explicitly select pricing policy
     type?: string;
     volume?: number;
   }): Promise<
@@ -170,9 +170,7 @@ export class CargoService {
       estimated_cost: number;
       breakdown: {
         weight_cost: number; // rate_per_kg × weight_kg
-        distance_cost: number; // Always 0 (distance not used)
         category_multiplier: number;
-        total_distance_km?: number | null; // Same as input (reference only)
         currency: string;
       };
       pricing_policy: {

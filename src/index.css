@@ -275,9 +275,7 @@
 /* iOS Safe Area Support - Extra padding/margin for status bar clearance */
 @supports (padding: max(0px)) {
   body {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    margin-top: 8px;
   }
 }
 

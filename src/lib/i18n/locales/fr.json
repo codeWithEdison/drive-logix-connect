@@ -1235,7 +1235,7 @@
     "companyName": "Loveway Rwanda Co. Ltd",
     "companyTagline": "Services de Logistique et de Transport",
     "companyLocation": "Kigali, Rwanda",
-    "companyContact": "Téléphone : +250 788 123 456 | Email : info@loveway.rw",
+    "companyContact": "Téléphone : 0794581924, 0786238927, 0789013134 | Email: info@loveway.rw",
     "invoiceLabel": "FACTURE",
     "invoiceNumberLabel": "Facture #",
     "cargoNumberLabel": "Cargaison #",
@@ -1306,7 +1306,6 @@
     "waitingForApproval": "En attente de l'approbation du paiement sur votre téléphone...",
     "initializingPayment": "Initialisation du paiement...",
     "enterPhoneToPay": "Entrez votre numéro de téléphone pour payer avec mobile money",
-    "referenceLabel": "Référence",
     "checkingPaymentStatus": "Vérification de l'état du paiement...",
     "dontCloseWindow": "Cela peut prendre jusqu'à 5 minutes. Veuillez ne pas fermer cette fenêtre.",
     "transactionReference": "Référence de transaction",
@@ -1775,6 +1774,7 @@
     "pricingSection": {
       "title": "Tarification Transparente",
       "subtitle": "Tarifs clairs et transparents sans frais cachés.",
+      "badge": "Tarification Transparente",
       "standardRates": "Tarifs Standard",
       "getQuote": "Obtenir un Devis Instantané",
       "getQuoteDescription": "Entrez les détails de votre envoi pour obtenir une estimation de prix précise.",
@@ -1783,7 +1783,9 @@
       "priceCalculator": "Calculateur de Prix",
       "calculator": {
         "distance": "Distance (km)",
+        "distancePlaceholder": "Entrer la distance",
         "weight": "Poids (kg)",
+        "weightPlaceholder": "Entrer le poids",
         "category": "Catégorie d'Article",
         "categoryPlaceholder": "Rechercher ou sélectionner une catégorie...",
         "loadingCategories": "Chargement des catégories...",
@@ -1833,8 +1835,8 @@
       "email": "Email",
       "address": "Adresse",
       "phoneNumbers": {
-        "primary": "+250 788 123 456",
-        "secondary": "+250 789 123 456"
+        "primary": "0794581924, 0786238927, 0789013134",
+        "secondary": "0786238927"
       },
       "emails": {
         "info": "info@lovewaylogistics.com",

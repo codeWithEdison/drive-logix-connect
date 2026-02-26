@@ -1344,7 +1344,7 @@
     "companyName": "Loveway Rwanda Co. Ltd",
     "companyTagline": "Serivisi za Logistique na Transport",
     "companyLocation": "Kigali, Rwanda",
-    "companyContact": "Telefone: +250 788 123 456 | Email: info@loveway.rw",
+    "companyContact": "Telefone: 0794581924, 0786238927, 0789013134 | Email: info@loveway.rw",
     "invoiceLabel": "INYEMEZABUGUZI",
     "invoiceNumberLabel": "Inyemezabuguzi #",
     "cargoNumberLabel": "Imizigo #",
@@ -1863,6 +1863,7 @@
     "pricingSection": {
       "title": "Ibiciro biboneye",
       "subtitle": "Ibiciro bisobanutse neza kandi biboneye bitewe nibigize umuzigo wawe",
+      "badge": "Ibiciro biboneye",
       "standardRates": "Ibiciro Bisanzwe",
       "getQuote": "Bona Igiciro Ako Kanya",
       "getQuoteDescription": "Injiza ibisobanuro by'ibyo wohereza kugira ngo ubone igiciro nyacyo.",
@@ -1871,7 +1872,9 @@
       "priceCalculator": "Kalkulateri y'Ibiciro",
       "calculator": {
         "distance": "Intera (km)",
+        "distancePlaceholder": "Injiza intera",
         "weight": "Uburemere (kg)",
+        "weightPlaceholder": "Injiza uburemere",
         "category": "Icyiciro cy'Ikintu",
         "categoryPlaceholder": "Shakisha cyangwa hitamo icyiciro...",
         "loadingCategories": "Urakira gupakira ibyiciro...",
@@ -1921,8 +1924,8 @@
       "email": "Email",
       "address": "Ahandi",
       "phoneNumbers": {
-        "primary": "+250 788 123 456",
-        "secondary": "+250 789 123 456"
+        "primary": "0794581924, 0786238927, 0789013134",
+        "secondary": "0786238927"
       },
       "emails": {
         "info": "info@lovewaylogistics.com",
