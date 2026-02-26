@@ -1782,17 +1782,18 @@
       "categoryMultipliers": "Multiplicateurs de Catégorie",
       "priceCalculator": "Calculateur de Prix",
       "calculator": {
-        "distance": "Distance (km)",
-        "distancePlaceholder": "Entrer la distance",
+        "title": "Calculateur de Prix",
+        "description": "Calculez le coût estimé de votre envoi en quelques secondes.",
         "weight": "Poids (kg)",
-        "weightPlaceholder": "Entrer le poids",
-        "category": "Catégorie d'Article",
+        "weightPlaceholder": "Entrer le poids de la cargaison",
+        "category": "Catégorie de Cargaison",
         "categoryPlaceholder": "Rechercher ou sélectionner une catégorie...",
-        "loadingCategories": "Chargement des catégories...",
-        "noCategories": "Aucune catégorie trouvée",
+        "pricingPolicy": "Politique de Tarification",
+        "pricingPolicyPlaceholder": "Rechercher ou sélectionner une politique...",
+        "loadingPolicies": "Chargement des politiques...",
         "estimatedPrice": "Prix Estimé",
-        "reset": "Réinitialiser",
-        "bookNow": "Réserver Maintenant"
+        "noCategories": "Aucune catégorie trouvée",
+        "loadingCategories": "Chargement des catégories..."
       }
     },
     "faq": {

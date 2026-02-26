@@ -1415,7 +1415,6 @@
     "waitingForApproval": "Tegereza kwemeza ubwishyu kuri telefone yawe...",
     "initializingPayment": "Gutangiza ubwishyu...",
     "enterPhoneToPay": "Andika nimero ya telefone yawe kugira ngo wishyure ukoresheje mobile money",
-    "referenceLabel": "Indangamurimo",
     "checkingPaymentStatus": "Kureba imiterere y'ubwishyu...",
     "dontCloseWindow": "Ibi bishobora gufata iminota itarenze 5. Nyamuneka ntugafunge idirishya.",
     "transactionReference": "Indangamurimo y'Ibyakozwe",
@@ -1871,17 +1870,20 @@
       "categoryMultipliers": "Ibyongereyeho mu Byiciro",
       "priceCalculator": "Kalkulateri y'Ibiciro",
       "calculator": {
-        "distance": "Intera (km)",
-        "distancePlaceholder": "Injiza intera",
-        "weight": "Uburemere (kg)",
-        "weightPlaceholder": "Injiza uburemere",
-        "category": "Icyiciro cy'Ikintu",
-        "categoryPlaceholder": "Shakisha cyangwa hitamo icyiciro...",
-        "loadingCategories": "Urakira gupakira ibyiciro...",
-        "noCategories": "Nta byiciro byabonetse",
-        "estimatedPrice": "Igiciro Giteganyijwe",
-        "reset": "Subiramo",
-        "bookNow": "Iyandikishe Nonaha"
+        "title": "Kubara Igiciro",
+        "description": "Bara igiciro cyo kohereza umuzigo wawe mu masegonda make.",
+        "weight": "Ibiro (kg)",
+        "weightPlaceholder": "Shyiramo ibiro by'umuzigo",
+        "category": "Ubwoko bw'umuzigo",
+        "categoryPlaceholder": "Shakisha cyangwa hitamo...",
+        "pricingPolicy": "Politiki y'Ibiciro",
+        "pricingPolicyPlaceholder": "Shakisha cyangwa hitamo politiki...",
+        "loadingPolicies": "Tegereza politiki...",
+        "estimatedPrice": "Igiciro Cyagereranijwe",
+        "noCategories": "Nta bwoko bwabonetse",
+        "loadingCategories": "Tegereza amoko...",
+        "reset": "Subiraho",
+        "bookNow": "Yandikisha ubu"
       }
     },
     "faq": {
@@ -1992,6 +1994,7 @@
         "tracking": "Kurikirana mu Gihe Nyacyo"
       }
     },
+
     "vehicles": {
       "title": "Ibikoresho byacu byo Gutwara",
       "subtitle": "Hitamo ikoresho cy'ukuri k'ibikoresho byawe. Dufite ibikoresho byinshi byo gutwara ibikoresho byose.",
