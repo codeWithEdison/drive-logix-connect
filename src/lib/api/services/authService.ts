@@ -25,6 +25,12 @@ export class AuthService {
     return response.data;
   }
 
+  // Google Login
+  static async googleLogin(credential: string): Promise<ApiResponse<LoginResponse>> {
+    const response = await axiosInstance.post("/auth/google-login", { credential });
+    return response.data;
+  }
+
   // Refresh token
   static async refreshToken(
     refreshToken: string

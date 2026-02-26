@@ -16,6 +16,7 @@ export { UserRole };
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: (credential: string) => Promise<boolean>;
   register: (data: CreateUserRequest) => Promise<boolean>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
@@ -112,6 +113,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async (credential: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const result = await AuthService.googleLogin(credential);
+
+      if (result.success && result.data) {
+        const { user, tokens } = result.data;
+        const { accessToken, refreshToken } = tokens;
+
+        // Store user data and tokens
+        await storage.setItem("logistics_user", JSON.stringify(user));
+        await storage.setItem("access_token", accessToken);
+        if (refreshToken) {
+          await storage.setItem("refresh_token", refreshToken);
+        }
+
+        setUser(user);
+        customToast.auth.loginSuccess(user.full_name);
+
+        // Navigate to appropriate route based on user role
+        const defaultRoute = getDefaultRoute(user.role);
+        navigate(defaultRoute);
+
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Google Login error:", error);
+      customToast.auth.loginError(
+        error?.error?.message || "Google Login failed. Please try again."
+      );
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const register = async (data: CreateUserRequest): Promise<boolean> => {
     setIsLoading(true);
     try {
@@ -183,6 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         login,
+        loginWithGoogle,
         register,
         logout,
         isAuthenticated: !!user,

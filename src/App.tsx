@@ -19,6 +19,9 @@ import { UpdatePrompt } from "@/components/mobile/UpdatePrompt";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { Capacitor } from "@capacitor/core";
 import { SplashScreen } from "@capacitor/splash-screen";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 // Lazy load pages for better performance
 const Login = lazy(() => import("@/pages/Login"));
@@ -520,15 +523,17 @@ function App() {
         <ScrollToTop />
         <ApiProvider>
           <TooltipProvider>
-            <AuthProvider>
-              <LanguageProvider>
-                <NotificationProvider>
-                  <AppContent />
-                  <Toaster />
-                  <Sonner />
-                </NotificationProvider>
-              </LanguageProvider>
-            </AuthProvider>
+            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+              <AuthProvider>
+                <LanguageProvider>
+                  <NotificationProvider>
+                    <AppContent />
+                    <Toaster />
+                    <Sonner />
+                  </NotificationProvider>
+                </LanguageProvider>
+              </AuthProvider>
+            </GoogleOAuthProvider>
           </TooltipProvider>
         </ApiProvider>
       </Router>

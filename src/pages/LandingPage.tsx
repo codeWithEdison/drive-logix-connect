@@ -521,20 +521,20 @@ const LandingPage: React.FC = () => {
       answer: t("landing.faq.payment.answer"),
     },
     {
-      question: t("landing.faq.delivery.question"),
-      answer: t("landing.faq.delivery.answer"),
+      question: t("landing.faq.pricing.question"),
+      answer: t("landing.faq.pricing.answer"),
     },
     {
-      question: t("landing.faq.damage.question"),
-      answer: t("landing.faq.damage.answer"),
+      question: t("landing.faq.security.question"),
+      answer: t("landing.faq.security.answer"),
     },
     {
-      question: t("landing.faq.address.question"),
-      answer: t("landing.faq.address.answer"),
+      question: t("landing.faq.scheduling.question"),
+      answer: t("landing.faq.scheduling.answer"),
     },
     {
-      question: t("landing.faq.weekend.question"),
-      answer: t("landing.faq.weekend.answer"),
+      question: t("landing.faq.coverage.question"),
+      answer: t("landing.faq.coverage.answer"),
     },
   ];
 

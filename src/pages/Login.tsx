@@ -28,9 +28,10 @@ import { LanguageSwitcher } from "@/lib/i18n/LanguageSwitcher";
 import { motion } from "framer-motion";
 import { SEO } from "@/components/seo/SEO";
 import { PAGE_SEO, generateWebPageSchema } from "@/lib/seo/seoData";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 
 export default function Login() {
-  const { login, isLoading } = useAuth();
+  const { login, loginWithGoogle, isLoading } = useAuth();
   const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,6 +48,21 @@ export default function Login() {
     } else {
       customToast.error(t("auth.invalidCredentials"));
     }
+  };
+
+  const handleGoogleSuccess = async (response: CredentialResponse) => {
+    if (response.credential) {
+      const success = await loginWithGoogle(response.credential);
+      if (success) {
+        customToast.success(t("auth.loginSuccess"));
+      }
+    } else {
+      customToast.error(t("auth.googleLoginFailed"));
+    }
+  };
+
+  const handleGoogleError = () => {
+    customToast.error(t("auth.googleLoginFailed"));
   };
 
   const webPageSchema = generateWebPageSchema(
@@ -333,13 +349,41 @@ export default function Login() {
                         )}
                       </Button>
                     </motion.div>
+
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <Separator className="w-full" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white px-2 text-gray-500 font-medium">
+                          {t("auth.orContinueWith")}
+                        </span>
+                      </div>
+                    </div>
+
+                    <motion.div
+                      className="flex justify-center"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.6 }}
+                    >
+                      <GoogleLogin
+                        onSuccess={handleGoogleSuccess}
+                        onError={handleGoogleError}
+                        useOneTap
+                        theme="filled_blue"
+                        shape="circle"
+                        width="100%"
+                        text="continue_with"
+                      />
+                    </motion.div>
                   </form>
 
                   <motion.div
                     className="mt-6 text-center"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.6 }}
+                    transition={{ duration: 0.5, delay: 0.7 }}
                   >
                     <Link
                       to="/forgot-password"

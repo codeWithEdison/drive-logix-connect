@@ -314,7 +314,9 @@
     "copyright": "© 2024 Loveway Logistics. Gucunga ubwikorezi byoroshye.",
     "phoneFormat": "Urugero: +250788240301, 250788240301, cyangwa 0788240399",
     "invalidPhoneNumber": "Nimero ya telefone itemewe",
-    "invalidPhoneNumberDescription": "Nimero ya telefone igomba kuba ikurikije format yemewe (Urugero: +250788240301, 250788240301, cyangwa 0788240399)"
+    "invalidPhoneNumberDescription": "Nimero ya telefone igomba kuba ikurikije format yemewe (Urugero: +250788240301, 250788240301, cyangwa 0788240399)",
+    "orContinueWith": "Cyangwa ukomeze na",
+    "googleLoginFailed": "Kwinjira hakoreshejwe Google byanze. Ongera ugerageze."
   },
   "navigation": {
     "login": "Injira",
@@ -1761,8 +1763,8 @@
         "description": "Serivisi y’abakiriya iboneka igihe cyose ayikeneye"
       },
       "transparentPricing": {
-        "title": "Ibiciro muburyo Bugaragara",
-        "description": "Nta mafaranga yihishe, igiciro kigaragara bitewe ni ntera n’uburemere"
+        "title": "Ibiciro Biboneye",
+        "description": "Nta kiguzi gihishe, imibare isobanutse ishingiye kuburemere n'ubwoko bw'umuzigo."
       }
     },
     "howItWorks": {
@@ -1897,21 +1899,21 @@
         "question": "Ese mwakira ubuhe buryo bwo kwishyura?",
         "answer": "Dukoresha Mobile Money (MTN, Airtel), kohereza kuri banki, kwishyura kuri murandasi, ndetse no kwishyura muntoki mugihe bishoboka."
       },
-      "delivery": {
-        "question": "Ese kohereza bitwara igihe kingana gute?",
-        "answer": "Igihe cyo kohereza giterwa n’intera n’ubwoko bwa serivisi. Kohereza mu munsi umwe birashoboka mugihe byihutirwa, naho ibisanzwe bifata iminsi 1-3 y’akazi."
+      "pricing": {
+        "question": "Igiciro cyo kohereza kibarwa gute?",
+        "answer": "Ibiciro bibarwa mu buryo bwikora hashingiwe ku buremere bw'umuzigo n'ubwoko bwawo (urugero, ibintu bimeneka cyangwa binini bifite inyongera zihariye)."
       },
-      "damage": {
-        "question": "Ese bizagenda bite niba umuzigo wange wangiritse?",
-        "answer": "Abashoferi bacu bose barishingiwe kandi dufite politiki yuzuye ijyanye n'ibyangiritse.Ihutire kutumenyesha ako kanya nimba habayeho kwangirika."
+      "security": {
+        "question": "Ese umuzigo wanjye uratekanye?",
+        "answer": "Yego. Dukorana n'abashoferi b'abanyamwuga bagenzuwe kandi dutanga uburyo bwo gukurikirana umuzigo ukoresheje GPS. Urabona aho umuzigo wawe uherereye mu gihe nyacyo."
       },
-      "address": {
-        "question": "Ese nshobora guhindura aderesi?",
-        "answer": "Yego Rwose, ushobora guhindura aderesi ya delivery nibura mu masaha 2 mbere y’igihe cyateganyijwe ukoresheje application cyangwa ukavugana nababishitswe."
+      "scheduling": {
+        "question": "Ese nshobora guteganya gahunda yo gufata umuzigo mu gihe kizaza?",
+        "answer": "Byanze bikunze. Urashobora guhitamo itariki n'isaha ushaka ko umuzigo ufatirwa mu gihe wiyandikisha."
       },
-      "weekend": {
-        "question": "Ese mutanga serivisi muri wikendi?",
-        "answer": "Yego rwose, dutanga serivisi muri wikende ku kiguzi cyiyongereyeho. Ushobora kuyihitamo igihe watumizaga serivisi."
+      "coverage": {
+        "question": "Ni hehe mutanga serivisi?",
+        "answer": "Dutanga serivisi zo kugeza umuzigo ku muryango mu turere twose tw'u Rwanda, tumenya ko ibintu byanyu bigera aho bijya neza aho ari ho hose mu gihugu."
       },
       "helpCta": {
         "title": "Ufite ibibazo byinshi?",

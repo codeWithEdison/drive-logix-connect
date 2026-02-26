@@ -373,7 +373,9 @@
     "copyright": "© 2024 Loveway Logistics. Professional logistics management made simple.",
     "phoneFormat": "Format: +250788240301, 250788240301, or 0788240399",
     "invalidPhoneNumber": "Invalid Phone Number",
-    "invalidPhoneNumberDescription": "Phone number must be a valid format (e.g., +250788240301, 250788240301, or 0788240399)"
+    "invalidPhoneNumberDescription": "Phone number must be a valid format (e.g., +250788240301, 250788240301, or 0788240399)",
+    "orContinueWith": "Or continue with",
+    "googleLoginFailed": "Google login failed. Please try again."
   },
   "navigation": {
     "login": "Login",
@@ -2314,7 +2316,7 @@
       },
       "transparentPricing": {
         "title": "Transparent Pricing",
-        "description": "No hidden fees, clear rates per distance and weight"
+        "description": "No hidden fees, clear calculations based on weight and category."
       }
     },
     "howItWorks": {
@@ -2422,11 +2424,11 @@
       "categoryMultipliers": "Category Multipliers",
       "priceCalculator": "Price Calculator",
       "calculator": {
-        "distance": "Distance (km)",
-        "distancePlaceholder": "Enter distance",
+        "title": "Price Calculator",
+        "description": "Calculate your estimated shipping cost in seconds.",
         "weight": "Weight (kg)",
-        "weightPlaceholder": "Enter weight",
-        "category": "Item Category",
+        "weightPlaceholder": "Enter cargo weight",
+        "category": "Cargo Category",
         "categoryPlaceholder": "Search or select category...",
         "pricingPolicy": "Pricing Policy",
         "pricingPolicyPlaceholder": "Select pricing policy...",
@@ -2449,21 +2451,21 @@
         "question": "What payment methods do you accept?",
         "answer": "We accept mobile money (MTN, Airtel), bank transfers, online payments, and cash on delivery where available."
       },
-      "delivery": {
-        "question": "How long does delivery take?",
-        "answer": "Delivery times vary based on distance and service type. Same-day delivery is available for urgent shipments, while standard delivery typically takes 1-3 business days."
+      "pricing": {
+        "question": "How is the shipping cost calculated?",
+        "answer": "Costs are automatically calculated based on the cargo weight and the category type (e.g., fragile or bulky items have specific multipliers)."
       },
-      "damage": {
-        "question": "What if my cargo is damaged?",
-        "answer": "All our drivers are insured and we have a comprehensive damage policy. Contact our support team immediately if you notice any damage to your cargo."
+      "security": {
+        "question": "Is my cargo safe and secured?",
+        "answer": "Yes. We use verified professional drivers and provide live GPS tracking. You can monitor your cargo's movement in real-time from pickup to delivery."
       },
-      "address": {
-        "question": "Can I change the delivery address?",
-        "answer": "Yes, you can change the delivery address up to 2 hours before the scheduled delivery time through our app or by contacting customer support."
+      "scheduling": {
+        "question": "Can I schedule a future pickup?",
+        "answer": "Absolutely. You can select your preferred pickup date and time during the booking process."
       },
-      "weekend": {
-        "question": "Do you deliver on weekends?",
-        "answer": "Yes, we offer weekend delivery services for an additional fee. You can select weekend delivery when booking your shipment."
+      "coverage": {
+        "question": "What areas do you support?",
+        "answer": "We provide door-to-door delivery across all districts in Rwanda, ensuring your goods reach their destination safely anywhere in the country."
       },
       "helpCta": {
         "title": "Still have questions?",
