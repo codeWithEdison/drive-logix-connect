@@ -31,6 +31,17 @@ export class AuthService {
     return response.data;
   }
 
+  // Sign in with Apple
+  static async appleLogin(payload: {
+    identityToken: string;
+    email?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
+  }): Promise<ApiResponse<LoginResponse>> {
+    const response = await axiosInstance.post("/auth/apple-login", payload);
+    return response.data;
+  }
+
   // Refresh token
   static async refreshToken(
     refreshToken: string

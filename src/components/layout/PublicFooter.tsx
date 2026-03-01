@@ -206,6 +206,12 @@ export function PublicFooter() {
             <p>{t("landing.footer.copyright")}</p>
             <div className="flex gap-6">
               <Link
+                to="/support"
+                className="hover:text-white transition-colors"
+              >
+                {t("support.title")}
+              </Link>
+              <Link
                 to="/privacy"
                 className="hover:text-white transition-colors"
               >

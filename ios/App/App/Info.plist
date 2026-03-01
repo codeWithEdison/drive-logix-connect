@@ -45,13 +45,21 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>We use the camera to capture cargo, delivery, and receipt photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We allow you to upload cargo and delivery photos from your library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We use your location to enable cargo tracking and driver live tracking.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We use your location in the background so drivers can share live tracking and delivery updates while on the road.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>We use Face ID to securely authenticate you in the app.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

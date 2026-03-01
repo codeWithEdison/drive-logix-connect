@@ -92,6 +92,7 @@ const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const PrivacyPolicy = lazy(() => import("@/pages/PrivacyPolicy"));
 const Terms = lazy(() => import("@/pages/Terms"));
 const Cookies = lazy(() => import("@/pages/Cookies"));
+const Support = lazy(() => import("@/pages/Support"));
 const DeleteAccount = lazy(() => import("@/pages/DeleteAccount"));
 
 // Loading component
@@ -135,6 +136,7 @@ function AppContent() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/cookies" element={<Cookies />} />
+            <Route path="/support" element={<Support />} />
             <Route path="/delete-account" element={<DeleteAccount />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -244,6 +246,7 @@ function AppContent() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/cookies" element={<Cookies />} />
+            <Route path="/support" element={<Support />} />
             <Route path="/delete-account" element={<DeleteAccount />} />
 
             {/* Driver Routes */}

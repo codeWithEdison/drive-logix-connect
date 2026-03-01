@@ -322,6 +322,8 @@
     "invalidPhoneNumber": "Numéro de téléphone invalide",
     "invalidPhoneNumberDescription": "Le numéro de téléphone doit être dans un format valide (ex. : +250788240301, 250788240301 ou 0788240399)",
     "orContinueWith": "Ou continuer avec",
+    "signInWithApple": "Se connecter avec Apple",
+    "appleLoginFailed": "La connexion avec Apple a échoué. Veuillez réessayer.",
     "googleLoginFailed": "L'authentification Google a échoué. Veuillez réessayer."
   },
   "navigation": {
@@ -1936,6 +1938,33 @@
       "navigation": "Navigation",
       "tools": "Outils",
       "language": "Langue"
+    }
+  },
+
+  "support": {
+    "pageTitle": "Support - Loveway Logistics | Contactez-nous",
+    "pageDescription": "Obtenez de l'aide pour le suivi des colis, les expéditions, les paiements et votre compte Loveway Logistics.",
+    "title": "Support",
+    "subtitle": "Nous sommes là pour vous aider. Contactez-nous pour toute question sur le suivi, les expéditions, les paiements ou votre compte.",
+    "backToHome": "Retour à l'accueil",
+    "contactUs": "Contactez-nous",
+    "contactIntro": "Écrivez-nous par e-mail et nous vous répondrons dans les plus brefs délais.",
+    "email": "E-mail support",
+    "emailNote": "Pour les problèmes techniques, l'assistance app et l'aide aux expéditions",
+    "generalInquiry": "Demandes générales",
+    "whatWeHelpWith": "Ce que nous pouvons faire pour vous",
+    "helpItems": {
+      "tracking": "Suivi des colis et livraisons",
+      "shipment": "Réservation et gestion des expéditions",
+      "payment": "Factures et paiements",
+      "account": "Problèmes de compte et de connexion",
+      "other": "Toute autre question sur nos services"
+    },
+    "otherLinks": "Plus d'informations",
+    "links": {
+      "privacy": "Politique de confidentialité",
+      "terms": "Conditions générales",
+      "home": "Accueil"
     }
   }
 }

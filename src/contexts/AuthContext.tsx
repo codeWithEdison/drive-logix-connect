@@ -17,6 +17,12 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: (credential: string) => Promise<boolean>;
+  loginWithApple: (payload: {
+    identityToken: string;
+    email?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
+  }) => Promise<boolean>;
   register: (data: CreateUserRequest) => Promise<boolean>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
@@ -150,6 +156,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithApple = async (payload: {
+    identityToken: string;
+    email?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
+  }): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const result = await AuthService.appleLogin(payload);
+
+      if (result.success && result.data) {
+        const { user, tokens } = result.data;
+        const { accessToken, refreshToken } = tokens;
+
+        await storage.setItem("logistics_user", JSON.stringify(user));
+        await storage.setItem("access_token", accessToken);
+        if (refreshToken) {
+          await storage.setItem("refresh_token", refreshToken);
+        }
+
+        setUser(user);
+        customToast.auth.loginSuccess(user.full_name);
+
+        const defaultRoute = getDefaultRoute(user.role);
+        navigate(defaultRoute);
+
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error("Apple Login error:", error);
+      customToast.auth.loginError(
+        error?.error?.message || "Sign in with Apple failed. Please try again."
+      );
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const register = async (data: CreateUserRequest): Promise<boolean> => {
     setIsLoading(true);
     try {
@@ -222,6 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         login,
         loginWithGoogle,
+        loginWithApple,
         register,
         logout,
         isAuthenticated: !!user,

@@ -316,6 +316,8 @@
     "invalidPhoneNumber": "Nimero ya telefone itemewe",
     "invalidPhoneNumberDescription": "Nimero ya telefone igomba kuba ikurikije format yemewe (Urugero: +250788240301, 250788240301, cyangwa 0788240399)",
     "orContinueWith": "Cyangwa ukomeze na",
+    "signInWithApple": "Injira ukoresheje Apple",
+    "appleLoginFailed": "Kwinjira ukoresheje Apple byanze. Ongera ugerageze.",
     "googleLoginFailed": "Kwinjira hakoreshejwe Google byanze. Ongera ugerageze."
   },
   "navigation": {
@@ -2027,6 +2029,33 @@
       "navigation": "Kuyobora",
       "tools": "Ibikoresho",
       "language": "Ururimi"
+    }
+  },
+
+  "support": {
+    "pageTitle": "Gufasha - Loveway Logistics | Twandikire",
+    "pageDescription": "Fata ubufasha ku kugenzura ibintu, kohereza, kwishyura n'konti yawe. Twandikire.",
+    "title": "Gufasha",
+    "subtitle": "Turimo kubafasha. Twandikire ku bibazo bijyanye n'ugenzura, kohereza, kwishyura cyangwa konti yawe.",
+    "backToHome": "Subira Ahabanza",
+    "contactUs": "Twandikire",
+    "contactIntro": "Twandikira kuri email kandi tuzasubiza vuba.",
+    "email": "Email y'ubufasha",
+    "emailNote": "Ku bibazo bya tekinike, ubufasha bwa porogaramu n'ubufasha bwo kohereza",
+    "generalInquiry": "Ibibazo bisanzwe",
+    "whatWeHelpWith": "Icyo dushobora gufasha",
+    "helpItems": {
+      "tracking": "Kugenzura ibintu n'ubwo kohereza",
+      "shipment": "Gufata booking no gucunga kohereza",
+      "payment": "Inyemezabuguzi n'amakuru y'ishyura",
+      "account": "Konti n'ingorane zo kwinjira",
+      "other": "Ibindi bibazo kuri serivisi zacu"
+    },
+    "otherLinks": "Amakuru y'inyongera",
+    "links": {
+      "privacy": "Politiki y'ibanga",
+      "terms": "Amategeko n'amasezerano",
+      "home": "Ahabanza"
     }
   }
 }
