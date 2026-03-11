@@ -790,19 +790,6 @@ const LandingPage: React.FC = () => {
                     {t("landing.hero.ctaPrimary")}
                   </span>
                 </Link>
-                <a
-                  href="https://play.google.com/store/apps/details?id=com.lovelycargo.app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group border-2 border-white/50 text-white px-8 py-4 rounded-full text-base font-semibold hover:bg-white hover:text-blue-900 transition-all duration-300 text-center backdrop-blur-sm hover:scale-105"
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                      <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5ZM14.4,12.71L17.14,14.29L4.84,22.39C4.94,22.46 5.06,22.5 5.18,22.5C5.36,22.5 5.53,22.41 5.64,22.25L14.4,12.71ZM14.4,11.29L5.64,1.75C5.53,1.59 5.36,1.5 5.18,1.5C5.06,1.5 4.94,1.54 4.84,1.61L17.14,9.71L14.4,11.29ZM18.53,10.51L15.39,12L18.53,13.49C19.16,13.79 19.84,13.56 20.14,12.93C20.25,12.65 20.25,12.35 20.14,12.07C19.84,11.44 19.16,11.21 18.53,10.51Z" />
-                    </svg>
-                    {t("landing.downloadApp.downloadButton")}
-                  </span>
-                </a>
               </div>
 
               {/* Stats */}
@@ -2410,19 +2397,7 @@ const LandingPage: React.FC = () => {
                   hidden: { opacity: 0, y: 20 },
                   show: { opacity: 1, y: 0 },
                 }}
-              >
-                <a
-                  href="https://play.google.com/store/apps/details?id=com.lovelycargo.app"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white px-6 md:px-10 py-3 md:py-4 rounded-full font-bold text-sm md:text-base hover:bg-white/20 transition-all duration-300 flex items-center gap-2"
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 md:w-5 md:h-5">
-                    <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5ZM14.4,12.71L17.14,14.29L4.84,22.39C4.94,22.46 5.06,22.5 5.18,22.5C5.36,22.5 5.53,22.41 5.64,22.25L14.4,12.71ZM14.4,11.29L5.64,1.75C5.53,1.59 5.36,1.5 5.18,1.5C5.06,1.5 4.94,1.54 4.84,1.61L17.14,9.71L14.4,11.29ZM18.53,10.51L15.39,12L18.53,13.49C19.16,13.79 19.84,13.56 20.14,12.93C20.25,12.65 20.25,12.35 20.14,12.07C19.84,11.44 19.16,11.21 18.53,10.51Z" />
-                  </svg>
-                  {t("landing.getStarted.downloadApp")}
-                </a>
-              </motion.div>
+              />
             </motion.div>
 
             {/* Stats */}

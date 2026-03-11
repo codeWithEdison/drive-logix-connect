@@ -362,7 +362,7 @@ class DeviceService {
     return await this.shareContent({
       title: "Loveway Logistics",
       text: "Download Loveway Logistics app for easy cargo tracking and logistics management.",
-      url: "https://play.google.com/store/apps/details?id=com.lovelycargo.app",
+      url: "https://lovewaylogistics.com/",
       dialogTitle: "Share Loveway Logistics",
     });
   }
