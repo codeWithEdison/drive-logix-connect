@@ -1717,7 +1717,7 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              <div className="flex items-center gap-3 mb-6 flex-shrink-0">
+              {/* <div className="flex items-center gap-3 mb-6 flex-shrink-0">
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-md">
                   <Package className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
@@ -1751,9 +1751,9 @@ const LandingPage: React.FC = () => {
                     RWF 250
                   </span>
                 </motion.div>
-              </div>
+              </div> */}
 
-              <div className="border-t border-gray-200 pt-6 flex-shrink-0">
+              <div className=" border-gray-200 pt-6 flex-shrink-0">
                 <h4 className="text-sm md:text-base font-bold text-gray-900 mb-4">
                   {t("landing.pricingSection.categoryMultipliers")}
                 </h4>

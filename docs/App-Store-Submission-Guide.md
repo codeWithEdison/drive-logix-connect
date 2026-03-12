@@ -33,24 +33,24 @@ Everything in **section 2** is already implemented in your frontend and backend.
 
 ### Frontend (this repo)
 
-| Item | Where | What it does |
-|------|--------|----------------|
-| **Info.plist** | `ios/App/App/Info.plist` | Background location usage text, export compliance (`ITSAppUsesNonExemptEncryption = false`), `UIBackgroundModes` (location) for driver tracking. |
-| **Privacy strings** | Same file | Camera, Photo Library, Location (when in use + always), Face ID – all have usage descriptions. |
-| **Sign in with Apple** | `src/pages/Login.tsx`, `AuthContext`, `authService` | Apple button on Login (shown only on iOS). Calls `POST /auth/apple-login` with `identityToken` and optional name/email. |
-| **Support page** | `src/pages/Support.tsx` | Route `/support` with contact emails (support@, info@lovewaylogistics.com) and links to Privacy/Terms. Footer links to it. |
-| **Capacitor plugin** | `package.json` | `@capacitor-community/apple-sign-in` for native Sign in with Apple. |
-| **i18n** | `src/lib/i18n/locales/*.json` | Support page and Sign in with Apple strings in English, Kinyarwanda, French. |
+| Item                   | Where                                               | What it does                                                                                                                                     |
+| ---------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Info.plist**         | `ios/App/App/Info.plist`                            | Background location usage text, export compliance (`ITSAppUsesNonExemptEncryption = false`), `UIBackgroundModes` (location) for driver tracking. |
+| **Privacy strings**    | Same file                                           | Camera, Photo Library, Location (when in use + always), Face ID – all have usage descriptions.                                                   |
+| **Sign in with Apple** | `src/pages/Login.tsx`, `AuthContext`, `authService` | Apple button on Login (shown only on iOS). Calls `POST /auth/apple-login` with `identityToken` and optional name/email.                          |
+| **Support page**       | `src/pages/Support.tsx`                             | Route `/support` with contact emails (support@, info@lovewaylogistics.com) and links to Privacy/Terms. Footer links to it.                       |
+| **Capacitor plugin**   | `package.json`                                      | `@capacitor-community/apple-sign-in` for native Sign in with Apple.                                                                              |
+| **i18n**               | `src/lib/i18n/locales/*.json`                       | Support page and Sign in with Apple strings in English, Kinyarwanda, French.                                                                     |
 
 ### Backend (LOVELY CARGO PLATFORM/backend)
 
-| Item | Where | What it does |
-|------|--------|----------------|
-| **Apple login endpoint** | `POST /auth/apple-login` | Accepts `identityToken`, optional `email`, `givenName`, `familyName`. Verifies the JWT with Apple’s keys, finds or creates user by `apple_sub`/email, returns `user` + `tokens` (same shape as Google login). |
-| **User model** | `prisma/schema.prisma` | Optional `apple_sub` field to link Apple users. |
-| **Migration** | `prisma/migrations/20260301000000_add_apple_sub/` | Adds `apple_sub` column to `users`. |
-| **Dependency** | `package.json` | `jwks-rsa` for verifying Apple’s JWT. |
-| **Env** | `src/config/env.ts` | `APPLE_CLIENT_ID` (default `com.lovelycargo.app`). |
+| Item                     | Where                                             | What it does                                                                                                                                                                                                  |
+| ------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Apple login endpoint** | `POST /auth/apple-login`                          | Accepts `identityToken`, optional `email`, `givenName`, `familyName`. Verifies the JWT with Apple’s keys, finds or creates user by `apple_sub`/email, returns `user` + `tokens` (same shape as Google login). |
+| **User model**           | `prisma/schema.prisma`                            | Optional `apple_sub` field to link Apple users.                                                                                                                                                               |
+| **Migration**            | `prisma/migrations/20260301000000_add_apple_sub/` | Adds `apple_sub` column to `users`.                                                                                                                                                                           |
+| **Dependency**           | `package.json`                                    | `jwks-rsa` for verifying Apple’s JWT.                                                                                                                                                                         |
+| **Env**                  | `src/config/env.ts`                               | `APPLE_CLIENT_ID` (default `com.lovelycargo.app`).                                                                                                                                                            |
 
 So in the codebase:
 
@@ -128,11 +128,11 @@ Deploy the frontend so that **https://lovewaylogistics.com/support** is live. Ap
 
 1. Create the app (or open it) with bundle ID **com.lovelycargo.app**.
 2. Fill in:
-   - **Name:** Loveway Logistics  
-   - **Subtitle:** 30 characters or fewer (e.g. **Logistics & delivery**)  
-   - **Category:** Business  
-   - **Privacy Policy URL:** https://lovewaylogistics.com/privacy  
-   - **Support URL:** https://lovewaylogistics.com/support  
+   - **Name:** Loveway Logistics
+   - **Subtitle:** 30 characters or fewer (e.g. **Logistics & delivery**)
+   - **Category:** Business
+   - **Privacy Policy URL:** https://lovewaylogistics.com/privacy
+   - **Support URL:** https://lovewaylogistics.com/support
 3. Create a version (e.g. **1.0.0**), add description, keywords, screenshots (required iPhone sizes; iPad if you support it).
 4. **App Privacy:** declare data types (Location, Photos, Contact info, Identifiers) as used by the app.
 5. **App Review Information:**
@@ -152,15 +152,15 @@ Deploy the frontend so that **https://lovewaylogistics.com/support** is live. Ap
 
 ## 4. Quick reference
 
-| What | Value |
-|------|--------|
-| **App name** | Loveway Logistics |
-| **Bundle ID** | com.lovelycargo.app |
-| **Support URL** | https://lovewaylogistics.com/support |
-| **Privacy Policy URL** | https://lovewaylogistics.com/privacy |
-| **Demo account** | umuliya@imperiumsarl.com / client123 |
-| **APNs key name** | Loveway Logistics Push (Key ID: 7X8SH3S668) |
-| **Subtitle (max 30 chars)** | e.g. Logistics & delivery |
+| What                        | Value                                       |
+| --------------------------- | ------------------------------------------- |
+| **App name**                | Loveway Logistics                           |
+| **Bundle ID**               | com.lovelycargo.app                         |
+| **Support URL**             | https://lovewaylogistics.com/support        |
+| **Privacy Policy URL**      | https://lovewaylogistics.com/privacy        |
+| **Demo account**            | umuliya@imperiumsarl.com / client123        |
+| **APNs key name**           | Loveway Logistics Push (Key ID: 7X8SH3S668) |
+| **Subtitle (max 30 chars)** | e.g. Logistics & delivery                   |
 
 ---
 
