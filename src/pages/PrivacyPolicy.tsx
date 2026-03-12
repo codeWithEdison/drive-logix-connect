@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
 
       <PublicHeader />
 
-      <div className="max-w-4xl mx-auto px-4 py-10 mt-20">
+      <div className="max-w-4xl mx-auto px-4 py-10 mt-28">
         <h1 className="text-3xl font-bold text-foreground">Privacy Policy</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Effective date: {new Date().getFullYear()}-01-01

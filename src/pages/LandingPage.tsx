@@ -557,9 +557,41 @@ const LandingPage: React.FC = () => {
         structuredData={[organizationSchema, webPageSchema, faqSchema]}
       />
       {/* Modern Navigation Header */}
-      <nav 
-        className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-100 z-50 shadow-sm"
-      >
+      <header className="fixed top-0 left-0 right-0 z-50">
+        {/* Top Contact Banner */}
+        <div className="bg-blue-600 text-white py-2 text-[10px] md:text-xs font-semibold shadow-sm overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4">
+            <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 md:gap-6">
+              <div className="flex items-center gap-1.5">
+                <Phone className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-200" />
+                <div className="flex items-center gap-2">
+                  <a href="tel:0793760755" className="hover:text-blue-100 transition-colors">0793760755</a>
+                  <span className="text-white/30">|</span>
+                  <a href="tel:0794581924" className="hover:text-blue-100 transition-colors">0794581924</a>
+                  <span className="text-white/30 hidden sm:inline">|</span>
+                  <a href="tel:0786238927" className="hover:text-blue-100 transition-colors hidden sm:inline">0786238927</a>
+                  <span className="text-white/30 hidden lg:inline">|</span>
+                  <a href="tel:0789013134" className="hover:text-blue-100 transition-colors hidden lg:inline">0789013134</a>
+                </div>
+              </div>
+              <a href="mailto:info@lovewaylogistics.com" className="flex items-center gap-1.5 hover:text-blue-100 transition-colors group border-l border-white/20 pl-3 md:pl-6">
+                <Mail className="w-3 h-3 md:w-3.5 md:h-3.5 group-hover:scale-110 transition-transform" />
+                <span>info@lovewaylogistics.com</span>
+              </a>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                <span>{t("landing.getStarted.stats.support")} 24/7</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Navigation */}
+        <nav 
+          className="bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm"
+        >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
@@ -736,11 +768,12 @@ const LandingPage: React.FC = () => {
           )}
         </div>
       </nav>
+    </header>
 
       {/* Modern Hero Section */}
       <section 
         className="relative min-h-screen flex items-center overflow-hidden"
-        style={{ paddingTop: 'calc(5rem + env(safe-area-inset-top, 0px))' }}
+        style={{ paddingTop: 'calc(7.5rem + env(safe-area-inset-top, 0px))' }}
       >
         {/* Animated Background with Gradient Overlay */}
         <div

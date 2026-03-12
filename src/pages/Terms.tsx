@@ -15,7 +15,7 @@ export default function TermsPage() {
 
       <PublicHeader />
 
-      <div className="max-w-4xl mx-auto px-4 py-10 mt-20">
+      <div className="max-w-4xl mx-auto px-4 py-10 mt-28">
         <h1 className="text-3xl font-bold text-foreground">
           Terms and Conditions
         </h1>
