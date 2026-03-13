@@ -46,15 +46,20 @@ export const useAllClients = (params?: {
 };
 
 // Admin-specific clients hook
-export const useAdminClients = (params?: {
-  status?: string;
-  page?: number;
-  limit?: number;
-}) => {
+export const useAdminClients = (
+  params?: {
+    status?: string;
+    business_type?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  },
+  options?: any
+) => {
   return useQuery({
     queryKey: ["admin", "clients", params],
     queryFn: () => AdminService.getClients(params),
-    select: (data) => {
+    select: (data: any) => {
       console.log("🔍 AdminClients hook - raw data:", data);
       // The API returns data directly in the data property
       if (data?.data && Array.isArray(data.data)) {
@@ -66,5 +71,6 @@ export const useAdminClients = (params?: {
       }
     },
     placeholderData: (previousData) => previousData,
+    ...options,
   });
 };

@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Activity,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Package,
   Users,
@@ -56,6 +57,7 @@ export function AdminDashboard() {
     return words.charAt(0).toUpperCase() + words.slice(1);
   };
   const { user } = useAuth();
+  const navigate = useNavigate();
   const branchName =
     (user as any)?.branch?.name ||
     (user as any)?.branch_name ||
@@ -200,16 +202,16 @@ export function AdminDashboard() {
   const handleViewAll = (type: string) => {
     switch (type) {
       case "deliveries":
-        window.location.href = "/admin/cargos";
+        navigate("/admin/cargos");
         break;
       case "approvals":
-        window.location.href = "/admin/drivers";
+        navigate("/admin/drivers");
         break;
       case "alerts":
-        window.location.href = "/admin/alerts";
+        navigate("/admin/alerts");
         break;
       case "transactions":
-        window.location.href = "/admin/reports";
+        navigate("/admin/reports");
         break;
       default:
         break;
@@ -429,20 +431,28 @@ export function AdminDashboard() {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={dashboardLoading}
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 mr-2 ${
-                    dashboardLoading ? "animate-spin" : ""
-                  }`}
-                />
-                {dashboardLoading ? "Refreshing..." : t("common.refresh")}
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={dashboardLoading}
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 w-full sm:w-auto"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 mr-2 ${
+                      dashboardLoading ? "animate-spin" : ""
+                    }`}
+                  />
+                  {dashboardLoading ? "Refreshing..." : t("common.refresh")}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate("/create-cargo")}
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30 w-full sm:w-auto"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Cargo
+                </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button

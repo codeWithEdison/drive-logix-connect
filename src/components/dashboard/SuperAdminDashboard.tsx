@@ -21,6 +21,7 @@ import { useSuperAdminDashboard } from "@/lib/api/hooks/dashboardHooks";
 import { useApplyDashboardFilters } from "@/lib/api/hooks/dashboardHooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { customToast } from "@/lib/utils/toast";
+import { useNavigate } from "react-router-dom";
 import {
   RefreshCw,
   AlertCircle,
@@ -45,6 +46,7 @@ import {
   Zap,
   Building2,
   Map,
+  Plus,
 } from "lucide-react";
 import { formatCompactRevenue } from "@/lib/utils/frontend";
 import {
@@ -77,6 +79,7 @@ export function SuperAdminDashboard() {
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
   };
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = React.useState("yearly");
 
   // API hooks
@@ -444,6 +447,14 @@ export function SuperAdminDashboard() {
                   }`}
                 />
                 {t("common.refresh")}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => navigate("/create-cargo")}
+                className="bg-white/20 border-white/30 text-white hover:bg-white/30 w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Cargo
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

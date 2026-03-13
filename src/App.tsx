@@ -177,7 +177,7 @@ function AppContent() {
             <Route
               path="/create-cargo"
               element={
-                <ProtectedRoute allowedRoles={["client"]}>
+                <ProtectedRoute allowedRoles={["client", "admin", "super_admin"]}>
                   <CreateCargo />
                 </ProtectedRoute>
               }

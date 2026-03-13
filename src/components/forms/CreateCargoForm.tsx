@@ -22,6 +22,7 @@ import {
   useCreateLocation,
 } from "@/lib/api/hooks";
 import { useActiveDistricts, useDistrict } from "@/lib/api/hooks/districtHooks";
+import { useAdminClients } from "@/lib/api/hooks/clientHooks";
 import {
   CreateCargoRequest,
   CargoPriority,
@@ -97,6 +98,13 @@ export function CreateCargoForm() {
     useExistingDestinationLocation: false,
     selectedPickupLocationId: "",
     selectedDestinationLocationId: "",
+    // Admin fields
+    clientId: "",
+    clientName: "",
+    businessType: "individual" as "individual" | "corporate" | "government",
+    clientEmail: "",
+    clientPhone: "",
+    isExistingClient: true,
   });
 
   const [estimatedCost, setEstimatedCost] = useState(0);
@@ -133,9 +141,11 @@ export function CreateCargoForm() {
   const [pickupDistrictSearch, setPickupDistrictSearch] = useState("");
   const [destinationDistrictSearch, setDestinationDistrictSearch] =
     useState("");
+  const [clientSearch, setClientSearch] = useState("");
 
   // Combobox open states
   const [cargoCategoryOpen, setCargoCategoryOpen] = useState(false);
+  const [clientOpen, setClientOpen] = useState(false);
   const [pickupDistrictOpen, setPickupDistrictOpen] = useState(false);
   const [destinationDistrictOpen, setDestinationDistrictOpen] = useState(false);
   const [pickupLocationOpen, setPickupLocationOpen] = useState(false);
@@ -160,6 +170,15 @@ export function CreateCargoForm() {
     useCargoCategories({ is_active: true });
   const { data: myLocations } = useMyLocations();
   const { data: districts } = useActiveDistricts();
+  const { data: allClients, isLoading: loadingClients } = useAdminClients(
+    {
+      limit: 100,
+      search: clientSearch || undefined,
+    },
+    {
+      enabled: user?.role === "admin" || user?.role === "super_admin",
+    }
+  );
   const createLocationMutation = useCreateLocation();
   const estimateCostMutation = useEstimateCargoCost();
 
@@ -328,13 +347,20 @@ export function CreateCargoForm() {
   const validateStep = (currentStep: number): boolean => {
     switch (currentStep) {
       case 1: // Cargo Details
-        return !!(
-          (
+        const isClientValid =
+          user?.role === "client" ||
+          (formData.isExistingClient
+            ? !!formData.clientId
+            : !!(formData.clientName && formData.businessType));
+
+        return (
+          isClientValid &&
+          !!(
             formData.cargoCategoryId &&
             formData.weight &&
             parseFloat(formData.weight) > 0 &&
             (!formData.description || formData.description.length <= 1000)
-          ) // Optional but max 1000 chars
+          )
         );
       case 2: {
         // Locations
@@ -577,17 +603,22 @@ export function CreateCargoForm() {
           category_id: formData.cargoCategoryId,
         });
         setEstimatedCost(costEstimate.data?.estimated_cost || 0);
-        setCostBreakdown(costEstimate.data?.breakdown || null);
+        setCostBreakdown((costEstimate.data?.breakdown as any) || null);
       } catch (error) {
         console.error("Error estimating cost:", error);
         // Fallback to manual calculation
         const weightRate = 500; // RWF per kg
         const distance = formData.distance || 25; // km
         const baseRate = 2000; // RWF per km
-        const cost =
-          baseRate * distance +
-          weightRate * parseFloat(formData.weight || "0");
-        setEstimatedCost(cost);
+        const breakdown = {
+          weight_cost: weightRate * parseFloat(formData.weight || "0"),
+          distance_cost: baseRate * distance,
+          category_multiplier: 1,
+          total_distance_km: distance,
+          currency: "RWF",
+        };
+        setEstimatedCost(breakdown.weight_cost + breakdown.distance_cost);
+        setCostBreakdown(breakdown);
       }
     }
     setStep(step + 1);
@@ -623,7 +654,12 @@ export function CreateCargoForm() {
       );
       const categoryName = selectedCategory?.name || "";
 
-      const cargoRequest: CreateCargoRequest & { distance_km?: number } = {
+      const cargoRequest: CreateCargoRequest & {
+        distance_km?: number;
+        client_id?: string;
+        client_name?: string;
+        business_type?: string;
+      } = {
         category_id: formData.cargoCategoryId || undefined,
         type: categoryName, // Send category name instead of cargo type
         weight_kg: parseFloat(formData.weight),
@@ -659,6 +695,18 @@ export function CreateCargoForm() {
         distance_km: formData.distance || 0, // Include calculated distance
         branch_id: pickupBranchId || undefined, // Include branch_id from pickup location district
       };
+
+      // Add client info for admins
+      if (user?.role === "admin" || user?.role === "super_admin") {
+        if (formData.isExistingClient) {
+          cargoRequest.client_id = formData.clientId;
+        } else {
+          cargoRequest.client_name = formData.clientName;
+          cargoRequest.business_type = formData.businessType;
+          (cargoRequest as any).client_email = formData.clientEmail;
+          (cargoRequest as any).client_phone = formData.clientPhone;
+        }
+      }
 
       console.log("🚚 Creating cargo with distance:", formData.distance, "km");
       console.log("🏢 Creating cargo with branch_id:", pickupBranchId);
@@ -892,6 +940,213 @@ export function CreateCargoForm() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 md:space-y-6">
+              {/* Admin-only Client Selection */}
+              {(user?.role === "admin" || user?.role === "super_admin") && (
+                <div className="space-y-4 p-4 sm:p-5 rounded-2xl bg-white border-2 border-blue-100 shadow-sm mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-sm sm:text-base font-bold text-gray-900">
+                      Client Information
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-4 mb-4">
+                    <Button
+                      type="button"
+                      variant={formData.isExistingClient ? "default" : "outline"}
+                      onClick={() =>
+                        setFormData({ ...formData, isExistingClient: true })
+                      }
+                      className="flex-1 rounded-full text-xs sm:text-sm font-semibold"
+                    >
+                      Existing Client
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={!formData.isExistingClient ? "default" : "outline"}
+                      onClick={() =>
+                        setFormData({ ...formData, isExistingClient: false })
+                      }
+                      className="flex-1 rounded-full text-xs sm:text-sm font-semibold"
+                    >
+                      New Client
+                    </Button>
+                  </div>
+
+                  {formData.isExistingClient ? (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-700">
+                        Select Client <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={
+                            clientSearch ||
+                            (formData.clientId
+                              ? (allClients as any[])?.find(
+                                  (c: any) => c.user?.id === formData.clientId
+                                )?.user?.full_name || ""
+                              : "")
+                          }
+                          onChange={(e) => {
+                            setClientSearch(e.target.value);
+                            setClientOpen(true);
+                          }}
+                          onFocus={() => setClientOpen(true)}
+                          placeholder="Search for a client..."
+                          className="w-full px-4 py-2.5 rounded-full border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm font-medium"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                          <Search className="w-4 h-4" />
+                        </div>
+
+                        {clientOpen && (
+                          <motion.div
+                            className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-xl border border-gray-200 max-h-60 overflow-y-auto"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                          >
+                            {loadingClients ? (
+                              <div className="p-4 text-center text-sm text-gray-500">
+                                Loading clients...
+                              </div>
+                            ) : (allClients as any[]) &&
+                              (allClients as any[]).filter(
+                                (c: any) =>
+                                  !clientSearch ||
+                                  c.user?.full_name
+                                    ?.toLowerCase()
+                                    .includes(clientSearch.toLowerCase()) ||
+                                  c.user?.email
+                                    ?.toLowerCase()
+                                    .includes(clientSearch.toLowerCase()) ||
+                                  c.client?.company_name
+                                    ?.toLowerCase()
+                                    .includes(clientSearch.toLowerCase())
+                              ).length > 0 ? (
+                              (allClients as any[])
+                                .filter(
+                                  (c: any) =>
+                                    !clientSearch ||
+                                    c.user?.full_name
+                                      ?.toLowerCase()
+                                      .includes(clientSearch.toLowerCase()) ||
+                                    c.user?.email
+                                      ?.toLowerCase()
+                                      .includes(clientSearch.toLowerCase()) ||
+                                    c.client?.company_name
+                                      ?.toLowerCase()
+                                      .includes(clientSearch.toLowerCase())
+                                )
+                                .map((c: any) => (
+                                  <button
+                                    key={c.user?.id}
+                                    onClick={() => {
+                                      setFormData({
+                                        ...formData,
+                                        clientId: c.user?.id,
+                                      });
+                                      setClientSearch("");
+                                      setClientOpen(false);
+                                    }}
+                                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-0"
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-semibold text-gray-900">
+                                        {c.user?.full_name}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        {c.client?.company_name ||
+                                          c.user?.email ||
+                                          c.user?.phone ||
+                                          "No contact info"}
+                                      </span>
+                                    </div>
+                                  </button>
+                                ))
+                            ) : (
+                              <div className="p-4 text-center text-sm text-gray-500">
+                                No clients found
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                        {clientOpen && (
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setClientOpen(false)}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-gray-700">
+                          Client Name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Enter client full name"
+                          value={formData.clientName}
+                          onChange={(e) =>
+                            setFormData({ ...formData, clientName: e.target.value })
+                          }
+                          className="rounded-full h-10 text-sm border-gray-200"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-gray-700">
+                          Business Type <span className="text-red-500">*</span>
+                        </Label>
+                        <Select
+                          value={formData.businessType}
+                          onValueChange={(value: any) =>
+                            setFormData({ ...formData, businessType: value })
+                          }
+                        >
+                          <SelectTrigger className="rounded-full h-10 text-sm border-gray-200">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="individual">Individual</SelectItem>
+                            <SelectItem value="corporate">Corporate</SelectItem>
+                            <SelectItem value="government">Government</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-gray-700">
+                          Client Email
+                        </Label>
+                        <Input
+                          placeholder="client@example.com"
+                          type="email"
+                          value={formData.clientEmail}
+                          onChange={(e) =>
+                            setFormData({ ...formData, clientEmail: e.target.value })
+                          }
+                          className="rounded-full h-10 text-sm border-gray-200"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-gray-700">
+                          Client Phone
+                        </Label>
+                        <Input
+                          placeholder="+250..."
+                          value={formData.clientPhone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, clientPhone: e.target.value })
+                          }
+                          className="rounded-full h-10 text-sm border-gray-200"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label

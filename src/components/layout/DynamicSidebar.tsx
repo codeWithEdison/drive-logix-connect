@@ -67,6 +67,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
   ],
   admin: [
     { title: t("navigation.dashboard"), url: "/admin", icon: Home },
+    { title: t("navigation.createCargo"), url: "/create-cargo", icon: Plus },
     { title: t("navigation.allCargos"), url: "/admin/cargos", icon: Package },
     {
       title: t("navigation.assignments"),
@@ -92,6 +93,7 @@ const getNavigationConfig = (t: (key: string) => string) => ({
   ],
   super_admin: [
     { title: t("navigation.dashboard"), url: "/super-admin", icon: Home },
+    { title: t("navigation.createCargo"), url: "/create-cargo", icon: Plus },
     {
       title: t("navigation.allCargos"),
       url: "/super-admin/cargos",

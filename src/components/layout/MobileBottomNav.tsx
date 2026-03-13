@@ -69,6 +69,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
   ],
   admin: [
     { title: t("navigation.dashboard"), url: "/admin", icon: HiOutlineHome },
+    {
+      title: t("navigation.createCargo"),
+      url: "/create-cargo",
+      icon: HiOutlinePlusCircle,
+    },
     { title: t("navigation.allCargos"), url: "/admin/cargos", icon: HiOutlineCube },
     {
       title: t("navigation.assignments"),
@@ -105,6 +110,11 @@ const getNavigationConfig = (t: (key: string) => string) => ({
       title: t("navigation.dashboard"),
       url: "/super-admin",
       icon: HiOutlineHome,
+    },
+    {
+      title: t("navigation.createCargo"),
+      url: "/create-cargo",
+      icon: HiOutlinePlusCircle,
     },
     {
       title: t("navigation.allCargos"),
