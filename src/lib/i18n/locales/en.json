@@ -247,7 +247,8 @@
     "allStatuses": "All Statuses",
     "applyFilters": "Apply Filters",
     "clearFilters": "Clear Filters",
-    "pending": "Pending"
+    "pending": "Pending",
+    "optional": "Optional"
   },
   "auth": {
     "login": "Login",

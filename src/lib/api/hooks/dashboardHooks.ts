@@ -16,8 +16,10 @@ export const useDriverDashboard = () => {
   return useQuery({
     queryKey: queryKeys.dashboard.driver(),
     queryFn: () => DashboardService.getDriverDashboard(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always consider data stale so it refetches on every mount
+    refetchOnMount: "always", // Always refetch when the component mounts (navigates to)
     refetchInterval: 30 * 1000, // 30 seconds for real-time updates
+    refetchIntervalInBackground: false, // Pause polling when tab is hidden
   });
 };
 

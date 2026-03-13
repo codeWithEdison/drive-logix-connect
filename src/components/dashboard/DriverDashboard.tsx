@@ -122,7 +122,30 @@ export function DriverDashboard() {
 
   // Refresh dashboard data after any action (accept, reject, status change, etc.)
   const refreshDashboardData = async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.driver() });
+    // Invalidate dashboard data
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.dashboard.driver(),
+    });
+
+    // Invalidate assignment-related queries
+    await queryClient.invalidateQueries({ queryKey: ["assignments"] });
+    await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+
+    // Invalidate delivery-related queries
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.deliveries.all(),
+    });
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.deliveries.driverDeliveries(),
+    });
+
+    // Invalidate cargo queries
+    await queryClient.invalidateQueries({ queryKey: queryKeys.cargos.all() });
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.cargos.driverCargos(),
+    });
+
+    // Manually refetch the primary dashboard data
     await refetchDashboard();
   };
 
@@ -134,6 +157,12 @@ export function DriverDashboard() {
   const dashboard = dashboardData?.data as any;
 
   const updateStatusMutation = useUpdateDriverStatus();
+
+  // Refetch data on every mount (whenever driver navigates to this page)
+  useEffect(() => {
+    refreshDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Sync driverStatus from API when dashboard loads (fixes revert on refresh)
   useEffect(() => {
@@ -205,6 +234,16 @@ export function DriverDashboard() {
         notes: "Cargo delivered successfully",
       });
       customToast.success(t("status.delivered") || "Delivered");
+
+      // Automatically set driver status back to available after delivery
+      try {
+        await updateStatusMutation.mutateAsync(DriverStatus.AVAILABLE);
+        setDriverStatus("available");
+      } catch (statusErr) {
+        // Non-blocking — delivery is still confirmed even if status update fails
+        console.warn("Could not auto-set driver to available:", statusErr);
+      }
+
       await refreshDashboardData();
       setIsDeliveryImageModalOpen(false);
     } catch (error: any) {
@@ -598,9 +637,19 @@ export function DriverDashboard() {
                 <Select
                   onValueChange={handleStatusChange}
                   value={driverStatus}
+                  disabled={updateStatusMutation.isPending}
                 >
                   <SelectTrigger className="w-full sm:w-[160px] lg:w-[180px] bg-white/10 border-white/30 text-white">
-                    <SelectValue placeholder={t("common.select")} />
+                    {updateStatusMutation.isPending ? (
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="h-4 w-4 animate-spin text-white/70" />
+                        <span className="text-white/70">
+                          {t("common.updating") || "Updating..."}
+                        </span>
+                      </div>
+                    ) : (
+                      <SelectValue placeholder={t("common.select")} />
+                    )}
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="available">
@@ -859,23 +908,38 @@ export function DriverDashboard() {
                           if (status === "picked_up") {
                             return (
                               <Button
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl"
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl disabled:opacity-70"
                                 onClick={handleStartDelivery}
+                                disabled={updateCargoStatus.isPending}
                               >
-                                <Navigation className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                {t("delivery.startTransit") || "Start Transit"}
+                                {updateCargoStatus.isPending ? (
+                                  <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+                                ) : (
+                                  <Navigation className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                )}
+                                {updateCargoStatus.isPending
+                                  ? t("common.processing") || "Processing..."
+                                  : t("delivery.startTransit") ||
+                                    "Start Transit"}
                               </Button>
                             );
                           }
                           if (status === "in_transit") {
                             return (
                               <Button
-                                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl"
+                                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl disabled:opacity-70"
                                 onClick={handleMarkDelivered}
+                                disabled={updateCargoStatus.isPending}
                               >
-                                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                {t("delivery.markDelivered") ||
-                                  "Mark Delivered"}
+                                {updateCargoStatus.isPending ? (
+                                  <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                )}
+                                {updateCargoStatus.isPending
+                                  ? t("common.processing") || "Processing..."
+                                  : t("delivery.markDelivered") ||
+                                    "Mark Delivered"}
                               </Button>
                             );
                           }
@@ -889,13 +953,20 @@ export function DriverDashboard() {
                               </div>
                             );
                           }
-                          return (
+                           return (
                             <Button
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl"
+                              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl disabled:opacity-70"
                               onClick={handleStartDelivery}
+                              disabled={updateCargoStatus.isPending}
                             >
-                              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                              {t("delivery.startDelivery")}
+                              {updateCargoStatus.isPending ? (
+                                <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 mr-2 animate-spin" />
+                              ) : (
+                                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                              )}
+                              {updateCargoStatus.isPending
+                                ? t("common.processing") || "Processing..."
+                                : t("delivery.startDelivery")}
                             </Button>
                           );
                         })()}
@@ -1119,16 +1190,31 @@ export function DriverDashboard() {
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold text-sm"
+                        className="bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-semibold text-sm disabled:opacity-70"
                         onClick={() => handleAcceptAssignment(assignment.id)}
+                        disabled={
+                          acceptAssignmentMutation.isPending ||
+                          rejectAssignmentMutation.isPending
+                        }
                       >
-                        {t("common.accept")}
+                        {acceptAssignmentMutation.isPending ? (
+                          <>
+                            <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-spin" />
+                            {t("common.processing") || "..."}
+                          </>
+                        ) : (
+                          t("common.accept")
+                        )}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-red-300 text-red-600 hover:bg-red-50 py-2 rounded-xl font-semibold text-sm"
+                        className="border-red-300 text-red-600 hover:bg-red-50 py-2 rounded-xl font-semibold text-sm disabled:opacity-70"
                         onClick={() => handleOpenRejectModal(assignment.id)}
+                        disabled={
+                          acceptAssignmentMutation.isPending ||
+                          rejectAssignmentMutation.isPending
+                        }
                       >
                         {t("common.reject")}
                       </Button>
@@ -1340,9 +1426,18 @@ export function DriverDashboard() {
             <Button
               variant="destructive"
               onClick={handleRejectFromModal}
-              disabled={!rejectionReason.trim()}
+              disabled={
+                !rejectionReason.trim() || rejectAssignmentMutation.isPending
+              }
             >
-              {t("assignment.rejectAssignment")}
+              {rejectAssignmentMutation.isPending ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  {t("common.processing") || "Processing..."}
+                </>
+              ) : (
+                t("assignment.rejectAssignment")
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -8,13 +8,14 @@ import { PhotoUploadModal } from "@/components/ui/PhotoUploadModal";
 import { RatingModal } from "@/components/ui/RatingModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { UserRole, CargoImageType, CargoStatus } from "@/types/shared";
+import { UserRole, CargoImageType, CargoStatus, DriverStatus } from "@/types/shared";
 import {
   useBulkUploadImages,
   useCargoImages,
 } from "@/lib/api/hooks/cargoImageHooks";
 import { useUpdateCargoStatus } from "@/lib/api/hooks/cargoHooks";
 import { useRateDelivery } from "@/lib/api/hooks/deliveryHooks";
+import { useUpdateDriverStatus } from "@/lib/api/hooks/driverHooks";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/api/queryClient";
@@ -285,6 +286,17 @@ export function CargoDetailModal({
     queryClient.invalidateQueries({
       queryKey: queryKeys.tracking.cargoDetail(cargoId),
     });
+    // Invalidate driver dashboard so it also refreshes after any cargo action
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.dashboard.driver(),
+    });
+    // Invalidate deliveries list
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.deliveries.all(),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.deliveries.driverDeliveries(),
+    });
     // Notify parent component
     onCargoUpdated?.(cargoId);
   };
@@ -311,6 +323,9 @@ export function CargoDetailModal({
   // State for countdown timer
   const [countdown, setCountdown] = useState<string>("");
 
+  // State for start transit
+  const [isStartingTransit, setIsStartingTransit] = useState(false);
+
   // State for rejection modal
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -331,6 +346,7 @@ export function CargoDetailModal({
   // API hooks
   const bulkUploadImages = useBulkUploadImages();
   const updateCargoStatus = useUpdateCargoStatus();
+  const updateDriverStatus = useUpdateDriverStatus();
   const rateDelivery = useRateDelivery();
   const { toast } = useToast();
 
@@ -660,6 +676,14 @@ export function CargoDetailModal({
 
       // Invalidate queries to refresh data
       invalidateCargoQueries(data.cargoId);
+
+      // Automatically set driver status back to available after delivery
+      try {
+        await updateDriverStatus.mutateAsync(DriverStatus.AVAILABLE);
+      } catch (statusErr) {
+        // Non-blocking — delivery confirmation still succeeds
+        console.warn("Could not auto-set driver to available:", statusErr);
+      }
 
       toast({
         title: t("delivery.deliveryConfirmed") || "Delivery Confirmed",
@@ -2311,24 +2335,24 @@ export function CargoDetailModal({
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   onClick={async () => {
+                    setIsStartingTransit(true);
                     try {
-                      await onStartDelivery?.(cargo.id);
-                      // Invalidate queries to refresh data
+                      // Directly call updateCargoStatus to mark as in_transit
+                      await updateCargoStatus.mutateAsync({
+                        id: cargo.id,
+                        status: CargoStatus.IN_TRANSIT,
+                        notes: t("delivery.transitStarted") || "Cargo is now in transit",
+                      });
+                      // Invalidate queries to refresh modal data
                       invalidateCargoQueries(cargo.id);
+                      // Also notify parent so it can refresh its own data
+                      onStartDelivery?.(cargo.id);
                       toast({
                         title: "Transit Started",
                         description:
                           "Cargo is now in transit. You can track it in real-time.",
                         variant: "default",
                       });
-                      // Navigate to tracking page
-                      navigate(`/tracking/${cargo.id}`);
-                      // Close modal
-                      if (closeOnSuccess) {
-                        setTimeout(() => {
-                          onClose();
-                        }, 1000);
-                      }
                     } catch (error: any) {
                       toast({
                         title:
@@ -2341,11 +2365,13 @@ export function CargoDetailModal({
                           ),
                         variant: "destructive",
                       });
+                    } finally {
+                      setIsStartingTransit(false);
                     }
                   }}
-                  disabled={isStartingDelivery}
+                  disabled={isStartingTransit}
                 >
-                  {isStartingDelivery ? (
+                  {isStartingTransit ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       {t("delivery.startingTransit") || "Starting Transit..."}
