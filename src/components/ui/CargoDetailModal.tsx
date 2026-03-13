@@ -794,16 +794,16 @@ export function CargoDetailModal({
             variant: "default" as const,
             onClick: () => handleGenerateInvoice(),
           },
-          {
-            key: "mark-accepted",
-            label: t("cargo.markAsAccepted") || "Mark as Accepted",
-            description:
-              t("cargo.markAsAcceptedDescription") ||
-              "Manually mark cargo as accepted",
-            icon: <CheckCircle className="h-4 w-4 mr-2" />,
-            variant: "outline" as const,
-            onClick: () => handleStatusChange("accepted"),
-          },
+          // {
+          //   key: "mark-accepted",
+          //   label: t("cargo.markAsAccepted") || "Mark as Accepted",
+          //   description:
+          //     t("cargo.markAsAcceptedDescription") ||
+          //     "Manually mark cargo as accepted",
+          //   icon: <CheckCircle className="h-4 w-4 mr-2" />,
+          //   variant: "outline" as const,
+          //   onClick: () => handleStatusChange("accepted"),
+          // },
           {
             key: "cancel-cargo",
             label: t("cargo.cancelCargo"),
