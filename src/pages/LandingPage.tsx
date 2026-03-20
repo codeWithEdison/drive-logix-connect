@@ -826,9 +826,9 @@ const LandingPage: React.FC = () => {
               </div>
 
               {/* App Download Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-6">
-                <a href="#download" className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 px-6 py-3 rounded-xl text-white backdrop-blur-sm shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1">
-                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-8">
+                <a href="https://apps.apple.com/us/app/loveway-logistics/id6759925915" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 px-6 py-3 rounded-xl text-white backdrop-blur-sm shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1 group">
+                  <svg className="w-8 h-8 text-white transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.04 2.26-.7 3.55-.7 1.15.03 2.53.37 3.44 1.25-2.95 1.58-2.42 5.56.56 6.89-1.04 2.1-1.92 3.65-2.63 4.73zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
                   </svg>
                   <div className="text-left flex flex-col justify-center leading-tight">
@@ -837,10 +837,8 @@ const LandingPage: React.FC = () => {
                   </div>
                 </a>
                 
-                <a href="https://play.google.com/store/apps/details?id=com.lovelycargo.app" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 px-6 py-3 rounded-xl text-white backdrop-blur-sm shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1">
-                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M14.41,11.28L20.88,7.57C21.66,7.12 21.66,5.88 20.88,5.43L15.39,8.57L14.41,11.28M14.41,12.72L15.39,15.43L20.88,18.57C21.66,19.02 21.66,20.26 20.88,20.81L14.41,12.72M4.76,3.61L13.11,11.96L14.33,10.74L4.76,3.61M14.33,13.26L13.11,12.04L4.76,20.39L14.33,13.26Z"/>
-                  </svg>
+                <a href="https://play.google.com/store/apps/details?id=com.lovelycargo.app" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 px-6 py-3 rounded-xl text-white backdrop-blur-sm shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1 group">
+                  <img src="/image/image.png" alt="Google Play" className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-110" />
                   <div className="text-left flex flex-col justify-center leading-tight">
                     <span className="text-[10px] text-gray-300 uppercase tracking-wider">GET IT ON</span>
                     <span className="text-lg font-bold -mt-0.5">Google Play</span>
