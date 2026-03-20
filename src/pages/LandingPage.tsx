@@ -837,7 +837,7 @@ const LandingPage: React.FC = () => {
                   </div>
                 </a>
                 
-                <a href="#download" className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 px-6 py-3 rounded-xl text-white backdrop-blur-sm shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1">
+                <a href="https://play.google.com/store/apps/details?id=com.lovelycargo.app" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 px-6 py-3 rounded-xl text-white backdrop-blur-sm shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1">
                   <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M14.41,11.28L20.88,7.57C21.66,7.12 21.66,5.88 20.88,5.43L15.39,8.57L14.41,11.28M14.41,12.72L15.39,15.43L20.88,18.57C21.66,19.02 21.66,20.26 20.88,20.81L14.41,12.72M4.76,3.61L13.11,11.96L14.33,10.74L4.76,3.61M14.33,13.26L13.11,12.04L4.76,20.39L14.33,13.26Z"/>
                   </svg>

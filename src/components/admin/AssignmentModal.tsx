@@ -451,6 +451,10 @@ export default function AssignmentModal({
       newErrors.cargo_id = t("validation.required");
     }
 
+    if (!formData.notes.trim()) {
+      newErrors.notes = t("validation.required") || "Notes are required";
+    }
+
     // For split assignments, validate split assignments
     if (formData.assignment_type === "split") {
       return validateSplitAssignments();
@@ -512,6 +516,10 @@ export default function AssignmentModal({
   const validateSplitAssignments = () => {
     const newErrors: Record<string, string> = {};
     const newSplitErrors: Record<string, string> = {};
+
+    if (!formData.notes.trim()) {
+      newErrors.notes = t("validation.required") || "Notes are required";
+    }
 
     // Check minimum and maximum drivers (2-5)
     const validAssignments = splitAssignments.filter(
@@ -2130,19 +2138,24 @@ export default function AssignmentModal({
                   htmlFor="notes"
                   className="text-sm sm:text-base font-semibold"
                 >
-                  {t("adminAssignments.notes") || "Notes"} (
-                  {t("common.optional") || "Optional"})
+                  {t("adminAssignments.notes") || "Notes"}{" "}
+                  <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="notes"
                   value={formData.notes}
                   onChange={(e) => handleFieldChange("notes", e.target.value)}
-                  className="rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm"
+                  className={`rounded-full px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-semibold border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm ${
+                    errors.notes ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""
+                  }`}
                   placeholder={
                     t("adminAssignments.notesPlaceholder") ||
-                    "Add any additional notes for this assignment"
+                    "Add required notes for this assignment"
                   }
                 />
+                {errors.notes && (
+                  <p className="text-sm text-red-500 pl-4">{errors.notes}</p>
+                )}
               </div>
             </CardContent>
           </Card>
