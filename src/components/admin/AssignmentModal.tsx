@@ -2899,16 +2899,7 @@ export default function AssignmentModal({
                         : t("common.notAvailable")}
                     </span>
                   </div>
-                  {assignment.expires_at && (
-                    <div className="col-span-1 sm:col-span-2">
-                      <span className="font-semibold text-gray-700">
-                        {t("adminAssignments.expiresAt")}:
-                      </span>{" "}
-                      <span className="text-gray-600">
-                        {new Date(assignment.expires_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
+
                 </div>
               </CardContent>
             </Card>

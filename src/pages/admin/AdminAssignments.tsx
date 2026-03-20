@@ -256,22 +256,7 @@ export default function AdminAssignments() {
     });
   };
 
-  // Calculate time until expiry
-  const getTimeUntilExpiry = (expiresAt: string) => {
-    const now = new Date();
-    const expiry = new Date(expiresAt);
-    const diffMs = expiry.getTime() - now.getTime();
 
-    if (diffMs <= 0) return t("assignment.expired");
-
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) return `${diffDays}d ${diffHours % 24}h`;
-    if (diffHours > 0) return `${diffHours}h ${diffMins % 60}m`;
-    return `${diffMins}m`;
-  };
 
   if (error) {
     return (
@@ -620,9 +605,7 @@ export default function AdminAssignments() {
                       <TableHead className="text-xs font-medium text-gray-600 w-32">
                         Assigned At
                       </TableHead>
-                      <TableHead className="text-xs font-medium text-gray-600 w-32">
-                        Expires At
-                      </TableHead>
+
                       <TableHead className="text-xs font-medium text-gray-600 w-20">
                         Actions
                       </TableHead>
@@ -689,13 +672,6 @@ export default function AdminAssignments() {
                         </TableCell>
                         <TableCell>
                           <StatusBadge status={assignment.assignment_status} />
-                          {assignment.assignment_status === "pending" &&
-                            assignment.expires_at && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {t("assignment.expiresIn")}:{" "}
-                                {getTimeUntilExpiry(assignment.expires_at)}
-                              </div>
-                            )}
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
@@ -704,13 +680,7 @@ export default function AdminAssignments() {
                               : "N/A"}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {assignment.expires_at
-                              ? formatDate(assignment.expires_at)
-                              : "N/A"}
-                          </div>
-                        </TableCell>
+
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -1000,12 +970,7 @@ export default function AdminAssignments() {
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-gray-400" />
                       <span className="text-xs text-gray-500">
-                        {assignment.assignment_status === "pending" &&
-                        assignment.expires_at
-                          ? `Expires: ${getTimeUntilExpiry(
-                              assignment.expires_at
-                            )}`
-                          : `Status: ${assignment.assignment_status}`}
+                        Status: {assignment.assignment_status}
                       </span>
                     </div>
 
@@ -1488,21 +1453,7 @@ export default function AdminAssignments() {
                     </div>
                   )}
 
-                  {selectedAssignment.expires_at && (
-                    <div className="flex items-center gap-4 p-3 bg-yellow-50 rounded-lg">
-                      <div className="p-2 bg-yellow-100 rounded-lg">
-                        <Clock className="h-4 w-4 text-yellow-600" />
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">
-                          {t("adminAssignments.expiresAt")}:
-                        </span>
-                        <p className="text-gray-900">
-                          {formatDate(selectedAssignment.expires_at)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+
 
                   {selectedAssignment.notes && (
                     <div className="p-3 bg-blue-50 rounded-lg">

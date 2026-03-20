@@ -356,52 +356,8 @@ export function CargoDetailModal({
     { limit: 20 } // Limit to 20 images for performance
   );
 
-  // Real-time countdown timer effect
-  useEffect(() => {
-    if (!cargo) {
-      setCountdown("");
-      return;
-    }
+  // Countdown timer removed - assignments no longer expire
 
-    const expiresAt =
-      cargo.delivery_assignment?.expires_at || cargo.assignmentExpiresAt;
-
-    if (!expiresAt) {
-      setCountdown("");
-      return;
-    }
-
-    const updateCountdown = () => {
-      const now = new Date();
-      const expiry = new Date(expiresAt);
-      const diffMs = expiry.getTime() - now.getTime();
-
-      if (diffMs <= 0) {
-        setCountdown(t("assignment.expired") || "Expired");
-        return;
-      }
-
-      const hours = Math.floor(diffMs / (1000 * 60 * 60));
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-      if (hours > 0) {
-        setCountdown(`${hours}h ${minutes}m ${seconds}s`);
-      } else if (minutes > 0) {
-        setCountdown(`${minutes}m ${seconds}s`);
-      } else {
-        setCountdown(`${seconds}s`);
-      }
-    };
-
-    // Update immediately
-    updateCountdown();
-
-    // Update every second
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, [cargo]);
 
   if (!cargo) {
     return (
@@ -981,7 +937,7 @@ export function CargoDetailModal({
 
     const assignmentStatus =
       cargo.delivery_assignment?.assignment_status || cargo.assignmentStatus;
-    return assignmentStatus === "pending" && !isAssignmentExpired();
+    return assignmentStatus === "pending";
   };
 
   const canAdminManage = () => {
@@ -1160,28 +1116,7 @@ export function CargoDetailModal({
                 ? `Assigned on ${cargo.assignedDate}`
                 : `Created on ${cargo.createdDate}`}
             </p>
-            {/* Assignment expiry timer */}
-            {(cargo.delivery_assignment?.assignment_status === "pending" ||
-              cargo.assignmentStatus === "pending") &&
-              (cargo.delivery_assignment?.expires_at ||
-                cargo.assignmentExpiresAt) &&
-              countdown && (
-                <div className="mt-2">
-                  <p className="text-xs text-gray-500">
-                    {t("assignment.responseRequiredWithin") ||
-                      "Response required within:"}{" "}
-                    <span
-                      className={`font-semibold ${
-                        countdown === "Expired" || isAssignmentExpired()
-                          ? "text-red-600"
-                          : "text-orange-600"
-                      }`}
-                    >
-                      {countdown}
-                    </span>
-                  </p>
-                </div>
-              )}
+
           </div>
           <div className="flex items-center gap-2">
             {getStatusBadge(cargo.status)}
@@ -1217,24 +1152,7 @@ export function CargoDetailModal({
                         cargo.assignmentStatus
                     )}
                   </div>
-                  {(cargo.delivery_assignment?.expires_at ||
-                    cargo.assignmentExpiresAt) &&
-                    countdown && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-700">
-                          {t("assignment.timeRemaining") || "Time Remaining"}:
-                        </span>
-                        <span
-                          className={`text-sm font-semibold ${
-                            countdown === (t("assignment.expired") || "Expired")
-                              ? "text-red-600"
-                              : "text-orange-600"
-                          }`}
-                        >
-                          {countdown}
-                        </span>
-                      </div>
-                    )}
+
                   {(cargo.delivery_assignment?.notes ||
                     cargo.assignmentNotes) && (
                     <div>

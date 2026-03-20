@@ -354,31 +354,13 @@ export function usePendingAssignmentsCount() {
 
 /**
  * Get assignment expiry status
+ * Note: Expiration feature has been disabled. Assignments no longer expire.
  */
 export function useAssignmentExpiryStatus(assignmentId: string) {
-  const { data: assignment } = useQuery({
-    queryKey: assignmentKeys.detail(assignmentId),
-    queryFn: () =>
-      deliveryAssignmentService.getAssignmentByCargoId(assignmentId),
-    enabled: !!assignmentId,
-    refetchInterval: 10000, // Check every 10 seconds for expiry
-  });
-
-  const isExpired = assignment?.data?.expires_at
-    ? new Date() > new Date(assignment.data.expires_at)
-    : false;
-
-  const timeUntilExpiry = assignment?.data?.expires_at
-    ? Math.max(
-        0,
-        new Date(assignment.data.expires_at).getTime() - new Date().getTime()
-      )
-    : 0;
-
   return {
-    isExpired,
-    timeUntilExpiry,
-    expiresAt: assignment?.data?.expires_at,
-    isLoading: !assignment,
+    isExpired: false,
+    timeUntilExpiry: 0,
+    expiresAt: undefined,
+    isLoading: false,
   };
 }
